@@ -43,3 +43,41 @@ is, and then deleted (`../process.md`, "Inboxes: facts filed by destination").
   a glob written with a decoded character.
 - **Origin.** The review of P1.4's config call, 2026-10-17
   (`../status/history/2026-10-17.md`).
+
+## The caller decides whether a body is extracted
+
+- **Fact.** P2's extractor is a function of one HTML body, the page's URL and
+  the root's profile choice; it never sees a status or a content type. P2's
+  grilling recommended extracting only 2xx `text/html` bodies. docs.fp.o's
+  404 page carries no generator meta, so under `auto` (D35) it would be
+  profiled `generic` (`fixtures/docs-fp-o/en-US/no-such-page-bruce-fixture/404.html`).
+  The charset is the caller's to hand over too.
+- **Why P3 cares.** The crawler is the first caller. Its grilling settles
+  which responses reach the extractor and where the charset comes from. A
+  local build's `404.html` (D1) reaches P5's fetcher as an ordinary file.
+- **Origin.** P1.2, refiled by P2's grilling, 2026-10-17
+  (`../wip/roadmap-P2-extractor.md`, "What P2 delivers, and where it stops").
+
+## docs.fp.o's page aliases are 200 meta-refresh pages
+
+- **Fact.** docs.fp.o leaves Antora's `redirect_facility` at `static`, so an
+  alias (`/en-US/quick-docs/howto-file-a-bug/`) and the site start page
+  (`/en-US/`) answer 200 with a "Redirect Notice": `rel=canonical` to the
+  target and `<meta http-equiv="refresh" content="0; url=…">`. P2's
+  extractor records the refresh as a link of kind `refresh`.
+- **Why P3 cares.** Whether the crawler follows a `refresh` as a redirect hop
+  (D7). If not, a fragment on a link to an alias is checked against the stub
+  and is a false `broken_anchor`. P2's grilling recommended following it, with
+  `redirected` set.
+- **Origin.** P2's grilling, 2026-10-17
+  (`../wip/roadmap-P2-extractor.md`, "Facts found while grilling").
+  Contingent on docs.fp.o's playbook keeping the static facility.
+
+## `url_id` could share the content hash's crate
+
+- **Fact.** P2 hashes page content with xxh3-128 (`xxhash-rust`). D26 names
+  a u64 hash of the canonical URL and no algorithm.
+- **Why P3 cares.** It builds `url` and picks the algorithm. P2's grilling
+  suggested the same crate's xxh3-64, one dependency for both. A
+  recommendation, not a decision.
+- **Origin.** P2's grilling, 2026-10-17.
