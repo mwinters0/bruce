@@ -27,35 +27,6 @@ and the development process is in place: [`../process.md`](../process.md), the
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
 pages, chosen and saved by `scripts/fixtures.py`.
 
-## P1 progress
-
-The spec is [`../wip/roadmap-P1-scaffold.md`](../wip/roadmap-P1-scaffold.md).
-
-- [x] **1.1** Fixtures: 30 docs.fp.o pages chosen by measurement, and
-  hand-written pages for other generators' markup, with a tabs page
-  reconstructed from I9.
-  [notes](../wip/roadmap-P1.1-fixtures-notes.md)
-- [x] **1.1.1** A real docs.fp.o page with tabs (I9): the survey counts a
-  `tabs` class token or a `_tabs_<n>` id, and the re-measured 698 hold one
-  tab set, saved as a fixture.
-  [notes](../wip/roadmap-P1.1-fixtures-notes.md)
-- [x] **1.2** Tokenizer spike: html5gum against lol_html in `spikes/tokenizer/`;
-  D11 names lol_html.
-  [notes](../wip/roadmap-P1.2-tokenizer-notes.md)
-- [x] **1.3** Scaffold: the crate, the Rust pin, the mise tasks, the D39
-  modules, and the check that only `cli` names a concrete profile.
-  [notes](../wip/roadmap-P1.3-scaffold-notes.md)
-- [x] **1.4** Config: the loader with D40's defaults, and the manual's config
-  reference.
-  [notes](../wip/roadmap-P1.4-config-notes.md)
-- [x] **1.4.1** Config keys per host: `[host."<h>"]` holds `per_second`
-  and `robots`, `crawl_delay` goes, and a root's `url` must be in its own
-  scope.
-  [notes](../wip/roadmap-P1.4.1-config-hosts-notes.md)
-- [x] **1.5** Store and the profile trait: the schema with `meta` and
-  `page_facts`, the writer skeleton, and the `Profile` trait.
-  [notes](../wip/roadmap-P1.5-store-profile-notes.md)
-
 ## Not started
 
 P2 onward in [`../design/roadmap.md`](../design/roadmap.md)'s index. None has

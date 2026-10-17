@@ -1,8 +1,8 @@
 # P1 — Scaffold and parser spike
 
-What P1 does and why. Progress is `../status/STATUS.md`'s checklist, never
-here. The decisions are in [`../design/decisions.md`](../design/decisions.md) and are
-cited here, never restated.
+What P1 does and why. It is complete; what it left for later phases is
+[`roadmap-P1-scaffold-notes.md`](roadmap-P1-scaffold-notes.md). The decisions
+are in [`decisions.md`](decisions.md) and are cited here, never restated.
 
 ## Intent
 

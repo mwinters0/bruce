@@ -14,7 +14,7 @@ never reused.
 
 | Phase | State | Where it is |
 |---|---|---|
-| P1 — scaffold and parser spike | Current | [`../wip/roadmap-P1-scaffold.md`](../wip/roadmap-P1-scaffold.md) |
+| P1 — scaffold and parser spike | Complete | [`roadmap-P1-scaffold.md`](roadmap-P1-scaffold.md), [notes](roadmap-P1-scaffold-notes.md) |
 | P2 — the extractor | Sketched; not grilled | this file, below |
 | P3 — the crawler | Sketched; not grilled | this file, below |
 | P4 — verdicts and reports; the first en-US crawl | Sketched; not grilled | this file, below |
@@ -63,9 +63,10 @@ maintainer.
 ## P1 — Scaffold and parser spike
 
 The spec is
-[`../wip/roadmap-P1-scaffold.md`](../wip/roadmap-P1-scaffold.md): the split
+[`roadmap-P1-scaffold.md`](roadmap-P1-scaffold.md): the split
 between the generic core and its profiles (D32–D38), the layering (D39),
-fixtures, the tokenizer spike, the scaffold, the config and the store.
+fixtures, the tokenizer spike, the scaffold, the config and the store. What it
+left for later phases is [`roadmap-P1-scaffold-notes.md`](roadmap-P1-scaffold-notes.md).
 
 ## P2 — The extractor
 
