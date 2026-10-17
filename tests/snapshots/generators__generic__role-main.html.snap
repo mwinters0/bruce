@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: generic
 title: A role=main region
+edit: -
 anchors: 5 (content 3, chrome 2, unknown 0)
 by tag: div 3, h1 1, h2 1
 links: 1 (anchor 1)

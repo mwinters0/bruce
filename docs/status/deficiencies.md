@@ -26,4 +26,9 @@ The full rules, striking and slice pairing included, are
 markers, against [`STATUS.md`](STATUS.md)'s slice checklist, and against the
 roadmap's phase index.
 
-No number has been allocated. <!-- deficiency-watermark: KD0 -->
+- **KD1** — A forge edit URL whose ref holds a `/` (a branch `feature/x`) parses
+  into the wrong ref and path, though `source_repo` and `source_url` stay right.
+  **(a) deliberate tradeoff**: telling them apart takes one forge API call per repo. Detail:
+  `src/forge.rs`
+
+<!-- deficiency-watermark: KD1 -->

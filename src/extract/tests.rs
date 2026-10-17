@@ -23,11 +23,21 @@ impl Profile for Stub {
             }
             Ok(())
         }));
+        extract.handlers.push(element!("a.prefer", move |el| {
+            sink.borrow_mut()
+                .prefer_edit_link(el.get_attribute("href").unwrap());
+            Ok(())
+        }));
         extract.handlers.push(element!(".tagme", move |_| {
             sink.borrow_mut().tag_link("tag");
             Ok(())
         }));
-        extract.finish = Some(|settled, sink| sink.fact("host", settled.url.host_str().unwrap()));
+        extract.finish = Some(|settled, sink| {
+            sink.fact("host", settled.url.host_str().unwrap());
+            if let Some(edit) = settled.edit_link {
+                sink.fact("edit", edit.url.as_str());
+            }
+        });
         extract
     }
 
@@ -321,5 +331,145 @@ fn a_tag_set_by_a_profiles_handler_lands_on_the_links_of_its_element() {
             ("4", None),
         ],
         "a tag set on an element that yields no link is dropped, not carried to the next"
+    );
+}
+
+/// A forge shape as `(repo, ref, path)`.
+type Shape = (String, String, String);
+
+/// The edit link's URL and the repo, ref and path it parses to, against
+/// `https://example.org/a/`.
+fn edit(html: &str) -> Option<(String, Option<Shape>)> {
+    auto(html).edit_link.map(|e| {
+        (
+            e.url.to_string(),
+            e.source.map(|s| (s.repo, s.git_ref, s.path)),
+        )
+    })
+}
+
+fn edit_url(html: &str) -> Option<String> {
+    edit(html).map(|(url, _)| url)
+}
+
+#[test]
+fn rel_edit_outranks_a_phrase_which_outranks_a_class_d36() {
+    let class = r#"<a class="theme-edit-this-page" href="/class">x</a>"#;
+    let phrase = r#"<a href="/phrase">Edit this page</a>"#;
+    let rel = r#"<a rel="nofollow EDIT" href="/rel">Suggest</a>"#;
+    for (html, want) in [
+        (format!("{class}{phrase}{rel}"), "/rel"),
+        (format!("{rel}{phrase}{class}"), "/rel"),
+        (format!("{class}{phrase}"), "/phrase"),
+        (format!("{phrase}{class}"), "/phrase"),
+        (class.to_string(), "/class"),
+    ] {
+        assert_eq!(
+            edit_url(&html).as_deref(),
+            Some(format!("https://example.org{want}").as_str()),
+            "{html}"
+        );
+    }
+}
+
+#[test]
+fn a_phrase_is_read_from_the_title_or_the_text_d36() {
+    let by_title = r#"<a href="/history" title="Page history"></a>
+        <a href="/edit" title="Edit this Page"></a><a href="/issue" title="Report an issue"></a>"#;
+    assert_eq!(
+        edit_url(by_title).as_deref(),
+        Some("https://example.org/edit")
+    );
+    let by_text = r#"<a href="/x"><i class="fa"></i> Edit on <b>GitHub</b></a>"#;
+    assert_eq!(edit_url(by_text).as_deref(), Some("https://example.org/x"));
+    let entity = r#"<a href="/y">Edit&nbsp;this&#32;page</a>"#;
+    assert_eq!(edit_url(entity).as_deref(), Some("https://example.org/y"));
+}
+
+#[test]
+fn text_after_a_link_is_not_its_text() {
+    let html = r#"<a href="/a">Home</a> Edit this page <a href="/b">Back</a>"#;
+    assert_eq!(edit_url(html), None);
+}
+
+#[test]
+fn links_in_no_tier_are_no_candidates_d36() {
+    let html = r#"<a href="https://forge.example.org/docs/site">Project repository</a>
+        <a class="edit" href="/other">Improve this page</a>
+        <a href="https://forge.example.org/docs/site/src/branch/main/a.md">Source</a>"#;
+    assert_eq!(edit(html), None);
+    assert_eq!(auto("<p>no links").edit_link, None);
+}
+
+#[test]
+fn inside_a_tier_a_forge_shape_wins_then_document_order() {
+    let html = r#"<a rel="edit" href="/first">a</a><a rel="edit" href="/second">b</a>
+        <a rel="edit" href="https://git.example.org/o/r/src/branch/main/p.md">c</a>
+        <a rel="edit" href="https://git.example.org/o/r/src/branch/main/q.md">d</a>"#;
+    assert_eq!(
+        edit(html),
+        Some((
+            "https://git.example.org/o/r/src/branch/main/p.md".to_string(),
+            Some((
+                "https://git.example.org/o/r".to_string(),
+                "main".to_string(),
+                "p.md".to_string()
+            ))
+        ))
+    );
+    let plain = r#"<a rel="edit" href="/first">a</a><a rel="edit" href="/second">b</a>"#;
+    assert_eq!(
+        edit_url(plain).as_deref(),
+        Some("https://example.org/first")
+    );
+    let tier = r#"<a rel="edit" href="/rel">a</a>
+        <a href="https://git.example.org/o/r/src/branch/main/p.md">Edit this page</a>"#;
+    assert_eq!(
+        edit_url(tier).as_deref(),
+        Some("https://example.org/rel"),
+        "a forge shape does not lift a link across tiers"
+    );
+}
+
+#[test]
+fn only_a_web_page_can_be_the_edit_link() {
+    let html = r#"<a rel="edit" href="mailto:a@example.org">m</a>
+        <a rel="edit" href="javascript:void(0)">j</a><a rel="edit" href="http://[bad">b</a>
+        <a rel="edit" href="edit.html">ok</a>"#;
+    assert_eq!(
+        edit_url(html).as_deref(),
+        Some("https://example.org/a/edit.html")
+    );
+}
+
+#[test]
+fn an_edit_link_resolves_against_the_base_like_any_href() {
+    let html = r#"<base href="https://git.example.org/o/r/src/branch/main/"><a rel="edit" href="p.md">e</a>"#;
+    assert_eq!(
+        edit_url(html).as_deref(),
+        Some("https://git.example.org/o/r/src/branch/main/p.md")
+    );
+}
+
+#[test]
+fn a_profile_may_prefer_a_link_over_the_ranking_d36() {
+    let html = r#"<meta name="generator" content="Stub"><body>
+        <a rel="edit" href="/ranked">e</a><a class="prefer" href="src.md">p</a>"#;
+    let x = auto(html);
+    assert_eq!(
+        x.edit_link.unwrap().url.as_str(),
+        "https://example.org/a/src.md"
+    );
+    let edit = x.facts.pairs().iter().find(|(k, _)| k == "stub.edit");
+    assert_eq!(
+        edit.map(|(_, v)| v.as_str()),
+        Some("https://example.org/a/src.md"),
+        "the finish step sees the preference as the settled choice"
+    );
+    let junk = r#"<meta name="generator" content="Stub"><body>
+        <a rel="edit" href="/ranked">e</a><a class="prefer" href="mailto:x@example.org">p</a>"#;
+    assert_eq!(
+        edit_url(junk).as_deref(),
+        Some("https://example.org/ranked")
     );
 }

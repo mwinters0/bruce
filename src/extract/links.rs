@@ -139,7 +139,7 @@ impl Links {
     }
 
     fn push(&mut self, raw: String, kind: Kind) {
-        let url = self.base.as_ref().unwrap_or(&self.page).join(&raw).ok();
+        let url = self.resolve(&raw);
         self.mark.get_or_insert(self.found.len());
         self.found.push(Link {
             raw,
@@ -147,6 +147,21 @@ impl Links {
             kind,
             tag: None,
         });
+    }
+
+    /// Where in [`Links::found`] the last link read sits.
+    pub(super) fn last_index(&self) -> Option<usize> {
+        self.found.len().checked_sub(1)
+    }
+
+    /// The links read so far.
+    pub(super) fn found(&self) -> &[Link] {
+        &self.found
+    }
+
+    /// `raw` resolved as a link read now would be.
+    pub(super) fn resolve(&self, raw: &str) -> Option<Url> {
+        self.base.as_ref().unwrap_or(&self.page).join(raw).ok()
     }
 
     pub(super) fn finish(self) -> Vec<Link> {

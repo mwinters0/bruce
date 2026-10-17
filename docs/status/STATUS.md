@@ -15,12 +15,13 @@ Red means a repoint is due ([`../process.md`](../process.md),
 ## What exists
 
 The `bruce` crate is a scaffold: D39's top-level modules, a binary that says
-no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Four modules hold
+no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Five modules hold
 code: `config`, the loader; `store`, the DuckDB schema, its version check and
 the single writer for two tables; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views and content region, with Resolve
-declared and empty; and `extract`, the pass over one page, which yields its
-profile, title, anchors with placement and links with kind. The rest hold only their doc.
+declared and empty; `extract`, the pass over one page, which yields its
+profile, title, anchors with placement, links with kind and the edit link; and
+`forge`, the edit-URL shape parse. The rest hold only their doc.
 `docs/manual/` holds the config reference. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -38,7 +39,8 @@ The spec is [`../wip/roadmap-P2-extractor.md`](../wip/roadmap-P2-extractor.md).
 - [x] **2.2** Links: every kind, `srcset`, `<base href>` and `refresh`,
   resolved against the page's URL
   ([notes](../wip/roadmap-P2.2-links-notes.md)).
-- [ ] **2.3** The edit link and `forge`: the core ranking and the shape parse.
+- [x] **2.3** The edit link and `forge`: the core ranking and the shape parse
+  ([notes](../wip/roadmap-P2.3-edit-link-notes.md)).
 - [ ] **2.4** Antora's Extract: its region, coordinates and unresolved-xref
   tags.
 - [ ] **2.5** The content hash: xxh3-128 over a scope set by `hash_root` and

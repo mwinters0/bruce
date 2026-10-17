@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: antora
 title: Spins :: Fedora Docs
+edit: https://forge.fedoraproject.org/fesco/docs/src/branch/main/fesco/modules/ROOT/pages/Spins.adoc (repo https://forge.fedoraproject.org/fesco/docs, ref main, path fesco/modules/ROOT/pages/Spins.adoc)
 anchors: 11 (content 6, chrome 5, unknown 0)
 by tag: a 1, button 1, div 4, h2 2, input 1, script 2
 links: 221 (anchor 207, image 3, canonical 1, stylesheet 3, script 7)

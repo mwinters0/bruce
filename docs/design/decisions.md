@@ -69,11 +69,13 @@ the result. The meta precedes anything a profile extracts. Rejected: deciding on
 mislabels a root spanning generators; config only, which makes every Antora user opt in.
 
 ### D36 The page → source tie-back is core: an edit-link heuristic and forge URL shapes
-Every generator's edit link points at a forge, so any site gets page → file with no config. The
-core ranks candidate links (`rel=edit` first, I12), and a profile may override the choice (I8).
-`pages` keeps `source_url`, plus `source_repo`, `source_ref` and `source_path` when a forge shape
-parses. Rejected: discovery in the Antora profile only, which leaves CI's build → repo map (D9,
-D17) resting on one generator.
+Every generator's edit link points at a forge, so any site gets page → file with no config. The core
+ranks the `<a href>`s earning a tier: `rel=edit`, an edit phrase in `title` or text, a known class
+(I12); inside a tier a forge-shaped URL, then document order. A link in no tier is none. docs.fp.o
+needs no override (I8): its title is a phrase. `pages` keeps `source_url`, plus `source_repo`,
+`source_ref` and `source_path` when a path shape parses on any host, the ref one segment (KD1).
+Rejected: discovery in the Antora profile only, which leaves CI's build → repo map (D9, D17) on one
+generator; a `title` match in `antora`, a docs.fp.o quirk in a generator profile (D32).
 
 ### D37 Profile facts live in one core table, `page_facts`, under namespaced keys
 `(run_id, url_id, key, value)`, keys like `antora.component`. A profile ships views pivoting its

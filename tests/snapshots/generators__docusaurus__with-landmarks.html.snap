@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: generic
 title: Installation | Example
+edit: https://github.com/example/site/edit/main/website/docs/installation.mdx (repo https://github.com/example/site, ref main, path website/docs/installation.mdx)
 anchors: 3 (content 1, chrome 2, unknown 0)
 by tag: div 2, h2 1
 links: 7 (anchor 6, canonical 1)

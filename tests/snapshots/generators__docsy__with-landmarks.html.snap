@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: generic
 title: Getting Started | Example
+edit: https://github.com/example/site/edit/main/content/en/docs/get-started/_index.md (repo https://github.com/example/site, ref main, path content/en/docs/get-started/_index.md)
 anchors: 2 (content 1, chrome 1, unknown 0)
 by tag: div 1, h2 1
 links: 9 (anchor 8, canonical 1)

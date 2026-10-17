@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: antora
 title: Tabs :: Example Docs
+edit: https://forge.example.org/docs/example/src/branch/main/modules/ROOT/pages/tabs.adoc (repo https://forge.example.org/docs/example, ref main, path modules/ROOT/pages/tabs.adoc)
 anchors: 6 (content 6, chrome 0, unknown 0)
 by tag: div 3, h2 1, li 2
 links: 6 (anchor 5, canonical 1)

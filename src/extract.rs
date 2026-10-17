@@ -9,6 +9,7 @@
 //! whether a response is extracted at all, and hands over decoded text.
 
 mod anchors;
+mod edit_link;
 mod links;
 
 use std::cell::RefCell;
@@ -19,10 +20,12 @@ use lol_html::{element, text};
 use url::Url;
 
 use crate::config::ProfileChoice;
+use crate::forge::EditLink;
 use crate::profile::{ElementHandlers, Extract, Facts, Registry, Settled, Sink, UnknownProfile};
 
 pub use anchors::{Anchor, Placement};
 use anchors::{Anchors, attribute};
+use edit_link::EditLinks;
 use links::Links;
 pub use links::{Kind, Link};
 
@@ -38,6 +41,9 @@ pub struct Extracted {
     pub anchors: Vec<Anchor>,
     /// Each link in document order (D13).
     pub links: Vec<Link>,
+    /// The page's edit link and what it parses to (D36); `None` where the
+    /// page has none.
+    pub edit_link: Option<EditLink>,
     /// The profile's facts about the page (D37).
     pub facts: Facts,
 }
@@ -92,6 +98,7 @@ pub fn extract(
     let anchors = RefCell::new(Anchors::default());
     let title = RefCell::new(Title::default());
     let links = RefCell::new(Links::new(url));
+    let edit_links = RefCell::new(EditLinks::default());
     let Extract {
         region,
         handlers,
@@ -104,6 +111,7 @@ pub fn extract(
         .into_iter()
         .chain(Anchors::handlers(&anchors, region))
         .chain(read)
+        .chain(EditLinks::handlers(&edit_links, &links))
         .chain(handlers)
         .chain(tag)
     {
@@ -114,14 +122,23 @@ pub fn extract(
     rewriter.end()?;
 
     let mut sink = sink.into_inner();
+    let links = links.into_inner();
+    let edit_link = edit_links
+        .into_inner()
+        .choose(&links, sink.preferred_edit_link());
     if let Some(finish) = finish {
-        finish(&Settled { url }, &mut sink);
+        let settled = Settled {
+            url,
+            edit_link: edit_link.as_ref(),
+        };
+        finish(&settled, &mut sink);
     }
     Ok(Extracted {
         profile: profile.name(),
         title: title.into_inner().text,
         anchors: anchors.into_inner().finish(),
-        links: links.into_inner().finish(),
+        links: links.finish(),
+        edit_link,
         facts: sink.into_facts(),
     })
 }

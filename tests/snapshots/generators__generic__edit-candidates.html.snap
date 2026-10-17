@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: generic
 title: Edit-link candidates
+edit: https://forge.example.org/docs/site/src/branch/main/pages/edit-candidates.md (repo https://forge.example.org/docs/site, ref main, path pages/edit-candidates.md)
 anchors: 1 (content 1, chrome 0, unknown 0)
 by tag: h1 1
 links: 4 (anchor 4)

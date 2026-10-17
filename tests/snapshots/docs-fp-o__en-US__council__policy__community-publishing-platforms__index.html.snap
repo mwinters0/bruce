@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: antora
 title: Community Publishing Platforms :: Fedora Docs
+edit: https://forge.fedoraproject.org/council/docs/src/branch/main/council/modules/ROOT/pages/policy/community-publishing-platforms.adoc (repo https://forge.fedoraproject.org/council/docs, ref main, path council/modules/ROOT/pages/policy/community-publishing-platforms.adoc)
 anchors: 10 (content 5, chrome 5, unknown 0)
 by tag: button 1, div 2, h2 3, h3 1, input 1, script 2
 links: 231 (anchor 216, image 4, canonical 1, stylesheet 3, script 7)

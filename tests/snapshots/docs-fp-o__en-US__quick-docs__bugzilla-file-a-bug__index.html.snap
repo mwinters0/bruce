@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: antora
 title: How to file a bug :: Fedora Docs
+edit: https://forge.fedoraproject.org/docs/quick-docs/src/branch/main/modules/ROOT/pages/bugzilla-file-a-bug.adoc (repo https://forge.fedoraproject.org/docs/quick-docs, ref main, path modules/ROOT/pages/bugzilla-file-a-bug.adoc)
 anchors: 24 (content 19, chrome 5, unknown 0)
 by tag: button 1, div 2, h2 6, h3 12, input 1, script 2
 links: 377 (anchor 358, image 8, canonical 1, stylesheet 3, script 7)

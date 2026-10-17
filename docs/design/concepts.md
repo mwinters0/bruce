@@ -15,7 +15,7 @@ records, each part saying why its module holds it. **Not in one place** names wh
 does not explain.
 
 Every concept below is, so far, one top-level module, placed by P1's spec (`roadmap-P1-scaffold.md`, "Where the concepts
-live"). `cli`, `config`, `store`, `profile` and `extract` hold code; the rest hold only their doc. The
+live"). `cli`, `config`, `store`, `profile`, `extract` and `forge` hold code; the rest hold only their doc. The
 decisions each carries are cited in its module's doc.
 
 ## Subcommands
@@ -43,8 +43,8 @@ decisions each carries are cited in its module's doc.
 
 - **bruce** — `extract/`: the pass, the page's result, the generator pre-pass
   and the title in the parent file, anchors (validity and placement) in the
-  `anchors` child, and links (kinds, `srcset`, `<base>`, refresh) in the `links`
-  child. It sits above `profile` because it drives the pass the
+  `anchors` child, links (kinds, `srcset`, `<base>`, refresh) in the `links`
+  child, and the edit-link ranking in the `edit_link` child. It sits above `profile` because it drives the pass the
   profile's Extract hook adds to, and reads no concrete profile (D39).
 
 ## Storage
@@ -62,7 +62,8 @@ decisions each carries are cited in its module's doc.
 
 ## Forge edit-URL shapes
 
-- **bruce** — `forge.rs`.
+- **bruce** — `forge.rs`: the shape parse and the edit link it parses, below
+  `profile` so the finish step can read it (D39).
 
 ## Canonical URLs and IDs
 

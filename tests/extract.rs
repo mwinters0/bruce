@@ -44,8 +44,18 @@ fn summary(x: &Extracted) -> String {
         .iter()
         .map(|(k, v)| format!("  {k} = {v}"))
         .collect();
+    let edit = match &x.edit_link {
+        None => "-".to_string(),
+        Some(e) => match &e.source {
+            None => format!("{} (no forge shape)", e.url),
+            Some(s) => format!(
+                "{} (repo {}, ref {}, path {})",
+                e.url, s.repo, s.git_ref, s.path
+            ),
+        },
+    };
     format!(
-        "profile: {}\ntitle: {}\nanchors: {} (content {}, chrome {}, unknown {})\nby tag: {}\nlinks: {} ({})\nfacts:{}\n",
+        "profile: {}\ntitle: {}\nedit: {edit}\nanchors: {} (content {}, chrome {}, unknown {})\nby tag: {}\nlinks: {} ({})\nfacts:{}\n",
         x.profile,
         x.title.as_deref().unwrap_or("-"),
         x.anchors.len(),
@@ -205,4 +215,109 @@ fn a_canonical_is_absolute_and_may_name_another_page() {
         frozen,
         "https://docs.fedoraproject.org/en-US/fedora/latest/"
     );
+}
+
+fn edit_link(path: &str) -> Option<bruce::forge::EditLink> {
+    let f = fixtures().into_iter().find(|f| f.path == path).unwrap();
+    run(&f).edit_link
+}
+
+/// D36, I8: "Edit this Page" is picked from "Page history" and "Report an
+/// issue" by its title alone, on every docs.fp.o page but the 404, which has
+/// none; its forge shape names a file in a repo.
+#[test]
+fn docs_fp_o_edit_links_are_the_edit_this_page_title() {
+    let mut forges = std::collections::BTreeSet::new();
+    for f in fixtures()
+        .iter()
+        .filter(|f| f.path.starts_with("docs-fp-o/"))
+    {
+        let edit = run(f).edit_link;
+        if f.path.ends_with("404.html") {
+            assert!(edit.is_none(), "{}", f.path);
+            continue;
+        }
+        let edit = edit.unwrap_or_else(|| panic!("{}: no edit link", f.path));
+        let source = edit
+            .source
+            .unwrap_or_else(|| panic!("{}: {}", f.path, edit.url));
+        assert!(source.path.ends_with(".adoc"), "{}: {}", f.path, edit.url);
+        assert!(edit.url.as_str().ends_with(&source.path));
+        forges.insert(source.repo.split('/').nth(2).unwrap().to_string());
+    }
+    // The survey's three hosts: Forgejo, GitHub and GitLab.
+    assert_eq!(
+        forges.into_iter().collect::<Vec<_>>(),
+        ["forge.fedoraproject.org", "github.com", "gitlab.com"]
+    );
+}
+
+/// D36: each generator's edit link is found by the signal that generator
+/// gives; on the generic page `rel=edit` outranks an earlier `a.edit`.
+#[test]
+fn each_generators_edit_link_is_found_by_its_own_signal() {
+    for (path, url, repo, git_ref, file) in [
+        (
+            "generators/docsy/with-landmarks.html",
+            "https://github.com/example/site/edit/main/content/en/docs/get-started/_index.md",
+            "https://github.com/example/site",
+            "main",
+            "content/en/docs/get-started/_index.md",
+        ),
+        (
+            "generators/docusaurus/with-landmarks.html",
+            "https://github.com/example/site/edit/main/website/docs/installation.mdx",
+            "https://github.com/example/site",
+            "main",
+            "website/docs/installation.mdx",
+        ),
+        (
+            "generators/furo/with-landmarks.html",
+            "https://github.com/example/site/edit/main/docs/quickstart.md",
+            "https://github.com/example/site",
+            "main",
+            "docs/quickstart.md",
+        ),
+        (
+            "generators/material/with-landmarks.html",
+            "https://github.com/example/site/edit/master/docs/getting-started.md",
+            "https://github.com/example/site",
+            "master",
+            "docs/getting-started.md",
+        ),
+        (
+            "generators/sphinx-rtd/text-only-edit.html",
+            "https://github.com/example/site/blob/main/docs/user/intro/sphinx.rst",
+            "https://github.com/example/site",
+            "main",
+            "docs/user/intro/sphinx.rst",
+        ),
+        (
+            "generators/generic/edit-candidates.html",
+            "https://forge.example.org/docs/site/src/branch/main/pages/edit-candidates.md",
+            "https://forge.example.org/docs/site",
+            "main",
+            "pages/edit-candidates.md",
+        ),
+    ] {
+        let edit = edit_link(path).unwrap_or_else(|| panic!("{path}: no edit link"));
+        let source = edit.source.as_ref().unwrap();
+        assert_eq!(edit.url.as_str(), url, "{path}");
+        assert_eq!(
+            (
+                source.repo.as_str(),
+                source.git_ref.as_str(),
+                source.path.as_str()
+            ),
+            (repo, git_ref, file),
+            "{path}"
+        );
+    }
+}
+
+/// A page with no edit candidate has none.
+#[test]
+fn a_page_without_an_edit_signal_has_no_edit_link() {
+    assert!(edit_link("generators/generic/main-landmark.html").is_none());
+    assert!(edit_link("generators/generic/role-main.html").is_none());
 }

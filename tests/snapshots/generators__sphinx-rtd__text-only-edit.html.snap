@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: generic
 title: Getting started with Sphinx — Example
+edit: https://github.com/example/site/blob/main/docs/user/intro/sphinx.rst (repo https://github.com/example/site, ref main, path docs/user/intro/sphinx.rst)
 anchors: 2 (content 2, chrome 0, unknown 0)
 by tag: section 2
 links: 6 (anchor 5, canonical 1)

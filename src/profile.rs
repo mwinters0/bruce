@@ -15,6 +15,7 @@ use lol_html::{ElementContentHandlers, Selector};
 use url::Url;
 
 use crate::config::ProfileChoice;
+use crate::forge::EditLink;
 
 /// An error a profile or the store behind its [`Lookup`] hands back.
 pub type BoxError = Box<dyn std::error::Error + Send + Sync>;
@@ -132,6 +133,9 @@ impl Extract<'_> {
 pub struct Settled<'a> {
     /// The page's URL.
     pub url: &'a Url,
+    /// The page's edit link, the core's ranked choice or the profile's own
+    /// preference (D36); `None` where the page has none.
+    pub edit_link: Option<&'a EditLink>,
 }
 
 /// What a profile's handlers and finish step write to (D38): the page's
@@ -169,7 +173,8 @@ impl Sink {
     }
 
     /// Prefers `href` as the page's edit link over the core's ranking
-    /// (D36).
+    /// (D36), resolved against the page as any other href. One that names
+    /// no web page is ignored.
     pub fn prefer_edit_link(&mut self, href: impl Into<String>) {
         self.edit_link = Some(href.into());
     }

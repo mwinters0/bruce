@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: antora
 title: Fedora Packaging Guidelines :: Fedora Docs
+edit: https://forge.fedoraproject.org/packaging/guidelines/src/branch/main/guidelines/modules/ROOT/pages/index.adoc (repo https://forge.fedoraproject.org/packaging/guidelines, ref main, path guidelines/modules/ROOT/pages/index.adoc)
 anchors: 156 (content 151, chrome 5, unknown 0)
 by tag: button 1, div 2, h2 69, h3 74, h4 7, input 1, script 2
 links: 547 (anchor 533, image 3, canonical 1, stylesheet 3, script 7)

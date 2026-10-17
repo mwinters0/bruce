@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: antora
 title: Fedora Design :: Fedora Docs
+edit: https://forge.fedoraproject.org/design/docs/src/branch/main/modules/ROOT/pages/index.adoc (repo https://forge.fedoraproject.org/design/docs, ref main, path modules/ROOT/pages/index.adoc)
 anchors: 7 (content 2, chrome 5, unknown 0)
 by tag: button 1, div 1, h2 2, input 1, script 2
 links: 201 (anchor 187, image 3, canonical 1, stylesheet 3, script 7)

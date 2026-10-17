@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: generic
 title: No landmarks
+edit: https://git.example.org/docs/site/src/branch/main/pages/no-landmarks.md (repo https://git.example.org/docs/site, ref main, path pages/no-landmarks.md)
 anchors: 6 (content 0, chrome 0, unknown 6)
 by tag: a 1, div 3, h1 1, h2 1
 links: 4 (anchor 4)

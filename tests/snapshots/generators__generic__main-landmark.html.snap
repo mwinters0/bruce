@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: generic
 title: A main element
+edit: -
 anchors: 7 (content 4, chrome 3, unknown 0)
 by tag: footer 1, h1 1, h2 1, header 1, main 1, nav 1, p 1
 links: 1 (anchor 1)

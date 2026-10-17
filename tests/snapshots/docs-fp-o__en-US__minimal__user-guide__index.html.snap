@@ -4,6 +4,7 @@ expression: summary(&run(f))
 ---
 profile: antora
 title: User Guide :: Fedora Docs
+edit: https://github.com/fedora-minimal/documentation-minimal/edit/main/minimal-docs/modules/ROOT/pages/user-guide/index.adoc (repo https://github.com/fedora-minimal/documentation-minimal, ref main, path minimal-docs/modules/ROOT/pages/user-guide/index.adoc)
 anchors: 5 (content 0, chrome 5, unknown 0)
 by tag: button 1, div 1, input 1, script 2
 links: 195 (anchor 181, image 3, canonical 1, stylesheet 3, script 7)
