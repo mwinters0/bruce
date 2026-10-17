@@ -83,7 +83,7 @@ checked.
 
 Requests are limited per host. `rate.per_second` is the rate for a host that
 nothing else governs; a `Crawl-delay` in a host's `robots.txt` takes
-precedence over it, and `[host]` (below) overrides both.
+precedence over it, and `[host]` (below) says when a host's own rate does.
 
 | Key | Default | Meaning |
 |---|---|---|
