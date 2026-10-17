@@ -14,9 +14,10 @@ Red means a repoint is due ([`../process.md`](../process.md),
 
 ## What exists
 
-The `bruce` crate is a scaffold: D39's top-level modules, each holding only
-its doc, a binary that says no subcommand exists, and Rust 1.99.1 pinned in
-`mise.toml`. The tokenizer spike in `spikes/tokenizer/` is its own project,
+The `bruce` crate is a scaffold: D39's top-level modules, a binary that says
+no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Only `config`
+holds code, the loader; the rest hold only their doc. `docs/manual/` holds the
+config reference. The tokenizer spike in `spikes/tokenizer/` is its own project,
 outside the crate and the checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -41,8 +42,9 @@ The spec is [`../wip/roadmap-P1-scaffold.md`](../wip/roadmap-P1-scaffold.md).
 - [x] **1.3** Scaffold: the crate, the Rust pin, the mise tasks, the D39
   modules, and the check that only `cli` names a concrete profile.
   [notes](../wip/roadmap-P1.3-scaffold-notes.md)
-- [ ] **1.4** Config: the loader with D40's defaults, and the manual's config
+- [x] **1.4** Config: the loader with D40's defaults, and the manual's config
   reference.
+  [notes](../wip/roadmap-P1.4-config-notes.md)
 - [ ] **1.5** Store and the profile trait: the schema with `meta` and
   `page_facts`, the writer skeleton, and the `Profile` trait.
 
@@ -59,3 +61,13 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **The config's key names and D44's scope rule were chosen unattended
+  (P1.4).** The call: `[[root]]` keys `url`, `include`, `exclude`,
+  `sitemap`, `profile`, `robots`, `crawl_delay`; `allowlist`;
+  `rate.per_second` and `rate.host."<host>".per_second`. `include` replaces
+  the root's path prefix rather than narrowing it, and globs match the whole
+  URL with `*` stopping at `/` (D44). Why: D5 and D40 name the settings but
+  not their spelling, and whole-URL globs let one root span locales or hosts.
+  Reconsidering renames keys in `src/config.rs` and `docs/manual/config.md`,
+  or rewrites D44, cheaply now and at a cost to users once a release ships.

@@ -7,3 +7,10 @@ description = "A link checker that validates anchors and keeps a link graph with
 publish = false
 
 [dependencies]
+globset = "0.4.20"
+serde = { version = "1.0.229", features = ["derive"] }
+toml = "1.1.8"
+url = "2.5.8"
+
+[dev-dependencies]
+tempfile = "3.27.0"

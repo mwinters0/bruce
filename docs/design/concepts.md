@@ -14,9 +14,9 @@ spans others only along the layering [`decisions.md`](decisions.md), "D39"
 records, each part saying why its module holds it. **Not in one place** names what today's tree scatters and the layering
 does not explain.
 
-Every concept below is, so far, one top-level module holding only its doc,
-placed by P1's spec (`../wip/roadmap-P1-scaffold.md`, "Where the concepts
-live"). The decisions each carries are cited in its module's doc.
+Every concept below is, so far, one top-level module, placed by P1's spec (`../wip/roadmap-P1-scaffold.md`, "Where the concepts
+live"). Only `config` holds code; the rest hold only their doc. The
+decisions each carries are cited in its module's doc.
 
 ## Subcommands
 
@@ -62,4 +62,5 @@ live"). The decisions each carries are cited in its module's doc.
 
 ## Configuration
 
-- **bruce** — `config.rs`.
+- **bruce** — `config.rs`: the loader, its defaults and its validation, at
+  the bottom of the layering so every module may read a setting (D39).

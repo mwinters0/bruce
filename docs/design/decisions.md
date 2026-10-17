@@ -6,11 +6,11 @@ over an alternative, and obvious changes argued and refused. Nothing here says h
 entry as `docs/design/decisions.md`, "D12"; the rest of the rules, the line cap included, are
 `docs/process.md`, "The decision register".
 
-The modules are P1's scaffold and still empty. D1–D30 were settled in the bootstrap grilling (2026-10-17, frozen as
+The modules are P1's scaffold, and only `config` is built. D1–D30 were settled in the bootstrap grilling (2026-10-17, frozen as
 `historical/initial.md`), D31 the same day, D32 onward in P1's grilling, and its **Code** is the module that will hold it once built. D25 and D29
 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s phase index.
 
-<!-- decision-watermark: D43 -->
+<!-- decision-watermark: D44 -->
 
 ## Scope and modes
 
@@ -204,6 +204,13 @@ unresolved xref: D19, then the same steps. Externals default to the baseline's v
 `allowlist` lists hosts checked one hop deep, and `[rate]` holds limits. Each root names its
 profile (D35). Roots are configurable so the tool is not tied to Fedora, and every key has a
 default (D40).
+
+### D44 A root's scope is its path prefix until `include` names globs, which match the whole URL
+`include` replaces the prefix rather than narrowing it, so one root can span locales; `exclude`
+always wins. Globs are globset's with `*` and `?` stopping at `/`, so a version segment matches as
+`f2?`. Rejected: globs over the path alone, which cannot scope by host; regexes, which users write
+worse. Reopens: a root needing both its prefix and an include, today written as one glob.
+Code: `config::Root::in_scope`. Evidence: `config::tests::include_replaces_the_prefix_and_exclude_wins`.
 
 ### D6 Reports are SQL views stored in the DB and run by `bruce report <kind>`
 Ad-hoc `duckdb` users see the same views as the CLI. Output is text, or `--format json`.
