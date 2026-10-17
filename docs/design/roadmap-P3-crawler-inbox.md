@@ -23,7 +23,10 @@ is, and then deleted (`../process.md`, "Inboxes: facts filed by destination").
   says what `bruce crawl URL --config f` does when the file has roots, nor
   which keys D5's CLI overrides cover. A profile name other than `auto` is
   kept as a string; `cli`, which builds the registry, is where an unknown
-  name must be refused (D39).
+  name must be refused (D39). `Config::parse` refuses `host."h".robots =
+  false` for a host no root starts on only when the file names a root, so a
+  URL added from the command line must run `Config::check_robots_hosts`
+  again.
 - **Why P3 cares.** The `crawl` subcommand is the first caller, so whichever
   slice adds it decides both, in the manual too.
 - **Origin.** P1.4, 2026-10-17.

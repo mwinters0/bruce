@@ -14,7 +14,9 @@ allowlist = ["github.com", "gitlab.com"]
 
 [rate]
 per_second = 2
-host."github.com".per_second = 1
+
+[host."github.com"]
+per_second = 1
 
 [[root]]
 url = "https://docs.example.org/en-US/"
@@ -37,8 +39,9 @@ default.
 | `exclude` | `[]` | URL globs that keep a page out, even when `include` matches it. |
 | `sitemap` | discovered | The sitemap to start from. By default, the `Sitemap:` lines of the host's `robots.txt`, then `sitemap.xml` under the root, then `sitemap.xml` at the host. |
 | `profile` | `"auto"` | How the root's pages are read: `"auto"`, `"generic"` or `"antora"` (below). |
-| `robots` | `true` | Whether the root's `robots.txt` is obeyed, its `Crawl-delay` included. External hosts' `robots.txt` is always obeyed. |
-| `crawl_delay` | none | Seconds between requests to the root's host. Overrides both `robots.txt`'s `Crawl-delay` and `[rate]`. Set it only for a site you have permission to crawl faster. |
+
+The `url` must be in the root's own scope: a root whose `include` or `exclude`
+rules out its starting page is an error.
 
 **The path prefix** is the root's URL without its query, up to the last `/`.
 For `https://docs.example.org/en-US/` it is the URL itself. For
@@ -51,7 +54,7 @@ For example:
 
 ```toml
 [[root]]
-url = "https://docs.example.org/en-US/"
+url = "https://docs.example.org/en-US/fedora/"
 include = ["https://docs.example.org/*/fedora/**"]
 exclude = ["https://docs.example.org/*/fedora/f2?/**"]
 ```
@@ -78,11 +81,42 @@ checked.
 
 ## Rate
 
-Requests are limited per host. A root's `crawl_delay`, or the `Crawl-delay` in
-its `robots.txt`, takes precedence. `[rate]` governs every request neither
-covers.
+Requests are limited per host. `rate.per_second` is the rate for a host that
+nothing else governs; a `Crawl-delay` in a host's `robots.txt` takes
+precedence over it, and `[host]` (below) overrides both.
 
 | Key | Default | Meaning |
 |---|---|---|
 | `rate.per_second` | `2` | Requests a second to any one host. |
-| `rate.host."<host>".per_second` | `rate.per_second` | Requests a second to that host. |
+
+## Hosts
+
+`[host."<host>"]` changes how one host is fetched, whether or not a root starts
+on it. The name is a bare host name, as in `allowlist`. A host that a root
+starts on, and one that only a root's `include` or an `allowlist` reaches, are
+both fine. `allowlist` says whether a host's links are checked; `[host]` says
+how the host is fetched.
+
+```toml
+[[root]]
+url = "https://docs.example.org/en-US/"
+
+[host."docs.example.org"]
+per_second = 10
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `host."<host>".per_second` | none | Requests a second to that host. |
+| `host."<host>".robots` | `true` | Whether the host's `robots.txt` is obeyed, its `Crawl-delay` included. |
+
+**Which rate applies** to a host:
+- With `robots = false`: its `per_second` if written, else `rate.per_second`.
+- On a host a root starts on, a `per_second` beats the host's `Crawl-delay`.
+  Write one only for a site you have permission to crawl faster.
+- On any other host, the slower of its `per_second` and its `Crawl-delay`.
+- With no `per_second` written, the `Crawl-delay` if there is one, else
+  `rate.per_second`.
+
+`robots = false` is an error on a host that no root starts on: an external
+host's `robots.txt` is always obeyed.

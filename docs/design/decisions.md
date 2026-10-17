@@ -81,7 +81,7 @@ simpler). Reopens: D19 slow over the view, fixed by materializing that view alon
 ### D40 A run needs no config: the URL given is the root, and every other setting has a default
 Without a file, the URL is the only root, scoped to its path prefix. Its sitemap comes from
 robots.txt `Sitemap:` lines, then `sitemap.xml` under the root, then at the host. Profile `auto`
-(D35), robots.txt and its `Crawl-delay` obeyed, 2 req/s per host otherwise, no allowlist. A config
+(D35), robots.txt and its `Crawl-delay` obeyed (D18), 2 req/s per host otherwise, no allowlist. A config
 overrides each. Rejected for now: a required config, and `bruce init`, until someone asks for it.
 
 ### D41 This repo builds the tool and never deploys it
@@ -201,30 +201,39 @@ unresolved xref: D19, then the same steps. Externals default to the baseline's v
 
 ### D5 Configuration is optional TOML, with CLI overrides; roots are separate from the allowlist
 `[[root]]` entries are crawled fully, each with include/exclude globs and its own sitemap URL.
-`allowlist` lists hosts checked one hop deep, and `[rate]` holds limits. Each root names its
-profile (D35). Roots are configurable so the tool is not tied to Fedora, and every key has a
-default (D40). Keys are snake_case and `[[root]]` singular, as Cargo's `[[bin]]`; rejected:
-kebab-case, which lychee and mise, the nearest tools, do not use.
+`allowlist` lists hosts checked one hop deep, `[rate]` holds the default limit and `[host."<h>"]`
+a host's own `per_second` and `robots` (D8). Each root names its profile (D35). Roots are
+configurable so the tool is not tied to Fedora, and every key has a default (D40). Keys are
+snake_case and `[[root]]` singular, as Cargo's `[[bin]]`; rejected: kebab-case, which lychee and
+mise, the nearest tools, do not use; `allowlist` inside `[host]`, since a root's own host belongs
+there and in no allowlist, so the two answer different questions.
 
 ### D44 A root's scope is its path prefix until `include` names globs, which match the whole URL
 `include` replaces the prefix rather than narrowing it, so one root can span locales; `exclude`
 always wins. Globs are globset's with `*` and `?` stopping at `/`, so a version segment matches as
 `f2?`. Rejected: globs over the path alone, which cannot scope by host; regexes, which users write
 worse; `include` narrowing the prefix, which keeps a root at `/en-US/` in one locale. Reopens: a
-root needing both its prefix and an include, today written as one glob.
+root needing both its prefix and an include, today written as one glob. A root's `url` must be in
+its own scope, refused at load, so a crawl never starts on a page it would not keep.
 Code: `config::Root::in_scope`. Evidence: `config::tests::include_replaces_the_prefix_and_exclude_wins`.
 
 ### D6 Reports are SQL views stored in the DB and run by `bruce report <kind>`
 Ad-hoc `duckdb` users see the same views as the CLI. Output is text, or `--format json`.
 
-### D8 Rate limits and concurrency are per host; robots.txt is per-root for roots
-Defaults in config (D40), with per-host overrides. Back off on 429/503 and honour `Retry-After`.
-robots.txt is always honoured for external hosts and switchable per root. Every run refetches every
-page (I3). Rejected: one global rate, which throttles the root to the slowest host's courtesy.
+### D8 Rate limits, concurrency and robots.txt are per host; only a root's host may skip robots.txt
+Defaults in config (D40), with per-host settings in `[host]`. Back off on 429/503 and honour
+`Retry-After`. robots.txt is always honoured for external hosts and switchable only for a host a
+root starts on, refused at load otherwise. Every run refetches every page (I3). Rejected: one
+global rate, which throttles the root to the slowest host's courtesy; `robots` on a root, where two
+roots on one host could disagree and a host an `include` reaches had no setting.
 
-### D18 A root's `Crawl-delay` is obeyed unless its config overrides it
-The default (D40). For docs.fp.o (I2), a nightly baseline does not need speed. A faster crawl is an explicit per-root override by
-whoever has permission. Performance work targets the local-dir mode and the pipeline.
+### D18 A host's `Crawl-delay` is obeyed unless a root's host overrides it with `per_second`
+The default (D40). For docs.fp.o (I2), a nightly baseline does not need speed. A `per_second`
+written for a host a root starts on beats `Crawl-delay`: a faster crawl is an explicit override by
+whoever has permission. On any other host the slower wins, and the default rate never beats it.
+Rejected: a `crawl_delay` key, a per-host rate in other units; `robots = false` alone passing
+`Crawl-delay`, when docs.fp.o wants its disallows obeyed. Performance work targets the local-dir
+mode and the pipeline.
 
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
 `check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status

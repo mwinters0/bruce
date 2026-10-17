@@ -12,9 +12,9 @@ What landed, and what the next slices inherit. The row is `P1.4` in
   `Config`, so later modules get parsed URLs, compiled globs and normalised
   host names. Errors name the key (`root[1]: include: …`).
 - **The keys** are those D5, D35 and D40 name: `[[root]]` with `url`,
-  `include`, `exclude`, `sitemap`, `profile`, `robots` and `crawl_delay`
-  (D18); `allowlist`; `rate.per_second` and `rate.host."<host>".per_second`
-  (D8). A file may name no root, leaving the URL on the command line to.
+  `include`, `exclude`, `sitemap` and `profile`; `allowlist`; `rate`; and
+  per-host `[host]` settings (D8; `roadmap-P1.4.1-config-hosts-notes.md`). A
+  file may name no root, leaving the URL on the command line to.
 - **A root's scope** is D44. `Root::in_scope` is in `config` because it is
   what `include` and `exclude` mean, and the crawler will call it.
 - **The manual starts** as `../manual/config.md`, one table a section. A test
@@ -30,13 +30,13 @@ What landed, and what the next slices inherit. The row is `P1.4` in
   (D39).
 - **The keys still missing, and how a URL on the command line meets a
   file,** are in the P3 inbox (`../design/roadmap-P3-crawler-inbox.md`).
-- **`crawl_delay` and `robots`** are loaded but enforced nowhere yet; their
-  precedence over `[rate]` is stated in the manual and in rustdoc, for the
-  crawler to implement.
+- **The `[host]` settings** are loaded but enforced nowhere yet; their
+  precedence is stated in the manual and in rustdoc, for the crawler to
+  implement.
 
 ## Negative results
 
 - **`toml` 1.x reads an integer into an `f64` field**, so `per_second = 2`
-  and `crawl_delay = 1` need no decimal point; a test holds this.
+  needs no decimal point; the manual's examples hold this.
 - **`url::Host::parse` refuses a URL or `host:port` only as `IdnaError`**,
-  so `allowlist` and `rate.host` refuse a `/` or `:` first, to say why.
+  so `allowlist` and `host` refuse a `/` or `:` first, to say why.

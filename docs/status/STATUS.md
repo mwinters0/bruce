@@ -45,9 +45,10 @@ The spec is [`../wip/roadmap-P1-scaffold.md`](../wip/roadmap-P1-scaffold.md).
 - [x] **1.4** Config: the loader with D40's defaults, and the manual's config
   reference.
   [notes](../wip/roadmap-P1.4-config-notes.md)
-- [ ] **1.4.1** Config keys per host: `[host."<h>"]` holds `per_second`
+- [x] **1.4.1** Config keys per host: `[host."<h>"]` holds `per_second`
   and `robots`, `crawl_delay` goes, and a root's `url` must be in its own
   scope.
+  [notes](../wip/roadmap-P1.4.1-config-hosts-notes.md)
 - [ ] **1.5** Store and the profile trait: the schema with `meta` and
   `page_facts`, the writer skeleton, and the `Profile` trait.
 

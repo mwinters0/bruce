@@ -15,7 +15,8 @@ use globset::{GlobBuilder, GlobSet, GlobSetBuilder};
 use serde::Deserialize;
 use url::{Host, Url};
 
-/// Requests a second to one host when no `Crawl-delay` governs it (D40).
+/// Requests a second to one host that no `Crawl-delay` or `[host]` governs
+/// (D40).
 pub const DEFAULT_PER_SECOND: f64 = 2.0;
 
 /// The profile value that picks one per page by its generator meta (D35).
@@ -31,15 +32,18 @@ pub struct Config {
     /// Hosts whose links are checked one hop deep and never crawled (D3),
     /// normalised as [`Host`] prints them. Empty by default.
     pub allowlist: Vec<String>,
-    /// Request rates per host (D8).
+    /// The rate no host setting or `Crawl-delay` overrides (D8).
     pub rate: Rate,
+    /// Per-host settings, keyed as [`Host`] prints a host (D8). A host not
+    /// here has [`HostSettings::default`].
+    pub hosts: BTreeMap<String, HostSettings>,
 }
 
 /// One site crawled fully (D5).
 #[derive(Debug, Clone)]
 pub struct Root {
-    /// Where the crawl starts. Its path, up to the last `/`, is the scope
-    /// when `include` is empty (D40).
+    /// Where the crawl starts, and always in the root's own scope. Its path,
+    /// up to the last `/`, is the scope when `include` is empty (D40).
     pub url: Url,
     /// URL globs a page must match to be in scope; empty means the root's
     /// path prefix.
@@ -51,11 +55,6 @@ pub struct Root {
     pub sitemap: Option<Url>,
     /// The profile the root's pages are extracted with (D35).
     pub profile: ProfileChoice,
-    /// Whether the root's robots.txt is obeyed (D8). On by default (D40).
-    pub robots: bool,
-    /// Seconds between requests to the root's host, overriding robots.txt's
-    /// `Crawl-delay` and the rate (D18). `None` by default.
-    pub crawl_delay: Option<f64>,
 }
 
 /// A root's profile (D35). A name is checked against the profiles compiled
@@ -68,13 +67,37 @@ pub enum ProfileChoice {
     Named(String),
 }
 
-/// Request rates (D8, D40).
+/// The default request rate (D8, D40).
 #[derive(Debug, Clone)]
 pub struct Rate {
-    /// Requests a second to any host no override names.
+    /// Requests a second to a host with no `[host]` rate. It never beats a
+    /// `Crawl-delay` (D18).
     pub per_second: f64,
-    /// Per-host overrides of `per_second`, keyed as [`Host`] prints them.
-    pub hosts: BTreeMap<String, f64>,
+}
+
+/// What a file says about fetching one host (D8). The crawler combines this
+/// with the host's robots.txt (D18): where `per_second` is written and the
+/// host is one a root starts on ([`Config::is_root_host`]), it beats
+/// `Crawl-delay`; on any other host the slower of the two applies; with
+/// `per_second` unwritten, `Crawl-delay` governs if there is one, else
+/// [`Rate::per_second`]. With `robots` off the host's robots.txt, its
+/// `Crawl-delay` included, is not read.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct HostSettings {
+    /// Requests a second, if the file gave one.
+    pub per_second: Option<f64>,
+    /// Whether the host's robots.txt is obeyed. On by default (D40).
+    /// Only a host a root starts on can turn it off (D8).
+    pub robots: bool,
+}
+
+impl Default for HostSettings {
+    fn default() -> HostSettings {
+        HostSettings {
+            per_second: None,
+            robots: true,
+        }
+    }
 }
 
 /// A list of URL globs, kept as written and compiled once. `*` and `?` stop
@@ -131,6 +154,7 @@ impl Config {
             roots: vec![Root::new(url)?],
             allowlist: Vec::new(),
             rate: Rate::default(),
+            hosts: BTreeMap::new(),
         })
     }
 
@@ -162,11 +186,41 @@ impl Config {
             .iter()
             .map(|h| host(h).map_err(|e| invalid(format!("allowlist: {e}"))))
             .collect::<Result<_, _>>()?;
-        Ok(Config {
+        let config = Config {
             roots,
             allowlist,
             rate: Rate::from_raw(raw.rate)?,
-        })
+            hosts: host_settings(raw.host)?,
+        };
+        // A file naming no root leaves one to the command line, which may
+        // start on the host, so the check waits for it.
+        if !config.roots.is_empty() {
+            config.check_robots_hosts()?;
+        }
+        Ok(config)
+    }
+
+    /// Whether a root starts on `host`, compared as [`Host`] prints it.
+    pub fn is_root_host(&self, host: &str) -> bool {
+        self.roots
+            .iter()
+            .any(|r| r.url.host().is_some_and(|h| h.to_string() == host))
+    }
+
+    /// Refuses `robots = false` on a host no root starts on, since external
+    /// hosts' robots.txt is always obeyed (D8). [`Config::parse`] runs it when
+    /// the file names a root; whoever adds one from the command line runs it
+    /// again.
+    pub fn check_robots_hosts(&self) -> Result<(), Error> {
+        for (name, h) in &self.hosts {
+            if !h.robots && !self.is_root_host(name) {
+                return Err(invalid(format!(
+                    "host.\"{name}\".robots: no root starts on {name}, and an external \
+                     host's robots.txt is always obeyed"
+                )));
+            }
+        }
+        Ok(())
     }
 }
 
@@ -193,22 +247,20 @@ impl Root {
             Some("") => return Err(invalid("profile: empty")),
             Some(name) => ProfileChoice::Named(name.to_owned()),
         };
-        if let Some(d) = raw.crawl_delay
-            && !(d.is_finite() && d >= 0.0)
-        {
-            return Err(invalid(format!(
-                "crawl_delay: {d} is not a number of seconds"
-            )));
-        }
-        Ok(Root {
+        let root = Root {
             url,
             include: Patterns::new(raw.include).map_err(|e| invalid(format!("include: {e}")))?,
             exclude: Patterns::new(raw.exclude).map_err(|e| invalid(format!("exclude: {e}")))?,
             sitemap,
             profile,
-            robots: raw.robots.unwrap_or(true),
-            crawl_delay: raw.crawl_delay,
-        })
+        };
+        if !root.in_scope(&root.url) {
+            return Err(invalid(format!(
+                "url: {} is outside the root's own scope",
+                root.url
+            )));
+        }
+        Ok(root)
     }
 
     /// The root's path prefix: its URL without query, up to the last `/` of
@@ -236,7 +288,6 @@ impl Default for Rate {
     fn default() -> Rate {
         Rate {
             per_second: DEFAULT_PER_SECOND,
-            hosts: BTreeMap::new(),
         }
     }
 }
@@ -245,23 +296,26 @@ impl Rate {
     fn from_raw(raw: RawRate) -> Result<Rate, Error> {
         let per_second = raw.per_second.unwrap_or(DEFAULT_PER_SECOND);
         positive(per_second).map_err(|e| invalid(format!("rate.per_second: {e}")))?;
-        let mut hosts = BTreeMap::new();
-        for (name, h) in raw.host {
-            let key = host(&name).map_err(|e| invalid(format!("rate.host: {e}")))?;
-            positive(h.per_second)
-                .map_err(|e| invalid(format!("rate.host.\"{name}\".per_second: {e}")))?;
-            if hosts.insert(key, h.per_second).is_some() {
-                return Err(invalid(format!("rate.host: \"{name}\" is named twice")));
-            }
-        }
-        Ok(Rate { per_second, hosts })
+        Ok(Rate { per_second })
     }
+}
 
-    /// Requests a second to `host`: its override if it has one, else the
-    /// default. `host` is compared as [`Host`] prints it.
-    pub fn per_second_for(&self, host: &str) -> f64 {
-        self.hosts.get(host).copied().unwrap_or(self.per_second)
+fn host_settings(raw: BTreeMap<String, RawHost>) -> Result<BTreeMap<String, HostSettings>, Error> {
+    let mut hosts = BTreeMap::new();
+    for (name, h) in raw {
+        let key = host(&name).map_err(|e| invalid(format!("host: {e}")))?;
+        if let Some(n) = h.per_second {
+            positive(n).map_err(|e| invalid(format!("host.\"{name}\".per_second: {e}")))?;
+        }
+        let settings = HostSettings {
+            per_second: h.per_second,
+            robots: h.robots.unwrap_or(true),
+        };
+        if hosts.insert(key, settings).is_some() {
+            return Err(invalid(format!("host: \"{name}\" is named twice")));
+        }
     }
+    Ok(hosts)
 }
 
 impl Patterns {
@@ -326,6 +380,8 @@ struct RawConfig {
     allowlist: Vec<String>,
     #[serde(default)]
     rate: RawRate,
+    #[serde(default)]
+    host: BTreeMap<String, RawHost>,
 }
 
 #[derive(Deserialize, Default)]
@@ -338,22 +394,19 @@ struct RawRoot {
     exclude: Vec<String>,
     sitemap: Option<String>,
     profile: Option<String>,
-    robots: Option<bool>,
-    crawl_delay: Option<f64>,
 }
 
 #[derive(Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 struct RawRate {
     per_second: Option<f64>,
-    #[serde(default)]
-    host: BTreeMap<String, RawHostRate>,
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct RawHostRate {
-    per_second: f64,
+struct RawHost {
+    per_second: Option<f64>,
+    robots: Option<bool>,
 }
 
 #[cfg(test)]

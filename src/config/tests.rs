@@ -20,11 +20,11 @@ fn a_run_given_only_a_url_has_every_default() {
     assert!(r.include.is_empty() && r.exclude.is_empty());
     assert_eq!(r.sitemap, None);
     assert_eq!(r.profile, ProfileChoice::Auto);
-    assert!(r.robots);
-    assert_eq!(r.crawl_delay, None);
     assert!(c.allowlist.is_empty());
     assert_eq!(c.rate.per_second, DEFAULT_PER_SECOND);
-    assert!(c.rate.hosts.is_empty());
+    assert!(c.hosts.is_empty());
+    assert!(c.is_root_host("docs.example.org"));
+    assert!(!c.is_root_host("example.org"));
 }
 
 #[test]
@@ -40,7 +40,7 @@ fn a_root_in_a_file_takes_the_defaults_of_one_given_on_its_own() {
     let c = Config::parse("[[root]]\nurl = \"https://docs.example.org/en-US/\"\n").unwrap();
     let r = &c.roots[0];
     assert_eq!(r.profile, ProfileChoice::Auto);
-    assert!(r.robots && r.sitemap.is_none() && r.crawl_delay.is_none());
+    assert!(r.sitemap.is_none());
 }
 
 #[test]
@@ -51,7 +51,13 @@ fn every_key_is_read() {
 
         [rate]
         per_second = 5
-        host."GitLab.com".per_second = 0.5
+
+        [host."GitLab.com"]
+        per_second = 0.5
+
+        [host."docs.example.org"]
+        per_second = 0.25
+        robots = false
 
         [[root]]
         url = "https://docs.example.org/en-US/"
@@ -59,8 +65,6 @@ fn every_key_is_read() {
         exclude = ["https://docs.example.org/en-US/fedora/f2?/**"]
         sitemap = "https://docs.example.org/sitemap.xml"
         profile = "antora"
-        robots = false
-        crawl_delay = 0.25
 
         [[root]]
         url = "https://other.example.net/"
@@ -70,8 +74,21 @@ fn every_key_is_read() {
     .unwrap();
     assert_eq!(c.allowlist, ["github.com", "pagure.io"]);
     assert_eq!(c.rate.per_second, 5.0);
-    assert_eq!(c.rate.per_second_for("gitlab.com"), 0.5);
-    assert_eq!(c.rate.per_second_for("pagure.io"), 5.0);
+    assert_eq!(
+        c.hosts["gitlab.com"],
+        HostSettings {
+            per_second: Some(0.5),
+            robots: true
+        }
+    );
+    assert_eq!(
+        c.hosts["docs.example.org"],
+        HostSettings {
+            per_second: Some(0.25),
+            robots: false
+        }
+    );
+    assert!(!c.hosts.contains_key("pagure.io"));
     let r = &c.roots[0];
     assert_eq!(r.include.globs(), ["https://docs.example.org/en-US/**"]);
     assert_eq!(
@@ -79,8 +96,6 @@ fn every_key_is_read() {
         Some("https://docs.example.org/sitemap.xml")
     );
     assert_eq!(r.profile, ProfileChoice::Named("antora".into()));
-    assert!(!r.robots);
-    assert_eq!(r.crawl_delay, Some(0.25));
     assert_eq!(c.roots[1].profile, ProfileChoice::Auto);
 }
 
@@ -90,7 +105,10 @@ fn an_unknown_key_is_refused() {
         "allowlists = []",
         "[rate]\nper_secnd = 1",
         "[[root]]\nurl = \"https://a.example/\"\nprofil = \"auto\"",
-        "[rate.host.\"a.example\"]\nper_second = 1\nburst = 2",
+        "[host.\"a.example\"]\nper_second = 1\nburst = 2",
+        "[rate]\nhost.\"a.example\".per_second = 1",
+        "[[root]]\nurl = \"https://a.example/\"\nrobots = false",
+        "[[root]]\nurl = \"https://a.example/\"\ncrawl_delay = 1",
     ] {
         assert!(
             matches!(Config::parse(text), Err(Error::Parse(_))),
@@ -134,18 +152,15 @@ fn bad_values_name_their_key() {
             "[[root]]\nurl = \"https://a.example/\"\nprofile = \"\"",
             "root[0]: profile:",
         ),
-        (
-            "[[root]]\nurl = \"https://a.example/\"\ncrawl_delay = -1",
-            "root[0]: crawl_delay:",
-        ),
         ("allowlist = [\"https://a.example/\"]", "allowlist:"),
         ("[rate]\nper_second = 0", "rate.per_second:"),
         (
-            "[rate.host.\"a.example\"]\nper_second = -2",
-            "rate.host.\"a.example\".per_second:",
+            "[host.\"a.example\"]\nper_second = -2",
+            "host.\"a.example\".per_second:",
         ),
+        ("[host.\"a.example/x\"]", "host:"),
         (
-            "[rate.host.\"A.example\"]\nper_second = 1\n[rate.host.\"a.example\"]\nper_second = 2",
+            "[host.\"A.example\"]\nper_second = 1\n[host.\"a.example\"]\nper_second = 2",
             "named twice",
         ),
     ];
@@ -153,6 +168,48 @@ fn bad_values_name_their_key() {
         let msg = invalid_msg(text);
         assert!(msg.contains(want), "{text}: {msg}");
     }
+}
+
+#[test]
+fn robots_can_be_turned_off_only_for_a_host_a_root_starts_on() {
+    let off = "[host.\"a.example\"]\nrobots = false\n";
+    let root = "[[root]]\nurl = \"https://A.example/x/\"\n";
+    let c = Config::parse(&format!("{off}{root}")).unwrap();
+    assert!(!c.hosts["a.example"].robots);
+
+    let external = "[host.\"c.example\"]\nrobots = false\n";
+    let msg = invalid_msg(&format!("{external}{root}"));
+    assert!(msg.starts_with("host.\"c.example\".robots:"), "{msg}");
+
+    // A file with no root leaves one to the command line, so the check is
+    // the caller's to run once it has the root.
+    let c = Config::parse(off).unwrap();
+    assert!(c.check_robots_hosts().is_err());
+    let c = Config {
+        roots: vec![Root::new("https://a.example/").unwrap()],
+        ..c
+    };
+    assert!(c.check_robots_hosts().is_ok());
+}
+
+#[test]
+fn a_roots_url_must_be_in_its_own_scope() {
+    let msg = invalid_msg(
+        "[[root]]\nurl = \"https://a.example/en-US/\"\ninclude = [\"https://a.example/de/**\"]",
+    );
+    assert!(
+        msg.starts_with("root[0]: url:") && msg.contains("own scope"),
+        "{msg}"
+    );
+    let msg = invalid_msg(
+        "[[root]]\nurl = \"https://a.example/en-US/\"\nexclude = [\"https://a.example/en-US/\"]",
+    );
+    assert!(msg.contains("own scope"), "{msg}");
+    // The page the crawl starts on may be named by an include of its own.
+    Config::parse(
+        "[[root]]\nurl = \"https://a.example/en-US/\"\ninclude = [\"https://a.example/*/\"]",
+    )
+    .unwrap();
 }
 
 #[test]
@@ -173,7 +230,7 @@ fn include_replaces_the_prefix_and_exclude_wins() {
     let c = Config::parse(
         r#"
         [[root]]
-        url = "https://docs.example.org/en-US/"
+        url = "https://docs.example.org/en-US/fedora/"
         include = ["https://docs.example.org/*/fedora/**"]
         exclude = ["https://docs.example.org/*/fedora/f2?/**"]
         "#,
