@@ -57,12 +57,3 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-- **lol_html won D11 on selectors alone.** The spike tied: every fixture
-  equal, the workload within noise (24.2 ms against html5gum's callback
-  emitter's 23.3 ms), so D11's written tiebreaker, streaming selector
-  matching, decided it. Not weighed by D11 when it was written: lol_html
-  brings 42 crates to html5gum's 2, hands over undecoded attributes and text,
-  and reaches an element's context only through handler-order flags
-  (`../wip/roadmap-P1.2-tokenizer-notes.md`). Reconsidering means html5gum's
-  callback emitter with our own open-element stack, and a selector matcher
-  over that stack before D33's rules can land.

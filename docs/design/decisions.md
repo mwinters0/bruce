@@ -231,7 +231,8 @@ reqwest, governor, lol_html and duckdb. What is ours (crawl frontier, link graph
 lychee does not model, and its extractor would need working around (D12's rejection). lol_html and
 html5gum tied on the spike's workload (every fixture equal, speed within noise); lol_html matches
 CSS selectors while streaming, which profiles and D33's rules want. Rejected: html5gum (2 crates to
-lol_html's 42), which leaves us an open-element stack and a selector matcher to write.
+lol_html's 42), which leaves us an open-element stack and a selector matcher to write. lol_html's
+other costs were weighed and accepted: undecoded attributes and text, and context only by handler order.
 Evidence: `historical/initial.md`, "Existing tools"; `spikes/tokenizer/`, its numbers in P1.2's notes.
 
 ### D23 DuckDB is bundled; distribution is a release binary on the forge
