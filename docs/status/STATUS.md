@@ -54,15 +54,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-1. **I8 left as written though six pages falsify it.** `arm-sbc`, `docs`,
-   `engineering`, `mindshare`, `spins-labs` and `tools` have no `nav-container`,
-   so no component or version, though I8 says every page names both. P1.1
-   found them in a 698-page sample (`fixtures/docs-fp-o/survey.json`; file
-   `fixtures/docs-fp-o/en-US/arm-sbc/index.html`). An unattended session may
-   not amend a standing register (`../process.md`, "Working unattended"), so I8
-   stands, `arm-sbc/` is a fixture, and the extractor's inbox carries the fact
-   (`../design/roadmap-P2-extractor-inbox.md`). Amending I8 to "every page of a
-   component", and deciding what D17, D19 and D34 do for a page with none,
-   changes only those entries' wording unless the maintainer wants these pages
-   to carry a component of their own.

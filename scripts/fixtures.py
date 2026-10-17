@@ -215,10 +215,10 @@ def select(pages: list[dict], target: int = TARGET) -> list[dict]:
     with_three = [p for p in ok if p["edit_titles"] == three]
     if with_three:
         take(min(with_three, key=lambda p: p["bytes"]), "the three edit-this-page links, I12")
-    # A page with no nav-container at all: I8 says every page has one.
+    # A page with no nav-container at all: the `without_menu` layout, I8.
     bare = [p for p in ok if p["component"] is None]
     if bare:
-        take(bare[0], "no component on the page (a site-frontpage landing page), I8")
+        take(bare[0], "no component on the page (the without_menu layout), I8")
     # Fill the rest with one page per component, the smallest first, so the
     # set spans the site rather than its biggest component.
     seen = {ok_p["component"] for ok_p in ok if ok_p["url"] in picked}

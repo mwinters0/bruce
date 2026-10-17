@@ -75,17 +75,23 @@ not as an error.
 - **Relied on by.** The project's premise, D4, D11.
 - **Re-verify.** `curl -s 'https://gitlab.com/api/v4/projects/antora%2Fantora/issues/1077' | grep -o '"state":"[a-z]*"' | head -1`
 
-### I8 Every docs.fp.o page names its component, version and source file
-- **Claim.** `<div class="nav-container" data-component="…" data-version="…">`, and
-  `<a href="https://forge.fedoraproject.org/<org>/<repo>/src/branch/<branch>/<start_path>/modules/<module>/pages/<path>.adoc" title="Edit this Page">`.
-  Content is in `<article class="doc">`. Unversioned components report a placeholder version
-  (`master` for packaging-guidelines) that their URLs omit.
-- **Proof.** Observed behaviour (the Fedora UI bundle's templates were not read).
-- **Scope limit.** Pages from the Fedora UI bundle, Antora 3.1.15. Source repos on GitHub or GitLab
-  have other edit-URL shapes.
-- **Verified against.** docs.fp.o, 2026-10-17.
+### I8 A docs.fp.o page names its source file, and on a menu layout its component and version
+- **Claim.** Every page has
+  `<a href="https://forge.fedoraproject.org/<org>/<repo>/src/branch/<branch>/<start_path>/modules/<module>/pages/<path>.adoc" title="Edit this Page">`,
+  and its content is in `<article class="doc">`. A page on the `with_menu` or `category` layout
+  also has `<div class="nav-container" data-component="…" data-version="…">`. Unversioned
+  components report a placeholder version (`master` for packaging-guidelines, empty for others)
+  that their URLs omit. `start_path` is not the component name (`docs` lives in `homepage`).
+- **Proof.** Upstream source: the UI bundle's `src/partials/body.hbs` renders the nav partial only
+  for the `with_menu`, `404` and `category` layouts, and `src/partials/nav.hbs` sets the data
+  attributes only when `page.component` is set. The edit link and article are observed.
+- **Scope limit.** Pages from the Fedora UI bundle, Antora 3.1.15. A `:page-layout: without_menu`
+  page has no nav container: `arm-sbc`, `docs`, `engineering`, `mindshare`, `spins-labs` and
+  `tools`, each a `site-frontpage` component's index. The 404 page has one with no data
+  attributes, and no edit link. Source repos on GitHub or GitLab have other edit-URL shapes.
+- **Verified against.** docs.fp.o and the UI bundle's `HEAD`, 2026-10-17.
 - **Relied on by.** D12, D17, D19, D34, D36.
-- **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/packaging-guidelines/ReviewGuidelines/ | grep -oE 'data-(component|version)="[^"]*"|<a href="[^"]*" title="Edit this Page">|<meta name="generator"[^>]*>'`
+- **Re-verify.** `for p in packaging-guidelines/ReviewGuidelines arm-sbc; do curl -s https://docs.fedoraproject.org/en-US/$p/ | grep -oE 'data-(component|version)="[^"]*"|<a href="[^"]*" title="Edit this Page">|<meta name="generator"[^>]*>'; done; curl -s https://gitlab.com/fedora/docs/docs-website/ui-bundle/-/raw/HEAD/src/partials/body.hbs`
 
 ### I9 Anchors on docs.fp.o are static `id`s, and every page carries template chrome ids
 - **Claim.**

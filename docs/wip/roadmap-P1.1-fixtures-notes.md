@@ -51,13 +51,13 @@ connection reset.
   came up empty. The image does carry the extension (`historical/initial.md`).
   `generators/antora/tabs.html` is reconstructed from I9's ids and is not
   observed markup; its comment says so. A real page is `P1.1.1`.
-- **I8 does not hold for six pages.** `arm-sbc`, `docs`, `engineering`,
+- **Six pages have no `nav-container`.** `arm-sbc`, `docs`, `engineering`,
   `mindshare`, `spins-labs` and `tools` (each the only page of its sitemap)
-  have no `nav-container`, so no `data-component` or `data-version`. They do
-  carry an edit link, to `docs/site-frontpage`
+  are on the `without_menu` layout, so they have no `data-component` or
+  `data-version`. They still carry an edit link, to `docs/site-frontpage`
   (`…/src/branch/main/arm-sbc/modules/ROOT/pages/index.adoc`). `arm-sbc/` is
-  the fixture. I8 is a standing register and is left as written; the call is
-  under STATUS's "Decisions worth another look".
+  the fixture. I8 states the layout condition, and the P2 inbox carries what
+  the extractor does about it.
 - **All three edit links are on every sampled page**, so "the three
   edit-this-page links" picks the smallest such page, not a rare one.
 - **gitlab.com serves a Cloudflare challenge** to `curl` on raw files, so

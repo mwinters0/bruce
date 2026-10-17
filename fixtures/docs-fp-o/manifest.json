@@ -26,7 +26,7 @@
    "url": "https://docs.fedoraproject.org/en-US/arm-sbc/",
    "why": [
     "the three edit-this-page links, I12",
-    "no component on the page (a site-frontpage landing page), I8"
+    "no component on the page (the without_menu layout), I8"
    ],
    "status": 200,
    "path": "en-US/arm-sbc/index.html",
