@@ -1,9 +1,8 @@
 # P2 — The extractor
 
-What P2 does and why. Grilled 2026-10-17; progress is
-[`../status/STATUS.md`](../status/STATUS.md)'s checklist, never this file. The decisions are in
-[`../design/decisions.md`](../design/decisions.md) and are cited here, never
-restated.
+What P2 does and why. It is complete; what it left for later phases is
+[`roadmap-P2-extractor-notes.md`](roadmap-P2-extractor-notes.md). The decisions
+are in [`decisions.md`](decisions.md) and are cited here, never restated.
 
 ## Intent
 

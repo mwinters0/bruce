@@ -29,24 +29,6 @@ and the development process is in place: [`../process.md`](../process.md), the
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
 pages, chosen and saved by `scripts/fixtures.py`.
 
-## P2 progress
-
-The spec is [`../wip/roadmap-P2-extractor.md`](../wip/roadmap-P2-extractor.md).
-
-- [x] **2.1** The pass and its anchors: the Extract hook's new shape, the
-  generator pre-pass, the title, anchors with tag and placement, the fixture
-  snapshots, and the bench moved into `bruce`
-  ([notes](../wip/roadmap-P2.1-pass-and-anchors-notes.md)).
-- [x] **2.2** Links: every kind, `srcset`, `<base href>` and `refresh`,
-  resolved against the page's URL
-  ([notes](../wip/roadmap-P2.2-links-notes.md)).
-- [x] **2.3** The edit link and `forge`: the core ranking and the shape parse
-  ([notes](../wip/roadmap-P2.3-edit-link-notes.md)).
-- [x] **2.4** Antora's Extract: its region, coordinates and unresolved-xref
-  tags ([notes](../wip/roadmap-P2.4-antora-extract-notes.md)).
-- [x] **2.5** The content hash: xxh3-128 over a scope set by `hash_root` and
-  `hash_exclude` ([notes](../wip/roadmap-P2.5-content-hash-notes.md)).
-
 ## Not started
 
 P3 onward in [`../design/roadmap.md`](../design/roadmap.md)'s index. None has

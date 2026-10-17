@@ -15,7 +15,7 @@ never reused.
 | Phase | State | Where it is |
 |---|---|---|
 | P1 — scaffold and parser spike | Complete | [`roadmap-P1-scaffold.md`](roadmap-P1-scaffold.md), [notes](roadmap-P1-scaffold-notes.md) |
-| P2 — the extractor | Current | [`../wip/roadmap-P2-extractor.md`](../wip/roadmap-P2-extractor.md) |
+| P2 — the extractor | Complete | [`roadmap-P2-extractor.md`](roadmap-P2-extractor.md), [notes](roadmap-P2-extractor-notes.md) |
 | P3 — the crawler | Sketched; not grilled | this file, below |
 | P4 — verdicts and reports; the first en-US crawl | Sketched; not grilled | this file, below |
 | P5 — CI mode: baseline and `check-dir` | Sketched; not grilled | this file, below |
@@ -70,10 +70,11 @@ left for later phases is [`roadmap-P1-scaffold-notes.md`](roadmap-P1-scaffold-no
 
 ## P2 — The extractor
 
-The spec is [`../wip/roadmap-P2-extractor.md`](../wip/roadmap-P2-extractor.md):
+The spec is [`roadmap-P2-extractor.md`](roadmap-P2-extractor.md):
 the streaming pass over one page, the Extract hook's new shape (D38), link
 kinds (D13), the edit link and its forge parse (D36), Antora's coordinates
-(D19) and a content hash scoped by config (D15).
+(D19) and a content hash scoped by config (D15). What it left for later
+phases is [`roadmap-P2-extractor-notes.md`](roadmap-P2-extractor-notes.md).
 
 ## P3 — The crawler
 

@@ -7,7 +7,7 @@ by destination").
 ## A changed hash scope makes every page read as changed once
 
 - **Fact.** A page's content hash covers a per-root scope set by `hash_root`
-  and `hash_exclude` (D15; `../wip/roadmap-P2-extractor.md`, "The content
+  and `hash_exclude` (D15; `roadmap-P2-extractor.md`, "The content
   hash"). Changing either can change every page's hash in that root at the
   next run. Nothing records the scope per run: `runs.config_hash` changes on any
   config edit, so it cannot tell a scope change from a rate change.

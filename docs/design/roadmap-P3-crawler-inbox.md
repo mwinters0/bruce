@@ -56,7 +56,7 @@ is, and then deleted (`../process.md`, "Inboxes: facts filed by destination").
   which responses reach the extractor and where the charset comes from. A
   local build's `404.html` (D1) reaches P5's fetcher as an ordinary file.
 - **Origin.** P1.2, refiled by P2's grilling, 2026-10-17
-  (`../wip/roadmap-P2-extractor.md`, "What P2 delivers, and where it stops").
+  (`roadmap-P2-extractor.md`, "What P2 delivers, and where it stops").
 
 ## docs.fp.o's page aliases are 200 meta-refresh pages
 
@@ -70,7 +70,7 @@ is, and then deleted (`../process.md`, "Inboxes: facts filed by destination").
   and is a false `broken_anchor`. P2's grilling recommended following it, with
   `redirected` set.
 - **Origin.** P2's grilling, 2026-10-17
-  (`../wip/roadmap-P2-extractor.md`, "Facts found while grilling").
+  (`roadmap-P2-extractor.md`, "Facts found while grilling").
   Contingent on docs.fp.o's playbook keeping the static facility.
 
 ## `url_id` could share the content hash's crate
