@@ -37,3 +37,17 @@ is, and then deleted (`../process.md`, "Inboxes: facts filed by destination").
   extractor as an ordinary page.
 - **Origin.** P1.2, 2026-10-17. Contingent on the Fedora UI bundle's 404
   layout omitting the meta.
+
+## The check runs the parser bench in test mode
+
+- **Fact.** D24's "run with every change" is met in `mise run check` by
+  running the bench once in criterion's test mode (`cargo test --benches`,
+  no timing), not by timing it. Timing stays on demand, through `mise run
+  bench`. `check.py`'s clippy, with `--all-targets`, already compiles the
+  bench.
+- **Why P2 cares.** The extractor slice that moves the bench into `bruce`
+  adds this check to `scripts/check.py`, and words D24 to match. Reasoning:
+  `../status/history/2026-10-17.md`, "The bench joins the check in test
+  mode".
+- **Origin.** The review of P1.3's call, 2026-10-17. Contingent on criterion
+  keeping its test mode.

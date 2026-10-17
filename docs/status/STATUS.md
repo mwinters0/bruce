@@ -59,12 +59,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **No bench runs in `mise run check` yet.** P1's spec asks for the mise
-  tasks, the bench among them, "joined to `mise run check`". P1.3 added
-  `mise run bench` beside `check` and changed nothing in `scripts/check.py`,
-  which already runs fmt, clippy and the suite, because `bruce` has no bench
-  target and a check running `cargo bench` would time nothing. The P2 slice
-  that moves the parser bench in (D24, "run with every change") would then
-  add it to `check.py`. If "joined" meant `check` should call the tasks
-  themselves, the tasks and `check.py` would need one set of flags.

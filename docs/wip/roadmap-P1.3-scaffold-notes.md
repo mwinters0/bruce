@@ -37,9 +37,8 @@ What landed, and what the next slices inherit. The row is `P1.3` in
   A profile's types reach the rest of the crate only through the trait, or
   the graph fails (D39).
 - **No bench exists**, so `mise run bench` runs nothing and `mise run check`
-  runs no bench; how D24's "run with every change" joins the check is the
-  slice that moves the parser bench in (P2). STATUS's "Decisions worth
-  another look" carries the reading.
+  runs no bench; the slice that moves the parser bench in (P2) joins it to
+  the check in test mode (`../design/roadmap-P2-extractor-inbox.md`).
 - **`check.py --affected` treats every `src/` change as outside a crate**:
   a root package's directory is `.`, which no path starts with, so any Rust
   change runs every check. For a one-crate repo that is the same set.

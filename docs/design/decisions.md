@@ -238,7 +238,9 @@ Evidence: `historical/initial.md`, "Existing tools"; `spikes/tokenizer/`, its nu
 ### D23 DuckDB is bundled; distribution is a release binary on the forge
 The `duckdb` crate's `bundled` feature makes a self-contained binary that a CI job in the
 Fedora-minimal docs image fetches in one step. Rust is pinned in `mise.toml`. Rejected for now:
-container image, RPM.
+container image, RPM. Its cargo tasks sit beside `check`, which runs the same commands with its own
+flags. Rejected: `check` calling the tasks, which would make `mise run fmt` stop writing or lose
+the check's summaries.
 
 ### D31 One crate, `bruce`; its concepts are separated by top-level module, not by crate
 The binary is the only consumer, so a crate boundary buys nothing a module boundary does not.
