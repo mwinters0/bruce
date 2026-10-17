@@ -1,0 +1,335 @@
+{
+ "pages": [
+  {
+   "url": "https://docs.fedoraproject.org/en-US/a11y/",
+   "why": [
+    "component a11y"
+   ],
+   "status": 200,
+   "path": "en-US/a11y/index.html",
+   "bytes": 25525,
+   "sha256": "8e9e106b06c02064421b746ead451ee9300194ec8ae7eb47ac25d6c0c6a4b747",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/ai-ml/infra/",
+   "why": [
+    "component ai-ml"
+   ],
+   "status": 200,
+   "path": "en-US/ai-ml/infra/index.html",
+   "bytes": 27650,
+   "sha256": "d13d94abc4d9322b10f234734dc9c6e5671ef8780f9489b08bb2d5c80d14550e",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/arm-sbc/",
+   "why": [
+    "the three edit-this-page links, I12",
+    "no component on the page (a site-frontpage landing page), I8"
+   ],
+   "status": 200,
+   "path": "en-US/arm-sbc/index.html",
+   "bytes": 15170,
+   "sha256": "0d79279ca6a3b020179e08fa9eceb3e730bc73aa95e00c503ac7ad592c9b54a0",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/badges/",
+   "why": [
+    "unversioned component badges, I8"
+   ],
+   "status": 200,
+   "path": "en-US/badges/index.html",
+   "bytes": 26121,
+   "sha256": "ab165d780c005b474f34499c6888745792415e9b924afb7618ce6b9353adc1f6",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/cle/processes/",
+   "why": [
+    "component cle"
+   ],
+   "status": 200,
+   "path": "en-US/cle/processes/index.html",
+   "bytes": 26848,
+   "sha256": "cd0636166a7387f6f8e9cb1ad2a5b08ea42219049ed2703cfa0765390ad9c7c1",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/cloud/faq/",
+   "why": [
+    "component cloud"
+   ],
+   "status": 200,
+   "path": "en-US/cloud/faq/index.html",
+   "bytes": 26011,
+   "sha256": "b6f3d72e6c9449f8ca6e05cb026dbb2e2db25b1c9f96f3438294e06750df29ea",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/community/appendix/",
+   "why": [
+    "component community"
+   ],
+   "status": 200,
+   "path": "en-US/community/appendix/index.html",
+   "bytes": 27420,
+   "sha256": "2b254ddf7dbe065a07c192257faf7767136d396f3585b5f9cd1e3c4eee4b848a",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/containers/community/",
+   "why": [
+    "component containers"
+   ],
+   "status": 200,
+   "path": "en-US/containers/community/index.html",
+   "bytes": 27144,
+   "sha256": "654e5d995b5988d4e42b109f2034e3b0c8b714d1e0f6f6539be1bb4ea6e525be",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/council/policy/community-publishing-platforms/",
+   "why": [
+    "unresolved xrefs, I6 (unresolved=2)"
+   ],
+   "status": 200,
+   "path": "en-US/council/policy/community-publishing-platforms/index.html",
+   "bytes": 37492,
+   "sha256": "1b0900cb0b365ca52667e77f737de5ac76b29c42349dca017f4e7d2d4b8dd3f7",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/dei/",
+   "why": [
+    "unresolved xrefs, I6 (unresolved=2)"
+   ],
+   "status": 200,
+   "path": "en-US/dei/index.html",
+   "bytes": 38288,
+   "sha256": "6b55a0aa23db826d31854c6dcded908fea450aabe7a0fae79965eb36f6aa0e4b",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/design/",
+   "why": [
+    "component design"
+   ],
+   "status": 200,
+   "path": "en-US/design/index.html",
+   "bytes": 27745,
+   "sha256": "cfa0f42e1ee528540574433c68c1bf4f108b3d97a053f25fdbca8439dc747954",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/fdwg/",
+   "why": [
+    "component fdwg"
+   ],
+   "status": 200,
+   "path": "en-US/fdwg/index.html",
+   "bytes": 27603,
+   "sha256": "d8c3bc1ae19b277b833c2fff9169b66ed3eb50c1675d7e5e1dda98441d22ead6",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/fedora-accounts/",
+   "why": [
+    "component fedora-accounts"
+   ],
+   "status": 200,
+   "path": "en-US/fedora-accounts/index.html",
+   "bytes": 27887,
+   "sha256": "fd0fe09dc0173e29cd985b3f9dbc21c69ad4919ac2fcc234eec06981febc9a21",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/fedora/f39/",
+   "why": [
+    "frozen f3x page, canonical to latest, I5"
+   ],
+   "status": 200,
+   "path": "en-US/fedora/f39/index.html",
+   "bytes": 40146,
+   "sha256": "1a39611d0bb6f2223e6ccfba707d578097ed801adf1b660c7ca349cfe513f77b",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/fedora/latest/",
+   "why": [
+    "the latest fedora version, I5"
+   ],
+   "status": 200,
+   "path": "en-US/fedora/latest/index.html",
+   "bytes": 37532,
+   "sha256": "40f71356e4125767c3427aa04300a8b930512bdc931c3529e208de145dc2f39e",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/fesco/Spins/",
+   "why": [
+    "unresolved xrefs, I6 (unresolved=3)"
+   ],
+   "status": 200,
+   "path": "en-US/fesco/Spins/index.html",
+   "bytes": 31623,
+   "sha256": "6a1e8bc8a04f69f9608585a8a3ac935dc3721cd0354521b1d206c3067b94ef89",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/flatpak/",
+   "why": [
+    "component flatpak"
+   ],
+   "status": 200,
+   "path": "en-US/flatpak/index.html",
+   "bytes": 25786,
+   "sha256": "61b948d22fcf04d43d07ad16054b9d7fb2cbd195d6023a4a0d8d307cd19c0fdf",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/i3/faq/",
+   "why": [
+    "component i3"
+   ],
+   "status": 200,
+   "path": "en-US/i3/faq/index.html",
+   "bytes": 26207,
+   "sha256": "c628dc84c90f2af2015ca5ed2306863431a5b66ee4e44687cccffd8b3a615163",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/iot-wg/",
+   "why": [
+    "component iot-wg"
+   ],
+   "status": 200,
+   "path": "en-US/iot-wg/index.html",
+   "bytes": 27081,
+   "sha256": "11c977e9ceb9653b7263b14b5eebe1da324c313ea6be3da0700d987c7e99f390",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/java-packaging-howto/integration_maven_xmvn/",
+   "why": [
+    "component java-packaging-howto"
+   ],
+   "status": 200,
+   "path": "en-US/java-packaging-howto/integration_maven_xmvn/index.html",
+   "bytes": 27274,
+   "sha256": "a075abbe7e6cc30681fa27b1d140b89b6d11250bc0a25f53b9640fd6b3669990",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/kde/",
+   "why": [
+    "component kde"
+   ],
+   "status": 200,
+   "path": "en-US/kde/index.html",
+   "bytes": 25298,
+   "sha256": "00090bed5c2ca81b468804e5c93bbe80f5786625a6ba52a2fb2f7f829c0d123f",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/legal/all-allowed/",
+   "why": [
+    "largest page sampled (bytes=507750)"
+   ],
+   "status": 200,
+   "path": "en-US/legal/all-allowed/index.html",
+   "bytes": 507750,
+   "sha256": "43bec1a23b2a9e1a572ed5c0cab4bc31c1e81c6ac145aa4f5aff57dc18ada73b",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/matrix/bots/",
+   "why": [
+    "component matrix"
+   ],
+   "status": 200,
+   "path": "en-US/matrix/bots/index.html",
+   "bytes": 25819,
+   "sha256": "94f014a0a37c8c9bf587ffde49101f6d4be7d0ae2a3b02c35dfb01505cbabed6",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/minimal/user-guide/",
+   "why": [
+    "component minimal"
+   ],
+   "status": 200,
+   "path": "en-US/minimal/user-guide/index.html",
+   "bytes": 26965,
+   "sha256": "b7f35ed04a28735203854e9a0731b1e2678a86309c4fe88843f781a470c21d81",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/packaging-guidelines/",
+   "why": [
+    "most ids (ids=156)"
+   ],
+   "status": 200,
+   "path": "en-US/packaging-guidelines/index.html",
+   "bytes": 216039,
+   "sha256": "cf1f34b7fca820b5628daffc5db612218187f65ae153c890fd52da77bf0451da",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/packaging-guidelines/ReviewGuidelines/",
+   "why": [
+    "witness of I8 and I9"
+   ],
+   "status": 200,
+   "path": "en-US/packaging-guidelines/ReviewGuidelines/index.html",
+   "bytes": 55333,
+   "sha256": "7e77477cfb47cc889c12d9206e9aef500497d5fd4895e80d979f3e63e11f6589",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/qa-docs/guides/",
+   "why": [
+    "component qa-docs"
+   ],
+   "status": 200,
+   "path": "en-US/qa-docs/guides/index.html",
+   "bytes": 26953,
+   "sha256": "339d24b1e35516a707c143f36f95de2390e1f1292367f5e14008a4a512892465",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/quick-docs/bugzilla-file-a-bug/",
+   "why": [
+    "witness of I6"
+   ],
+   "status": 200,
+   "path": "en-US/quick-docs/bugzilla-file-a-bug/index.html",
+   "bytes": 72492,
+   "sha256": "d59df3674a436dfe26ba5c86dc4597f26d969db9fedecae988e82edd246f21a6",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/reproducible-builds/talks/",
+   "why": [
+    "component reproducible-builds"
+   ],
+   "status": 200,
+   "path": "en-US/reproducible-builds/talks/index.html",
+   "bytes": 27549,
+   "sha256": "4030da5155a7cdb2c908853fc32a77324d53b365cc821845e377a1830be18e4b",
+   "fetched": "2026-10-17"
+  },
+  {
+   "url": "https://docs.fedoraproject.org/en-US/no-such-page-bruce-fixture/",
+   "why": [
+    "a 404"
+   ],
+   "status": 404,
+   "path": "en-US/no-such-page-bruce-fixture/404.html",
+   "bytes": 22763,
+   "sha256": "dcaefa1f6214fd37482306729be8b939ae5c681cace0e498ec054d391131d4a6",
+   "fetched": "2026-10-17"
+  }
+ ]
+}

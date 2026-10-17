@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Publishing Platforms :: Fedora Docs</title>
+    <link rel="canonical" href="https://docs.fedoraproject.org/en-US/council/policy/community-publishing-platforms/">
+    <meta name="generator" content="Antora 3.1.15">
+    <link rel="stylesheet" href="../../../_/css/site.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+<link rel="stylesheet" href="../../../_/css/vendor/tabs.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Fedora Docs">
+<meta property="og:title" content="Community Publishing Platforms">
+
+<meta property="og:description" content="Learn more about Fedora Linux, the Fedora Project & the Fedora Community.">
+<meta property="og:image" content="https://docs.fedoraproject.org/en-US/_/img/docs_logo.png">
+
+    <script>if (localStorage.darkmode === 'true' || (!('darkmode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark');} else {document.documentElement.classList.remove('dark');}</script>
+  </head>
+  <body class="article dark:bg-fp-blue-darkest text-black dark:text-white">
+<!-- Add any HTML code to show at the top of each page — like a banner to a survey, some announcement, etc. Leave this file empty to not show anything-->
+<header class="header" role="banner">
+  <nav class="fixed z-50 top-0 w-full bg-gradient-to-l from-fp-blue to-fp-blue-light dark:bg-none dark:bg-fp-blue-dark" style="">
+    <div class="mx-auto px-2 sm:px-6 lg:px-8">
+      <div class="relative flex h-14 items-center justify-between">
+        <div
+          class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start"
+        >
+          <div class="flex flex-shrink-0 items-center">
+            <a href="https://docs.fedoraproject.org/en-US">
+              <img class="h-6 z-10 w-auto" src="../../../_/img/docs_logo_white.svg">
+            </a>
+          </div>
+
+
+	  <div class="hidden sm:ml-auto sm:block">
+            <div class="flex space-x-4">
+
+
+              <div id="search-field" class="relative inline-flex cursor-pointer items-center rounded px-4 text-xs text-gray-500 dark:text-gray-200">
+                <svg class="absolute left-6 fill-gray-400 dark:fill-gray-400 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg>
+                <input id="search-input" class="pl-6 pr-28 h-8 w-64 rounded-xl dark:bg-black" type="text" placeholder="Search Docs">
+                <label class="ml-2 absolute right-6 filter checkbox border-l border-gray-500 pl-2">
+		 <input type="checkbox" class="appearance-none h-3 w-3 border border-gray-500 rounded bg-white dark:bg-black checked:bg-fp-blue-light checked:border-fp-blue-light dark:checked:bg-fp-blue dark:checked:border-fp-blue focus:outline-none transition duration-200 cursor-pointer my-0.5 mr-1 float-left" data-facet-filter="component:council"> In this section
+                </label>
+              </div>
+            </div>
+          </div>
+	  <button type="button" id="themeSwitch" class="hidden sm:block stroke-white fill-white ">
+	    <span class="dark:hidden">
+	      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+	        <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+		<path d="M12 4v1M17.66 6.344l-.828.828M20.005 12.004h-1M17.66 17.664l-.828-.828M12 20.01V19M6.34 17.664l.835-.836M3.995 12.004h1.01M6 6l.835.836"></path>
+	      </svg>
+	    </span>
+	    <span class="hidden dark:inline">
+	      <svg viewBox="0 0 512 512" class="w-4 h-4">
+	        <path d="M421.6 379.9c-.6641 0-1.35 .0625-2.049 .1953c-11.24 2.143-22.37 3.17-33.32 3.17c-94.81 0-174.1-77.14-174.1-175.5c0-63.19 33.79-121.3 88.73-152.6c8.467-4.812 6.339-17.66-3.279-19.44c-11.2-2.078-29.53-3.746-40.9-3.746C132.3 31.1 32 132.2 32 256c0 123.6 100.1 224 223.8 224c69.04 0 132.1-31.45 173.8-82.93C435.3 389.1 429.1 379.9 421.6 379.9zM255.8 432C158.9 432 80 353 80 256c0-76.32 48.77-141.4 116.7-165.8C175.2 125 163.2 165.6 163.2 207.8c0 99.44 65.13 183.9 154.9 212.8C298.5 428.1 277.4 432 255.8 432z"/>
+              </svg>
+	    </span>
+	  </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container dark:text-gray-300 bg-fp-gray-lightest dark:bg-fp-blue-darker dark:border-r dark:border-gray-800" data-component="council" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title text-fp-blue-dark dark:text-fp-blue font-bold"><a href="../../">Fedora Council</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../../">Council Charter</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../../contact/">Contact the Fedora Council</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../members/">Current Council Members</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../fpl/">Fedora Project Leader</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../fca/">Fedora Community Architect</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../foa/">Fedora Operations Architect</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../../dei/roles/council-advisor/">Fedora DEI Advisor <sup>[🡵]</sup></a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Council Policies</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../ai-contribution-policy/">AI-Assisted Contributions Policy</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="./">Community Publishing Platforms</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../contribution-model/">Contribution Model</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../guiding-policy/">Guiding Policy</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../policy-change-policy/">Policy Change Policy</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../edition-promotion-policy/">Edition Promotion Policy</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../event-location-policy/">Event DEI Location Policy</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../../legal/">Legal &amp; Licensing Policies <sup>[🡵]</sup></a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../policies/">Additional Policies</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Council Procedures</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../procedures/welcome/">Welcome to Council</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../procedures/team_directory/">Team Directory</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../procedures/tickets/">Ticket Queue</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Fedora Annual Survey</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../procedures/survey/overview/">Survey Overview</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../procedures/survey/how-to/">How to run a Survey</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../procedures/survey/questions/">Survey Questions</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../archive/">Archived Pages</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../archive/board_stable_updates_vision/">Stable Updates Vision</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../../history/">Council and Board Historical Membership</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore bg-gray-50 dark:bg-fp-blue-darkest" data-panel="explore">
+  <div class="context dark:border-t dark:border-gray-800">
+    <span class="title">Fedora Council</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components bg-gray-100 dark:bg-fp-blue-darkest">
+    <li class="component">
+      <a class="title" href="../../../beginners-guide/">A Beginner's Guide to Fedora</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../arm-sbc/">ARM Single Board Computers</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../community/">Community Architecture (CommArch)</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../cle/">Community Linux Engineering</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../defensive-coding/">Defensive Coding Guide</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../engineering/">Engineering Teams</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../epel/">EPEL</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../a11y/">Fedora Accessibility (a11y) WG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../fedora-accounts/">Fedora Accounts</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../ai-ml/">Fedora AI/ML SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../fedora-asahi-remix/">Fedora Asahi Remix</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../atomic-desktops/">Fedora Atomic Desktops</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../badges/">Fedora Badges</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../ci/">Fedora CI</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../cloud/">Fedora Cloud</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../commops/">Fedora Community Ops</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../containers/">Fedora Container Docs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../fedora-coreos/">Fedora CoreOS</a>
+    </li>
+    <li class="component is-current">
+      <a class="title" href="../../">Fedora Council</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../fdwg/">Fedora Data Working Group (FDWG)</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../design/">Fedora Design Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../discussion-forum-guidelines-and-rules/">Fedora Discussion Forum (Self-)Moderation Guidelines and Rules</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../dei/">Fedora Diversity, Equity, and Inclusion (DEI)</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../docs/">Fedora Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../fedora-docs/team-info/">Fedora Documentation Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../eln/">Fedora ELN</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../forge-documentation/">Fedora Forge Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../gaming/">Fedora Gaming</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../i3/">Fedora i3 S.I.G.</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../infra/">Fedora Infrastructure & Release Engineering</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../iot/">Fedora Internet Of Things</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../iot-wg/">Fedora IoT Working Group</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../fedora-join/">Fedora Join SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../kde/">Fedora KDE Plasma Desktop Edition</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../legal/">Fedora Legal</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../releases/">Fedora Linux Releases</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../localization/">Fedora Localization Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../fedora-magazine/">Fedora Magazine</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../marketing/">Fedora Marketing Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../matrix/">Fedora Matrix WG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../mentored-projects/">Fedora Mentored Projects</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../mindshare-committee/">Fedora Mindshare Committee</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../minimal/">Fedora Minimal</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../operations/">Fedora Program Operations</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../project/">Fedora Project</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../qa-docs/">Fedora Quality Docs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../rawhide-gating/">Fedora Rawhide Gating</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../robotics-sig/">Fedora Robotics SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../security/">Fedora Security SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../fedora-server/">Fedora Server User Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../server-working-group/">Fedora Server Working Group</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../spins-labs/">Fedora Spins & Labs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../tools/">Fedora Tools</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../fedora/latest/">Fedora User Docs</a>
+      <ul class="versions">
+        <li class="version">
+          <a href="../../../fedora/rawhide/">rawhide</a>
+        </li>
+        <li class="version is-latest">
+          <a href="../../../fedora/latest/">f44</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f43/">f43</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f42/">f42</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f41/">f41</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f40/">f40</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f39/">f39</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f38/">f38</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f37/">f37</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f36/">f36</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f35/">f35</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f34/">f34</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f33/">f33</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f32/">f32</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f31/">f31</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f30/">f30</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f29/">f29</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f28/">f28</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f27/">f27</a>
+        </li>
+        <li class="version">
+          <a href="../../../fedora/f26/">f26</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../websites/">Fedora Websites & Apps</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../workstation-docs/">Fedora Workstation Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../workstation-working-group/">Fedora Workstation Working Group</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../bootc/">Fedora/CentOS bootc</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../fesco/">FESCo</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../flatpak/">Flatpak</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../java-packaging-howto/">Java Packaging HOWTO</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../docs-l10n/">Localization help and stats</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../mindshare/">Mindshare Teams</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../neurofedora/overview/">NeuroFedora User Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../package-maintainers/">Package Maintainers</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../packaging-guidelines/">Packaging Guidelines</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../quick-docs/">Quick Docs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../reproducible-builds/">Reproducible Builds</a>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar bg-fp-gray-lightest dark:bg-fp-blue-darkest dark:text-gray-300 dark:border-b dark:border-gray-800" role="navigation">
+<button class="toolbar-icon nav-toggle"></button>
+  <a href="../../../docs/" class="toolbar-icon home-link"></a>
+<nav class="crumbs" role="navigation" aria-label="breadcrumbs">
+  <ul>
+    <li class="after:text-gray-800 dark:after:text-gray-400"><a href="../../">Fedora Council</a></li>
+    <li class="after:text-gray-800 dark:after:text-gray-400">Council Policies</li>
+    <li class="after:text-gray-800 dark:after:text-gray-400"><a href="./">Community Publishing Platforms</a></li>
+  </ul>
+</nav>
+
+        <div class="page-languages">
+            <button class="languages-menu-toggle" title="Show other languages of the site">
+                en-US
+            </button>
+            <div class="languages-menu">
+    
+<a class="language" href="../../../../en-US/council/policy/community-publishing-platforms/">en-US</a>
+<a class="language" href="../../../../ar/council/policy/community-publishing-platforms/">ar</a>
+<a class="language" href="../../../../ast/council/policy/community-publishing-platforms/">ast</a>
+<a class="language" href="../../../../az/council/policy/community-publishing-platforms/">az</a>
+<a class="language" href="../../../../be/council/policy/community-publishing-platforms/">be</a>
+<a class="language" href="../../../../bg/council/policy/community-publishing-platforms/">bg</a>
+<a class="language" href="../../../../bn/council/policy/community-publishing-platforms/">bn</a>
+<a class="language" href="../../../../ca/council/policy/community-publishing-platforms/">ca</a>
+<a class="language" href="../../../../cs/council/policy/community-publishing-platforms/">cs</a>
+<a class="language" href="../../../../de/council/policy/community-publishing-platforms/">de</a>
+<a class="language" href="../../../../el/council/policy/community-publishing-platforms/">el</a>
+<a class="language" href="../../../../es/council/policy/community-publishing-platforms/">es</a>
+<a class="language" href="../../../../es_419/council/policy/community-publishing-platforms/">es_419</a>
+<a class="language" href="../../../../fa/council/policy/community-publishing-platforms/">fa</a>
+<a class="language" href="../../../../fi/council/policy/community-publishing-platforms/">fi</a>
+<a class="language" href="../../../../fil/council/policy/community-publishing-platforms/">fil</a>
+<a class="language" href="../../../../fr/council/policy/community-publishing-platforms/">fr</a>
+<a class="language" href="../../../../fur/council/policy/community-publishing-platforms/">fur</a>
+<a class="language" href="../../../../ga/council/policy/community-publishing-platforms/">ga</a>
+<a class="language" href="../../../../gl/council/policy/community-publishing-platforms/">gl</a>
+<a class="language" href="../../../../he/council/policy/community-publishing-platforms/">he</a>
+<a class="language" href="../../../../hi/council/policy/community-publishing-platforms/">hi</a>
+<a class="language" href="../../../../hr/council/policy/community-publishing-platforms/">hr</a>
+<a class="language" href="../../../../hu/council/policy/community-publishing-platforms/">hu</a>
+<a class="language" href="../../../../hy/council/policy/community-publishing-platforms/">hy</a>
+<a class="language" href="../../../../id/council/policy/community-publishing-platforms/">id</a>
+<a class="language" href="../../../../it/council/policy/community-publishing-platforms/">it</a>
+<a class="language" href="../../../../ja/council/policy/community-publishing-platforms/">ja</a>
+<a class="language" href="../../../../jp/council/policy/community-publishing-platforms/">jp</a>
+<a class="language" href="../../../../ka/council/policy/community-publishing-platforms/">ka</a>
+<a class="language" href="../../../../kab/council/policy/community-publishing-platforms/">kab</a>
+<a class="language" href="../../../../km/council/policy/community-publishing-platforms/">km</a>
+<a class="language" href="../../../../ko/council/policy/community-publishing-platforms/">ko</a>
+<a class="language" href="../../../../lb/council/policy/community-publishing-platforms/">lb</a>
+<a class="language" href="../../../../lo/council/policy/community-publishing-platforms/">lo</a>
+<a class="language" href="../../../../lt/council/policy/community-publishing-platforms/">lt</a>
+<a class="language" href="../../../../mr/council/policy/community-publishing-platforms/">mr</a>
+<a class="language" href="../../../../ms/council/policy/community-publishing-platforms/">ms</a>
+<a class="language" href="../../../../my/council/policy/community-publishing-platforms/">my</a>
+<a class="language" href="../../../../nb_NO/council/policy/community-publishing-platforms/">nb_NO</a>
+<a class="language" href="../../../../ne/council/policy/community-publishing-platforms/">ne</a>
+<a class="language" href="../../../../nl/council/policy/community-publishing-platforms/">nl</a>
+<a class="language" href="../../../../nn/council/policy/community-publishing-platforms/">nn</a>
+<a class="language" href="../../../../or/council/policy/community-publishing-platforms/">or</a>
+<a class="language" href="../../../../pl/council/policy/community-publishing-platforms/">pl</a>
+<a class="language" href="../../../../pt/council/policy/community-publishing-platforms/">pt</a>
+<a class="language" href="../../../../pt_BR/council/policy/community-publishing-platforms/">pt_BR</a>
+<a class="language" href="../../../../pt_PT/council/policy/community-publishing-platforms/">pt_PT</a>
+<a class="language" href="../../../../ro/council/policy/community-publishing-platforms/">ro</a>
+<a class="language" href="../../../../ru/council/policy/community-publishing-platforms/">ru</a>
+<a class="language" href="../../../../si/council/policy/community-publishing-platforms/">si</a>
+<a class="language" href="../../../../sk/council/policy/community-publishing-platforms/">sk</a>
+<a class="language" href="../../../../sq/council/policy/community-publishing-platforms/">sq</a>
+<a class="language" href="../../../../sv/council/policy/community-publishing-platforms/">sv</a>
+<a class="language" href="../../../../sw/council/policy/community-publishing-platforms/">sw</a>
+<a class="language" href="../../../../szl/council/policy/community-publishing-platforms/">szl</a>
+<a class="language" href="../../../../te/council/policy/community-publishing-platforms/">te</a>
+<a class="language" href="../../../../tr/council/policy/community-publishing-platforms/">tr</a>
+<a class="language" href="../../../../tzm/council/policy/community-publishing-platforms/">tzm</a>
+<a class="language" href="../../../../uk/council/policy/community-publishing-platforms/">uk</a>
+<a class="language" href="../../../../ur/council/policy/community-publishing-platforms/">ur</a>
+<a class="language" href="../../../../ur_PK/council/policy/community-publishing-platforms/">ur_PK</a>
+<a class="language" href="../../../../uz/council/policy/community-publishing-platforms/">uz</a>
+<a class="language" href="../../../../vi/council/policy/community-publishing-platforms/">vi</a>
+<a class="language" href="../../../../zh_CN/council/policy/community-publishing-platforms/">zh_CN</a>
+<a class="language" href="../../../../zh_Hans/council/policy/community-publishing-platforms/">zh_Hans</a>
+<a class="language" href="../../../../zh_Hant/council/policy/community-publishing-platforms/">zh_Hant</a>
+<a class="language" href="../../../../zh_TW/council/policy/community-publishing-platforms/">zh_TW</a>
+
+            </div>
+        </div>
+      <div class="edit-this-page"><a href="https://forge.fedoraproject.org/council/docs/commits/branch/main/council/modules/ROOT/pages/policy/community-publishing-platforms.adoc" title="Page history"><i class="fas fa-history"></i></a></div>
+  <div class="edit-this-page"><a href="https://forge.fedoraproject.org/council/docs/src/branch/main/council/modules/ROOT/pages/policy/community-publishing-platforms.adoc" title="Edit this Page"><i class="fas fa-edit"></i></a></div>
+  <div class="edit-this-page"><a href="https://forge.fedoraproject.org/council/docs/issues/new?title=[main] Doc issue in file council/modules/ROOT/pages/policy/community-publishing-platforms.adoc" title="Report an issue"><i class="fas fa-bug"></i></a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar dark:text-fp-gray-light" data-title="Contents" data-levels="2">
+  <div class="toc-content">
+    <div class="toc-menu"></div>
+    <div class="pt-6">
+        </div>
+  </div>
+
+</aside>
+<article class="doc dark:text-gray-100">
+<h1 class="page mt-8 mb-1">Community Publishing Platforms</h1>
+<div class="is-before-toc text-xs text-gray-400 border-b border-gray-300 mb-6 pb-1">
+<span>Justin W. Wheeler, Fedora Council, Fedora Community, and others</span>
+<span class="before:content-['–_']">Version 1.1.1</span>
+<span class="before:content-['–_']">Last review: 2020-10-02</span>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p><span class="image"><img src="https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg" alt="License: CC BY 4.0"></span></p>
+</div>
+<div class="paragraph">
+<p>This policy page describes how Community Publishing Platforms are defined, reviewed, and moderated.
+It provides a loose framework of how moderation is handled in cases that <a href="https://fedoraproject.org/wiki/Legal:Trademark_guidelines#Community_sites_and_accounts">involve the Fedora Trademark</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="what"><a class="anchor" href="#what"></a>What are Community Publishing Platforms (or, Platforms)?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>Community Publishing Platforms</strong>, shortened as <strong>Platforms</strong>, are content-focused websites that publish Creative Works with the Fedora Trademark.
+Platforms are places for expression of ideas and thoughts specifically related to or in the interest of the Fedora Project and its community.</p>
+</div>
+<div class="sect2">
+<h3 id="examples"><a class="anchor" href="#examples"></a>Examples</h3>
+<div class="paragraph">
+<p>Creative Works include, but are not limited to, the following examples:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Blog posts</p>
+</li>
+<li>
+<p>Pictures or photographs</p>
+</li>
+<li>
+<p>Public social media posts</p>
+</li>
+<li>
+<p>Other written communications depending on context</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The Fedora Council reserves the authority to modify or expand the definition of Creative Works, based on unique context of the Fedora Project and the Fedora Community.</p>
+</div>
+<div class="paragraph">
+<p>Community Publishing Platforms include, but are not limited to, the following examples:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://communityblog.fedoraproject.org">Community Blog</a></p>
+</li>
+<li>
+<p><a href="http://fedoraplanet.org/">Planet</a></p>
+</li>
+<li>
+<p>Specific social media accounts</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://www.facebook.com/TheFedoraProject" class="bare">https://www.facebook.com/TheFedoraProject</a></p>
+</li>
+<li>
+<p><a href="https://twitter.com/fedora" class="bare">https://twitter.com/fedora</a></p>
+</li>
+<li>
+<p><a href="https://twitter.com/fedoracommunity" class="bare">https://twitter.com/fedoracommunity</a></p>
+</li>
+<li>
+<p><a href="https://twitter.com/fedora_planet" class="bare">https://twitter.com/fedora_planet</a></p>
+</li>
+<li>
+<p><a href="https://www.youtube.com/channel/UCnIfca4LPFVn8-FjpPVc1ow" class="bare">https://www.youtube.com/channel/UCnIfca4LPFVn8-FjpPVc1ow</a></p>
+</li>
+<li>
+<p><a href="https://www.reddit.com/r/Fedora/" class="bare">https://www.reddit.com/r/Fedora/</a></p>
+</li>
+<li>
+<p><a href="https://discord.gg/fedora" class="bare">https://discord.gg/fedora</a></p>
+</li>
+<li>
+<p><a href="https://telegram.me/fedoranews" class="bare">https://telegram.me/fedoranews</a></p>
+</li>
+<li>
+<p><a href="https://www.instagram.com/thefedoraproject/" class="bare">https://www.instagram.com/thefedoraproject/</a></p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="content"><a class="anchor" href="#content"></a>What content is appropriate for Platforms?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Community Publishing Platforms feature Creative Works controlled by but not actively curated by the Fedora Community and Fedora Leadership.
+Platforms may be provided on infrastructure or web services hosted and managed by the Fedora Project or its sponsors.
+Community Publishing Platforms are not actively curated because they rely on decentralized community labor and contributions that are difficult to centrally control.</p>
+</div>
+<div class="paragraph">
+<p>Creative Works on Platforms must comply with the <a href="#project:ROOT:code-of-conduct.adoc" class="xref unresolved">Fedora Code of Conduct</a>.
+These Creative Works are not officially endorsed by the Fedora Project or Red Hat, but must comply with <a href="https://fedoraproject.org/wiki/Legal:Trademark_guidelines#Community_sites_and_accounts">existing trademark rules</a>.
+If the Fedora Trademark is used, it must comply to this policy.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="report"><a class="anchor" href="#report"></a>How to report a Creative Work</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you participate in an informally moderated Platform (e.g. Reddit, Telegram, Discord, etc.), work with Platform moderators first to report a Creative Work.
+For the provided examples, this could be a Sub-Reddit moderator, a Telegram group admin, or a Discord server admin.</p>
+</div>
+<div class="paragraph">
+<p>If you are unsuccessful in working with Platform moderators OR a Platform moderator encourages you to do so, follow the reporting guidelines in the <a href="#project:ROOT:code-of-conduct.adoc" class="xref unresolved">Fedora Code of Conduct</a>.
+Specific outcomes will fall under the scope of the Fedora Code of Conduct.</p>
+</div>
+</div>
+</div>
+<div id="" class="mt-16">
+    <p class="contribute px-6 py-3 w-fit bg-gray-100 dark:bg-fp-blue-darker rounded-full">Want to help? <a class="" href="https://docs.fedoraproject.org/en-US/fedora-docs/contributing/">Learn how to contribute to Fedora Docs <span class="ml-2 inline-block text-3xl leading-4 h-max align-top text-black dark:text-white">›</span></a></p>
+</div>
+</article>
+
+  </div>
+</main>
+</div>
+<footer class="flex flex-col bg-fp-gray-lightest dark:bg-fp-blue-darkest dark:text-fp-gray-light text-sm dark:border-t dark:border-gray-800">
+  <section class="pt-2 pb-6 px-2">
+
+    <p class="text-center">All Fedora Documentation content available under <a href="http://creativecommons.org/licenses/by-sa/4.0/legalcode">CC BY-SA 4.0</a> or, when specifically noted, under another <a href="https://fedoraproject.org/wiki/Licensing:Main">accepted</a> free and open content license.</p>
+
+    <div class="container mx-auto flex flex-col lg:flex-row my-4">
+      <div class="mx-auto lg:mx-0 lg:basis-3/12">
+        <img
+          src="../../../_/img/fedora-blue.svg"
+          alt="Fedora Logo"
+          class="w-36 mb-4 lg:mb-0"
+        />
+      </div>
+      <ul
+        class="mx-4 flex items-center grow justify-center gap-4 lg:mx-0 lg:gap-12 xl:gap-20 2xl:gap-28 lg:justify-start"
+      >
+        <li class="list-none">
+          <a
+            href="/en-US/legal/privacy/"
+            class="text-fp-gray-darkest dark:text-fp-gray transition duration-300 ease-in-out hover:text-fp-gray dark:hover:text-fp-gray-light"
+            >Privacy Statement</a
+          >
+        </li>
+        <li class="list-none">
+          <a
+            href="/en-US/legal/"
+            class="text-fp-gray-darkest transition duration-300 ease-in-out hover:text-fp-gray dark:text-fp-gray dark:hover:text-fp-gray-light"
+            >Legal</a
+          >
+        </li>
+        <li class="list-none">
+          <a
+            href="/en-US/project/code-of-conduct/"
+            class="text-fp-gray-darkest transition duration-300 ease-in-out hover:text-fp-gray dark:text-fp-gray dark:hover:text-fp-gray-light"
+            >Code of Conduct</a
+          >
+        </li>
+        <li class="list-none">
+          <a
+            href="https://getfedora.org/en/sponsors/"
+            class="text-fp-gray-darkest transition duration-300 ease-in-out hover:text-fp-gray dark:text-fp-gray dark:hover:text-fp-gray-light"
+            >Sponsors</a
+          >
+        </li>
+      </ul>
+    </div>
+    <p class="text-center text-xs text-fp-gray-dark">Last build: 2026-10-17 02:50:05 UTC  | Last content update: 2025-07-07 </p>
+  </section>
+  <!-- Red Hat Sponsorship Section -->
+  <section class="bg-black py-6 text-center md:text-left px-2">
+    <div class="container mx-auto flex flex-col lg:flex-row">
+      <div class="mx-auto items-center lg:mx-0 lg:basis-3/12">
+        <img
+          src="../../../_/img/logo-sponsored-by-red-hat.png"
+          alt="Sponsored by Red Hat Logo"
+          class="mb-4 xl:mb-0"
+        />
+      </div>
+
+      <div class="flex items-center justify-center text-center lg:text-left lg:ml-8 xl:-ml-8 2xl:ml-5">
+        <p class="text-white">
+          Fedora is sponsored by Red Hat.
+          <a class="block text-fp-gray xl:ml-2 xl:inline" href="https://www.redhat.com/en/technologies/linux-platforms/articles/relationship-between-fedora-and-rhel">
+            Learn more about the relationship between Red Hat and Fedora.
+          </a>
+        </p>
+      </div>
+    </div>
+  </section>
+</footer>
+<script id="site-script" src="../../../_/js/site.js" data-ui-root-path="../../../_"></script>
+<script async src="../../../_/js/vendor/highlight.js"></script>
+<script async src="../../../_/js/vendor/datatables.js"></script>
+<script async src="../../../_/js/vendor/tabs.js"></script>
+<script src="../../../_/js/vendor/lunr.js"></script>
+<script src="../../../_/js/search-ui.js" id="search-ui-script" data-site-root-path="../../.." data-snippet-length="100" data-stylesheet="../../../_/css/search.css"></script>
+<script async src="../../../search-index.js"></script>
+  </body>
+</html>

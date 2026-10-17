@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Package Review Guidelines :: Fedora Docs</title>
+    <link rel="canonical" href="https://docs.fedoraproject.org/en-US/packaging-guidelines/ReviewGuidelines/">
+    <meta name="generator" content="Antora 3.1.15">
+    <link rel="stylesheet" href="../../_/css/site.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+<link rel="stylesheet" href="../../_/css/vendor/tabs.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Fedora Docs">
+<meta property="og:title" content="Package Review Guidelines">
+
+<meta property="og:description" content="Learn more about Fedora Linux, the Fedora Project & the Fedora Community.">
+<meta property="og:image" content="https://docs.fedoraproject.org/en-US/_/img/docs_logo.png">
+
+    <script>if (localStorage.darkmode === 'true' || (!('darkmode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark');} else {document.documentElement.classList.remove('dark');}</script>
+  </head>
+  <body class="article dark:bg-fp-blue-darkest text-black dark:text-white">
+<!-- Add any HTML code to show at the top of each page — like a banner to a survey, some announcement, etc. Leave this file empty to not show anything-->
+<header class="header" role="banner">
+  <nav class="fixed z-50 top-0 w-full bg-gradient-to-l from-fp-blue to-fp-blue-light dark:bg-none dark:bg-fp-blue-dark" style="">
+    <div class="mx-auto px-2 sm:px-6 lg:px-8">
+      <div class="relative flex h-14 items-center justify-between">
+        <div
+          class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start"
+        >
+          <div class="flex flex-shrink-0 items-center">
+            <a href="https://docs.fedoraproject.org/en-US">
+              <img class="h-6 z-10 w-auto" src="../../_/img/docs_logo_white.svg">
+            </a>
+          </div>
+
+
+	  <div class="hidden sm:ml-auto sm:block">
+            <div class="flex space-x-4">
+
+
+              <div id="search-field" class="relative inline-flex cursor-pointer items-center rounded px-4 text-xs text-gray-500 dark:text-gray-200">
+                <svg class="absolute left-6 fill-gray-400 dark:fill-gray-400 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg>
+                <input id="search-input" class="pl-6 pr-28 h-8 w-64 rounded-xl dark:bg-black" type="text" placeholder="Search Docs">
+                <label class="ml-2 absolute right-6 filter checkbox border-l border-gray-500 pl-2">
+		 <input type="checkbox" class="appearance-none h-3 w-3 border border-gray-500 rounded bg-white dark:bg-black checked:bg-fp-blue-light checked:border-fp-blue-light dark:checked:bg-fp-blue dark:checked:border-fp-blue focus:outline-none transition duration-200 cursor-pointer my-0.5 mr-1 float-left" data-facet-filter="component:packaging-guidelines"> In this section
+                </label>
+              </div>
+            </div>
+          </div>
+	  <button type="button" id="themeSwitch" class="hidden sm:block stroke-white fill-white ">
+	    <span class="dark:hidden">
+	      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+	        <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+		<path d="M12 4v1M17.66 6.344l-.828.828M20.005 12.004h-1M17.66 17.664l-.828-.828M12 20.01V19M6.34 17.664l.835-.836M3.995 12.004h1.01M6 6l.835.836"></path>
+	      </svg>
+	    </span>
+	    <span class="hidden dark:inline">
+	      <svg viewBox="0 0 512 512" class="w-4 h-4">
+	        <path d="M421.6 379.9c-.6641 0-1.35 .0625-2.049 .1953c-11.24 2.143-22.37 3.17-33.32 3.17c-94.81 0-174.1-77.14-174.1-175.5c0-63.19 33.79-121.3 88.73-152.6c8.467-4.812 6.339-17.66-3.279-19.44c-11.2-2.078-29.53-3.746-40.9-3.746C132.3 31.1 32 132.2 32 256c0 123.6 100.1 224 223.8 224c69.04 0 132.1-31.45 173.8-82.93C435.3 389.1 429.1 379.9 421.6 379.9zM255.8 432C158.9 432 80 353 80 256c0-76.32 48.77-141.4 116.7-165.8C175.2 125 163.2 165.6 163.2 207.8c0 99.44 65.13 183.9 154.9 212.8C298.5 428.1 277.4 432 255.8 432z"/>
+              </svg>
+	    </span>
+	  </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container dark:text-gray-300 bg-fp-gray-lightest dark:bg-fp-blue-darker dark:border-r dark:border-gray-800" data-component="packaging-guidelines" data-version="master">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title text-fp-blue-dark dark:text-fp-blue font-bold"><a href="../">Packaging Guidelines</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="https://fedoraproject.org/wiki/EPEL:Packaging">EPEL-specific guidelines</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../Alternatives/">Alternatives</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../AppData/">AppData</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../AutoProvidesAndRequiresFiltering/">Dependency Filtering</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../Conflicts/">Conflicts</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../CryptoPolicies/">Crypto Policies</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../Debuginfo/">Debuginfo</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../DefaultServices/">Default Services</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../vpath/">Defining source and build directories</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../deprecating-packages/">Deprecating Packages</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../Directory_Replacement/">Directory Replacement</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../DistTag/">Dist Tag</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../Initial_Service_Setup/">Initial Service Setup</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../KDEPackaging/">KDE Packaging Guidelines</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../Langpacks/">Language Packs</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../LicensingGuidelines/">Licensing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../manual-changelog/">Manual Changelog</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../Naming/">Naming</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../PatchUpstreamStatus/">Patch Status</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../Per-Product_Configuration/">Per-Product Configuration</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../PkgConfigBuildRequires/">Pkgconfig Build Dependencies</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../Pkcs11Support/">PKCS#11 / Smartcard Support Guidelines</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="./">Review Guidelines</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../RPMMacros/">RPM Macros</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../RPM_Source_Dir/">RPM Source Dir</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../Scriptlets/">Scriptlets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../SourceURL/">SourceURL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../SSLCertificateHandling/">SSL Certificate Handling</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../Systemd/">Systemd</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../Tmpfiles.d/">Tmpfiles.d</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../UnownedDirectories/">Unowned Directories</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../UsersAndGroups/">Users and Groups</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../Versioning/">Versioning</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Versioning_Appendix/">Versioning Appendix</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../WeakDependencies/">Weak Dependencies</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../what-can-be-packaged/">What Can Be Packaged</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Build Systems</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../CMake/">CMake</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Meson/">Meson</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Programming Languages</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Ada/">Ada</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../C_and_C++/">C and C&#43;&#43;</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../D/">D</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Fortran/">Fortran</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../Golang/">Golang</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../Golang_old/">Legacy guidelines</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../Golang_advanced/">Advanced uses cases</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../Golang_templates/">Additional annotated templates</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Haskell/">Haskell</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../Java/">Java</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../java-packaging-howto/">Java Packaging HOWTO</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../JavaScript/">JavaScript</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Lisp/">Lisp</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Lua/">Lua</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Mono/">Mono</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Node.js/">Node.js</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../OCaml/">OCaml</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Octave/">Octave</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Perl/">Perl</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../PHP/">PHP</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../Python/">Python</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../Python_201x/">Python (201x-era)</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../Python_Appendix/">Python Appendix</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../R/">R</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Ruby/">Ruby</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Rust/">Rust</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Tcl/">Tcl/Tk extensions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Other Domain-specific Guidelines</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Ansible_collections/">Ansible Collections</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../BLAS_LAPACK/">BLAS/LAPACK</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../CronFiles/">CronFiles</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Emacs/">Emacs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../EnvironmentModules/">EnvironmentModules</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../FontsPolicy/">Fonts</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../GAP/">GAP</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../LibreOfficeExtensions/">LibreOffice Extensions</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../MinGW/">MinGW</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../MPI/">MPI</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../ShellCompletions/">Shell Completions</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../SugarActivityGuidelines/">Sugar activities</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Tree-sitter/">Tree-sitter parsers</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../Web_Assets/">Web Assets</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../WordPress_plugin_packaging_guidelines/">WordPress extensions</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore bg-gray-50 dark:bg-fp-blue-darkest" data-panel="explore">
+  <div class="context dark:border-t dark:border-gray-800">
+    <span class="title">Packaging Guidelines</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components bg-gray-100 dark:bg-fp-blue-darkest">
+    <li class="component">
+      <a class="title" href="../../beginners-guide/">A Beginner's Guide to Fedora</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../arm-sbc/">ARM Single Board Computers</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../community/">Community Architecture (CommArch)</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../cle/">Community Linux Engineering</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../defensive-coding/">Defensive Coding Guide</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../engineering/">Engineering Teams</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../epel/">EPEL</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../a11y/">Fedora Accessibility (a11y) WG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-accounts/">Fedora Accounts</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../ai-ml/">Fedora AI/ML SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-asahi-remix/">Fedora Asahi Remix</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../atomic-desktops/">Fedora Atomic Desktops</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../badges/">Fedora Badges</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../ci/">Fedora CI</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../cloud/">Fedora Cloud</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../commops/">Fedora Community Ops</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../containers/">Fedora Container Docs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-coreos/">Fedora CoreOS</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../council/">Fedora Council</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fdwg/">Fedora Data Working Group (FDWG)</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../design/">Fedora Design Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../discussion-forum-guidelines-and-rules/">Fedora Discussion Forum (Self-)Moderation Guidelines and Rules</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../dei/">Fedora Diversity, Equity, and Inclusion (DEI)</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../docs/">Fedora Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-docs/team-info/">Fedora Documentation Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../eln/">Fedora ELN</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../forge-documentation/">Fedora Forge Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../gaming/">Fedora Gaming</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../i3/">Fedora i3 S.I.G.</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../infra/">Fedora Infrastructure & Release Engineering</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../iot/">Fedora Internet Of Things</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../iot-wg/">Fedora IoT Working Group</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-join/">Fedora Join SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../kde/">Fedora KDE Plasma Desktop Edition</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../legal/">Fedora Legal</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../releases/">Fedora Linux Releases</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../localization/">Fedora Localization Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-magazine/">Fedora Magazine</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../marketing/">Fedora Marketing Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../matrix/">Fedora Matrix WG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../mentored-projects/">Fedora Mentored Projects</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../mindshare-committee/">Fedora Mindshare Committee</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../minimal/">Fedora Minimal</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../operations/">Fedora Program Operations</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../project/">Fedora Project</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../qa-docs/">Fedora Quality Docs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../rawhide-gating/">Fedora Rawhide Gating</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../robotics-sig/">Fedora Robotics SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../security/">Fedora Security SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-server/">Fedora Server User Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../server-working-group/">Fedora Server Working Group</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../spins-labs/">Fedora Spins & Labs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../tools/">Fedora Tools</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora/latest/">Fedora User Docs</a>
+      <ul class="versions">
+        <li class="version">
+          <a href="../../fedora/rawhide/">rawhide</a>
+        </li>
+        <li class="version is-latest">
+          <a href="../../fedora/latest/">f44</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f43/">f43</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f42/">f42</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f41/">f41</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f40/">f40</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f39/">f39</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f38/">f38</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f37/">f37</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f36/">f36</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f35/">f35</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f34/">f34</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f33/">f33</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f32/">f32</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f31/">f31</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f30/">f30</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f29/">f29</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f28/">f28</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f27/">f27</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f26/">f26</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <a class="title" href="../../websites/">Fedora Websites & Apps</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../workstation-docs/">Fedora Workstation Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../workstation-working-group/">Fedora Workstation Working Group</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../bootc/">Fedora/CentOS bootc</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fesco/">FESCo</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../flatpak/">Flatpak</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../java-packaging-howto/">Java Packaging HOWTO</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../docs-l10n/">Localization help and stats</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../mindshare/">Mindshare Teams</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../neurofedora/overview/">NeuroFedora User Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../package-maintainers/">Package Maintainers</a>
+    </li>
+    <li class="component is-current">
+      <a class="title" href="../">Packaging Guidelines</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../quick-docs/">Quick Docs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../reproducible-builds/">Reproducible Builds</a>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar bg-fp-gray-lightest dark:bg-fp-blue-darkest dark:text-gray-300 dark:border-b dark:border-gray-800" role="navigation">
+<button class="toolbar-icon nav-toggle"></button>
+  <a href="../../docs/" class="toolbar-icon home-link"></a>
+<nav class="crumbs" role="navigation" aria-label="breadcrumbs">
+  <ul>
+    <li class="after:text-gray-800 dark:after:text-gray-400"><a href="../">Packaging Guidelines</a></li>
+    <li class="after:text-gray-800 dark:after:text-gray-400"><a href="./">Review Guidelines</a></li>
+  </ul>
+</nav>
+
+        <div class="page-languages">
+            <button class="languages-menu-toggle" title="Show other languages of the site">
+                en-US
+            </button>
+            <div class="languages-menu">
+    
+<a class="language" href="../../../en-US/packaging-guidelines/ReviewGuidelines/">en-US</a>
+<a class="language" href="../../../ar/packaging-guidelines/ReviewGuidelines/">ar</a>
+<a class="language" href="../../../ast/packaging-guidelines/ReviewGuidelines/">ast</a>
+<a class="language" href="../../../az/packaging-guidelines/ReviewGuidelines/">az</a>
+<a class="language" href="../../../be/packaging-guidelines/ReviewGuidelines/">be</a>
+<a class="language" href="../../../bg/packaging-guidelines/ReviewGuidelines/">bg</a>
+<a class="language" href="../../../bn/packaging-guidelines/ReviewGuidelines/">bn</a>
+<a class="language" href="../../../ca/packaging-guidelines/ReviewGuidelines/">ca</a>
+<a class="language" href="../../../cs/packaging-guidelines/ReviewGuidelines/">cs</a>
+<a class="language" href="../../../de/packaging-guidelines/ReviewGuidelines/">de</a>
+<a class="language" href="../../../el/packaging-guidelines/ReviewGuidelines/">el</a>
+<a class="language" href="../../../es/packaging-guidelines/ReviewGuidelines/">es</a>
+<a class="language" href="../../../es_419/packaging-guidelines/ReviewGuidelines/">es_419</a>
+<a class="language" href="../../../fa/packaging-guidelines/ReviewGuidelines/">fa</a>
+<a class="language" href="../../../fi/packaging-guidelines/ReviewGuidelines/">fi</a>
+<a class="language" href="../../../fil/packaging-guidelines/ReviewGuidelines/">fil</a>
+<a class="language" href="../../../fr/packaging-guidelines/ReviewGuidelines/">fr</a>
+<a class="language" href="../../../fur/packaging-guidelines/ReviewGuidelines/">fur</a>
+<a class="language" href="../../../ga/packaging-guidelines/ReviewGuidelines/">ga</a>
+<a class="language" href="../../../gl/packaging-guidelines/ReviewGuidelines/">gl</a>
+<a class="language" href="../../../he/packaging-guidelines/ReviewGuidelines/">he</a>
+<a class="language" href="../../../hi/packaging-guidelines/ReviewGuidelines/">hi</a>
+<a class="language" href="../../../hr/packaging-guidelines/ReviewGuidelines/">hr</a>
+<a class="language" href="../../../hu/packaging-guidelines/ReviewGuidelines/">hu</a>
+<a class="language" href="../../../hy/packaging-guidelines/ReviewGuidelines/">hy</a>
+<a class="language" href="../../../id/packaging-guidelines/ReviewGuidelines/">id</a>
+<a class="language" href="../../../it/packaging-guidelines/ReviewGuidelines/">it</a>
+<a class="language" href="../../../ja/packaging-guidelines/ReviewGuidelines/">ja</a>
+<a class="language" href="../../../jp/packaging-guidelines/ReviewGuidelines/">jp</a>
+<a class="language" href="../../../ka/packaging-guidelines/ReviewGuidelines/">ka</a>
+<a class="language" href="../../../kab/packaging-guidelines/ReviewGuidelines/">kab</a>
+<a class="language" href="../../../km/packaging-guidelines/ReviewGuidelines/">km</a>
+<a class="language" href="../../../ko/packaging-guidelines/ReviewGuidelines/">ko</a>
+<a class="language" href="../../../lb/packaging-guidelines/ReviewGuidelines/">lb</a>
+<a class="language" href="../../../lo/packaging-guidelines/ReviewGuidelines/">lo</a>
+<a class="language" href="../../../lt/packaging-guidelines/ReviewGuidelines/">lt</a>
+<a class="language" href="../../../mr/packaging-guidelines/ReviewGuidelines/">mr</a>
+<a class="language" href="../../../ms/packaging-guidelines/ReviewGuidelines/">ms</a>
+<a class="language" href="../../../my/packaging-guidelines/ReviewGuidelines/">my</a>
+<a class="language" href="../../../nb_NO/packaging-guidelines/ReviewGuidelines/">nb_NO</a>
+<a class="language" href="../../../ne/packaging-guidelines/ReviewGuidelines/">ne</a>
+<a class="language" href="../../../nl/packaging-guidelines/ReviewGuidelines/">nl</a>
+<a class="language" href="../../../nn/packaging-guidelines/ReviewGuidelines/">nn</a>
+<a class="language" href="../../../or/packaging-guidelines/ReviewGuidelines/">or</a>
+<a class="language" href="../../../pl/packaging-guidelines/ReviewGuidelines/">pl</a>
+<a class="language" href="../../../pt/packaging-guidelines/ReviewGuidelines/">pt</a>
+<a class="language" href="../../../pt_BR/packaging-guidelines/ReviewGuidelines/">pt_BR</a>
+<a class="language" href="../../../pt_PT/packaging-guidelines/ReviewGuidelines/">pt_PT</a>
+<a class="language" href="../../../ro/packaging-guidelines/ReviewGuidelines/">ro</a>
+<a class="language" href="../../../ru/packaging-guidelines/ReviewGuidelines/">ru</a>
+<a class="language" href="../../../si/packaging-guidelines/ReviewGuidelines/">si</a>
+<a class="language" href="../../../sk/packaging-guidelines/ReviewGuidelines/">sk</a>
+<a class="language" href="../../../sq/packaging-guidelines/ReviewGuidelines/">sq</a>
+<a class="language" href="../../../sv/packaging-guidelines/ReviewGuidelines/">sv</a>
+<a class="language" href="../../../sw/packaging-guidelines/ReviewGuidelines/">sw</a>
+<a class="language" href="../../../szl/packaging-guidelines/ReviewGuidelines/">szl</a>
+<a class="language" href="../../../te/packaging-guidelines/ReviewGuidelines/">te</a>
+<a class="language" href="../../../tr/packaging-guidelines/ReviewGuidelines/">tr</a>
+<a class="language" href="../../../tzm/packaging-guidelines/ReviewGuidelines/">tzm</a>
+<a class="language" href="../../../uk/packaging-guidelines/ReviewGuidelines/">uk</a>
+<a class="language" href="../../../ur/packaging-guidelines/ReviewGuidelines/">ur</a>
+<a class="language" href="../../../ur_PK/packaging-guidelines/ReviewGuidelines/">ur_PK</a>
+<a class="language" href="../../../uz/packaging-guidelines/ReviewGuidelines/">uz</a>
+<a class="language" href="../../../vi/packaging-guidelines/ReviewGuidelines/">vi</a>
+<a class="language" href="../../../zh_CN/packaging-guidelines/ReviewGuidelines/">zh_CN</a>
+<a class="language" href="../../../zh_Hans/packaging-guidelines/ReviewGuidelines/">zh_Hans</a>
+<a class="language" href="../../../zh_Hant/packaging-guidelines/ReviewGuidelines/">zh_Hant</a>
+<a class="language" href="../../../zh_TW/packaging-guidelines/ReviewGuidelines/">zh_TW</a>
+
+            </div>
+        </div>
+      <div class="edit-this-page"><a href="https://forge.fedoraproject.org/packaging/guidelines/commits/branch/main/guidelines/modules/ROOT/pages/ReviewGuidelines.adoc" title="Page history"><i class="fas fa-history"></i></a></div>
+  <div class="edit-this-page"><a href="https://forge.fedoraproject.org/packaging/guidelines/src/branch/main/guidelines/modules/ROOT/pages/ReviewGuidelines.adoc" title="Edit this Page"><i class="fas fa-edit"></i></a></div>
+  <div class="edit-this-page"><a href="https://forge.fedoraproject.org/packaging/guidelines/issues/new?title=[main] Doc issue in file guidelines/modules/ROOT/pages/ReviewGuidelines.adoc" title="Report an issue"><i class="fas fa-bug"></i></a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar dark:text-fp-gray-light" data-title="Contents" data-levels="2">
+  <div class="toc-content">
+    <div class="toc-menu"></div>
+    <div class="pt-6">
+        </div>
+  </div>
+
+</aside>
+<article class="doc dark:text-gray-100">
+<h1 class="page mt-8 mb-1">Package Review Guidelines</h1>
+<div class="is-before-toc text-xs text-gray-400 border-b border-gray-300 mb-6 pb-1">
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This is a set of guidelines for Package Reviews.
+Note that a complete list of things to check for would be impossible,
+but every attempt has been made
+to make this document as comprehensive as possible.
+Reviewers and contributors (packagers)
+should use their best judgement
+whenever items are unclear,
+and if in doubt,
+ask on the <a href="https://lists.fedoraproject.org/admin/lists/packaging.lists.fedoraproject.org/">Fedora packaging list</a> .</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_package_review_guidelines"><a class="anchor" href="#_package_review_guidelines"></a>Package Review Guidelines</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Contributors and reviewers
+MUST follow the <a href="https://docs.fedoraproject.org/en-US/package-maintainers/Package_Review_Process/">Package Review Process</a>,
+with the exceptions listed in the next section</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_package_review_exceptions"><a class="anchor" href="#_package_review_exceptions"></a>Package Review Exceptions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The following exceptions apply to the review process linked above</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>FPC grants an explicit exemption from the process,
+as indicated <a href="https://fedoraproject.org/wiki/Packaging_Committee#Review_Process_Exemption_Procedure">here</a>.</p>
+</li>
+<li>
+<p>The package is being created
+so that multiple versions of the same package can coexist in the distribution
+(or coexist between EPEL and RHEL).
+The package MUST be properly named
+according to the <a href="../Naming/#_multiple_packages_with_the_same_base_name" class="xref page">naming guidelines</a>.</p>
+</li>
+<li>
+<p>The package exists in both Fedora and RHEL,
+but the packager wants to ship it in EPEL
+under an alternative name
+(as required by <a href="https://fedoraproject.org/wiki/EPEL/GuidelinesAndPolicies#Policy">EPEL policy</a>)
+to provide a subpackage that exists in Fedora
+but does not exist (or is not shipped) in RHEL.</p>
+</li>
+</ul>
+</div>
+<div class="ulist">
+<div class="title">Exemptions which have been explicitly granted:</div>
+<ul>
+<li>
+<p>fXX-backgrounds
+(<a href="https://pagure.io/packaging-committee/issue/1479">ticket</a>):
+This package doesn&#8217;t follow the usual naming conventions
+for versioned packages,
+but a new one is created per Fedora release.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_relaxed_rules_for_existing_components"><a class="anchor" href="#_relaxed_rules_for_existing_components"></a>Relaxed rules for existing components</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Some guidelines that apply to "new" packages
+do not need to be applied when reviewing packages
+that are only <em>"added"</em> to the distribution
+in the sense that the name of the <em>source package</em> is "new"
+but the component was already available
+from an existing package, i.e. when</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>renaming an existing package,</p>
+</li>
+<li>
+<p>moving a subcomponent from an existing package
+into a separate source package,</p>
+</li>
+<li>
+<p>adding an alternative version ("compat package")
+of an existing package, or</p>
+</li>
+<li>
+<p>adding an EPEL-only alternative version
+of an existing package.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For example, it is allowed for a <em>"new"</em> package like this
+to depend on packages marked as <code>deprecated()</code>
+because no <em>actually new</em> component
+will depend on the deprecated package.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_things_to_check_on_review"><a class="anchor" href="#_things_to_check_on_review"></a>Things To Check On Review</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There are many many things to check for a review.
+This list is provided to assist new reviewers
+in identifying areas that they should look for,
+but is by no means complete.
+Reviewers should use their own good judgement
+when reviewing packages.
+The items listed fall into two categories:
+<strong>SHOULD</strong> and <strong>MUST</strong>.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a id="rpmlint"></a> <strong>MUST</strong>:
+rpmlint must be run on the source rpm and all binary rpms the build produces.
+The output should be posted in the review.
+See <a href="../#_use_rpmlint" class="xref page">Packaging Guidelines: Use rpmlint</a>.</p>
+</li>
+<li>
+<p><a id="naming"></a> <strong>MUST</strong>:
+The package must be named according to the <a href="../Naming/" class="xref page">Package Naming Guidelines</a>.</p>
+</li>
+<li>
+<p><a id="spec-fie-name"></a> <strong>MUST</strong>:
+The spec file name must match the base package <code>%{name}</code>,
+in the format <code>%{name}.spec</code>
+unless your package has an exemption.
+See <a href="../#_spec_file_naming" class="xref page">Packaging Guidelines: Spec File Naming</a>.</p>
+</li>
+<li>
+<p><a id="packaging-guidelines"></a> <strong>MUST</strong>:
+The package must meet the <a href="../" class="xref page">Packaging Guidelines</a>.</p>
+</li>
+<li>
+<p><a id="approved-license"></a> <strong>MUST</strong>:
+The package must be licensed with a Fedora approved license
+and meet the <a href="../LicensingGuidelines/" class="xref page">Licensing Guidelines</a>.</p>
+</li>
+<li>
+<p><a id="license-field"></a> <strong>MUST</strong>:
+The License field in the package spec file
+must match the actual license.
+See <a href="../LicensingGuidelines/#_valid_license_short_names" class="xref page">Licensing Guidelines: Valid License Short Names</a>.</p>
+</li>
+<li>
+<p><a id="license-file"></a> <strong>MUST</strong>:
+If (and only if) the source package includes the text of the license(s) in its own file,
+then that file, containing the text of the license(s) for the package
+must be included in <code>%license</code>.
+See <a href="../LicensingGuidelines/#_license_text" class="xref page">Licensing Guidelines: License Text</a>.</p>
+</li>
+<li>
+<p><a id="spec-in-american-english"></a> <strong>MUST</strong>:
+The spec file must be written in American English.
+See <a href="../#_summary_and_description" class="xref page">Packaging Guidelines: Summary and description</a>.</p>
+</li>
+<li>
+<p><a id="legible-spec"></a> <strong>MUST</strong>:
+The spec file for the package <strong>MUST</strong> be legible.
+See <a href="../#_spec_legibility" class="xref page">Packaging Guidelines: Spec Legibility</a>.</p>
+</li>
+<li>
+<p><a id="build-sources"></a> <strong>MUST</strong>:
+The sources used to build the package
+must match the upstream source,
+as provided in the spec URL.
+Reviewers should use sha256sum for this task
+as it is used by the <code>sources</code> file once imported into git.
+If no upstream URL can be specified for this package,
+please see the <a href="../SourceURL/" class="xref page">Source URL Guidelines</a> for how to deal with this.</p>
+</li>
+<li>
+<p><a id="successful-build"></a> <strong>MUST</strong>:
+The package <strong>MUST</strong> successfully compile and build into binary rpms
+on at least one primary architecture.
+See <a href="../#_architecture_support" class="xref page">Packaging Guidelines: Architecture Support</a>.</p>
+</li>
+<li>
+<p><a id="exclude-arch"></a> <strong>MUST</strong>:
+If the package does not successfully compile,
+build or work on an architecture,
+then those architectures should be listed in the spec in <code>ExcludeArch</code>.
+Each architecture listed in <code>ExcludeArch</code> <strong>MUST</strong> have a bug filed in bugzilla,
+describing the reason that the package does not compile/build/work on that architecture.
+The bug number <strong>MUST</strong> be placed in a comment,
+next to the corresponding <code>ExcludeArch</code> line.
+See <a href="../#_architecture_build_failures" class="xref page">Packaging Guidelines: Architecture Build Failures</a>.</p>
+</li>
+<li>
+<p><a id="build-dependencies"></a> <strong>MUST</strong>:
+All build dependencies must be listed in <code>BuildRequires</code>.
+See <a href="../#buildrequires" class="xref page">Packaging Guidelines: Build-Time Dependencies (BuildRequires)</a>.</p>
+</li>
+<li>
+<p><a id="locales"></a> <strong>MUST</strong>:
+The spec file MUST handle locales properly.
+This is done by using the <code>%find_lang</code> macro.
+Using <code>%{_datadir}/locale/*</code> is strictly forbidden.
+See <a href="../#_handling_locale_files" class="xref page">Packaging Guidelines: Handling Locale Files</a>.</p>
+</li>
+<li>
+<p><a id="bundling"></a> <strong>MUST</strong>:
+Packages must NOT bundle copies of system libraries.
+See <a href="../#bundling" class="xref page">Packaging Guidelines: Bundling and Duplication of System Libraries</a>.</p>
+</li>
+<li>
+<p><a id="relocatable-package"></a> <strong>MUST</strong>:
+If the package is designed to be relocatable,
+the packager must state this fact in the request for review,
+along with the rationalization for relocation of that specific package.
+Without this, use of Prefix: /usr is considered a blocker.
+See <a href="../#_relocatable_packages" class="xref page">Packaging Guidelines: Relocatable Packages</a>.</p>
+</li>
+<li>
+<p><a id="directory-ownership"></a> <strong>MUST</strong>:
+A package must own all directories that it creates.
+If it does not create a directory that it uses,
+then it should require a package
+which does create that directory.
+See <a href="../#_file_and_directory_ownership" class="xref page">Packaging Guidelines: File And Directory Ownership</a>.</p>
+</li>
+<li>
+<p><a id="file-listed-once"></a> <strong>MUST</strong>:
+A Fedora package must not list a file more than once
+in the spec file&#8217;s %files listings.
+(Notable exception: license texts in specific situations)See <a href="../#_duplicate_files" class="xref page">Packaging Guidelines: Duplicate Files</a>.</p>
+</li>
+<li>
+<p><a id="premissions"></a> <strong>MUST</strong>:
+Permissions on files must be set properly.
+Executables should be set with executable permissions, for example.
+See <a href="../#_file_permissions" class="xref page">Packaging Guidelines: File Permissions</a>.</p>
+</li>
+<li>
+<p><a id="consistent-macros"></a> <strong>MUST</strong>:
+Each package must consistently use macros.
+See <a href="../#_macros" class="xref page">Packaging Guidelines: Macros</a>.</p>
+</li>
+<li>
+<p><a id="permisible-content"></a> <strong>MUST</strong>:
+The package must contain code,
+or permissible content.
+See <a href="../what-can-be-packaged/" class="xref page">What Can Be Packaged</a>.</p>
+</li>
+<li>
+<p><a id="large-documentation"></a> <strong>MUST</strong>:
+Large documentation files must go in a -doc subpackage.
+(The definition of large is left up to the packager&#8217;s best judgement,
+but is not restricted to size.
+Large can refer to either size or quantity).
+See <a href="../#_documentation" class="xref page">Packaging Guidelines: Documentation</a>.</p>
+</li>
+<li>
+<p><a id="doc-runtime"></a> <strong>MUST</strong>:
+If a package includes something as %doc,
+it must not affect the runtime of the application.
+To summarize: If it is in %doc,
+the program must run properly if it is not present.
+See <a href="../#_documentation" class="xref page">Packaging Guidelines: Documentation</a>.</p>
+</li>
+<li>
+<p><a id="static-libraries"></a> <strong>MUST</strong>:
+Static libraries must be in a -static package.
+See <a href="../#packaging-static-libraries" class="xref page">Packaging Guidelines: Packaging Static Libraries</a>.</p>
+</li>
+<li>
+<p><a id="devel-subpackage"></a> <strong>MUST</strong>:
+Development files must be in a -devel package.
+See <a href="../#_devel_packages" class="xref page">Packaging Guidelines: Devel Packages</a>.</p>
+</li>
+<li>
+<p><a id="versioned-devel-require"></a> <strong>MUST</strong>:
+In the vast majority of cases,
+devel packages must require the base package
+using a fully versioned dependency:
+<code>Requires: %{name}%{?_isa} = %{version}-%{release}</code>.
+See <a href="../#_requiring_base_package" class="xref page">Packaging Guidelines: Requiring Base Package</a>.</p>
+</li>
+<li>
+<p><a id="la-archives"></a> <strong>MUST</strong>:
+Packages must NOT contain any .la libtool archives,
+these must be removed in the spec if they are built.
+See <a href="../#packaging-static-libraries" class="xref page">Packaging Guidelines: Packaging Static Libraries</a>.</p>
+</li>
+<li>
+<p><a id="desktop-file"></a> <strong>MUST</strong>:
+Packages containing GUI applications must include a %{name}.desktop file,
+and that file must be properly installed
+with <code>desktop-file-install</code> in the <code>%install</code> section.
+If you feel that your packaged GUI application
+does not need a .desktop file,
+you must put a comment in the spec file
+with your explanation.
+See <a href="../#_desktop_files" class="xref page">Packaging Guidelines: Desktop files</a>.</p>
+</li>
+<li>
+<p><a id="file-directory-ownership"></a> <strong>MUST</strong>:
+Packages must not own files or directories
+that are already owned by other packages.
+The rule of thumb here is
+that the first package to be installed
+should own the files or directories
+that other packages may rely upon.
+This means, for example,
+that no package in Fedora should ever share ownership
+with any of the files or directories
+owned by the <code>filesystem</code> or <code>man</code> package.
+If you feel that you have a good reason
+to own a file or directory that another package owns,
+then please present that at package review time.
+See <a href="../#_file_and_directory_ownership" class="xref page">Packaging Guidelines: File and Directory Ownership</a>.</p>
+</li>
+<li>
+<p><a id="utf-8"></a> <strong>MUST</strong>:
+All filenames in rpm packages must be valid UTF-8.
+See <a href="../#_non_ascii_filenames" class="xref page">Packaging Guidelines: Non-ASCII Filenames</a>.</p>
+</li>
+<li>
+<p><a id="deprecated-packages"></a> <strong>MUST</strong>:
+Packages being added to the distribution
+MUST NOT depend on any packages
+which have been marked as being deprecated.
+See <a href="../deprecating-packages/" class="xref page">Deprecating Packages</a>.</p>
+</li>
+</ul>
+</div>
+<hr>
+<div class="ulist">
+<ul>
+<li>
+<p><a id="upstream-license-file"></a> <strong>SHOULD</strong>:
+If the source package does not include license text(s)
+as a separate file from upstream,
+the packager SHOULD query upstream to include it.
+See <a href="../LicensingGuidelines/#_license_text" class="xref page">Licensing Guidelines: License Text</a>.</p>
+</li>
+<li>
+<p><a id="builds-in-mock"></a> <strong>SHOULD</strong>:
+The reviewer should test that the package builds in mock.
+See <a href="https://fedoraproject.org/wiki/Using_Mock_to_test_package_builds">Using Mock to test package builds</a>.</p>
+</li>
+<li>
+<p><a id="supports-all-architectures"></a> <strong>SHOULD</strong>:
+The package should compile and build into binary rpms
+on all supported architectures.
+See <a href="../#_architecture_support" class="xref page">Packaging Guidelines: Architecture Support</a>.</p>
+</li>
+<li>
+<p><a id="symbols-are-versioned"></a> <strong>SHOULD</strong>:
+Shared libraries should provide versioned symbols (as in "libc.so.6(<strong>GLIBC_2.41</strong>)(64bit)".
+Maintainers are encouraged to work with upstream projects that do not yet provide
+versioned symbols to add them.
+See <a href="../C_and_C++/" class="xref page">Versioned Symbols</a></p>
+</li>
+<li>
+<p><a id="functions-as-described"></a> <strong>SHOULD</strong>:
+The reviewer should test that the package functions as described.
+A package should not segfault instead of running, for example.</p>
+</li>
+<li>
+<p><a id="sane-scriplets"></a> <strong>SHOULD</strong>:
+If scriptlets are used, those scriptlets must be sane.
+This is vague, and left up to the reviewers judgement to determine sanity.
+See <a href="../#_scriptlets" class="xref page">Packaging Guidelines: Scriptlets</a>.</p>
+</li>
+<li>
+<p><a id="subpackage-versioned-requires"></a> <strong>SHOULD</strong>:
+Usually, subpackages other than devel should require the base package
+using a fully versioned dependency.
+See <a href="../#_requiring_base_package" class="xref page">Packaging Guidelines: Requiring Base Package</a>.</p>
+</li>
+<li>
+<p><a id="pkgconfig-in-devel"></a> <strong>SHOULD</strong>:
+The placement of pkgconfig(.pc) files depends on their usecase,
+and this is usually for development purposes,
+so should be placed in a -devel pkg.
+A reasonable exception is that the main pkg itself
+is a devel tool not installed in a user runtime,
+e.g. gcc or gdb.
+See <a href="../#_pkgconfig_files_foo_pc" class="xref page">Packaging Guidelines: Pkgconfig Files</a>.</p>
+</li>
+<li>
+<p><a id="man-pages"></a> <strong>SHOULD</strong>:
+Your package should contain man pages for binaries/scripts.
+If it doesn&#8217;t, work with upstream to add them where they make sense.
+See <a href="../#_manpages" class="xref page">Packaging Guidelines: Manpages</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_a_note_on_dependencies"><a class="anchor" href="#_a_note_on_dependencies"></a>A note on dependencies</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>It is often useful to submit a package for review
+along with its dependencies in separate tickets.
+As long as the submitter sets up the <em>Depends on:</em> and <em>Blocks:</em> fields in BugZilla properly,
+this is not an issue,
+and it is perfectly possible to review these packages
+before the full dependency chain is in the distribution
+(by maintaining a local repository,
+building and installing the packages locally,
+or maintaining a COPR).</p>
+</div>
+<div class="paragraph">
+<p>However, please keep in mind that you cannot do koji builds
+unless all of the build dependencies are met
+(because you cannot provide additional dependencies to koji)
+and when the time comes to build these packages,
+they must be built in order
+and you must wait between builds for the dependencies
+to make it into the appropriate branch of the distribution.
+This can be automated using side tags and chain builds.</p>
+</div>
+<div class="paragraph">
+<p>Please also note that while you may actually be able to build a package
+because all of its build-time dependencies are met,
+the package may still be non-installable (and thus useless)
+if its <em>runtime</em> dependencies are not met.
+A package <strong>MUST</strong> not be built
+if any of its runtime dependencies are unsatisfied.</p>
+</div>
+</div>
+</div>
+<div id="" class="mt-16">
+    <p class="contribute px-6 py-3 w-fit bg-gray-100 dark:bg-fp-blue-darker rounded-full">Want to help? <a class="" href="https://docs.fedoraproject.org/en-US/fedora-docs/contributing/">Learn how to contribute to Fedora Docs <span class="ml-2 inline-block text-3xl leading-4 h-max align-top text-black dark:text-white">›</span></a></p>
+</div>
+</article>
+
+  </div>
+</main>
+</div>
+<footer class="flex flex-col bg-fp-gray-lightest dark:bg-fp-blue-darkest dark:text-fp-gray-light text-sm dark:border-t dark:border-gray-800">
+  <section class="pt-2 pb-6 px-2">
+
+    <p class="text-center">All Fedora Documentation content available under <a href="http://creativecommons.org/licenses/by-sa/4.0/legalcode">CC BY-SA 4.0</a> or, when specifically noted, under another <a href="https://fedoraproject.org/wiki/Licensing:Main">accepted</a> free and open content license.</p>
+
+    <div class="container mx-auto flex flex-col lg:flex-row my-4">
+      <div class="mx-auto lg:mx-0 lg:basis-3/12">
+        <img
+          src="../../_/img/fedora-blue.svg"
+          alt="Fedora Logo"
+          class="w-36 mb-4 lg:mb-0"
+        />
+      </div>
+      <ul
+        class="mx-4 flex items-center grow justify-center gap-4 lg:mx-0 lg:gap-12 xl:gap-20 2xl:gap-28 lg:justify-start"
+      >
+        <li class="list-none">
+          <a
+            href="/en-US/legal/privacy/"
+            class="text-fp-gray-darkest dark:text-fp-gray transition duration-300 ease-in-out hover:text-fp-gray dark:hover:text-fp-gray-light"
+            >Privacy Statement</a
+          >
+        </li>
+        <li class="list-none">
+          <a
+            href="/en-US/legal/"
+            class="text-fp-gray-darkest transition duration-300 ease-in-out hover:text-fp-gray dark:text-fp-gray dark:hover:text-fp-gray-light"
+            >Legal</a
+          >
+        </li>
+        <li class="list-none">
+          <a
+            href="/en-US/project/code-of-conduct/"
+            class="text-fp-gray-darkest transition duration-300 ease-in-out hover:text-fp-gray dark:text-fp-gray dark:hover:text-fp-gray-light"
+            >Code of Conduct</a
+          >
+        </li>
+        <li class="list-none">
+          <a
+            href="https://getfedora.org/en/sponsors/"
+            class="text-fp-gray-darkest transition duration-300 ease-in-out hover:text-fp-gray dark:text-fp-gray dark:hover:text-fp-gray-light"
+            >Sponsors</a
+          >
+        </li>
+      </ul>
+    </div>
+    <p class="text-center text-xs text-fp-gray-dark">Last build: 2026-10-17 02:50:05 UTC  | Last content update: 2026-06-25 </p>
+  </section>
+  <!-- Red Hat Sponsorship Section -->
+  <section class="bg-black py-6 text-center md:text-left px-2">
+    <div class="container mx-auto flex flex-col lg:flex-row">
+      <div class="mx-auto items-center lg:mx-0 lg:basis-3/12">
+        <img
+          src="../../_/img/logo-sponsored-by-red-hat.png"
+          alt="Sponsored by Red Hat Logo"
+          class="mb-4 xl:mb-0"
+        />
+      </div>
+
+      <div class="flex items-center justify-center text-center lg:text-left lg:ml-8 xl:-ml-8 2xl:ml-5">
+        <p class="text-white">
+          Fedora is sponsored by Red Hat.
+          <a class="block text-fp-gray xl:ml-2 xl:inline" href="https://www.redhat.com/en/technologies/linux-platforms/articles/relationship-between-fedora-and-rhel">
+            Learn more about the relationship between Red Hat and Fedora.
+          </a>
+        </p>
+      </div>
+    </div>
+  </section>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+<script async src="../../_/js/vendor/datatables.js"></script>
+<script async src="../../_/js/vendor/tabs.js"></script>
+<script src="../../_/js/vendor/lunr.js"></script>
+<script src="../../_/js/search-ui.js" id="search-ui-script" data-site-root-path="../.." data-snippet-length="100" data-stylesheet="../../_/css/search.css"></script>
+<script async src="../../search-index.js"></script>
+  </body>
+</html>

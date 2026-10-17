@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to file a bug :: Fedora Docs</title>
+    <link rel="canonical" href="https://docs.fedoraproject.org/en-US/quick-docs/bugzilla-file-a-bug/">
+    <meta name="description" content="The purpose of this document is to give step by step instructions on filing bugs in Fedora. For more information about using Bugzilla, see the Bugs section of the Quick…">
+    <meta name="generator" content="Antora 3.1.15">
+    <link rel="stylesheet" href="../../_/css/site.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+<link rel="stylesheet" href="../../_/css/vendor/tabs.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Fedora Docs">
+<meta property="og:title" content="How to file a bug">
+
+<meta property="og:description" content="The purpose of this document is to give step by step instructions on filing bugs in Fedora. For more information about using Bugzilla, see the Bugs section of the Quick…">
+<meta property="og:image" content="https://docs.fedoraproject.org/en-US/_/img/docs_logo.png">
+
+    <script>if (localStorage.darkmode === 'true' || (!('darkmode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark');} else {document.documentElement.classList.remove('dark');}</script>
+  </head>
+  <body class="article dark:bg-fp-blue-darkest text-black dark:text-white">
+<!-- Add any HTML code to show at the top of each page — like a banner to a survey, some announcement, etc. Leave this file empty to not show anything-->
+<header class="header" role="banner">
+  <nav class="fixed z-50 top-0 w-full bg-gradient-to-l from-fp-blue to-fp-blue-light dark:bg-none dark:bg-fp-blue-dark" style="">
+    <div class="mx-auto px-2 sm:px-6 lg:px-8">
+      <div class="relative flex h-14 items-center justify-between">
+        <div
+          class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start"
+        >
+          <div class="flex flex-shrink-0 items-center">
+            <a href="https://docs.fedoraproject.org/en-US">
+              <img class="h-6 z-10 w-auto" src="../../_/img/docs_logo_white.svg">
+            </a>
+          </div>
+
+
+	  <div class="hidden sm:ml-auto sm:block">
+            <div class="flex space-x-4">
+
+
+              <div id="search-field" class="relative inline-flex cursor-pointer items-center rounded px-4 text-xs text-gray-500 dark:text-gray-200">
+                <svg class="absolute left-6 fill-gray-400 dark:fill-gray-400 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg>
+                <input id="search-input" class="pl-6 pr-28 h-8 w-64 rounded-xl dark:bg-black" type="text" placeholder="Search Docs">
+                <label class="ml-2 absolute right-6 filter checkbox border-l border-gray-500 pl-2">
+		 <input type="checkbox" class="appearance-none h-3 w-3 border border-gray-500 rounded bg-white dark:bg-black checked:bg-fp-blue-light checked:border-fp-blue-light dark:checked:bg-fp-blue dark:checked:border-fp-blue focus:outline-none transition duration-200 cursor-pointer my-0.5 mr-1 float-left" data-facet-filter="component:quick-docs"> In this section
+                </label>
+              </div>
+            </div>
+          </div>
+	  <button type="button" id="themeSwitch" class="hidden sm:block stroke-white fill-white ">
+	    <span class="dark:hidden">
+	      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+	        <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+		<path d="M12 4v1M17.66 6.344l-.828.828M20.005 12.004h-1M17.66 17.664l-.828-.828M12 20.01V19M6.34 17.664l.835-.836M3.995 12.004h1.01M6 6l.835.836"></path>
+	      </svg>
+	    </span>
+	    <span class="hidden dark:inline">
+	      <svg viewBox="0 0 512 512" class="w-4 h-4">
+	        <path d="M421.6 379.9c-.6641 0-1.35 .0625-2.049 .1953c-11.24 2.143-22.37 3.17-33.32 3.17c-94.81 0-174.1-77.14-174.1-175.5c0-63.19 33.79-121.3 88.73-152.6c8.467-4.812 6.339-17.66-3.279-19.44c-11.2-2.078-29.53-3.746-40.9-3.746C132.3 31.1 32 132.2 32 256c0 123.6 100.1 224 223.8 224c69.04 0 132.1-31.45 173.8-82.93C435.3 389.1 429.1 379.9 421.6 379.9zM255.8 432C158.9 432 80 353 80 256c0-76.32 48.77-141.4 116.7-165.8C175.2 125 163.2 165.6 163.2 207.8c0 99.44 65.13 183.9 154.9 212.8C298.5 428.1 277.4 432 255.8 432z"/>
+              </svg>
+	    </span>
+	  </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container dark:text-gray-300 bg-fp-gray-lightest dark:bg-fp-blue-darker dark:border-r dark:border-gray-800" data-component="quick-docs" data-version="master">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title text-fp-blue-dark dark:text-fp-blue font-bold"><a href="../">Quick Docs</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../contribute-to-quick-docs/">Contribute to Quick Docs</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started-guide/">Getting started with Fedora</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../bugzilla-an-introduction/">Bugs</a>
+<ul class="nav-list">
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="./">How to file a bug</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../bugzilla-query/">Bugzilla queries</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../bugzilla-find-duplicates/">Finding duplicate bugs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../bugzilla-find-correct-component/">Finding the correct component</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../bugzilla-spam/">Reporting Bugzilla spam</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../bugzilla-email-notifications/">Managing email notifications</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../bugzilla-providing-a-stacktrace/">Providing a Stack Trace</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Installation</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../creating-and-using-a-live-installation-image/">Creating and using a live installation image</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../raspberry-pi/">Fedora on Raspberry Pi</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../anaconda-introduction/">Anaconda: the Fedora installer</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../anaconda-logging/">Anaconda Logging</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Accessibility</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../accessibility-why-choose-fedora/">Why choose Fedora Linux?</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../accessibility-installation-with-orca/">Installing Fedora using Orca</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../accessibility-post-installation-with-orca/">Post installation configuration</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">AI</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../ollama/">Run local LLMs on Fedora</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../pytorch/">Play with tensors in pytorch</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Adding and managing software</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../package-management/">Package management system</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../dnf/">Using the DNF software package manager</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../dnf-vs-apt/">APT command equivalents on Fedora with DNF</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../fedora-repositories/">Fedora DNF repositories</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../adding-or-removing-software-repositories-in-fedora/">Adding or removing software repositories in Fedora</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../dnf-repository-mirror/">Creating a DNF repository mirror</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../autoupdates/">Automatic DNF Updates</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../securing-the-system-by-keeping-it-up-to-date/">Securing the system by keeping it up-to-date</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../finding-and-installing-linux-applications/">Finding and installing Linux applications</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../third-party-software/">Third Party Software</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../rpmfusion-setup/">Enabling the RPM Fusion repositories</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../flathub-flatpak-applications/">Flathub</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../snap-store-applications/">Snap Store</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../appimage/">AppImage</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../installing-from-source/">Installing Software from Source</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../language-package-managers/">Language package managers</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Installing popular applications</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../fonts/">Adding New Fonts in Fedora</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../installing-java/">Installing Java</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../installing-plugins-for-playing-movies-and-music/">Installing plugins for playing movies and music</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../installing-chromium-or-google-chrome-browsers/">Installing Chromium or Google Chrome browsers</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../switching-desktop-environments/">Installing and switching desktop environments</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../installing-spotify/">Installing Spotify on Fedora</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../installing-and-running-vlc/">Installing and running the VLC player</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Usage and customisation</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../adding_user_to_sudoers_file/">Adding a user to sudoers</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../automatic-power-management-power2top/">Automatic power management using powertop2tuned</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../changing-hostname/">Changing Hostname</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../aide-checking-file-integrity/">Checking file integrity with AIDE</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../configuring-ip-networking-with-nmcli/">Configuring IP networking with nmcli</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../configuring-x-window-system-using-the-xorg-conf-file/">Configuring X Window System using the xorg.conf file</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../firewalld/">Control of System Accessibility by firewalld</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../creating-a-disk-partition-in-linux/">Creating Disk Partitions</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../create-gpg-keys/">Creating GPG Keys</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../disabling-automatic-screenlock/">Disabling the GNOME automatic screen locking</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../displaying_user_prompt_on_gnome_login_screen/">Displaying a user prompt on the GNOME login screen</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../persistent-identifiers-for-storage-devices/">Persistent Identifiers for Storage Devices</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../encrypting-drives-using-LUKS/">Encrypting drives using LUKS</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../getting-started-with-apache-http-server/">Getting started with Apache HTTP Server</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../grub2-bootloader/">The GRUB2 Bootloader</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../samba/">How to create a Samba share</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../join-active-directory-freeipa/">How to join an Active Directory or FreeIPA domain</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../set-nvidia-as-primary-gpu-on-optimus-based-laptops/">How to Set NVIDIA as Primary GPU on Optimus-based Laptops</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../debug-systemd-problems/">How to debug systemd problems</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../enable-touchpad-click/">How to enable touchpad click</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../installing-docker/">Installing Docker and Docker-Compose on Fedora</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../jitsi-getting-started/">Jitsi Meet Self-Hosting Guide</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mok-enrollment/">Machine Owner Key Enrollment</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../managing-keyboard-shortcuts-for-running-app-in-gnome/">Managing keyboard shortcuts for running an application in GNOME</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../performing-administration-tasks-using-sudo/">Performing administration tasks using sudo</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../reset-root-password/">Resetting a root password</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../root-account-locked/">Root Account Locked</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../wine/">Running Windows applications with Wine</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gnome-setting-key-shortcut/">Setting a key shortcut to run an application in GNOME</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../screenrecorder-apps-comparison/">Screen Recorder – Comparison of Applications in Fedora and How to Use them</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../systemd-understanding-and-administering/">Understanding and administering systemd</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gnome-shell-extensions/">Using GNOME Shell extensions</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../using-kubernetes/">Using Kubernetes on Fedora</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../using-kubernetes-basics/">Kubernetes Basics</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../using-kubernetes-versioned/">Versioned Kubernetes rpms (F41 and newer)</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../using-kubernetes-kubelet/">Configuring <code><code>kubelet</code></code></a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../using-kubernetes-kubeadm/">Creating a Kubernetes cluster</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../using-kubernetes-cri-o/">CRI-O and CRI-Tools</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../using-shared-system-certificates/">Using shared system certificates</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../using-yubikeys/">Using Yubikeys with Fedora</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../viewing-logs/">Viewing logs in Fedora</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../selinux-getting-started/">SELinux</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../selinux-changing-states-and-modes/">Changing SELinux states and modes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../selinux-troubleshooting/">Troubleshooting SELinux</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../upgrading-fedora-new-release/">Upgrading to a new release</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../upgrading-fedora-offline/">Upgrading Fedora using the DNF system upgrade</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../upgrading-fedora-online/">Upgrading Fedora using package manager</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kernel-overview/">Kernel and booting</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kernel-booting/">Booting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kernel-troubleshooting/">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kernel-build-custom/">Building a Custom Kernel</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kernel-test-days/">Guide for Kernel Test Days</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../debug-dracut-problems/">How to debug Dracut problems</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kernel-installing-from-koji/">Installing a kernel from Koji</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kernel-testing-patches/">Testing kernel patches</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../virtualization-an-overview/">Virtualization – an Overview</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../virtualization-getting-started/">Virtualization – Getting Started (libvirt)</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../installing-virtual-systems-with-gnome-boxes/">Installing virtual operating systems with GNOME Boxes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../qemu/">Using virtualization emulation in QEMU</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../using-nested-virtualization-in-kvm/">Using nested virtualization in KVM</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../creating-windows-virtual-machines-using-virtio-drivers/">Creating Windows virtual machines using virtIO drivers</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../vmware-what-is-it/">VMware – what is it and how use it?</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../uefi-with-qemu/">Using UEFI with QEMU</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../virtualization-howto-debug-issues/">Virtualization – how to debug issues</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../publish-rpm-on-copr/">Publishing your software on Copr</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Databases</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../postgresql/">PostgreSQL</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../installing-mysql-mariadb/">MariaDB, MySQL</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../manage-database-servers-from-gui/">How to Manage Various Database Servers from GUI</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Printing and scanning</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cups-debug-printing-issues/">How to debug printing issues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cups-debug-scanning-issues/">How to debug scanning issues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cups-useful-tricks/">Useful tricks</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cups-terminology/">Terminology</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cups-known-issues/">Known issues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cups-filing-a-bug-report/">Filing a CUPS Bug Report</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Troubleshooting</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../troubleshooting-bluetooth-problems/">Troubleshooting Bluetooth problems</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../troubleshooting-java-programs/">Troubleshooting Java Programs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../troubleshooting-mozilla-products/">Troubleshooting Mozilla Products</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../troubleshooting-wayland-problems/">Troubleshooting Wayland Problems</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../how-to-troubleshoot-sound-problems/">Troubleshooting Sound Problems</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">FAQ</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fedora-and-red-hat-enterprise-linux/">Fedora and Red Hat Enterprise Linux</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fedora-and-software-patents/">Fedora and software patents</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore bg-gray-50 dark:bg-fp-blue-darkest" data-panel="explore">
+  <div class="context dark:border-t dark:border-gray-800">
+    <span class="title">Quick Docs</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components bg-gray-100 dark:bg-fp-blue-darkest">
+    <li class="component">
+      <a class="title" href="../../beginners-guide/">A Beginner's Guide to Fedora</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../arm-sbc/">ARM Single Board Computers</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../community/">Community Architecture (CommArch)</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../cle/">Community Linux Engineering</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../defensive-coding/">Defensive Coding Guide</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../engineering/">Engineering Teams</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../epel/">EPEL</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../a11y/">Fedora Accessibility (a11y) WG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-accounts/">Fedora Accounts</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../ai-ml/">Fedora AI/ML SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-asahi-remix/">Fedora Asahi Remix</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../atomic-desktops/">Fedora Atomic Desktops</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../badges/">Fedora Badges</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../ci/">Fedora CI</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../cloud/">Fedora Cloud</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../commops/">Fedora Community Ops</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../containers/">Fedora Container Docs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-coreos/">Fedora CoreOS</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../council/">Fedora Council</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fdwg/">Fedora Data Working Group (FDWG)</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../design/">Fedora Design Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../discussion-forum-guidelines-and-rules/">Fedora Discussion Forum (Self-)Moderation Guidelines and Rules</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../dei/">Fedora Diversity, Equity, and Inclusion (DEI)</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../docs/">Fedora Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-docs/team-info/">Fedora Documentation Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../eln/">Fedora ELN</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../forge-documentation/">Fedora Forge Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../gaming/">Fedora Gaming</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../i3/">Fedora i3 S.I.G.</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../infra/">Fedora Infrastructure & Release Engineering</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../iot/">Fedora Internet Of Things</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../iot-wg/">Fedora IoT Working Group</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-join/">Fedora Join SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../kde/">Fedora KDE Plasma Desktop Edition</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../legal/">Fedora Legal</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../releases/">Fedora Linux Releases</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../localization/">Fedora Localization Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-magazine/">Fedora Magazine</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../marketing/">Fedora Marketing Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../matrix/">Fedora Matrix WG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../mentored-projects/">Fedora Mentored Projects</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../mindshare-committee/">Fedora Mindshare Committee</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../minimal/">Fedora Minimal</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../operations/">Fedora Program Operations</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../project/">Fedora Project</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../qa-docs/">Fedora Quality Docs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../rawhide-gating/">Fedora Rawhide Gating</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../robotics-sig/">Fedora Robotics SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../security/">Fedora Security SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora-server/">Fedora Server User Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../server-working-group/">Fedora Server Working Group</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../spins-labs/">Fedora Spins & Labs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../tools/">Fedora Tools</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fedora/latest/">Fedora User Docs</a>
+      <ul class="versions">
+        <li class="version">
+          <a href="../../fedora/rawhide/">rawhide</a>
+        </li>
+        <li class="version is-latest">
+          <a href="../../fedora/latest/">f44</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f43/">f43</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f42/">f42</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f41/">f41</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f40/">f40</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f39/">f39</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f38/">f38</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f37/">f37</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f36/">f36</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f35/">f35</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f34/">f34</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f33/">f33</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f32/">f32</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f31/">f31</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f30/">f30</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f29/">f29</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f28/">f28</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f27/">f27</a>
+        </li>
+        <li class="version">
+          <a href="../../fedora/f26/">f26</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <a class="title" href="../../websites/">Fedora Websites & Apps</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../workstation-docs/">Fedora Workstation Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../workstation-working-group/">Fedora Workstation Working Group</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../bootc/">Fedora/CentOS bootc</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../fesco/">FESCo</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../flatpak/">Flatpak</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../java-packaging-howto/">Java Packaging HOWTO</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../docs-l10n/">Localization help and stats</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../mindshare/">Mindshare Teams</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../neurofedora/overview/">NeuroFedora User Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../package-maintainers/">Package Maintainers</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../packaging-guidelines/">Packaging Guidelines</a>
+    </li>
+    <li class="component is-current">
+      <a class="title" href="../">Quick Docs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../reproducible-builds/">Reproducible Builds</a>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar bg-fp-gray-lightest dark:bg-fp-blue-darkest dark:text-gray-300 dark:border-b dark:border-gray-800" role="navigation">
+<button class="toolbar-icon nav-toggle"></button>
+  <a href="../../docs/" class="toolbar-icon home-link"></a>
+<nav class="crumbs" role="navigation" aria-label="breadcrumbs">
+  <ul>
+    <li class="after:text-gray-800 dark:after:text-gray-400"><a href="../">Quick Docs</a></li>
+    <li class="after:text-gray-800 dark:after:text-gray-400"><a href="../bugzilla-an-introduction/">Bugs</a></li>
+    <li class="after:text-gray-800 dark:after:text-gray-400"><a href="./">How to file a bug</a></li>
+  </ul>
+</nav>
+
+        <div class="page-languages">
+            <button class="languages-menu-toggle" title="Show other languages of the site">
+                en-US
+            </button>
+            <div class="languages-menu">
+    
+<a class="language" href="../../../en-US/quick-docs/bugzilla-file-a-bug/">en-US</a>
+<a class="language" href="../../../ar/quick-docs/bugzilla-file-a-bug/">ar</a>
+<a class="language" href="../../../ast/quick-docs/bugzilla-file-a-bug/">ast</a>
+<a class="language" href="../../../az/quick-docs/bugzilla-file-a-bug/">az</a>
+<a class="language" href="../../../be/quick-docs/bugzilla-file-a-bug/">be</a>
+<a class="language" href="../../../bg/quick-docs/bugzilla-file-a-bug/">bg</a>
+<a class="language" href="../../../bn/quick-docs/bugzilla-file-a-bug/">bn</a>
+<a class="language" href="../../../ca/quick-docs/bugzilla-file-a-bug/">ca</a>
+<a class="language" href="../../../cs/quick-docs/bugzilla-file-a-bug/">cs</a>
+<a class="language" href="../../../de/quick-docs/bugzilla-file-a-bug/">de</a>
+<a class="language" href="../../../el/quick-docs/bugzilla-file-a-bug/">el</a>
+<a class="language" href="../../../es/quick-docs/bugzilla-file-a-bug/">es</a>
+<a class="language" href="../../../es_419/quick-docs/bugzilla-file-a-bug/">es_419</a>
+<a class="language" href="../../../fa/quick-docs/bugzilla-file-a-bug/">fa</a>
+<a class="language" href="../../../fi/quick-docs/bugzilla-file-a-bug/">fi</a>
+<a class="language" href="../../../fil/quick-docs/bugzilla-file-a-bug/">fil</a>
+<a class="language" href="../../../fr/quick-docs/bugzilla-file-a-bug/">fr</a>
+<a class="language" href="../../../fur/quick-docs/bugzilla-file-a-bug/">fur</a>
+<a class="language" href="../../../ga/quick-docs/bugzilla-file-a-bug/">ga</a>
+<a class="language" href="../../../gl/quick-docs/bugzilla-file-a-bug/">gl</a>
+<a class="language" href="../../../he/quick-docs/bugzilla-file-a-bug/">he</a>
+<a class="language" href="../../../hi/quick-docs/bugzilla-file-a-bug/">hi</a>
+<a class="language" href="../../../hr/quick-docs/bugzilla-file-a-bug/">hr</a>
+<a class="language" href="../../../hu/quick-docs/bugzilla-file-a-bug/">hu</a>
+<a class="language" href="../../../hy/quick-docs/bugzilla-file-a-bug/">hy</a>
+<a class="language" href="../../../id/quick-docs/bugzilla-file-a-bug/">id</a>
+<a class="language" href="../../../it/quick-docs/bugzilla-file-a-bug/">it</a>
+<a class="language" href="../../../ja/quick-docs/bugzilla-file-a-bug/">ja</a>
+<a class="language" href="../../../jp/quick-docs/bugzilla-file-a-bug/">jp</a>
+<a class="language" href="../../../ka/quick-docs/bugzilla-file-a-bug/">ka</a>
+<a class="language" href="../../../kab/quick-docs/bugzilla-file-a-bug/">kab</a>
+<a class="language" href="../../../km/quick-docs/bugzilla-file-a-bug/">km</a>
+<a class="language" href="../../../ko/quick-docs/bugzilla-file-a-bug/">ko</a>
+<a class="language" href="../../../lb/quick-docs/bugzilla-file-a-bug/">lb</a>
+<a class="language" href="../../../lo/quick-docs/bugzilla-file-a-bug/">lo</a>
+<a class="language" href="../../../lt/quick-docs/bugzilla-file-a-bug/">lt</a>
+<a class="language" href="../../../mr/quick-docs/bugzilla-file-a-bug/">mr</a>
+<a class="language" href="../../../ms/quick-docs/bugzilla-file-a-bug/">ms</a>
+<a class="language" href="../../../my/quick-docs/bugzilla-file-a-bug/">my</a>
+<a class="language" href="../../../nb_NO/quick-docs/bugzilla-file-a-bug/">nb_NO</a>
+<a class="language" href="../../../ne/quick-docs/bugzilla-file-a-bug/">ne</a>
+<a class="language" href="../../../nl/quick-docs/bugzilla-file-a-bug/">nl</a>
+<a class="language" href="../../../nn/quick-docs/bugzilla-file-a-bug/">nn</a>
+<a class="language" href="../../../or/quick-docs/bugzilla-file-a-bug/">or</a>
+<a class="language" href="../../../pl/quick-docs/bugzilla-file-a-bug/">pl</a>
+<a class="language" href="../../../pt/quick-docs/bugzilla-file-a-bug/">pt</a>
+<a class="language" href="../../../pt_BR/quick-docs/bugzilla-file-a-bug/">pt_BR</a>
+<a class="language" href="../../../pt_PT/quick-docs/bugzilla-file-a-bug/">pt_PT</a>
+<a class="language" href="../../../ro/quick-docs/bugzilla-file-a-bug/">ro</a>
+<a class="language" href="../../../ru/quick-docs/bugzilla-file-a-bug/">ru</a>
+<a class="language" href="../../../si/quick-docs/bugzilla-file-a-bug/">si</a>
+<a class="language" href="../../../sk/quick-docs/bugzilla-file-a-bug/">sk</a>
+<a class="language" href="../../../sq/quick-docs/bugzilla-file-a-bug/">sq</a>
+<a class="language" href="../../../sv/quick-docs/bugzilla-file-a-bug/">sv</a>
+<a class="language" href="../../../sw/quick-docs/bugzilla-file-a-bug/">sw</a>
+<a class="language" href="../../../szl/quick-docs/bugzilla-file-a-bug/">szl</a>
+<a class="language" href="../../../te/quick-docs/bugzilla-file-a-bug/">te</a>
+<a class="language" href="../../../tr/quick-docs/bugzilla-file-a-bug/">tr</a>
+<a class="language" href="../../../tzm/quick-docs/bugzilla-file-a-bug/">tzm</a>
+<a class="language" href="../../../uk/quick-docs/bugzilla-file-a-bug/">uk</a>
+<a class="language" href="../../../ur/quick-docs/bugzilla-file-a-bug/">ur</a>
+<a class="language" href="../../../ur_PK/quick-docs/bugzilla-file-a-bug/">ur_PK</a>
+<a class="language" href="../../../uz/quick-docs/bugzilla-file-a-bug/">uz</a>
+<a class="language" href="../../../vi/quick-docs/bugzilla-file-a-bug/">vi</a>
+<a class="language" href="../../../zh_CN/quick-docs/bugzilla-file-a-bug/">zh_CN</a>
+<a class="language" href="../../../zh_Hans/quick-docs/bugzilla-file-a-bug/">zh_Hans</a>
+<a class="language" href="../../../zh_Hant/quick-docs/bugzilla-file-a-bug/">zh_Hant</a>
+<a class="language" href="../../../zh_TW/quick-docs/bugzilla-file-a-bug/">zh_TW</a>
+
+            </div>
+        </div>
+      <div class="edit-this-page"><a href="https://forge.fedoraproject.org/docs/quick-docs/commits/branch/main/modules/ROOT/pages/bugzilla-file-a-bug.adoc" title="Page history"><i class="fas fa-history"></i></a></div>
+  <div class="edit-this-page"><a href="https://forge.fedoraproject.org/docs/quick-docs/src/branch/main/modules/ROOT/pages/bugzilla-file-a-bug.adoc" title="Edit this Page"><i class="fas fa-edit"></i></a></div>
+  <div class="edit-this-page"><a href="https://forge.fedoraproject.org/docs/quick-docs/issues/new?title=[main] Doc issue in file modules/ROOT/pages/bugzilla-file-a-bug.adoc" title="Report an issue"><i class="fas fa-bug"></i></a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar dark:text-fp-gray-light" data-title="Contents" data-levels="2">
+  <div class="toc-content">
+    <div class="toc-menu"></div>
+    <div class="pt-6">
+          <h3 class="text-sm font-bold dark:text-white">Categories</h3>
+      <div class="flex flex-wrap gap-1 pt-2">
+          <span class="text-xs text-center font-semibold bg-lime-500 dark:bg-lime-600 text-black dark:text-white rounded-full px-2 py-0.5 align-baseline inline-block leading-none whitespace-nowrap font-display capitalize">
+            <a href="../categories/bugs/" class="font-display hover:no-underline">bugs</a>
+          </span>
+      </div>
+      <div class="flex flex-wrap gap-1 pt-2">
+          <span class="text-xs text-center font-semibold bg-fp-blue-light dark:bg-fp-blue text-black dark:text-white rounded-full px-2 py-0.5 align-baseline inline-block leading-none whitespace-nowrap font-display capitalize">
+            <a href="../tags/how-to/" class="font-display hover:no-underline">how-to</a>
+          </span>
+          <span class="text-xs text-center font-semibold bg-fp-blue-light dark:bg-fp-blue text-black dark:text-white rounded-full px-2 py-0.5 align-baseline inline-block leading-none whitespace-nowrap font-display capitalize">
+            <a href="../tags/bug-report/" class="font-display hover:no-underline">bug-report</a>
+          </span>
+      </div>
+    </div>
+  </div>
+
+</aside>
+<article class="doc dark:text-gray-100">
+<h1 class="page mt-8 mb-1">How to file a bug</h1>
+<div class="is-before-toc text-xs text-gray-400 border-b border-gray-300 mb-6 pb-1">
+<span>Ankur Sinha, Joe Walker</span>
+<span class="before:content-['–_']">Version all</span>
+<span class="before:content-['–_']">Last review: 2024-01-18</span>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="quoteblock abstract">
+<blockquote>
+The purpose of this document is to give step by step instructions on filing bugs in Fedora.
+For more information about using Bugzilla,
+see the <a href="../bugzilla-an-introduction/" class="xref page">Bugs section</a> of the Quick Docs.
+</blockquote>
+</div>
+<div class="paragraph">
+<p>A software bug does not necessarily need to be a software crash.
+Any undesired behaviour in software can be filed as a bug.
+The package maintainer can then look at the bug report and decide the best course of action.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<strong>Anyone can file bugs</strong>:
+All users are encouraged to file any bugs they run into.
+Bug filing is not limited to only software developers.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_terminology"><a class="anchor" href="#_terminology"></a>Terminology</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There are a few terms that are commonly used in this document:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Bug</strong>: A bug is any behaviour in a software that appears unexpected/undesired.</p>
+</li>
+<li>
+<p><strong>Bug tracker</strong>: The Fedora bug tracking system at <a href="https://bugzilla.redhat.com" class="bare">https://bugzilla.redhat.com</a>.</p>
+</li>
+<li>
+<p><strong>Package</strong>: Each software that is available in Fedora has a formal package name that is used by the bug tracker and other infrastructure tools.
+Packages can be searched using the <a href="https://src.fedoraproject.org/">Fedora dist-git</a>.</p>
+</li>
+<li>
+<p><strong>Maintainer</strong>: A body of volunteers that takes care of the software packages provided in Fedora.
+These are referred to as "package maintainers".
+They keep track of bugs, help with issues, and generally act as middlemen between the developers of the software and Fedora users.</p>
+</li>
+<li>
+<p><strong>QA</strong>: Quality assurance is the process of ensuring that the software works as intended.</p>
+</li>
+<li>
+<p><strong>Bodhi</strong>: The <a href="https://bodhi.fedoraproject.org">Fedora QA Web Application</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_before_filing_a_bug"><a class="anchor" href="#_before_filing_a_bug"></a>Before filing a bug</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://ask.fedoraproject.org">Ask Fedora</a> —
+the community support forum —
+is a good place to start if you&#8217;re not sure if you&#8217;ve encountered a bug.
+Sometimes what is perceived as a bug is a misunderstanding or a question.
+The Ask Fedora community can help you figure out if you&#8217;ve encountered a bug —
+and if it&#8217;s specific to Fedora or is in the upstream package.</p>
+</div>
+<div class="sect2">
+<h3 id="_step_0_check_the_common_issues_page"><a class="anchor" href="#_step_0_check_the_common_issues_page"></a>Step 0: Check the Common Issues page</h3>
+<div class="paragraph">
+<p>We maintain a list of common issues.
+Check this site first to see if your issue has been reported —
+and if a solution exists.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://fedoraproject.org/wiki/Common_F44_bugs">Fedora Linux 44</a></p>
+</li>
+<li>
+<p><a href="https://fedoraproject.org/wiki/Common_F43_bugs">Fedora Linux 43</a></p>
+</li>
+<li>
+<p><a href="https://discussion.fedoraproject.org/c/ask/common-issues/82/all">Ask Fedora listing</a></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_step_1_check_for_the_latest_version"><a class="anchor" href="#_step_1_check_for_the_latest_version"></a>Step 1: Check for the latest version</h3>
+<div class="paragraph">
+<p>As bugs are reported and fixed, developers collect a set of fixes and periodically release improved versions of their software.
+So, before reporting an issue, it is useful to check if you are using the latest version of a software.
+The simplest way to get the latest version of software in Fedora is to regularly update your system.
+Users of Gnome/KDE and other desktop environments can use their default applications to do so.
+These periodically check for updates and notify users.
+You can also use the default package manager <code>dnf</code> to check and update your system.
+Only users with administrator privileges can do so:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ sudo dnf upgrade --refresh</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_step_2_check_for_already_filed_bugs"><a class="anchor" href="#_step_2_check_for_already_filed_bugs"></a>Step 2: Check for already filed bugs</h3>
+<div class="paragraph">
+<p>If you are using the latest version of the software available in Fedora, then it is likely that the bug has either not been reported, or has been reported but a fix has not yet been released.
+So, it is useful to search the list of already reported bugs before filing a new report.
+The <a href="https://packages.fedoraproject.org/">Fedora Packages Web application</a> provides a link to the open bugs for a package.
+There is also a convenient shortcut that can be used.</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>https://bugz.fedoraproject.org/&lt;package name&gt;</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here, the <code>package name</code> must be the formal name of the package.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<strong>Finding the name of the package</strong>: If you do not know the formal package name of the software, you can use the <a href="https://packages.fedoraproject.org/">Fedora Packages Web Application</a> to search for it and view the list of bugs there.
+</td>
+</tr>
+</table>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../_images/20180825-how-to-file-a-bug-gs.png" alt="20180825 how to file a bug gs">
+</div>
+<div class="title">Figure 1. Searching the Fedora Packages Web Application for Gnome Software.</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Advanced searching</strong>: You can also use the <a href="https://bugzilla.redhat.com/query.cgi">advanced search features of the bug tracker</a> to narrow down your search.
+However, this is not necessary.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>If a bug report has already been filed describing the issue, you should provide any extra information you may have.
+If there is nothing more to add to the report, you should "CC" (carbon-copy) yourself to the report to receive any updates.
+This can be done by clicking on the "Save changes" button when the "Add me to CC list" option is checked as shown below:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../_images/20180825-how-to-file-a-bug-cc-list.png" alt="20180825 how to file a bug cc list">
+</div>
+<div class="title">Figure 2. The CC list contains all users that should be notified when any updates are made to the report.</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_filing_a_bug_report"><a class="anchor" href="#_filing_a_bug_report"></a>Filing a bug report</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_step_0_create_a_bugzilla_account"><a class="anchor" href="#_step_0_create_a_bugzilla_account"></a>Step 0: Create a Bugzilla account</h3>
+<div class="paragraph">
+<p>Bugs are filed on <a href="https://bugzilla.redhat.com">Bugzilla</a> and you must have a <a href="https://bugzilla.redhat.com/createaccount.cgi">Bugzilla account</a> to file bugs and interact with them.
+Once you have created an account on Bugzilla, you can also login using your <a href="https://accounts.fedoraproject.org">Fedora account</a>.
+To use your FAS account to login to Bugzilla, you need to either use the same e-mail address on FAS and on Bugzilla, or if they differ, you can set the Bugzilla e-mail address in your FAS profile explicitly.</p>
+</div>
+<div class="paragraph">
+<p>The bug tracker will only send e-mail notifications about bugs that a user is involved in.
+No other e-mails will be sent.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_step_1_filing_a_new_bug"><a class="anchor" href="#_step_1_filing_a_new_bug"></a>Step 1: Filing a new bug</h3>
+<div class="paragraph">
+<p>If a bug report for the particular issue has not already been filed,
+you should file a new one.
+The easiest way to file a new report is to look up the package in the
+<a href="https://packages.fedoraproject.org/">Fedora Packages Web application</a>,
+and use the "File a new bug report" link provided on the page.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../_images/20240118-how-to-file-a-bug-new-bug-shortcut.png" alt="20240118 how to file a bug new bug shortcut">
+</div>
+<div class="title">Figure 3. The Fedora Packages Web Application provides a convenient shortcut to file new bugs.</div>
+</div>
+<div class="paragraph">
+<p>This redirects to a new bug report template on the bug tracker.
+The image below shows a new bug template:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../_images/20180825-how-to-file-a-bug-new-bug.png" alt="20180825 how to file a bug new bug">
+</div>
+<div class="title">Figure 4. A new bug report template.</div>
+</div>
+<div class="paragraph">
+<p>The following fields need to be set:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Component</strong>: This will be set to the name of the package.</p>
+</li>
+<li>
+<p><strong>Version</strong>: You should set this to the version of Fedora that you observed the bug on.</p>
+</li>
+<li>
+<p><strong>Summary</strong>: You should provide a useful short summary of the issue here.</p>
+</li>
+<li>
+<p><strong>Description</strong>: More detailed information about the issue should be provided here.
+It already contains a template, which is explained below.</p>
+</li>
+<li>
+<p><strong>Attachment</strong>: Files that provide more information of the issue can be uploaded with the bug report using the button here.
+E.g,, screen-shots, log files, screen recordings.</p>
+</li>
+<li>
+<p><strong>Severity, Hardware, OS</strong>: These fields are optional and need not be set.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Description of problem:</strong></p>
+</div>
+<div class="paragraph">
+<p>Explain the issue in more detail here.</p>
+</div>
+<div class="paragraph">
+<p><strong>Version-Release number of selected component (if applicable):</strong></p>
+</div>
+<div class="paragraph">
+<p>The version of the package should be specified here.
+Once the package name is known, the version can be obtained by using the <code>rpm</code> command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ rpm -q &lt;packagename&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ rpm -q gnome-software
+gnome-software-3.28.2-1.fc28.x86_64</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>How reproducible:</strong></p>
+</div>
+<div class="paragraph">
+<p>How often is the issue observed?
+Usually, a good answer to this field is one of:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Always: the issue is observed each time.</p>
+</li>
+<li>
+<p>Sometimes: the issue occurs, but not each time.</p>
+</li>
+<li>
+<p>Only once: the issue was only observed once.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Issues that occur always are easiest for developers to diagnose, since they may also be able to replicate it on their machines to collect more information.
+If an issue only happens sometimes, developers must spend more time and effort to understand what causes the problem.
+If an issue was only observed once, it is even harder to debug.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<strong>Detailed bug reports make bugs easier to fix</strong>: If possible, you should try to investigate what steps cause the issue to happen and provide these steps in the next section:
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<strong>Submit a report even if unsure</strong>: If you aren&#8217;t sure of what to fill in, you should still submit the bug report.
+Maintainers can follow up with questions to gather more information.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Steps to Reproduce:</strong></p>
+</div>
+<div class="paragraph">
+<p>These enable other users to verify the bug, and they also inform the developers of what specific steps cause the issue.
+It makes it much easier for them to look at the source code and pick out the bits that may be faulty.</p>
+</div>
+<div class="paragraph">
+<p><strong>Actual results:</strong></p>
+</div>
+<div class="paragraph">
+<p>What is observed when the issue occurs?</p>
+</div>
+<div class="paragraph">
+<p><strong>Expected results:</strong></p>
+</div>
+<div class="paragraph">
+<p>What does the user expect that should happen if the software behaved correctly?</p>
+</div>
+<div class="paragraph">
+<p><strong>Additional info:</strong></p>
+</div>
+<div class="paragraph">
+<p>Any additional information that may be useful to the maintainer should be added here.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_step_2_follow_up_on_filed_reports"><a class="anchor" href="#_step_2_follow_up_on_filed_reports"></a>Step 2: Follow up on filed reports</h3>
+<div class="paragraph">
+<p>After a bug has been filed, you should keep an eye out for any updates.
+The <a href="../../package-maintainers/bug_status/" class="xref page">bug status workflow</a> documentation describes the different statuses a bug may have.
+An e-mail notification of any new comments to the report will be sent to everyone involved in the bug report---the reporter, other users, and the maintainer.
+Often, maintainers will comment with queries to gather more information on the issue. Sometimes other users that experience the same issue may also add more information.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<strong>Ask for instructions</strong>: If the maintainers ask for more information but it is unclear how it should be gathered, it is perfectly OK to ask the maintainers for explicit instructions.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<strong>E-mail notifications</strong>: The notifications are sent from <a href="mailto:bugzilla@redhat.com">bugzilla@redhat.com</a>.
+You should keep an eye out for e-mails from this address, and add it to your "no-spam" lists.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_step_3_test_updates"><a class="anchor" href="#_step_3_test_updates"></a>Step 3: Test updates</h3>
+<div class="paragraph">
+<p>A well reported bug will often be fixed,
+and the maintainer will make an improved version of the software available to Fedora users.
+Bodhi will add a comment to the report when this happens.
+You can help the maintainer by confirming if the improved version works better in the Bodhi.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../_images/20180825-how-to-file-a-bug-qa.png" alt="20180825 how to file a bug qa">
+</div>
+<div class="title">Figure 5. Bodhi Application adds comments informing users of an update that should fix the bug.</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<strong>Help test updates</strong>: All users can help by testing new versions of software.
+More information on this can be found <a href="https://fedoraproject.org/wiki/QA:Updates_Testing">here</a>.
+Note that this requires a <a href="https://admin.fedoraproject.org/accounts/">Fedora account</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Once the improved version of the software has passed the QA process, the bug will automatically be closed. Congratulations!</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_advice_for_specific_bug_types"><a class="anchor" href="#_advice_for_specific_bug_types"></a>Advice for specific bug types</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_crashes"><a class="anchor" href="#_crashes"></a>Crashes</h3>
+<div class="paragraph">
+<p>If you have experienced a program crash, it will almost certainly be necessary to include a stack trace with your bug report.  Crashes are often difficult to reproduce and even more difficult to fix, so the more information you can provide, the better.
+You will probably need to install -debuginfo RPMs so your stack trace will have useful debugging symbols.  See the following pages for more information:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://fedoraproject.org/wiki/StackTraces">Stack traces</a></p>
+</li>
+<li>
+<p><a href="https://fedoraproject.org/wiki/Java/StackTraces">Java stack traces</a></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_enhancement_requests"><a class="anchor" href="#_enhancement_requests"></a>Enhancement Requests</h3>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<strong>Most enhancement requests should be filed upstream.</strong>
+If the software is missing a feature you think it should have,
+you generally want to file that in the upstream project&#8217;s bug tracker.
+Feature requests in Fedora Linux are generally changing defaults, enabling disabled-by-default features, etc.
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>When filing an enhancement request in Bugzilla, add the keyword <code>Future Feature</code> to the report. The Keyword should be added right after submitting the bug. You will see the Keyword input box then. Make sure you supply enough information and rationale for your enhancement requests to be considered.</p>
+</li>
+<li>
+<p>The Fedora Project has the objective to be a platform built exclusively from free and open-source software. Suggestions to include support for proprietary or other legally encumbered software is not constructive. See the list of <a href="https://fedoraproject.org/wiki/Forbidden_items">forbidden items</a> page for details about this.</p>
+</li>
+<li>
+<p>If you want to make a new feature happen on your own create a wiki page for your feature and get it accepted.
+See more on the <a href="#program_management::changes_policy.adoc" class="xref unresolved">Changes Process</a>.</p>
+</li>
+<li>
+<p>Requests for new packages to be added to Fedora should not be filed in Bugzilla.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_graphical_user_interfaces"><a class="anchor" href="#_graphical_user_interfaces"></a>Graphical User Interfaces</h3>
+<div class="paragraph">
+<p>If you are having trouble with a graphical user interface (GUI),
+it often helps to include a screenshot or a screencast showing the bug in action.
+This helps developers find the exact place in the code which is causing the bug,
+and helps communicate what is going wrong when it is difficult to reproduce
+(for example, machine-specific layout problems).</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_hardware_specific_bugs"><a class="anchor" href="#_hardware_specific_bugs"></a>Hardware-Specific Bugs</h3>
+<div class="paragraph">
+<p>A strong indication of a hardware-specific bug is that other people with different hardware should be able to reproduce the bug, but can&#8217;t.
+They also usually involve code that specifically interacts with a peripheral, such a webcam, video card, printer, or sound card (so for instance, it is uncommon for bugs affecting the user interface of a word processor or desktop calculator to be hardware-specific).</p>
+</div>
+<div class="paragraph">
+<p>If you suspect your bug has something to do with the specific hardware you have, it will be necessary to identify the hardware so targeted action can be taken.</p>
+</div>
+<div class="paragraph">
+<p>PCI and PCI-E devices found by the kernel can be listed with <code>lspci</code>.</p>
+</div>
+<div class="paragraph">
+<p>USB devices found by the kernel can be listed with <code>lsusb</code>.</p>
+</div>
+<div class="paragraph">
+<p>You may also find mention of specific devices or drivers in your system logs (run <code>journalctl</code>).</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_security_sensitive"><a class="anchor" href="#_security_sensitive"></a>Security-Sensitive</h3>
+<div class="paragraph">
+<p>We pay special attention to security-sensitive bugs.
+Read the <a href="https://fedoraproject.org/wiki/Security_Bugs#Reporting_a_Security_Vulnerability">Reporting a Security Vulnerability</a> page to understand the special process of opening a security bug.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_information_required_for_bugs_in_specific_components"><a class="anchor" href="#_information_required_for_bugs_in_specific_components"></a>Information required for bugs in specific components</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://fedoraproject.org/wiki/How_to_debug_installation_problems">Anaconda (installer)</a></p>
+</li>
+<li>
+<p><a href="https://fedoraproject.org/wiki/How_to_debug_Dracut_problems">Dracut</a></p>
+</li>
+<li>
+<p><a href="https://fedoraproject.org/wiki/How_to_debug_Firefox_problems">Firefox</a></p>
+</li>
+<li>
+<p><a href="https://fedoraproject.org/wiki/Category:Fonts_and_text_QA">Fonts</a></p>
+</li>
+<li>
+<p><a href="https://fedoraproject.org/wiki/KernelBugTriage">Kernel</a></p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://fedoraproject.org/wiki/How_to_debug_sound_problems">Sound</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><a href="https://fedoraproject.org/wiki/How_to_debug_printing_problems">Printing</a></p>
+</li>
+<li>
+<p><a href="https://fedoraproject.org/wiki/SELinux/Troubleshooting">SELinux</a></p>
+</li>
+<li>
+<p><a href="https://fedoraproject.org/wiki/How_to_debug_Systemd_problems">Systemd</a></p>
+</li>
+<li>
+<p><a href="https://fedoraproject.org/wiki/How_to_debug_Virtualization_problems">Virtualization</a></p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://fedoraproject.org/wiki/How_to_use_qemu">QEMU</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><a href="https://fedoraproject.org/wiki/How_to_debug_Wayland_problems">Wayland</a></p>
+</li>
+<li>
+<p><a href="https://fedoraproject.org/wiki/How_to_debug_Xorg_problems">X.org</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_more_reading"><a class="anchor" href="#_more_reading"></a>More reading</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>These are some more resources for those looking to report better bugs by providing more information:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://bugzilla.mozilla.org/page.cgi?id=etiquette.html">Bugzilla etiquette: how to be polite in bug related conversations on the bug tracker</a>.</p>
+</li>
+<li>
+<p><a href="https://www.chiark.greenend.org.uk/~sgtatham/bugs.html">A general introduction on how to file good bugs (available in multiple languages)</a>.</p>
+</li>
+<li>
+<p><a href="https://fedoraproject.org/wiki/StackTraces">An introduction to Stacktraces---information software provides about where the fault may lie</a>.</p>
+</li>
+<li>
+<p><a href="https://fedoramagazine.org/file-better-bugs-coredumpctl/">Using <code>coredumpctl</code> to gather more information for bug reports</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="" class="mt-16">
+    <p class="contribute px-6 py-3 w-fit bg-gray-100 dark:bg-fp-blue-darker rounded-full">Want to help? <a class="" href="https://docs.fedoraproject.org/en-US/fedora-docs/contributing/">Learn how to contribute to Fedora Docs <span class="ml-2 inline-block text-3xl leading-4 h-max align-top text-black dark:text-white">›</span></a></p>
+</div>
+</article>
+
+  </div>
+</main>
+</div>
+<footer class="flex flex-col bg-fp-gray-lightest dark:bg-fp-blue-darkest dark:text-fp-gray-light text-sm dark:border-t dark:border-gray-800">
+  <section class="pt-2 pb-6 px-2">
+
+    <p class="text-center">All Fedora Documentation content available under <a href="http://creativecommons.org/licenses/by-sa/4.0/legalcode">CC BY-SA 4.0</a> or, when specifically noted, under another <a href="https://fedoraproject.org/wiki/Licensing:Main">accepted</a> free and open content license.</p>
+
+    <div class="container mx-auto flex flex-col lg:flex-row my-4">
+      <div class="mx-auto lg:mx-0 lg:basis-3/12">
+        <img
+          src="../../_/img/fedora-blue.svg"
+          alt="Fedora Logo"
+          class="w-36 mb-4 lg:mb-0"
+        />
+      </div>
+      <ul
+        class="mx-4 flex items-center grow justify-center gap-4 lg:mx-0 lg:gap-12 xl:gap-20 2xl:gap-28 lg:justify-start"
+      >
+        <li class="list-none">
+          <a
+            href="/en-US/legal/privacy/"
+            class="text-fp-gray-darkest dark:text-fp-gray transition duration-300 ease-in-out hover:text-fp-gray dark:hover:text-fp-gray-light"
+            >Privacy Statement</a
+          >
+        </li>
+        <li class="list-none">
+          <a
+            href="/en-US/legal/"
+            class="text-fp-gray-darkest transition duration-300 ease-in-out hover:text-fp-gray dark:text-fp-gray dark:hover:text-fp-gray-light"
+            >Legal</a
+          >
+        </li>
+        <li class="list-none">
+          <a
+            href="/en-US/project/code-of-conduct/"
+            class="text-fp-gray-darkest transition duration-300 ease-in-out hover:text-fp-gray dark:text-fp-gray dark:hover:text-fp-gray-light"
+            >Code of Conduct</a
+          >
+        </li>
+        <li class="list-none">
+          <a
+            href="https://getfedora.org/en/sponsors/"
+            class="text-fp-gray-darkest transition duration-300 ease-in-out hover:text-fp-gray dark:text-fp-gray dark:hover:text-fp-gray-light"
+            >Sponsors</a
+          >
+        </li>
+      </ul>
+    </div>
+    <p class="text-center text-xs text-fp-gray-dark">Last build: 2026-10-17 02:50:05 UTC  | Last content update: 2026-08-03 </p>
+  </section>
+  <!-- Red Hat Sponsorship Section -->
+  <section class="bg-black py-6 text-center md:text-left px-2">
+    <div class="container mx-auto flex flex-col lg:flex-row">
+      <div class="mx-auto items-center lg:mx-0 lg:basis-3/12">
+        <img
+          src="../../_/img/logo-sponsored-by-red-hat.png"
+          alt="Sponsored by Red Hat Logo"
+          class="mb-4 xl:mb-0"
+        />
+      </div>
+
+      <div class="flex items-center justify-center text-center lg:text-left lg:ml-8 xl:-ml-8 2xl:ml-5">
+        <p class="text-white">
+          Fedora is sponsored by Red Hat.
+          <a class="block text-fp-gray xl:ml-2 xl:inline" href="https://www.redhat.com/en/technologies/linux-platforms/articles/relationship-between-fedora-and-rhel">
+            Learn more about the relationship between Red Hat and Fedora.
+          </a>
+        </p>
+      </div>
+    </div>
+  </section>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+<script async src="../../_/js/vendor/datatables.js"></script>
+<script async src="../../_/js/vendor/tabs.js"></script>
+<script src="../../_/js/vendor/lunr.js"></script>
+<script src="../../_/js/search-ui.js" id="search-ui-script" data-site-root-path="../.." data-snippet-length="100" data-stylesheet="../../_/css/search.css"></script>
+<script async src="../../search-index.js"></script>
+  </body>
+</html>

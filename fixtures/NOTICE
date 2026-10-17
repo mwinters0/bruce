@@ -1,0 +1,23 @@
+Fixtures for the bruce test suite.
+
+docs-fp-o/
+  Saved, unmodified, from https://docs.fedoraproject.org, on the dates in
+  manifest.json, which also records why each page was chosen. The content is
+  by the Fedora Documentation Team and contributors and is licensed CC BY-SA
+  4.0 (https://creativecommons.org/licenses/by-sa/4.0/). These copies are
+  shared under the same licence. Each page's source file is named by its
+  "Edit this Page" link. scripts/fixtures.py chooses and saves them.
+
+generators/
+  Written by hand for this project, under this repository's licence. They
+  reproduce only the markup that the invariants register records (I9, I12) of
+  Docusaurus, MkDocs Material, Docsy, Furo, the Read the Docs Sphinx theme and
+  Antora's tabs, with example.org and github.com/example links in place of the real
+  ones. The real pages the markup was read from, on 2026-10-17:
+    https://docusaurus.io/docs/installation
+    https://squidfunk.github.io/mkdocs-material/getting-started/
+    https://www.docsy.dev/docs/get-started/
+    https://pradyunsg.me/furo/quickstart/
+    https://docs.readthedocs.io/en/stable/intro/getting-started-with-sphinx.html
+  generators/generic/ holds pages with and without landmarks, and with
+  competing edit links, for the generic heuristics (D34, D36).
