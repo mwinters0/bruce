@@ -14,7 +14,8 @@ Red means a repoint is due ([`../process.md`](../process.md),
 
 ## What exists
 
-No Rust. The design is settled ([`../design/decisions.md`](../design/decisions.md))
+No `bruce` code; the only Rust is the tokenizer spike in `spikes/tokenizer/`,
+outside any crate the checks see. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
@@ -32,8 +33,9 @@ The spec is [`../wip/roadmap-P1-scaffold.md`](../wip/roadmap-P1-scaffold.md).
   `tabs` class token or a `_tabs_<n>` id, and the re-measured 698 hold one
   tab set, saved as a fixture.
   [notes](../wip/roadmap-P1.1-fixtures-notes.md)
-- [ ] **1.2** Tokenizer spike: html5gum against lol_html in `spikes/tokenizer/`;
-  D11 names the winner.
+- [x] **1.2** Tokenizer spike: html5gum against lol_html in `spikes/tokenizer/`;
+  D11 names lol_html.
+  [notes](../wip/roadmap-P1.2-tokenizer-notes.md)
 - [ ] **1.3** Scaffold: the crate, the Rust pin, the mise tasks, the D39
   modules, and the check that only `cli` names a concrete profile.
 - [ ] **1.4** Config: the loader with D40's defaults, and the manual's config
@@ -55,3 +57,12 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
+- **lol_html won D11 on selectors alone.** The spike tied: every fixture
+  equal, the workload within noise (24.2 ms against html5gum's callback
+  emitter's 23.3 ms), so D11's written tiebreaker, streaming selector
+  matching, decided it. Not weighed by D11 when it was written: lol_html
+  brings 42 crates to html5gum's 2, hands over undecoded attributes and text,
+  and reaches an element's context only through handler-order flags
+  (`../wip/roadmap-P1.2-tokenizer-notes.md`). Reconsidering means html5gum's
+  callback emitter with our own open-element stack, and a selector matcher
+  over that stack before D33's rules can land.

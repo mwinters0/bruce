@@ -23,3 +23,17 @@ is, and then deleted (`../process.md`, "Inboxes: facts filed by destination").
   the layout".
 - **Origin.** P1.1, and the review of its call, 2026-10-17. Contingent on
   docs.fp.o keeping Antora's URL scheme with no per-component URL override.
+
+## docs.fp.o's 404 page has no generator meta
+
+- **Fact.** The site's not-found page
+  (`fixtures/docs-fp-o/en-US/no-such-page-bruce-fixture/404.html`) carries the
+  Antora chrome but no `<meta name="generator">`, so under `auto` (D35) it is
+  profiled `generic`, its region drawn by `<main class="article">` though it
+  has an `article.doc` as every other page does.
+- **Why P2 cares.** The extractor decides whether a non-2xx body is extracted
+  at all (D16 already makes the page `broken_url`); if it is, its facts come
+  from the wrong profile. A local build's `404.html` (D1, P5) reaches the
+  extractor as an ordinary page.
+- **Origin.** P1.2, 2026-10-17. Contingent on the Fedora UI bundle's 404
+  layout omitting the meta.

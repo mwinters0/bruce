@@ -32,8 +32,8 @@ the command).
 ## What the next slices inherit
 
 - **P1.2's workload** is `manifest.json`'s pages. The largest is
-  `legal/all-allowed` (508 KB); the median is about 27 KB. Every page carries
-  `<meta name="generator" content="Antora 3.1.15">`.
+  `legal/all-allowed` (508 KB); the median is about 27 KB. Every page but the
+  404 carries `<meta name="generator" content="Antora 3.1.15">`.
 - **Minified markup.** The Material and Docsy fixtures keep their real
   unquoted attributes (`rel=edit`, `class=md-main`) and one-line layout, which
   a tokenizer must read as it does quoted ones.
@@ -41,7 +41,8 @@ the command).
   component and more for the largest. "Largest page" and "most ids" mean
   those of the sample.
 - **Fixture 404:** `no-such-page-bruce-fixture/404.html` is the site's own
-  not-found page, a full Antora page with the generator meta.
+  not-found page: the Antora chrome, with no generator meta, so `auto` (D35)
+  profiles it `generic`.
 - **Frozen versions:** `fedora/f39/` has `rel=canonical` pointing at
   `/en-US/fedora/latest/`. 14 of the 698 sampled pages have a canonical other
   than their own URL.

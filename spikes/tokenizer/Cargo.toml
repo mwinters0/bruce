@@ -1,0 +1,20 @@
+[package]
+name = "tokenizer-spike"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+html5gum = "=0.8.4"
+lol_html = "=3.0.1"
+scraper = "0.27.0"
+htmlize = { version = "1.1.0", features = ["unescape_fast"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+criterion = "0.8.2"
+
+[[bench]]
+name = "extract"
+harness = false

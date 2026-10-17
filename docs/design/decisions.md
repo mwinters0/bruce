@@ -226,12 +226,13 @@ It was free on crates.io on 2026-10-17. `anchorage` (D25) was taken there.
 
 ## Build
 
-### D11 Our own stack, not lychee-lib
-reqwest, governor, a streaming HTML tokenizer and duckdb. What is ours (crawl frontier, link graph,
-anchor semantics) lychee does not model, and its extractor would need working around (D12's
-rejection). The tokenizer, html5gum or lol_html, is chosen by a benchmark on saved docs.fp.o pages,
-weighing streaming CSS-selector matching, which profiles and D33's later rules want.
-Evidence: `historical/initial.md`, "Existing tools".
+### D11 Our own stack, not lychee-lib; lol_html is the tokenizer
+reqwest, governor, lol_html and duckdb. What is ours (crawl frontier, link graph, anchor semantics)
+lychee does not model, and its extractor would need working around (D12's rejection). lol_html and
+html5gum tied on the spike's workload (every fixture equal, speed within noise); lol_html matches
+CSS selectors while streaming, which profiles and D33's rules want. Rejected: html5gum (2 crates to
+lol_html's 42), which leaves us an open-element stack and a selector matcher to write.
+Evidence: `historical/initial.md`, "Existing tools"; `spikes/tokenizer/`, its numbers in P1.2's notes.
 
 ### D23 DuckDB is bundled; distribution is a release binary on the forge
 The `duckdb` crate's `bundled` feature makes a self-contained binary that a CI job in the
