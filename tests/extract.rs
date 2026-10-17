@@ -321,7 +321,7 @@ fn each_generators_edit_link_is_found_by_its_own_signal() {
     }
 }
 
-/// A page with no edit candidate has none.
+/// A page with no edit candidate has none (D36).
 #[test]
 fn a_page_without_an_edit_signal_has_no_edit_link() {
     assert!(edit_link("generators/generic/main-landmark.html").is_none());

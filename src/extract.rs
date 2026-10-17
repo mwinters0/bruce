@@ -165,7 +165,8 @@ impl std::fmt::Display for Stop {
 impl std::error::Error for Stop {}
 
 /// The content of the page's first `<meta name="generator">` (D35), read
-/// from the head: the pass stops at `<body>`, past which no profile looks.
+/// from the head: the pass stops at a `<body>` start tag, past which no
+/// profile looks, and on a page without one reads to the end.
 fn generator(html: &str) -> Result<Option<String>, Error> {
     let found = RefCell::new(None);
     let settings = Settings::new()

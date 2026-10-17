@@ -2,8 +2,8 @@
 //! sits (D34).
 //!
 //! The pass reads `[id], a[name]` in document order. Whether an anchor is in
-//! the content region is a flag a handler on the region's descendants sets
-//! just before it (handlers on one element run in registration order, and
+//! the content region is a flag a handler on the region and its descendants
+//! sets just before it (handlers on one element run in registration order, and
 //! none sees an ancestor). Whether the page has a region at all is known only
 //! when it ends, which is why placement is decided there.
 

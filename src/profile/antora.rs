@@ -6,9 +6,10 @@
 //! `version` from the nav container, verbatim; `module` and `rel_path` from
 //! the edit URL's `modules/<module>/pages/<rel_path>` tail. A page with no
 //! nav container (a `without_menu` layout) takes its `component` from the first
-//! path segment under the site root the search script names (I13), and
-//! records no `version`, so a component with no version fact *is* a
-//! URL-derived one. An unresolved xref is tagged with its raw refspec (I6, D20).
+//! directory under the site root the search script names (I13), and records
+//! no `version`. A nav container carrying both attributes, as docs.fp.o's
+//! does (I8), makes a component with no version fact a URL-derived one; one
+//! lacking `data-component` (I12) gives no component at all. An unresolved xref is tagged with its raw refspec (I6, D20).
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -23,9 +24,10 @@ use super::{BoxError, Extract, Lookup, Profile, Settled, Sink, View};
 pub struct Antora;
 
 /// A page's Antora coordinates as columns (D19, D37). `version` is the nav
-/// container's, verbatim, a placeholder (`""`, `master`) included, and NULL on
-/// a page with none, whose `component` came from its URL. D19 reads a
-/// placeholder and a NULL alike, as the component's only or latest version.
+/// container's, verbatim, a placeholder (`""`, `master`) included, and NULL
+/// where it has no `data-version` or the page has no nav container, whose
+/// `component` then came from its URL. D19 reads a placeholder and a NULL
+/// alike, as the component's only or latest version.
 const PAGES: View = View {
     name: "antora_pages",
     select: "SELECT run_id, url_id, \

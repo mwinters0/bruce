@@ -6,9 +6,10 @@ over an alternative, and obvious changes argued and refused. Nothing here says h
 entry as `docs/design/decisions.md`, "D12"; the rest of the rules, the line cap included, are
 `docs/process.md`, "The decision register".
 
-The modules are P1's scaffold, and `config`, `store` and `profile` are built. D1–D30 were settled in the bootstrap grilling (2026-10-17, frozen as
-`historical/initial.md`), D31 the same day, D32 onward in P1's grilling, and its **Code** is the module that will hold it once built. D25 and D29
-are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s phase index.
+The modules are P1's scaffold, and `cli`, `config`, `store`, `profile`, `extract` and `forge` hold code. D1–D30 were settled
+in the bootstrap grilling (2026-10-17, frozen as `historical/initial.md`), D31 the same day, D32 onward in P1's grilling, and
+an entry's **Code** is the module that will hold it once built. D25 and D29 are spent: D25 was superseded by D30, and D29
+became `roadmap.md`'s phase index.
 
 <!-- decision-watermark: D44 -->
 
@@ -123,10 +124,10 @@ This answers when a link broke and which upstream change did it, and allows run 
 pruned explicitly (`bruce prune`). Rejected: latest-state upsert, which cannot date a breakage.
 
 ### D15 Pages store metadata, a content hash and their profile's facts; bodies only on request
-The hash detects change because validators are unreliable (I3). Profile facts (D37), Antora's
-component, version and module among them, group reports by what owns a page. Bodies go in an opt-in, prunable table. The hash is
-xxh3-128 (not adversarial; faster than BLAKE3) over tags, attributes and decoded text in a scope `hash_root`/`hash_exclude` set, by
-default the profile's region; a page matching no root is hashed whole. Rejected: storing bodies by default (about 140 MB per en-US
+The hash detects change because validators are unreliable (I3). Profile facts (D37), Antora's component, version and module
+among them, group reports by what owns a page. Bodies go in an opt-in, prunable table. The hash is xxh3-128 (not adversarial;
+faster than BLAKE3) over tags, attributes and decoded text in a scope `hash_root`/`hash_exclude` set, by default the profile's
+region; a page matching no root is hashed whole, less exclusions. Rejected: storing bodies by default (about 140 MB per en-US
 run, uncompressed); raw bytes (docs.fp.o's `Last build:` changes every page every build); one fixed default root (an exclusion
 alone would barely act); an empty or region fallback for a set root matching nothing, hiding the misconfiguration a page changing
 every build shows. Code: `extract::hash`. Evidence: `tests/extract.rs`, the `Last build:` test.
@@ -216,7 +217,7 @@ unresolved xref: D19, then the same steps. Externals default to the baseline's v
 `[[root]]` entries are crawled fully, each with include/exclude globs and its own sitemap URL.
 `allowlist` lists hosts checked one hop deep, `[rate]` holds the default limit and `[host."<h>"]`
 a host's own `per_second` and `robots` (D8). Each root names its profile (D35). Roots are
-configurable so the tool is not tied to Fedora, and every key has a default (D40). Keys are
+configurable so the tool is not tied to Fedora, and every key but a root's `url` has a default (D40). Keys are
 snake_case and `[[root]]` singular, as Cargo's `[[bin]]`; rejected: kebab-case, which lychee and
 mise, the nearest tools, do not use; `allowlist` inside `[host]`, since a root's own host belongs
 there and in no allowlist, so the two answer different questions.

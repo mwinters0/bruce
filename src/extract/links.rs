@@ -62,7 +62,8 @@ impl Kind {
 /// One reference on a page.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Link {
-    /// The attribute's decoded value, as written.
+    /// The attribute's decoded value, as written: for `srcset` one
+    /// candidate's URL, for a refresh the URL in `content`, unquoted.
     pub raw: String,
     /// `raw` resolved against the page's URL or its `<base href>`; `None`
     /// where it does not parse as a URL.
@@ -98,7 +99,8 @@ impl Links {
     }
 
     /// The handlers: one reading every element in [`READ`] and `<base>`, and,
-    /// registered last so the profile's have run, one tagging what it read.
+    /// registered after the profile's so they have run, one tagging what it
+    /// read.
     /// `read` goes before the profile's handlers and `tag` after.
     pub(super) fn handlers<'h>(
         this: &'h RefCell<Links>,
@@ -169,7 +171,7 @@ impl Links {
     }
 }
 
-/// The references one element makes, in the order a reader meets them. An
+/// The references one element makes, in a fixed order per tag. An
 /// empty `src`, `srcset` or `href` on anything but an anchor names no
 /// resource, and a browser requests none.
 fn references(el: &Element) -> Vec<(String, Kind)> {
@@ -286,8 +288,8 @@ fn srcset_urls(value: &str) -> Vec<String> {
 }
 
 /// The URL of a `<meta http-equiv=refresh>`'s `content`, as HTML parses it:
-/// a delay, a `;` or `,` or space, then `url=` and the URL, which may be
-/// quoted. `None` for a plain reload (`content="30"`) or content that does
+/// a delay, a `;` or `,` or space, then the URL, after an optional `url=`,
+/// and possibly quoted. `None` for a plain reload (`content="30"`) or content that does
 /// not start with a delay.
 fn refresh_url(content: &str) -> Option<String> {
     let ws = |c: char| c.is_ascii_whitespace();

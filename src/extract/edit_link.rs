@@ -30,7 +30,8 @@ const CLASSES: [&str; 3] = [
     "theme-edit-this-page",
 ];
 
-/// How much of a link's text is kept: enough for any phrase.
+/// How much of a link's text is kept, enough for any phrase: text is
+/// appended a chunk at a time until it reaches this many bytes.
 const TEXT_LIMIT: usize = 200;
 
 /// One `<a href>` as the ranking will read it.
@@ -40,7 +41,7 @@ struct Candidate {
     rel_edit: bool,
     class: bool,
     title: Option<String>,
-    /// Its text, undecoded, up to [`TEXT_LIMIT`] bytes.
+    /// Its text, undecoded, cut off past [`TEXT_LIMIT`] bytes.
     text: String,
 }
 

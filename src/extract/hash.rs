@@ -26,7 +26,7 @@ use crate::profile::ElementHandlers;
 
 /// One page's two running hashes and the flags that route each item.
 pub(super) struct Hash {
-    /// Everything in scope beneath a root element.
+    /// Everything in scope in a root element, its own start tag included.
     root: Xxh3,
     /// Everything not excluded, the fallback where no root matched.
     page: Xxh3,

@@ -24,9 +24,9 @@ pub type BoxError = Box<dyn std::error::Error + Send + Sync>;
 /// handlers keyed by selector, in registration order (D38).
 pub type ElementHandlers<'h> = Vec<(Cow<'static, Selector>, ElementContentHandlers<'h>)>;
 
-/// A profile's extension of the core (D38). Detect, Views and the core half
-/// of Extract are built; Resolve is declared here and given a body by the
-/// Antora resolver (P5).
+/// A profile's extension of the core (D38). Detect, Extract and Views are
+/// built; Resolve is declared here and given a body by the Antora resolver
+/// (P5).
 pub trait Profile: Send + Sync {
     /// The name a root's `profile` key gives, and the namespace of the
     /// profile's facts and views (D37).
@@ -62,7 +62,8 @@ pub trait Profile: Send + Sync {
 }
 
 /// One SQL view a profile ships. `name` begins with the profile's name and an
-/// underscore, so two profiles' views cannot collide.
+/// underscore, by convention and unchecked, so two profiles' views collide
+/// only where one profile's name is another's and `_` more.
 #[derive(Debug, Clone, Copy)]
 pub struct View {
     /// The view's name in the database.

@@ -96,7 +96,7 @@ Each entry is one selector, or several separated by commas. Tag, class, id
 and attribute selectors, descendant (` `) and child (`>`) combinators,
 `:not()`, `:first-child` and `:nth-child()` are accepted; sibling
 combinators (`+`, `~`) and `:has()` are errors, since `bruce` reads a page
-in one pass. Changing either key changes every page's hash once.
+in one pass. Changing either key can change every page's hash, once.
 
 ## Allowlist
 

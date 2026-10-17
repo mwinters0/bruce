@@ -7,7 +7,7 @@ index table is the schedule. Where what is built falls short is
 [`deficiencies.md`](deficiencies.md). Dated pickup notes and plan-changing
 discoveries are in `history/`.
 
-<!-- repointed: 5404bcf --> The marker names the commit `scripts/repoint.py`
+<!-- repointed: 6e81a2f --> The marker names the commit `scripts/repoint.py`
 measures the record's growth from.
 Red means a repoint is due ([`../process.md`](../process.md),
 "Repointing").
@@ -15,8 +15,8 @@ Red means a repoint is due ([`../process.md`](../process.md),
 ## What exists
 
 The `bruce` crate is a scaffold: D39's top-level modules, a binary that says
-no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Five modules hold
-code: `config`, the loader; `store`, the DuckDB schema, its version check and
+no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Six modules hold
+code: `cli`, the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check and
 the single writer for two tables; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views and Extract, with Resolve
 declared and empty; `extract`, the pass over one page, which yields its
