@@ -1,0 +1,18 @@
+[tools]
+# Every tool is pinned exactly: under `latest`, two runs of one commit could
+# check under different versions. Rust is not pinned yet; P1 pins it (D23).
+#
+# `cargo nextest run` runs the suite once there is one (`scripts/check.py`),
+# one test a CPU, nextest's default: no thread cap is committed, a fixed count
+# being wrong on every other checkout, and a machine needing one sets
+# `NEXTEST_TEST_THREADS`.
+"aqua:nextest-rs/nextest/cargo-nextest" = "0.9.146"
+# `mise run check` and every `scripts/*.py`.
+uv = "0.12.17"
+
+# Every per-round check once, logged under `runs/check/`; `--verify` reuses a
+# passing run of the same tree. `scripts/check.py` says what it runs and why.
+[tasks.check]
+description = "Run the per-round checks once and summarize them"
+dir = "{{config_root}}/scripts"
+run = "uv run check.py"

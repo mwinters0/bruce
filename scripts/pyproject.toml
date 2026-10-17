@@ -1,0 +1,9 @@
+[project]
+name = "bruce-scripts"
+version = "0.1.0"
+description = "The development-process checks behind `mise run check`"
+requires-python = ">=3.13"
+
+# None: every check is stdlib, so a fresh checkout runs them with nothing to
+# fetch beyond the interpreter.
+dependencies = []

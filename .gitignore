@@ -1,0 +1,8 @@
+/target
+/runs
+/scripts/.venv
+__pycache__/
+*.swp
+.DS_Store
+# graft local graph cache: regenerable, not committed.
+/graft/
