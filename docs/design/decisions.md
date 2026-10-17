@@ -6,7 +6,7 @@ over an alternative, and obvious changes argued and refused. Nothing here says h
 entry as `docs/design/decisions.md`, "D12"; the rest of the rules, the line cap included, are
 `docs/process.md`, "The decision register".
 
-The modules are P1's scaffold, and only `config` is built. D1–D30 were settled in the bootstrap grilling (2026-10-17, frozen as
+The modules are P1's scaffold, and `config`, `store` and `profile` are built. D1–D30 were settled in the bootstrap grilling (2026-10-17, frozen as
 `historical/initial.md`), D31 the same day, D32 onward in P1's grilling, and its **Code** is the module that will hold it once built. D25 and D29
 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s phase index.
 
@@ -73,7 +73,7 @@ parses. Rejected: discovery in the Antora profile only, which leaves CI's build 
 D17) resting on one generator.
 
 ### D37 Profile facts live in one core table, `page_facts`, under namespaced keys
-`(run_id, page_id, key, value)`, keys like `antora.component`. Each profile ships views pivoting its
+`(run_id, url_id, key, value)`, keys like `antora.component`. Each profile ships views pivoting its
 keys into columns, and D19 resolves through Antora's. D33's rules can write only a key and a value.
 Rejected: a typed table per profile (a migration story each); a JSON column (no typed joins, no
 simpler). Reopens: D19 slow over the view, fixed by materializing that view alone.
@@ -98,7 +98,8 @@ from the guide describing it; a hand-built `sim/`, which no other machine can re
 
 ### D38 A profile has four hooks: detect, extract, resolve, views
 Detect claims a generator string (D35). Extract records facts, draws the content region (D34),
-may override the edit link (D36), and tags links the core cannot read (I6). Resolve maps a tagged
+may override the edit link (D36), and tags links the core cannot read (I6), by handing the core's
+one lol_html pass selector/handler pairs rather than tokens (D11). Resolve maps a tagged
 reference to a URL through a lookup the store provides (D19, D20, D22). Views is its SQL (D37).
 `generic` leaves only Resolve empty, having no reference that is not a URL. Reopens: a second hook
 empty in `generic`, the sign the trait is bending around Antora.

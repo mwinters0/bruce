@@ -15,8 +15,11 @@ Red means a repoint is due ([`../process.md`](../process.md),
 ## What exists
 
 The `bruce` crate is a scaffold: D39's top-level modules, a binary that says
-no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Only `config`
-holds code, the loader; the rest hold only their doc. `docs/manual/` holds the
+no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Three modules hold
+code: `config`, the loader; `store`, the DuckDB schema, its version check and
+the single writer for two tables; and `profile`, the trait, the registry and
+the `generic` and `antora` profiles' Detect and Views, with Extract and Resolve
+declared and empty. The rest hold only their doc. `docs/manual/` holds the
 config reference. The tokenizer spike in `spikes/tokenizer/` is its own project,
 outside the crate and the checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
@@ -49,8 +52,9 @@ The spec is [`../wip/roadmap-P1-scaffold.md`](../wip/roadmap-P1-scaffold.md).
   and `robots`, `crawl_delay` goes, and a root's `url` must be in its own
   scope.
   [notes](../wip/roadmap-P1.4.1-config-hosts-notes.md)
-- [ ] **1.5** Store and the profile trait: the schema with `meta` and
+- [x] **1.5** Store and the profile trait: the schema with `meta` and
   `page_facts`, the writer skeleton, and the `Profile` trait.
+  [notes](../wip/roadmap-P1.5-store-profile-notes.md)
 
 ## Not started
 

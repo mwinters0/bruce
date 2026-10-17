@@ -15,7 +15,7 @@ records, each part saying why its module holds it. **Not in one place** names wh
 does not explain.
 
 Every concept below is, so far, one top-level module, placed by P1's spec (`../wip/roadmap-P1-scaffold.md`, "Where the concepts
-live"). Only `config` holds code; the rest hold only their doc. The
+live"). `config`, `store` and `profile` hold code; the rest hold only their doc. The
 decisions each carries are cited in its module's doc.
 
 ## Subcommands
@@ -45,12 +45,16 @@ decisions each carries are cited in its module's doc.
 
 ## Storage
 
-- **bruce** — `store.rs`.
+- **bruce** — `store/`: the connection, the schema's version check and a
+  profile's views in the parent file, the tables in the `schema` child and
+  the single writer thread in the `writer` child. It sits above `profile`
+  because it asks each profile for its views and answers its lookups (D39).
 
 ## Profiles
 
-- **bruce** — `profile/`: the trait in the parent file, and a child module
-  for each profile compiled in (D33), `generic` and `antora`.
+- **bruce** — `profile/`: the trait, the registry and the fact and lookup
+  types in the parent file, and a child module for each profile compiled in
+  (D33), `generic` and `antora`. `cli` alone builds the registry (D39).
 
 ## Forge edit-URL shapes
 

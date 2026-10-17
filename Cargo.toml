@@ -7,7 +7,9 @@ description = "A link checker that validates anchors and keeps a link graph with
 publish = false
 
 [dependencies]
+duckdb = { version = "1.10506.1", features = ["bundled"] }
 globset = "0.4.20"
+lol_html = "3.0.1"
 serde = { version = "1.0.229", features = ["derive"] }
 toml = "1.1.8"
 url = "2.5.8"
