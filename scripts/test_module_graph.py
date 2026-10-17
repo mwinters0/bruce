@@ -61,6 +61,7 @@ def run(graph: mg.Graph, **kw) -> tuple[int, str]:
     out = io.StringIO()
     kw.setdefault("accepted", {})
     kw.setdefault("owed", {})
+    kw.setdefault("confined", {})
     code = mg.report(graph, out, **kw)
     return code, out.getvalue()
 
@@ -187,6 +188,32 @@ class Cycles(unittest.TestCase):
         f.refer(parent, "Kay", kay, 1)
         code, out = run(f.graph())
         self.assertIn("!! cycle: c::p, c::p::k", out)
+
+
+class Confined(unittest.TestCase):
+    RULE = {"c::b": (frozenset({"c::r"}), "only r names b")}
+
+    def reader(self, module: str) -> tuple[int, str]:
+        f = Fixture({"c/src/x.rs": (module, "pub fn ay() {\n    crate::b::Bee;\n}\n"), B: ("c::b::k", "pub struct Bee;\n")})
+        f.define(B, "Bee", BEE, (0, 0)).define("c/src/x.rs", "ay", sym("c", "x/ay()."), (0, 2))
+        f.refer("c/src/x.rs", "Bee", BEE)
+        return run(f.graph(), confined=self.RULE)
+
+    def test_an_edge_into_a_confined_module_from_another_fails(self):
+        code, out = self.reader("c::a")
+        self.assertEqual(code, 1)
+        self.assertIn("!! confined: c::a -> c::b::k: only r names b", out)
+        self.assertIn("c/src/x.rs:2 ay -> Bee", out)
+
+    def test_its_readers_their_children_and_its_own_descendants_pass(self):
+        for module in ("c::r", "c::r::q", "c::b"):
+            code, out = self.reader(module)
+            self.assertEqual(code, 0, out)
+
+    def test_a_confinement_naming_no_module_is_stale(self):
+        code, out = run(two_modules("").graph(), confined={"c::z": (frozenset({"c::a"}), "why")})
+        self.assertEqual(code, 1)
+        self.assertIn("!! stale confinement: c::z is no module", out)
 
 
 class Design(unittest.TestCase):
@@ -335,7 +362,8 @@ class NoWorkspace(unittest.TestCase):
     def test_no_manifest_is_an_empty_graph_that_passes(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = io.StringIO()
-            self.assertEqual(mg.main([], repo=Path(tmp), out=out), 0, out.getvalue())
+            with unittest.mock.patch.dict(mg.CONFINED, clear=True):
+                self.assertEqual(mg.main([], repo=Path(tmp), out=out), 0, out.getvalue())
         self.assertEqual(
             out.getvalue(),
             "module-graph: no workspace yet (no Cargo.toml): 0 modules, 0 edges, no cycle; "
@@ -345,7 +373,10 @@ class NoWorkspace(unittest.TestCase):
     def test_a_kept_cycle_with_no_workspace_is_stale(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = io.StringIO()
-            with unittest.mock.patch.dict(mg.ACCEPTED, {frozenset({"c::a", "c::b"}): "why"}):
+            with (
+                unittest.mock.patch.dict(mg.ACCEPTED, {frozenset({"c::a", "c::b"}): "why"}),
+                unittest.mock.patch.dict(mg.CONFINED, clear=True),
+            ):
                 self.assertEqual(mg.main([], repo=Path(tmp), out=out), 1)
         self.assertIn("!! stale acceptance: c::a, c::b is no cycle", out.getvalue())
 
@@ -378,6 +409,13 @@ class ThisRepo(unittest.TestCase):
             self.assertLessEqual(set(key), modules, sorted(key))
             self.assertTrue(reason.strip(), sorted(key))
         self.assertFalse(set(mg.ACCEPTED) & set(mg.OWED))
+
+    def test_every_confinement_names_modules_of_the_tree_and_a_reason(self):
+        sources = mg.workspace_sources(mg.REPO, mg.metadata(mg.REPO))
+        modules = {s.module for s in sources.values()}
+        for target, (readers, reason) in mg.CONFINED.items():
+            self.assertLessEqual({target, *readers}, modules, target)
+            self.assertTrue(reason.strip(), target)
 
 
 if __name__ == "__main__":

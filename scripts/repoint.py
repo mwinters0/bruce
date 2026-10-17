@@ -168,7 +168,7 @@ def code_roots(repo: Path) -> tuple[str, ...]:
 def _source_files(repo: Path) -> Iterable[Path]:
     roots = code_roots(repo)
     for path in sorted({p for root in roots for p in (repo / root).rglob("*.rs")}):
-        if is_source(path.relative_to(repo).as_posix(), roots):
+        if is_source(path.relative_to(repo).as_posix(), roots, repo):
             yield path
 
 
@@ -215,10 +215,18 @@ def is_live_doc(path: str) -> bool:
     )
 
 
-def is_source(path: str, roots: Sequence[str]) -> bool:
-    """A `.rs` under a member root, never a vendored copy or a build's output."""
+def is_source(path: str, roots: Sequence[str], repo: Path | None = None) -> bool:
+    """A `.rs` under a member root, never a vendored copy or a build's output;
+    given `repo`, never one in a package below the root that is no member,
+    like a spike, as `file_limits.py` reads it."""
     if not path.endswith(".rs") or path.startswith(NOT_SOURCE) or "/target/" in path:
         return False
+    if repo is not None:
+        dirs = Path(path).parts[:-1]
+        for k in range(1, len(dirs) + 1):
+            here = "/".join(dirs[:k])
+            if here not in roots and (repo / here / "Cargo.toml").is_file():
+                return False
     return "." in roots or path.startswith(tuple(f"{root}/" for root in roots))
 
 
@@ -261,7 +269,7 @@ def growth_since(repo: Path, stamp: str) -> Growth:
             continue
         if line.startswith("+++ "):
             new = line[6:] if line.startswith("+++ b/") else ""
-            counting = is_source(new or old, roots)
+            counting = is_source(new or old, roots, repo)
             continue
         if counting and line[:1] in "+-" and COMMENT_RE.match(line[1:]):
             comments += 1 if line[0] == "+" else -1
@@ -269,7 +277,7 @@ def growth_since(repo: Path, stamp: str) -> Growth:
         lines = _lines(repo / path)
         if is_live_doc(path):
             docs += len(lines)
-        elif is_source(path, live):
+        elif is_source(path, live, repo):
             comments += sum(1 for line in lines if COMMENT_RE.match(line))
     return Growth(docs, comments)
 

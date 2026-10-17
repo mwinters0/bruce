@@ -249,11 +249,19 @@ def rust_files(repo: Path) -> list[Path]:
     seen: set[Path] = set()
     for member in members(repo):
         for p in sorted(member.rglob("*.rs")):
-            # A root package's walk reaches the nested members too.
-            if "target" not in p.relative_to(repo).parts and p not in seen:
-                seen.add(p)
-                files.append(p)
+            if "target" in p.relative_to(repo).parts or p in seen or _nested(member, p):
+                continue
+            seen.add(p)
+            files.append(p)
     return files
+
+
+def _nested(member: Path, path: Path) -> bool:
+    """Whether `path` sits in another package below `member`: a root
+    package's walk reaches the nested members, read by their own walks, and
+    packages outside the workspace, like a spike, read by none."""
+    parts = path.relative_to(member).parts[:-1]
+    return any((member.joinpath(*parts[:k]) / "Cargo.toml").is_file() for k in range(1, len(parts) + 1))
 
 
 def readings(repo: Path) -> list[Reading]:

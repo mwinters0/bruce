@@ -1,0 +1,9 @@
+[package]
+name = "bruce"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+description = "A link checker that validates anchors and keeps a link graph with run history"
+publish = false
+
+[dependencies]

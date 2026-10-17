@@ -6,7 +6,7 @@ over an alternative, and obvious changes argued and refused. Nothing here says h
 entry as `docs/design/decisions.md`, "D12"; the rest of the rules, the line cap included, are
 `docs/process.md`, "The decision register".
 
-No code exists yet. D1–D30 were settled in the bootstrap grilling (2026-10-17, frozen as
+The modules are P1's scaffold and still empty. D1–D30 were settled in the bootstrap grilling (2026-10-17, frozen as
 `historical/initial.md`), D31 the same day, D32 onward in P1's grilling, and its **Code** is the module that will hold it once built. D25 and D29
 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s phase index.
 

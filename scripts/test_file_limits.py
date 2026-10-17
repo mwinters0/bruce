@@ -234,6 +234,18 @@ class Workspace(unittest.TestCase):
             self.assertIn("src/main.rs", paths)
             self.assertIn("a/src/m.rs", paths)
 
+    def test_a_package_outside_the_workspace_is_not_read(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self.make(tmp)
+            (repo / "Cargo.toml").write_text('[package]\nname = "r"\n[workspace]\nmembers = ["a"]\n')
+            (repo / "src").mkdir()
+            (repo / "src/main.rs").write_text("fn main() {}\n")
+            (repo / "spikes/s/src").mkdir(parents=True)
+            (repo / "spikes/s/Cargo.toml").write_text('[package]\nname = "s"\n')
+            (repo / "spikes/s/src/main.rs").write_text("fn main() {}\n")
+            paths = {r.path for r in fl.readings(repo)}
+            self.assertEqual(paths, {"src/main.rs", "a/src/lib.rs", "a/src/m.rs", "a/src/m/tests.rs", "a/tests/it.rs"})
+
 
 class RealTree(unittest.TestCase):
     def test_every_exemption_is_live(self):

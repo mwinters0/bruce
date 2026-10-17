@@ -242,6 +242,19 @@ class Meter(unittest.TestCase):
         self.assertIn("ancestor", problems[0])
 
 
+class Source(unittest.TestCase):
+    def test_a_package_below_the_root_that_is_no_member_is_no_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "spikes/s/src").mkdir(parents=True)
+            (repo / "spikes/s/Cargo.toml").write_text('[package]\nname = "s"\n')
+            (repo / "a").mkdir()
+            (repo / "a/Cargo.toml").write_text('[package]\nname = "a"\n')
+            self.assertFalse(repoint.is_source("spikes/s/src/lib.rs", (".", "a"), repo))
+            self.assertTrue(repoint.is_source("a/src/lib.rs", (".", "a"), repo))
+            self.assertTrue(repoint.is_source("src/lib.rs", (".",), repo))
+
+
 class ThisRepo(unittest.TestCase):
     def test_the_stamp_is_readable_and_the_scope_is_as_documented(self):
         stamp = repoint.read_stamp(repoint.REPO)
@@ -262,7 +275,7 @@ class ThisRepo(unittest.TestCase):
         roots = repoint.code_roots(repoint.REPO)
         for path in file_limits.rust_files(repoint.REPO):
             rel = path.relative_to(repoint.REPO).as_posix()
-            self.assertTrue(repoint.is_source(rel, roots), rel)
+            self.assertTrue(repoint.is_source(rel, roots, repoint.REPO), rel)
         if not (repoint.REPO / "Cargo.toml").exists():
             self.assertEqual(roots, ())
 

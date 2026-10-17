@@ -4,9 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **bruce** is a Rust link checker for docs.fedoraproject.org. It validates
 anchors (`page#fragment`), keeps a DuckDB link graph with run history, and
-gates a content repo's CI on the breakage that repo introduced. **No code
-exists yet.** The design is settled, and P1 is the next phase to grill
-(`docs/design/roadmap.md`). **The code is the ground truth** once it exists.
+gates a content repo's CI on the breakage that repo introduced. **The code is
+a scaffold**: the `bruce` crate's modules, still empty. The design is settled,
+and P1 is the open phase (`docs/design/roadmap.md`). **The code is the ground
+truth.**
 Docs exist to locate it quickly and to record what it cannot explain.
 
 ## Commands
@@ -22,9 +23,10 @@ cd scripts && uv run file_limits.py      # every .rs against the size limits (`d
 cd scripts && uv run module_graph.py     # every module edge one-way, read off rust-analyzer
 cd scripts && uv run concepts.py         # every production .rs claimed by one concept in docs/design/concepts.md
 cd scripts && uv run python -m unittest test_<script>   # one script's own tests
+mise run build | test | clippy | fmt | bench   # one cargo command; Rust is pinned in mise.toml
 ```
 
-The Cargo commands arrive with P1's scaffold. Every `scripts/*.py` has a
+Every `scripts/*.py` has a
 `--help` and a `test_*.py`. The harness's own rules are asserted there, not
 remembered here.
 

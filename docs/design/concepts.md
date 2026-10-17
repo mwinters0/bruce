@@ -14,6 +14,52 @@ spans others only along the layering [`decisions.md`](decisions.md), "D39"
 records, each part saying why its module holds it. **Not in one place** names what today's tree scatters and the layering
 does not explain.
 
-No code exists yet, so no concept is listed. P1's spec places the first
-concepts (`../wip/roadmap-P1-scaffold.md`, "Where the concepts live"), and each
-lands here with the slice that creates its files.
+Every concept below is, so far, one top-level module holding only its doc,
+placed by P1's spec (`../wip/roadmap-P1-scaffold.md`, "Where the concepts
+live"). The decisions each carries are cited in its module's doc.
+
+## Subcommands
+
+- **bruce** — `cli.rs` and the binary's `main.rs`, which only calls it: the
+  top of the layering, and the one module naming a concrete profile (D39).
+
+## The crawl
+
+- **bruce** — `crawl.rs`.
+
+## CI mode
+
+- **bruce** — `ci.rs`.
+
+## Reports and pruning
+
+- **bruce** — `report.rs`.
+
+## Fetchers
+
+- **bruce** — `fetch.rs`.
+
+## The extraction pass and its core heuristics
+
+- **bruce** — `extract.rs`.
+
+## Storage
+
+- **bruce** — `store.rs`.
+
+## Profiles
+
+- **bruce** — `profile/`: the trait in the parent file, and a child module
+  for each profile compiled in (D33), `generic` and `antora`.
+
+## Forge edit-URL shapes
+
+- **bruce** — `forge.rs`.
+
+## Canonical URLs and IDs
+
+- **bruce** — `url.rs`.
+
+## Configuration
+
+- **bruce** — `config.rs`.

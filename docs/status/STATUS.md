@@ -14,8 +14,10 @@ Red means a repoint is due ([`../process.md`](../process.md),
 
 ## What exists
 
-No `bruce` code; the only Rust is the tokenizer spike in `spikes/tokenizer/`,
-outside any crate the checks see. The design is settled ([`../design/decisions.md`](../design/decisions.md))
+The `bruce` crate is a scaffold: D39's top-level modules, each holding only
+its doc, a binary that says no subcommand exists, and Rust 1.99.1 pinned in
+`mise.toml`. The tokenizer spike in `spikes/tokenizer/` is its own project,
+outside the crate and the checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
@@ -36,8 +38,9 @@ The spec is [`../wip/roadmap-P1-scaffold.md`](../wip/roadmap-P1-scaffold.md).
 - [x] **1.2** Tokenizer spike: html5gum against lol_html in `spikes/tokenizer/`;
   D11 names lol_html.
   [notes](../wip/roadmap-P1.2-tokenizer-notes.md)
-- [ ] **1.3** Scaffold: the crate, the Rust pin, the mise tasks, the D39
+- [x] **1.3** Scaffold: the crate, the Rust pin, the mise tasks, the D39
   modules, and the check that only `cli` names a concrete profile.
+  [notes](../wip/roadmap-P1.3-scaffold-notes.md)
 - [ ] **1.4** Config: the loader with D40's defaults, and the manual's config
   reference.
 - [ ] **1.5** Store and the profile trait: the schema with `meta` and
@@ -57,3 +60,11 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
+- **No bench runs in `mise run check` yet.** P1's spec asks for the mise
+  tasks, the bench among them, "joined to `mise run check`". P1.3 added
+  `mise run bench` beside `check` and changed nothing in `scripts/check.py`,
+  which already runs fmt, clippy and the suite, because `bruce` has no bench
+  target and a check running `cargo bench` would time nothing. The P2 slice
+  that moves the parser bench in (D24, "run with every change") would then
+  add it to `check.py`. If "joined" meant `check` should call the tasks
+  themselves, the tasks and `check.py` would need one set of flags.

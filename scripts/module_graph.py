@@ -23,7 +23,11 @@ never assumed:
   child included. Each one is a problem unless `ACCEPTED` lists its modules
   with the reason it is kept, or `OWED` lists them with the work that
   removes it. An entry matching no cycle exactly is stale, which is a
-  problem too, so a cut that shrinks a cycle rewrites its entry.
+  problem too, so a cut that shrinks a cycle rewrites its entry;
+* a **confined** module is one only the readers `CONFINED` names may have
+  an edge into, besides its own descendants, a reader's descendants reading
+  as it does: a layering rule a cycle check cannot see. An edge from any
+  other module is a problem, and so is an entry naming no module.
 
 **A design is checked before it is cut** (`--design <doc>`). The moves in
 the doc's ```` ```moves ```` blocks are applied to the current references,
@@ -49,8 +53,8 @@ carries none. Nothing runs `cargo doc`'s
 link check, and a doc link into a higher crate or into another module's
 private child does not resolve, so such a reference is a code span instead.
 
-rust-analyzer is the `rust-toolchain.toml` component that `rustup which
-rust-analyzer` names. Its `scip` index covers the whole workspace, so a
+rust-analyzer is the component `mise.toml` pins with Rust, which `rustup
+which rust-analyzer` names. Its `scip` index covers the whole workspace, so a
 design iterated against an unchanged tree reads a saved index (`--index`,
 written by `--save-index`).
 
@@ -86,6 +90,13 @@ ACCEPTED: dict[frozenset[str], str] = {}
 #: Cycles the tree has and a design or a slice removes, each naming which;
 #: a phase's closing seams round leaves none.
 OWED: dict[frozenset[str], str] = {}
+
+#: Modules only the named readers may reference, each with its reason (the
+#: module's own descendants read it freely).
+CONFINED: dict[str, tuple[frozenset[str], str]] = {
+    concrete: (frozenset({"bruce::cli"}), "only `cli` names a concrete profile, to build the registry (D39)")
+    for concrete in ("bruce::profile::generic", "bruce::profile::antora")
+}
 
 #: How many references are shown for each edge of a cycle.
 WITNESSES = 3
@@ -192,8 +203,8 @@ def build_index(repo: Path, out: Path) -> None:
     )
     if which.returncode != 0:
         raise RuntimeError(
-            "no rust-analyzer: it is `rust-toolchain.toml`'s component "
-            f"(`rustup component add rust-analyzer`): {which.stderr.strip()}"
+            "no rust-analyzer: it is a component of `mise.toml`'s Rust "
+            f"(`mise install`): {which.stderr.strip()}"
         )
     subprocess.run(
         [which.stdout.strip(), "scip", str(repo), "--output", str(out)],
@@ -747,6 +758,10 @@ def _crate(module: str) -> str:
     return module.split("::", 1)[0]
 
 
+def _within(module: str, root: str) -> bool:
+    return module == root or module.startswith(root + "::")
+
+
 # ---------------------------------------------------------------------------
 # The report.
 
@@ -759,9 +774,11 @@ def report(
     accepted: dict[frozenset[str], str] | None = None,
     owed: dict[frozenset[str], str] | None = None,
     what: str | None = None,
+    confined: dict[str, tuple[frozenset[str], str]] | None = None,
 ) -> int:
     accepted = ACCEPTED if accepted is None else accepted
     owed = OWED if owed is None else owed
+    confined = CONFINED if confined is None else confined
     by_arc = edges(graph.refs, moves)
     arcs = set(by_arc)
     nodes = set(graph.modules)
@@ -802,6 +819,19 @@ def report(
                 if key not in live:
                     problems += 1
                     print(f"!! stale {word}: {', '.join(sorted(key))} is no cycle", file=out)
+    for target, (readers, reason) in sorted(confined.items()):
+        if not moves and not any(_within(n, target) for n in nodes):
+            problems += 1
+            print(f"!! stale confinement: {target} is no module", file=out)
+        for (a, b), refs in sorted(by_arc.items()):
+            if not _within(b, target) or _within(a, target) or any(_within(a, r) for r in readers):
+                continue
+            problems += 1
+            print(f"!! confined: {a} -> {b}: {reason}", file=out)
+            for r in refs[:WITNESSES]:
+                print(f"     {r.rel}:{r.line} {r.src_item} -> {r.dst_item}", file=out)
+            if len(refs) > WITNESSES:
+                print(f"     ... {len(refs) - WITNESSES} more", file=out)
     reach = _reach(arcs)
     def placed(module: str) -> str:
         return moves.target(module, TOP) if moves else module
