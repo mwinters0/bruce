@@ -1,0 +1,9 @@
+---
+source: tests/extract.rs
+expression: summary(&run(f))
+---
+profile: antora
+title: Fedora Design :: Fedora Docs
+anchors: 7 (content 2, chrome 5, unknown 0)
+by tag: button 1, div 1, h2 2, input 1, script 2
+facts: none

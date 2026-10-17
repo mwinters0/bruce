@@ -97,12 +97,13 @@ here only as that guide's worked example. Rejected: a committed template directo
 from the guide describing it; a hand-built `sim/`, which no other machine can rebuild.
 
 ### D38 A profile has four hooks: detect, extract, resolve, views
-Detect claims a generator string (D35). Extract records facts, draws the content region (D34),
-may override the edit link (D36), and tags links the core cannot read (I6), by handing the core's
-one lol_html pass selector/handler pairs rather than tokens (D11). Resolve maps a tagged
-reference to a URL through a lookup the store provides (D19, D20, D22). Views is its SQL (D37).
-`generic` leaves Resolve and Views empty, having no reference that is not a URL and no facts to
-pivot. Reopens: a hook empty in `generic` for any other reason, the trait bending around Antora.
+Detect claims a generator string (D35). Extract hands the core's one lol_html pass (D11) a declared
+content region (selectors, D34), element handlers and a finish step run over the core's settled
+result; handlers write a sink: a fact, a tag on the link being read (I6), a preferred edit link (D36).
+Resolve maps a tagged reference to a URL through the store's lookup (D19, D20, D22). Views is its SQL
+(D37). `generic` leaves Resolve and Views empty, having no reference that is not a URL and no facts to
+pivot. Rejected: region handlers in each profile, each re-deciding `unknown` (D34), which a page's end
+alone settles. Reopens: a hook empty in `generic` for any other reason, the trait bending around Antora.
 
 ### D39 The layering: `cli` › `crawl`, `ci`, `report` › `fetch`, `extract`, `store` › `profile` › `forge`, `url`, `config`
 Edges point down only. `store` implements `profile`'s lookup trait and asks each profile for its
@@ -252,7 +253,7 @@ html5gum tied on the spike's workload (every fixture equal, speed within noise);
 CSS selectors while streaming, which profiles and D33's rules want. Rejected: html5gum (2 crates to
 lol_html's 42), which leaves us an open-element stack and a selector matcher to write. lol_html's
 other costs were weighed and accepted: undecoded attributes and text, and context only by handler order.
-Evidence: `historical/initial.md`, "Existing tools"; `spikes/tokenizer/`, its numbers in P1.2's notes.
+Evidence: `historical/initial.md`, "Existing tools"; `spikes/tokenizer/` at commit b436db8, its numbers in P1's notes.
 
 ### D23 DuckDB is bundled; distribution is a release binary on the forge
 The `duckdb` crate's `bundled` feature makes a self-contained binary that a CI job in the
@@ -271,5 +272,6 @@ Reopens: a second consumer of the core, or the evidence the `seams` skill's §4 
 ### D24 Tests run on saved real pages, a mock HTTP server, and an optional Antora build
 Fixture pages from docs.fp.o (I6, I8, I9), hand-written pages for other generators' markup (I12),
 wiremock for redirects, 429 and robots, and a criterion
-parser bench run with every change. An end-to-end 2–3-component Antora site sits behind a task, as
-it is slow.
+parser bench that `mise run check` runs once, in test mode, as a nextest test; `mise run bench`
+times it. An end-to-end 2–3-component Antora site sits behind a task, as it is slow. Rejected: a
+timing threshold in `check`, flaky at the spike's 8% run-to-run noise and tied to one machine.

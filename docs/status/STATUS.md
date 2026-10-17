@@ -15,13 +15,13 @@ Red means a repoint is due ([`../process.md`](../process.md),
 ## What exists
 
 The `bruce` crate is a scaffold: D39's top-level modules, a binary that says
-no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Three modules hold
+no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Four modules hold
 code: `config`, the loader; `store`, the DuckDB schema, its version check and
-the single writer for two tables; and `profile`, the trait, the registry and
-the `generic` and `antora` profiles' Detect and Views, with Extract and Resolve
-declared and empty. The rest hold only their doc. `docs/manual/` holds the
-config reference. The tokenizer spike in `spikes/tokenizer/` is its own project,
-outside the crate and the checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
+the single writer for two tables; `profile`, the trait, the registry and the
+`generic` and `antora` profiles' Detect, Views and content region, with Resolve
+declared and empty; and `extract`, the pass over one page, which yields its
+profile, title and anchors with placement. The rest hold only their doc.
+`docs/manual/` holds the config reference. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
@@ -31,9 +31,10 @@ pages, chosen and saved by `scripts/fixtures.py`.
 
 The spec is [`../wip/roadmap-P2-extractor.md`](../wip/roadmap-P2-extractor.md).
 
-- [ ] **2.1** The pass and its anchors: the Extract hook's new shape, the
+- [x] **2.1** The pass and its anchors: the Extract hook's new shape, the
   generator pre-pass, the title, anchors with tag and placement, the fixture
-  snapshots, and the bench moved into `bruce`.
+  snapshots, and the bench moved into `bruce`
+  ([notes](../wip/roadmap-P2.1-pass-and-anchors-notes.md)).
 - [ ] **2.2** Links: every kind, `srcset`, `<base href>` and `refresh`,
   resolved against the page's URL.
 - [ ] **2.3** The edit link and `forge`: the core ranking and the shape parse.

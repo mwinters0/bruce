@@ -1,0 +1,9 @@
+---
+source: tests/extract.rs
+expression: summary(&run(f))
+---
+profile: antora
+title: Fedora Data Working Group :: Fedora Docs
+anchors: 11 (content 6, chrome 5, unknown 0)
+by tag: button 1, div 2, h2 3, h3 2, input 1, script 2
+facts: none

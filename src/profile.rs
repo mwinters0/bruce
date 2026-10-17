@@ -23,9 +23,9 @@ pub type BoxError = Box<dyn std::error::Error + Send + Sync>;
 /// handlers keyed by selector, in registration order (D38).
 pub type ElementHandlers<'h> = Vec<(Cow<'static, Selector>, ElementContentHandlers<'h>)>;
 
-/// A profile's extension of the core (D38). Detect and Views are built;
-/// Extract and Resolve are declared here and given bodies by the extractor
-/// (P2) and the Antora resolver (P5).
+/// A profile's extension of the core (D38). Detect, Views and the core half
+/// of Extract are built; Resolve is declared here and given a body by the
+/// Antora resolver (P5).
 pub trait Profile: Send + Sync {
     /// The name a root's `profile` key gives, and the namespace of the
     /// profile's facts and views (D37).
@@ -36,13 +36,12 @@ pub trait Profile: Send + Sync {
     /// profile claims none; it is what no other claims.
     fn detect(&self, generator: &str) -> bool;
 
-    /// Extract: the handlers the core adds to its one `HtmlRewriter`, which
-    /// record this profile's facts into `facts`, draw the content region
-    /// (D34), may override the edit link (D36) and tag links the core cannot
-    /// read (I6). Handlers on one element run in registration order, and
-    /// none sees an ancestor, so context is a flag an earlier handler set
-    /// (D38).
-    fn extract<'h>(&self, facts: &'h RefCell<Facts>) -> ElementHandlers<'h>;
+    /// Extract: what the profile adds to the core's one `HtmlRewriter` for a
+    /// page: its content region, its handlers and its finish step (D38). The
+    /// handlers write into `sink` and run on one element in registration
+    /// order, after the core's own, and none sees an ancestor, so context is
+    /// a flag an earlier handler set.
+    fn extract<'h>(&self, sink: &'h RefCell<Sink>) -> Extract<'h>;
 
     /// Resolve: the URL a reference tagged by [`Profile::extract`] names, as
     /// found on the page at `from`, through the pages `lookup` knows. `None`
@@ -96,6 +95,96 @@ impl Facts {
     /// Every fact as a full key and its value, in the order recorded.
     pub fn pairs(&self) -> &[(String, String)] {
         &self.pairs
+    }
+}
+
+/// What a profile's Extract hook hands the core for one page (D38).
+pub struct Extract<'h> {
+    /// Selectors for the elements that hold the page's content (D34). The
+    /// core turns them into its own descendant handlers and decides each
+    /// anchor's placement when the page ends, since a page with no region
+    /// anywhere makes every placement `unknown`. Each is one compound
+    /// selector with no list or combinator, which the core extends with
+    /// `[id]`, ` [id]` and ` a[name]`.
+    pub region: &'static [&'static str],
+    /// Handlers added to the core's pass.
+    pub handlers: ElementHandlers<'h>,
+    /// Runs once the pass has ended, over the core's settled result.
+    pub finish: Option<fn(&Settled, &mut Sink)>,
+}
+
+impl Extract<'_> {
+    /// An Extract with `region` and nothing else.
+    pub fn region(region: &'static [&'static str]) -> Self {
+        Extract {
+            region,
+            handlers: Vec::new(),
+            finish: None,
+        }
+    }
+}
+
+/// The core's settled result for a page, which a profile's finish step reads
+/// where a handler could not: a value like the chosen edit link is known
+/// only when the page has ended (D38).
+#[derive(Debug, Clone, Copy)]
+pub struct Settled<'a> {
+    /// The page's URL.
+    pub url: &'a Url,
+}
+
+/// What a profile's handlers and finish step write to (D38): the page's
+/// facts, a tag for the link being read, and a preferred edit link. The core
+/// reads the sink after the pass.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Sink {
+    facts: Facts,
+    link_tag: Option<String>,
+    edit_link: Option<String>,
+}
+
+impl Sink {
+    /// An empty sink for the profile named `namespace`.
+    pub fn new(namespace: &'static str) -> Sink {
+        Sink {
+            facts: Facts::new(namespace),
+            link_tag: None,
+            edit_link: None,
+        }
+    }
+
+    /// Records the fact `key` (without the namespace) as `value` (D37).
+    pub fn fact(&mut self, key: &str, value: impl Into<String>) {
+        self.facts.record(key, value);
+    }
+
+    /// Tags the link the core is reading, for the profile's Resolve to
+    /// find: `tag` is what Resolve is handed as the reference (I6). The
+    /// core takes it with the link it belongs to, so it must be set by a
+    /// handler on that link's own element.
+    pub fn tag_link(&mut self, tag: impl Into<String>) {
+        self.link_tag = Some(tag.into());
+    }
+
+    /// Prefers `href` as the page's edit link over the core's ranking
+    /// (D36).
+    pub fn prefer_edit_link(&mut self, href: impl Into<String>) {
+        self.edit_link = Some(href.into());
+    }
+
+    /// The tag set since the last call, taken by the core.
+    pub fn take_link_tag(&mut self) -> Option<String> {
+        self.link_tag.take()
+    }
+
+    /// The edit link a profile preferred, if one did.
+    pub fn preferred_edit_link(&self) -> Option<&str> {
+        self.edit_link.as_deref()
+    }
+
+    /// The facts recorded.
+    pub fn into_facts(self) -> Facts {
+        self.facts
     }
 }
 

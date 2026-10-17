@@ -1,0 +1,9 @@
+---
+source: tests/extract.rs
+expression: summary(&run(f))
+---
+profile: antora
+title: Fedora Packaging Guidelines :: Fedora Docs
+anchors: 156 (content 151, chrome 5, unknown 0)
+by tag: button 1, div 2, h2 69, h3 74, h4 7, input 1, script 2
+facts: none

@@ -1,0 +1,9 @@
+---
+source: tests/extract.rs
+expression: summary(&run(f))
+---
+profile: antora
+title: Package Review Guidelines :: Fedora Docs
+anchors: 51 (content 46, chrome 5, unknown 0)
+by tag: a 40, button 1, div 2, h2 5, input 1, script 2
+facts: none

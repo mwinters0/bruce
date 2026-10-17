@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 
 use super::*;
-use crate::profile::{ElementHandlers, Facts, Profile, View};
+use crate::profile::{Extract, Profile, Sink, View};
 
 /// A profile that ships one view over `page_facts`.
 struct Viewing;
@@ -15,8 +15,8 @@ impl Profile for Viewing {
         false
     }
 
-    fn extract<'h>(&self, _: &'h RefCell<Facts>) -> ElementHandlers<'h> {
-        Vec::new()
+    fn extract<'h>(&self, _: &'h RefCell<Sink>) -> Extract<'h> {
+        Extract::region(&[])
     }
 
     fn resolve(&self, _: &str, _: &Url, _: &dyn Lookup) -> Result<Option<Url>, BoxError> {

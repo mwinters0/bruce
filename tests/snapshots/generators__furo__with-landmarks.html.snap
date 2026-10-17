@@ -1,0 +1,9 @@
+---
+source: tests/extract.rs
+expression: summary(&run(f))
+---
+profile: generic
+title: Quickstart - Example
+anchors: 3 (content 3, chrome 0, unknown 0)
+by tag: article 1, section 2
+facts: none

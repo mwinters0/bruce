@@ -1,13 +1,13 @@
 //! The `antora` profile: Antora's generator meta, nav container, content
-//! region and xrefs (D19, D20). Detect and Views are built; Extract is the
-//! extractor's (P2) and Resolve the resolver's (P5), and until then both do
-//! nothing.
+//! region and xrefs (D19, D20). Detect, Views and Extract's region are built;
+//! the rest of Extract is the extractor's (P2) and Resolve the resolver's (P5),
+//! and until then both do nothing.
 
 use std::cell::RefCell;
 
 use url::Url;
 
-use super::{BoxError, ElementHandlers, Facts, Lookup, Profile, View};
+use super::{BoxError, Extract, Lookup, Profile, Sink, View};
 
 /// The profile for sites built by Antora.
 pub struct Antora;
@@ -38,8 +38,8 @@ impl Profile for Antora {
             .is_some_and(|word| word.eq_ignore_ascii_case("antora"))
     }
 
-    fn extract<'h>(&self, _facts: &'h RefCell<Facts>) -> ElementHandlers<'h> {
-        Vec::new()
+    fn extract<'h>(&self, _sink: &'h RefCell<Sink>) -> Extract<'h> {
+        Extract::region(&["article.doc"])
     }
 
     fn resolve(

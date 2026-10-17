@@ -1,0 +1,9 @@
+---
+source: tests/extract.rs
+expression: summary(&run(f))
+---
+profile: antora
+title: Guides & How-Tos :: Fedora Docs
+anchors: 9 (content 4, chrome 5, unknown 0)
+by tag: button 1, div 2, h3 3, input 1, script 2
+facts: none

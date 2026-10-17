@@ -14,10 +14,10 @@ map.
   `runs/fixtures/survey.jsonl`. A changed `measure` needs a fresh partial
   file: `--urls-from ../fixtures/docs-fp-o/survey.json --partial <new>`, as
   `runs/fixtures/tabs-20261017/` did (its `log` heads with the command).
-- **The tokenizer spike** (`spikes/tokenizer/`, its own Cargo project): `cargo
-  run --release` (correctness against an html5ever oracle), `cargo bench
-  --bench extract` (speed), `cargo test`. Measured under rustc 1.98.0 on a
-  Ryzen 9 3900X; logs in `runs/tokenizer-spike/`. It now builds under 1.99.1.
+- **The tokenizer spike** is `spikes/tokenizer/` at commit `b436db8`, deleted
+  by P2.1: `cargo run --release` there ran correctness against an html5ever
+  oracle, `cargo bench --bench extract` speed. Measured under rustc 1.98.0 on a
+  Ryzen 9 3900X; logs in `runs/tokenizer-spike/`.
 
 ## What P2, the extractor, inherits
 
@@ -32,12 +32,9 @@ map.
   23.3 ms, its token iterator 30.2 ms, the oracle 55.1 ms, with 8%
   run-to-run noise. About 14 ms of each is the shared code's owned strings,
   so the tokenizer is not where a page's time goes.
-- **`Profile::extract` is lol_html's own type**, `Vec<(Cow<'static,
-  Selector>, ElementContentHandlers<'h>)>`, appended to
-  `Settings::element_content_handlers` unchanged. The facts sink is a
-  `&RefCell<Facts>`; `Facts::record` namespaces each key. Region, edit-link
-  and tagged-link output have no sink yet: adding them changes the trait's
-  signature and both profiles, nothing else.
+- **`Extract::handlers` is lol_html's own type**, `Vec<(Cow<'static,
+  Selector>, ElementContentHandlers<'h>)>`, appended to the settings
+  unchanged.
 - **lol_html has no ancestor access from a handler.** Context is a flag set
   by an earlier handler on a contextual selector; handlers on one element run
   in registration order (lol_html 3.0.1, `handlers_dispatcher.rs`,
@@ -51,9 +48,6 @@ map.
   (`=`, `~=`, `^=`, `*=`, `i`), descendant and child combinators, `:not`,
   `:nth-child`, `:first-child`, lists. Refused: `+`, `~`, `:has`,
   `:last-child`, `:nth-last-child`, pseudo-elements.
-- **The generator meta is read before a profile is chosen.**
-  `Registry::choose` takes its content; the core reads it in a first small
-  pass or from the head before the rewriter starts (D35).
 - **`content_hash` is a `BLOB`**: D15 names no hash, and P2 picks one.
 - **`page_facts` has no uniqueness**; the Antora view takes `max(value)`, and
   its extract records each key once.
@@ -105,8 +99,5 @@ map.
   with stubs and the Antora view is tested in `cli`.
 - **`information_schema` is the existence check** for `meta`, not a failed
   query, so a file with other tables is left unwritten.
-- **No `[workspace]` table** is needed to keep `spikes/tokenizer/` out:
-  cargo finds no workspace above it while the root manifest has none, and the
-  checks skip a package nested below a member that is not one.
 - **`check.py --affected` treats every `src/` change as outside a crate**, a
   root package's directory being `.`; for one crate that is the same set.

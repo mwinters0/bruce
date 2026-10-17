@@ -9,10 +9,20 @@ publish = false
 [dependencies]
 duckdb = { version = "1.10506.1", features = ["bundled"] }
 globset = "0.4.20"
+htmlize = { version = "1.1.0", features = ["unescape_fast"] }
 lol_html = "3.0.1"
 serde = { version = "1.0.229", features = ["derive"] }
 toml = "1.1.8"
 url = "2.5.8"
 
 [dev-dependencies]
+criterion = "0.8.2"
+insta = "1.49.0"
 tempfile = "3.27.0"
+
+# `harness = false` because criterion has its own; `test = true` so `cargo
+# test` and nextest run it once in criterion's test mode (D24).
+[[bench]]
+name = "extract"
+harness = false
+test = true

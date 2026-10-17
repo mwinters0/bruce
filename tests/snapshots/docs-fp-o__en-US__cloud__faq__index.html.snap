@@ -1,0 +1,9 @@
+---
+source: tests/extract.rs
+expression: summary(&run(f))
+---
+profile: antora
+title: Frequently Asked Questions (FAQ) :: Fedora Docs
+anchors: 5 (content 0, chrome 5, unknown 0)
+by tag: button 1, div 1, input 1, script 2
+facts: none

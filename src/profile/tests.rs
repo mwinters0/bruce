@@ -14,8 +14,8 @@ impl Profile for Stub {
         !self.claims.is_empty() && generator.starts_with(self.claims)
     }
 
-    fn extract<'h>(&self, _facts: &'h RefCell<Facts>) -> ElementHandlers<'h> {
-        Vec::new()
+    fn extract<'h>(&self, _sink: &'h RefCell<Sink>) -> Extract<'h> {
+        Extract::region(&[])
     }
 
     fn resolve(&self, _: &str, _: &Url, _: &dyn Lookup) -> Result<Option<Url>, BoxError> {
@@ -89,5 +89,23 @@ fn facts_are_recorded_under_the_profiles_namespace() {
             ("antora.component".to_string(), "handbook".to_string()),
             ("antora.module".to_string(), "ROOT".to_string())
         ]
+    );
+}
+
+#[test]
+fn the_sink_hands_the_core_what_a_profile_wrote() {
+    let mut sink = Sink::new("antora");
+    sink.fact("module", "ROOT");
+    sink.tag_link("comp::page.adoc");
+    sink.prefer_edit_link("https://forge.example/edit");
+    assert_eq!(sink.take_link_tag().as_deref(), Some("comp::page.adoc"));
+    assert_eq!(sink.take_link_tag(), None, "a tag belongs to one link");
+    assert_eq!(
+        sink.preferred_edit_link(),
+        Some("https://forge.example/edit")
+    );
+    assert_eq!(
+        sink.into_facts().pairs(),
+        [("antora.module".to_string(), "ROOT".to_string())]
     );
 }
