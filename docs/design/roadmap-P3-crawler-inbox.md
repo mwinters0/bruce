@@ -27,3 +27,16 @@ is, and then deleted (`../process.md`, "Inboxes: facts filed by destination").
 - **Why P3 cares.** The `crawl` subcommand is the first caller, so whichever
   slice adds it decides both, in the manual too.
 - **Origin.** P1.4, 2026-10-17.
+
+## Scope globs match the canonical URL
+
+- **Fact.** The maintainer settled that `include` and `exclude` globs match
+  D7's canonical form of a URL, the one the store and reports show.
+  `config::Root::in_scope` matches `Url::as_str()` today: percent-encoded
+  where D7 decodes, the query kept where a root may strip it. D44 still says
+  "the whole URL".
+- **Why P3 cares.** It builds the canonicaliser. The slice that does makes
+  `in_scope` take a canonical URL, amends D44 to say so, and adds a test of
+  a glob written with a decoded character.
+- **Origin.** The review of P1.4's config call, 2026-10-17
+  (`../status/history/2026-10-17.md`).

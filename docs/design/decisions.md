@@ -203,13 +203,15 @@ unresolved xref: D19, then the same steps. Externals default to the baseline's v
 `[[root]]` entries are crawled fully, each with include/exclude globs and its own sitemap URL.
 `allowlist` lists hosts checked one hop deep, and `[rate]` holds limits. Each root names its
 profile (D35). Roots are configurable so the tool is not tied to Fedora, and every key has a
-default (D40).
+default (D40). Keys are snake_case and `[[root]]` singular, as Cargo's `[[bin]]`; rejected:
+kebab-case, which lychee and mise, the nearest tools, do not use.
 
 ### D44 A root's scope is its path prefix until `include` names globs, which match the whole URL
 `include` replaces the prefix rather than narrowing it, so one root can span locales; `exclude`
 always wins. Globs are globset's with `*` and `?` stopping at `/`, so a version segment matches as
 `f2?`. Rejected: globs over the path alone, which cannot scope by host; regexes, which users write
-worse. Reopens: a root needing both its prefix and an include, today written as one glob.
+worse; `include` narrowing the prefix, which keeps a root at `/en-US/` in one locale. Reopens: a
+root needing both its prefix and an include, today written as one glob.
 Code: `config::Root::in_scope`. Evidence: `config::tests::include_replaces_the_prefix_and_exclude_wins`.
 
 ### D6 Reports are SQL views stored in the DB and run by `bruce report <kind>`

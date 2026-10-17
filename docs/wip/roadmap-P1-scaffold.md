@@ -77,6 +77,14 @@ weighs in the choice (D11).
   documents each key and its default in the change that adds the key. The
   deployment guide joins it in P4 (D42).
 
+### P1.4.1 Config keys per host
+
+P1.4 put `robots` and `crawl_delay` on a root, though D8 limits per host. The
+maintainer moved per-host settings to `[host."<h>"]`, folded `crawl_delay`
+into its `per_second`, and refused a root starting outside its own scope (`../status/history/2026-10-17.md`, "P1.4's config call reviewed:
+per-host keys, a root inside its scope"). The slice changes the loader, the
+manual, and D5, D8, D18, D40 and D44 together.
+
 ### P1.5 Store and the profile trait
 
 - **The schema** (D26) with `meta` (D43) and `page_facts` (D37).

@@ -45,6 +45,9 @@ The spec is [`../wip/roadmap-P1-scaffold.md`](../wip/roadmap-P1-scaffold.md).
 - [x] **1.4** Config: the loader with D40's defaults, and the manual's config
   reference.
   [notes](../wip/roadmap-P1.4-config-notes.md)
+- [ ] **1.4.1** Config keys per host: `[host."<h>"]` holds `per_second`
+  and `robots`, `crawl_delay` goes, and a root's `url` must be in its own
+  scope.
 - [ ] **1.5** Store and the profile trait: the schema with `meta` and
   `page_facts`, the writer skeleton, and the `Profile` trait.
 
@@ -62,12 +65,3 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-- **The config's key names and D44's scope rule were chosen unattended
-  (P1.4).** The call: `[[root]]` keys `url`, `include`, `exclude`,
-  `sitemap`, `profile`, `robots`, `crawl_delay`; `allowlist`;
-  `rate.per_second` and `rate.host."<host>".per_second`. `include` replaces
-  the root's path prefix rather than narrowing it, and globs match the whole
-  URL with `*` stopping at `/` (D44). Why: D5 and D40 name the settings but
-  not their spelling, and whole-URL globs let one root span locales or hosts.
-  Reconsidering renames keys in `src/config.rs` and `docs/manual/config.md`,
-  or rewrites D44, cheaply now and at a cost to users once a release ships.
