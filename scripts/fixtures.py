@@ -94,6 +94,23 @@ def attr(tag: str, name: str) -> str | None:
     return m.group(1) if m else None
 
 
+# An opening tag, and the two marks of an `@asciidoctor/tabs` block on it (I9):
+# a `tabs` class token, or an id `_tabs_<n>` (its tabs are `_tabs_<n>_tab_<x>`).
+TAG = re.compile(r"<[a-zA-Z][^>]*>")
+TAB_SET_ID = re.compile(r'\bid="_tabs_\d+"')
+CLASS = re.compile(r'\bclass="([^"]*)"')
+
+
+def tab_sets(html: str) -> int:
+    """How many tab blocks a page holds, each tag counted once."""
+    n = 0
+    for tag in TAG.findall(html):
+        cls = CLASS.search(tag)
+        if TAB_SET_ID.search(tag) or (cls and "tabs" in cls.group(1).split()):
+            n += 1
+    return n
+
+
 def measure(url: str, status: int, body: bytes) -> dict:
     """What the selection rules read off one page."""
     html = body.decode("utf-8", "replace")
@@ -109,7 +126,7 @@ def measure(url: str, status: int, body: bytes) -> dict:
         "component": attr(nav.group(0), "data-component") if nav else None,
         "version": attr(nav.group(0), "data-version") if nav else None,
         "ids": len(re.findall(r'\sid="[^"]+"', html)),
-        "tabs": len(re.findall(r'<div class="tabs\b', html)),
+        "tabs": tab_sets(html),
         "unresolved": len(re.findall(r'class="xref unresolved"', html)),
         "edit_titles": sorted(
             set(re.findall(r'<a href="[^"]*" title="([^"]*)"', html))
@@ -118,7 +135,47 @@ def measure(url: str, status: int, body: bytes) -> dict:
     }
 
 
-def survey(per_component: int, deep: dict[str, int], out: Path) -> None:
+def survey(
+    per_component: int,
+    deep: dict[str, int],
+    out: Path,
+    partial: Path = PARTIAL,
+    urls_from: Path | None = None,
+) -> None:
+    if urls_from:
+        # Re-measure an earlier survey's pages, not a fresh sample: the
+        # sitemap moves, and the point is the same pages measured again.
+        chosen = [p["url"] for p in json.loads(urls_from.read_text())["pages"]]
+    else:
+        chosen = choose(per_component, deep)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    # One measurement a line, appended as it is taken: a run that dies is
+    # resumed by running it again, which skips the pages already measured.
+    # A partial file holds the counts of the `measure` that wrote it, so a
+    # changed count starts a fresh one.
+    partial.parent.mkdir(parents=True, exist_ok=True)
+    done = {}
+    if partial.exists():
+        for line in partial.read_text().splitlines():
+            m = json.loads(line)
+            done[m["url"]] = m
+    chosen += list(WITNESSES)
+    with partial.open("a") as log:
+        for i, url in enumerate(dict.fromkeys(chosen), 1):
+            if url in done:
+                continue
+            time.sleep(DELAY)
+            status, body = fetch(url)
+            done[url] = measure(url, status, body)
+            log.write(json.dumps(done[url]) + "\n")
+            log.flush()
+            print(f"{i} {status} {len(body)} {url}", flush=True)
+    pages = [done[u] for u in dict.fromkeys(chosen)]
+    out.write_text(json.dumps({"date": str(date.today()), "pages": pages}, indent=1))
+
+
+def choose(per_component: int, deep: dict[str, int]) -> list[str]:
+    """The sample: each sitemap's pages, evenly spaced."""
     status, body = fetch(INDEX)
     if status != 200:
         sys.exit(f"{INDEX}: HTTP {status}")
@@ -142,29 +199,7 @@ def survey(per_component: int, deep: dict[str, int], out: Path) -> None:
         # spaced sample can miss them.
         picks += [u for u in sample([u for u in urls if FROZEN.search(u)], 4)]
         chosen += [u for u in dict.fromkeys(picks)]
-    out.parent.mkdir(parents=True, exist_ok=True)
-    # One measurement a line, appended as it is taken: a run that dies is
-    # resumed by running it again, which skips the pages already measured.
-    partial = PARTIAL
-    partial.parent.mkdir(parents=True, exist_ok=True)
-    done = {}
-    if partial.exists():
-        for line in partial.read_text().splitlines():
-            m = json.loads(line)
-            done[m["url"]] = m
-    chosen += list(WITNESSES)
-    with partial.open("a") as log:
-        for i, url in enumerate(dict.fromkeys(chosen), 1):
-            if url in done:
-                continue
-            time.sleep(DELAY)
-            status, body = fetch(url)
-            done[url] = measure(url, status, body)
-            log.write(json.dumps(done[url]) + "\n")
-            log.flush()
-            print(f"{i} {status} {len(body)} {url}", flush=True)
-    pages = [done[u] for u in dict.fromkeys(chosen)]
-    out.write_text(json.dumps({"date": str(date.today()), "pages": pages}, indent=1))
+    return chosen
 
 
 def select(pages: list[dict], target: int = TARGET) -> list[dict]:
@@ -267,6 +302,14 @@ def main() -> None:
         help="sample N pages of one component instead (repeatable)",
     )
     s.add_argument("--out", type=Path, default=SURVEY)
+    s.add_argument(
+        "--partial", type=Path, default=PARTIAL,
+        help="the resumable one-line-a-page log (default: %(default)s)",
+    )
+    s.add_argument(
+        "--urls-from", type=Path, metavar="SURVEY",
+        help="re-measure the pages an earlier survey.json names, not a fresh sample",
+    )
     c = sub.add_parser("select", help="write the manifest from a survey")
     c.add_argument("--survey", type=Path, default=SURVEY)
     c.add_argument("--manifest", type=Path, default=MANIFEST)
@@ -275,7 +318,7 @@ def main() -> None:
     args = ap.parse_args()
     if args.cmd == "survey":
         deep = {k: int(v) for k, v in (d.split("=") for d in args.deep)}
-        survey(args.per_component, deep, args.out)
+        survey(args.per_component, deep, args.out, args.partial, args.urls_from)
     elif args.cmd == "select":
         pages = json.loads(args.survey.read_text())["pages"]
         entries = select(pages)

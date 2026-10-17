@@ -8,7 +8,7 @@
    "status": 200,
    "path": "en-US/a11y/index.html",
    "bytes": 25525,
-   "sha256": "8e9e106b06c02064421b746ead451ee9300194ec8ae7eb47ac25d6c0c6a4b747",
+   "sha256": "7265ee18db1985aa8ea55839ab35a23446da581d1bedb6e3b690239062e76209",
    "fetched": "2026-10-17"
   },
   {
@@ -19,7 +19,7 @@
    "status": 200,
    "path": "en-US/ai-ml/infra/index.html",
    "bytes": 27650,
-   "sha256": "d13d94abc4d9322b10f234734dc9c6e5671ef8780f9489b08bb2d5c80d14550e",
+   "sha256": "b22f6a27f44431540a915571dc0f143169d222f5e51445f6a26929da05d2d1bc",
    "fetched": "2026-10-17"
   },
   {
@@ -31,7 +31,7 @@
    "status": 200,
    "path": "en-US/arm-sbc/index.html",
    "bytes": 15170,
-   "sha256": "0d79279ca6a3b020179e08fa9eceb3e730bc73aa95e00c503ac7ad592c9b54a0",
+   "sha256": "9ddb7399953c06f9366244a0a15391e5a6cd8f338bdbb1dc80545d9d85e2cb15",
    "fetched": "2026-10-17"
   },
   {
@@ -42,7 +42,7 @@
    "status": 200,
    "path": "en-US/badges/index.html",
    "bytes": 26121,
-   "sha256": "ab165d780c005b474f34499c6888745792415e9b924afb7618ce6b9353adc1f6",
+   "sha256": "e35c819bf61cbc88e411f98def17726ced310a09e7547e0b6ebc3425743bf635",
    "fetched": "2026-10-17"
   },
   {
@@ -53,7 +53,7 @@
    "status": 200,
    "path": "en-US/cle/processes/index.html",
    "bytes": 26848,
-   "sha256": "cd0636166a7387f6f8e9cb1ad2a5b08ea42219049ed2703cfa0765390ad9c7c1",
+   "sha256": "b8586914d6d2e82e174e14ec177a576d9834d8db79b1acdf301b3b2f75f1a7ad",
    "fetched": "2026-10-17"
   },
   {
@@ -64,7 +64,7 @@
    "status": 200,
    "path": "en-US/cloud/faq/index.html",
    "bytes": 26011,
-   "sha256": "b6f3d72e6c9449f8ca6e05cb026dbb2e2db25b1c9f96f3438294e06750df29ea",
+   "sha256": "618d11748c5ed213aa84c76ce55f823ae8e3977587af76b7183abffa9f05534b",
    "fetched": "2026-10-17"
   },
   {
@@ -75,7 +75,7 @@
    "status": 200,
    "path": "en-US/community/appendix/index.html",
    "bytes": 27420,
-   "sha256": "2b254ddf7dbe065a07c192257faf7767136d396f3585b5f9cd1e3c4eee4b848a",
+   "sha256": "fd0623eadfcc2720c39e379b4688f01e51daecebdc867f57c6836261c4cf9311",
    "fetched": "2026-10-17"
   },
   {
@@ -86,7 +86,7 @@
    "status": 200,
    "path": "en-US/containers/community/index.html",
    "bytes": 27144,
-   "sha256": "654e5d995b5988d4e42b109f2034e3b0c8b714d1e0f6f6539be1bb4ea6e525be",
+   "sha256": "f5e51b0754e7e845e357947fb70fd48892fa576addec4faab0b5f85d33433c9d",
    "fetched": "2026-10-17"
   },
   {
@@ -97,7 +97,7 @@
    "status": 200,
    "path": "en-US/council/policy/community-publishing-platforms/index.html",
    "bytes": 37492,
-   "sha256": "1b0900cb0b365ca52667e77f737de5ac76b29c42349dca017f4e7d2d4b8dd3f7",
+   "sha256": "0263bff9e89010252124366d047608fbf7a1b097e80d858ea3d33b16e9fa2068",
    "fetched": "2026-10-17"
   },
   {
@@ -108,7 +108,7 @@
    "status": 200,
    "path": "en-US/dei/index.html",
    "bytes": 38288,
-   "sha256": "6b55a0aa23db826d31854c6dcded908fea450aabe7a0fae79965eb36f6aa0e4b",
+   "sha256": "0c88e8ab63c89d1bdae434489b759515129d20591fd6101908ac53605b4760eb",
    "fetched": "2026-10-17"
   },
   {
@@ -119,7 +119,7 @@
    "status": 200,
    "path": "en-US/design/index.html",
    "bytes": 27745,
-   "sha256": "cfa0f42e1ee528540574433c68c1bf4f108b3d97a053f25fdbca8439dc747954",
+   "sha256": "54f5eafa93e5a104919a19947f1de114a48309c52ee13a11bb54462bd990b5ee",
    "fetched": "2026-10-17"
   },
   {
@@ -130,18 +130,18 @@
    "status": 200,
    "path": "en-US/fdwg/index.html",
    "bytes": 27603,
-   "sha256": "d8c3bc1ae19b277b833c2fff9169b66ed3eb50c1675d7e5e1dda98441d22ead6",
+   "sha256": "66c3bde3c2085688907acd7a9023209a15e21109b92eecd9d5a2070be96b0134",
    "fetched": "2026-10-17"
   },
   {
-   "url": "https://docs.fedoraproject.org/en-US/fedora-accounts/",
+   "url": "https://docs.fedoraproject.org/en-US/fedora-docs/contributing/content/asciidoc-markup/",
    "why": [
-    "component fedora-accounts"
+    "tabs, I9 (tabs=1)"
    ],
    "status": 200,
-   "path": "en-US/fedora-accounts/index.html",
-   "bytes": 27887,
-   "sha256": "fd0fe09dc0173e29cd985b3f9dbc21c69ad4919ac2fcc234eec06981febc9a21",
+   "path": "en-US/fedora-docs/contributing/content/asciidoc-markup/index.html",
+   "bytes": 51917,
+   "sha256": "ae17b42493f4fcaf1d734b8711a2b43123fe7d2e42918f771b2e6f396c481950",
    "fetched": "2026-10-17"
   },
   {
@@ -152,7 +152,7 @@
    "status": 200,
    "path": "en-US/fedora/f39/index.html",
    "bytes": 40146,
-   "sha256": "1a39611d0bb6f2223e6ccfba707d578097ed801adf1b660c7ca349cfe513f77b",
+   "sha256": "9f5545e0977babc5f70cde194077768681ba404ef330ac75a760b44153e0ea4a",
    "fetched": "2026-10-17"
   },
   {
@@ -163,7 +163,7 @@
    "status": 200,
    "path": "en-US/fedora/latest/index.html",
    "bytes": 37532,
-   "sha256": "40f71356e4125767c3427aa04300a8b930512bdc931c3529e208de145dc2f39e",
+   "sha256": "a5f05fee1d87590e273d5457062a062721eb0f0f9fee4a105d5cb11b16fb4ad0",
    "fetched": "2026-10-17"
   },
   {
@@ -174,7 +174,7 @@
    "status": 200,
    "path": "en-US/fesco/Spins/index.html",
    "bytes": 31623,
-   "sha256": "6a1e8bc8a04f69f9608585a8a3ac935dc3721cd0354521b1d206c3067b94ef89",
+   "sha256": "69cddd66e205ec8fb23f1c8757751969ba021cafc58069b13369d7ce1ab0fba5",
    "fetched": "2026-10-17"
   },
   {
@@ -185,7 +185,7 @@
    "status": 200,
    "path": "en-US/flatpak/index.html",
    "bytes": 25786,
-   "sha256": "61b948d22fcf04d43d07ad16054b9d7fb2cbd195d6023a4a0d8d307cd19c0fdf",
+   "sha256": "68dea03d28398045acb25be40add4c4a72d8e5702dc8b6860a17ea40d7550f26",
    "fetched": "2026-10-17"
   },
   {
@@ -196,7 +196,7 @@
    "status": 200,
    "path": "en-US/i3/faq/index.html",
    "bytes": 26207,
-   "sha256": "c628dc84c90f2af2015ca5ed2306863431a5b66ee4e44687cccffd8b3a615163",
+   "sha256": "d3c5a688d9e38443bd9c5ba169d66847187e507e5ed6661fd27e209cecf98927",
    "fetched": "2026-10-17"
   },
   {
@@ -207,7 +207,7 @@
    "status": 200,
    "path": "en-US/iot-wg/index.html",
    "bytes": 27081,
-   "sha256": "11c977e9ceb9653b7263b14b5eebe1da324c313ea6be3da0700d987c7e99f390",
+   "sha256": "f78c4ac206b0813449a8c5fecbb77527a321ea27c80278e3d75f806fdfa264ed",
    "fetched": "2026-10-17"
   },
   {
@@ -218,7 +218,7 @@
    "status": 200,
    "path": "en-US/java-packaging-howto/integration_maven_xmvn/index.html",
    "bytes": 27274,
-   "sha256": "a075abbe7e6cc30681fa27b1d140b89b6d11250bc0a25f53b9640fd6b3669990",
+   "sha256": "35ca51b3559ad6c93f176a55f34d99ecf16cfd39833b4f2e936fdc1a4a8b002a",
    "fetched": "2026-10-17"
   },
   {
@@ -229,7 +229,7 @@
    "status": 200,
    "path": "en-US/kde/index.html",
    "bytes": 25298,
-   "sha256": "00090bed5c2ca81b468804e5c93bbe80f5786625a6ba52a2fb2f7f829c0d123f",
+   "sha256": "71f9fbf755ddfd21297a7eff09c47c8e165de6ce18e4b7ad951ce9fcf97fb909",
    "fetched": "2026-10-17"
   },
   {
@@ -240,7 +240,7 @@
    "status": 200,
    "path": "en-US/legal/all-allowed/index.html",
    "bytes": 507750,
-   "sha256": "43bec1a23b2a9e1a572ed5c0cab4bc31c1e81c6ac145aa4f5aff57dc18ada73b",
+   "sha256": "d5b26ba100da0ad03929e165591f9f85cbda566043a497afcd6972f3544b7fc3",
    "fetched": "2026-10-17"
   },
   {
@@ -251,7 +251,7 @@
    "status": 200,
    "path": "en-US/matrix/bots/index.html",
    "bytes": 25819,
-   "sha256": "94f014a0a37c8c9bf587ffde49101f6d4be7d0ae2a3b02c35dfb01505cbabed6",
+   "sha256": "b13f0326abcbc2f2e468082b5863e729935cb7a2e4cb9ab6ea1b164b768c9427",
    "fetched": "2026-10-17"
   },
   {
@@ -262,7 +262,7 @@
    "status": 200,
    "path": "en-US/minimal/user-guide/index.html",
    "bytes": 26965,
-   "sha256": "b7f35ed04a28735203854e9a0731b1e2678a86309c4fe88843f781a470c21d81",
+   "sha256": "6e44b2baec48ef4229c11ea7a5b23d9c2cbbedfd23cd7ab0759eaaaec5dc90eb",
    "fetched": "2026-10-17"
   },
   {
@@ -273,7 +273,7 @@
    "status": 200,
    "path": "en-US/packaging-guidelines/index.html",
    "bytes": 216039,
-   "sha256": "cf1f34b7fca820b5628daffc5db612218187f65ae153c890fd52da77bf0451da",
+   "sha256": "26fb2defb7d984488b84ff74d350698d3007684e3165e6d1cd2229f7f3c825fc",
    "fetched": "2026-10-17"
   },
   {
@@ -284,7 +284,7 @@
    "status": 200,
    "path": "en-US/packaging-guidelines/ReviewGuidelines/index.html",
    "bytes": 55333,
-   "sha256": "7e77477cfb47cc889c12d9206e9aef500497d5fd4895e80d979f3e63e11f6589",
+   "sha256": "bd1c4c5d96eb16598d71ba56b423559a191a47f6610fe43fdb26539f7bcf3cf4",
    "fetched": "2026-10-17"
   },
   {
@@ -295,7 +295,7 @@
    "status": 200,
    "path": "en-US/qa-docs/guides/index.html",
    "bytes": 26953,
-   "sha256": "339d24b1e35516a707c143f36f95de2390e1f1292367f5e14008a4a512892465",
+   "sha256": "5ca32c0930e68e1ef8269b3d817b2ba1337d87e7841dc6f2e21a25e7d0ca2b2c",
    "fetched": "2026-10-17"
   },
   {
@@ -306,7 +306,7 @@
    "status": 200,
    "path": "en-US/quick-docs/bugzilla-file-a-bug/index.html",
    "bytes": 72492,
-   "sha256": "d59df3674a436dfe26ba5c86dc4597f26d969db9fedecae988e82edd246f21a6",
+   "sha256": "422e56d4afb618518f8c914e69ef01f3753efb96d5cb6920caf08f24dc59ec8e",
    "fetched": "2026-10-17"
   },
   {
@@ -317,7 +317,7 @@
    "status": 200,
    "path": "en-US/reproducible-builds/talks/index.html",
    "bytes": 27549,
-   "sha256": "4030da5155a7cdb2c908853fc32a77324d53b365cc821845e377a1830be18e4b",
+   "sha256": "d7de8f33d16ef7e89e0959070753339feb279815354b49ab07bfaa265a945033",
    "fetched": "2026-10-17"
   },
   {
@@ -328,7 +328,7 @@
    "status": 404,
    "path": "en-US/no-such-page-bruce-fixture/404.html",
    "bytes": 22763,
-   "sha256": "dcaefa1f6214fd37482306729be8b939ae5c681cace0e498ec054d391131d4a6",
+   "sha256": "43b36b28f67f8d3cfaeb1dbed58c1c1744775956e8d4151050795dec3c9c6e90",
    "fetched": "2026-10-17"
   }
  ]

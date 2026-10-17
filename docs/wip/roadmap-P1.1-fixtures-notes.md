@@ -8,7 +8,8 @@ What landed, and what the next slices inherit. The row is `P1.1` in
 
 - **`fixtures/docs-fp-o/`**: 30 saved pages, 1.7 MB, as served. `manifest.json`
   holds each page's URL, why it was chosen, status, size, sha256 and fetch date
-  (2026-10-17). `survey.json` holds the measurements the choice was read from.
+  (2026-10-17). `survey.json` holds the measurements the choice was read from,
+  its `tabs` count as re-measured by `P1.1.1`.
   `fixtures/NOTICE` carries the CC BY-SA 4.0 attribution.
 - **`fixtures/generators/`**: ten hand-written pages. One edit-link page each for
   Docusaurus, MkDocs Material, Docsy, Furo and the Read the Docs theme, one
@@ -23,7 +24,10 @@ Reproduce the choice with `cd scripts && uv run fixtures.py select`. Repeat the
 measurement with `uv run fixtures.py survey --deep quick-docs=90 --deep
 infra=40 --deep releases=20`, about 12 minutes at I2's `Crawl-delay`; it
 resumes from `runs/fixtures/survey.jsonl` if it dies, as one did here on a
-connection reset.
+connection reset. A changed `measure` needs a fresh partial file:
+`--urls-from ../fixtures/docs-fp-o/survey.json --partial <new>` re-measures
+the same pages, as `runs/fixtures/tabs-20261017/` did (its `log` heads with
+the command).
 
 ## What the next slices inherit
 
@@ -45,14 +49,20 @@ connection reset.
 
 ## Negative results
 
-- **No docs.fp.o page with tabs was found, and the sample is no evidence.**
-  The survey's `tabs` count matches only `<div class="tabs` and measures
-  `generators/antora/tabs.html` at zero, so the 698 are unmeasured for tabs
-  (`P1.1.1`). The `[tabs]` search of the quick-docs,
-  release-notes, beginners-guide, accounts-docs and fedora-coreos-docs sources
-  came up empty. The image does carry the extension (`historical/initial.md`).
-  `generators/antora/tabs.html` is reconstructed from I9's ids and is not
-  observed markup; its comment says so. A real page is `P1.1.1`.
+- **One tab set in 698 pages, and it is a demonstration.** The only sampled
+  page with `@asciidoctor/tabs` is `fedora-docs/contributing/content/asciidoc-markup/`,
+  the Docs team's markup guide showing a three-tab example; its fixture is
+  picked as "tabs, I9" (`P1.1.1`). Content use of tabs remains unobserved.
+  The `[tabs]` search of the quick-docs, release-notes, beginners-guide,
+  accounts-docs and fedora-coreos-docs sources came up empty.
+- **Served tab markup is the pre-JS form.** The block is
+  `<div id="_tabs_1" class="openblock tabs is-loading">`, its tabs
+  `_tabs_1_tab_<x>` and panels `_tabs_1_tab_<x>--panel`, all static as I9
+  claims. The roles, `aria-selected` and `hidden` that
+  `generators/antora/tabs.html` reconstructs are absent, being the browser
+  script's; its comment says so.
+- **Adding the tabs page dropped `fedora-accounts/`**, the last
+  one-per-component fill, to stay at 30.
 - **Six pages have no `nav-container`.** `arm-sbc`, `docs`, `engineering`,
   `mindshare`, `spins-labs` and `tools` (each the only page of its sitemap)
   are on the `without_menu` layout, so they have no `data-component` or

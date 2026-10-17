@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AsciiDoc markup :: Fedora Docs</title>
+    <link rel="canonical" href="https://docs.fedoraproject.org/en-US/fedora-docs/contributing/content/asciidoc-markup/">
+    <meta name="description" content="General information about writing in AsciiDoc as well as Fedora/Antora-specific syntax that comes up often in Fedora Documentation.">
+    <meta name="generator" content="Antora 3.1.15">
+    <link rel="stylesheet" href="../../../../_/css/site.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+<link rel="stylesheet" href="../../../../_/css/vendor/tabs.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Fedora Docs">
+<meta property="og:title" content="AsciiDoc markup">
+
+<meta property="og:description" content="General information about writing in AsciiDoc as well as Fedora/Antora-specific syntax that comes up often in Fedora Documentation.">
+<meta property="og:image" content="https://docs.fedoraproject.org/en-US/_/img/docs_logo.png">
+
+    <script>if (localStorage.darkmode === 'true' || (!('darkmode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark');} else {document.documentElement.classList.remove('dark');}</script>
+  </head>
+  <body class="article dark:bg-fp-blue-darkest text-black dark:text-white">
+<!-- Add any HTML code to show at the top of each page — like a banner to a survey, some announcement, etc. Leave this file empty to not show anything-->
+<header class="header" role="banner">
+  <nav class="fixed z-50 top-0 w-full bg-gradient-to-l from-fp-blue to-fp-blue-light dark:bg-none dark:bg-fp-blue-dark" style="">
+    <div class="mx-auto px-2 sm:px-6 lg:px-8">
+      <div class="relative flex h-14 items-center justify-between">
+        <div
+          class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start"
+        >
+          <div class="flex flex-shrink-0 items-center">
+            <a href="https://docs.fedoraproject.org/en-US">
+              <img class="h-6 z-10 w-auto" src="../../../../_/img/docs_logo_white.svg">
+            </a>
+          </div>
+
+
+	  <div class="hidden sm:ml-auto sm:block">
+            <div class="flex space-x-4">
+
+
+              <div id="search-field" class="relative inline-flex cursor-pointer items-center rounded px-4 text-xs text-gray-500 dark:text-gray-200">
+                <svg class="absolute left-6 fill-gray-400 dark:fill-gray-400 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg>
+                <input id="search-input" class="pl-6 pr-28 h-8 w-64 rounded-xl dark:bg-black" type="text" placeholder="Search Docs">
+                <label class="ml-2 absolute right-6 filter checkbox border-l border-gray-500 pl-2">
+		 <input type="checkbox" class="appearance-none h-3 w-3 border border-gray-500 rounded bg-white dark:bg-black checked:bg-fp-blue-light checked:border-fp-blue-light dark:checked:bg-fp-blue dark:checked:border-fp-blue focus:outline-none transition duration-200 cursor-pointer my-0.5 mr-1 float-left" data-facet-filter="component:fedora-docs"> In this section
+                </label>
+              </div>
+            </div>
+          </div>
+	  <button type="button" id="themeSwitch" class="hidden sm:block stroke-white fill-white ">
+	    <span class="dark:hidden">
+	      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+	        <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+		<path d="M12 4v1M17.66 6.344l-.828.828M20.005 12.004h-1M17.66 17.664l-.828-.828M12 20.01V19M6.34 17.664l.835-.836M3.995 12.004h1.01M6 6l.835.836"></path>
+	      </svg>
+	    </span>
+	    <span class="hidden dark:inline">
+	      <svg viewBox="0 0 512 512" class="w-4 h-4">
+	        <path d="M421.6 379.9c-.6641 0-1.35 .0625-2.049 .1953c-11.24 2.143-22.37 3.17-33.32 3.17c-94.81 0-174.1-77.14-174.1-175.5c0-63.19 33.79-121.3 88.73-152.6c8.467-4.812 6.339-17.66-3.279-19.44c-11.2-2.078-29.53-3.746-40.9-3.746C132.3 31.1 32 132.2 32 256c0 123.6 100.1 224 223.8 224c69.04 0 132.1-31.45 173.8-82.93C435.3 389.1 429.1 379.9 421.6 379.9zM255.8 432C158.9 432 80 353 80 256c0-76.32 48.77-141.4 116.7-165.8C175.2 125 163.2 165.6 163.2 207.8c0 99.44 65.13 183.9 154.9 212.8C298.5 428.1 277.4 432 255.8 432z"/>
+              </svg>
+	    </span>
+	  </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container dark:text-gray-300 bg-fp-gray-lightest dark:bg-fp-blue-darker dark:border-r dark:border-gray-800" data-component="fedora-docs" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title text-fp-blue-dark dark:text-fp-blue font-bold"><a href="../../../team-info/">Fedora Documentation Team</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How we work</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../../team-info/charter/">The Docs Charter</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../../team-info/meetings/">Docs Meetings</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../../team-info/workflow/">Docs Workflow organization</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../">Contribute to Fedora Docs</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../contrib-new-documentation/">Create a new documentation module</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../contrib-quickdocs/">Contributing to Quick Docs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../contrib-release-notes/">Contributing to Release Notes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../tools-file-edit-forge/">Edit documentation in Forge</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../tools-edit-local-clone/">Edit documentation locally</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../tools-vale-linter/">Check edits with Vale</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../style-guide/">The docs style guide</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../asciidoc-intro/">AsciiDoc for Fedora</a>
+<ul class="nav-list">
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="./">Markup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../asciidoc-reusable-attributes/">Reusable attributes</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../translations/">Working with Translations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Legacy guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../tools-gitlab-howto/">HowTo for casual contributions (for GitLab-based pages)</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../tools-web-ide-ui/">How to profoundly use GitLab UI for document maintenance</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../tools-file-edit-pagure/">How to edit files on the Pagure Web UI</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../tools-local-authoring-env/">How to create and use a local Fedora authoring environment</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../tools-localenv-preview/">How to run a local preview</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../maintenance/">Contribute to keeping docs up and running</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../maintenance/design-ux-contribution/">Design the user interface for Docs</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore bg-gray-50 dark:bg-fp-blue-darkest" data-panel="explore">
+  <div class="context dark:border-t dark:border-gray-800">
+    <span class="title">Fedora Documentation Team</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components bg-gray-100 dark:bg-fp-blue-darkest">
+    <li class="component">
+      <a class="title" href="../../../../beginners-guide/">A Beginner's Guide to Fedora</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../arm-sbc/">ARM Single Board Computers</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../community/">Community Architecture (CommArch)</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../cle/">Community Linux Engineering</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../defensive-coding/">Defensive Coding Guide</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../engineering/">Engineering Teams</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../epel/">EPEL</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../a11y/">Fedora Accessibility (a11y) WG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../fedora-accounts/">Fedora Accounts</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../ai-ml/">Fedora AI/ML SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../fedora-asahi-remix/">Fedora Asahi Remix</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../atomic-desktops/">Fedora Atomic Desktops</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../badges/">Fedora Badges</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../ci/">Fedora CI</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../cloud/">Fedora Cloud</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../commops/">Fedora Community Ops</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../containers/">Fedora Container Docs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../fedora-coreos/">Fedora CoreOS</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../council/">Fedora Council</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../fdwg/">Fedora Data Working Group (FDWG)</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../design/">Fedora Design Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../discussion-forum-guidelines-and-rules/">Fedora Discussion Forum (Self-)Moderation Guidelines and Rules</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../dei/">Fedora Diversity, Equity, and Inclusion (DEI)</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../docs/">Fedora Documentation</a>
+    </li>
+    <li class="component is-current">
+      <a class="title" href="../../../team-info/">Fedora Documentation Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../eln/">Fedora ELN</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../forge-documentation/">Fedora Forge Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../gaming/">Fedora Gaming</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../i3/">Fedora i3 S.I.G.</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../infra/">Fedora Infrastructure & Release Engineering</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../iot/">Fedora Internet Of Things</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../iot-wg/">Fedora IoT Working Group</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../fedora-join/">Fedora Join SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../kde/">Fedora KDE Plasma Desktop Edition</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../legal/">Fedora Legal</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../releases/">Fedora Linux Releases</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../localization/">Fedora Localization Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../fedora-magazine/">Fedora Magazine</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../marketing/">Fedora Marketing Team</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../matrix/">Fedora Matrix WG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../mentored-projects/">Fedora Mentored Projects</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../mindshare-committee/">Fedora Mindshare Committee</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../minimal/">Fedora Minimal</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../operations/">Fedora Program Operations</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../project/">Fedora Project</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../qa-docs/">Fedora Quality Docs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../rawhide-gating/">Fedora Rawhide Gating</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../robotics-sig/">Fedora Robotics SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../security/">Fedora Security SIG</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../fedora-server/">Fedora Server User Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../server-working-group/">Fedora Server Working Group</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../spins-labs/">Fedora Spins & Labs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../tools/">Fedora Tools</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../fedora/latest/">Fedora User Docs</a>
+      <ul class="versions">
+        <li class="version">
+          <a href="../../../../fedora/rawhide/">rawhide</a>
+        </li>
+        <li class="version is-latest">
+          <a href="../../../../fedora/latest/">f44</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f43/">f43</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f42/">f42</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f41/">f41</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f40/">f40</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f39/">f39</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f38/">f38</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f37/">f37</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f36/">f36</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f35/">f35</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f34/">f34</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f33/">f33</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f32/">f32</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f31/">f31</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f30/">f30</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f29/">f29</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f28/">f28</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f27/">f27</a>
+        </li>
+        <li class="version">
+          <a href="../../../../fedora/f26/">f26</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../websites/">Fedora Websites & Apps</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../workstation-docs/">Fedora Workstation Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../workstation-working-group/">Fedora Workstation Working Group</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../bootc/">Fedora/CentOS bootc</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../fesco/">FESCo</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../flatpak/">Flatpak</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../java-packaging-howto/">Java Packaging HOWTO</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../docs-l10n/">Localization help and stats</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../mindshare/">Mindshare Teams</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../neurofedora/overview/">NeuroFedora User Documentation</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../package-maintainers/">Package Maintainers</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../packaging-guidelines/">Packaging Guidelines</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../quick-docs/">Quick Docs</a>
+    </li>
+    <li class="component">
+      <a class="title" href="../../../../reproducible-builds/">Reproducible Builds</a>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar bg-fp-gray-lightest dark:bg-fp-blue-darkest dark:text-gray-300 dark:border-b dark:border-gray-800" role="navigation">
+<button class="toolbar-icon nav-toggle"></button>
+  <a href="../../../../docs/" class="toolbar-icon home-link"></a>
+<nav class="crumbs" role="navigation" aria-label="breadcrumbs">
+  <ul>
+    <li class="after:text-gray-800 dark:after:text-gray-400"><a href="../../../team-info/">Fedora Documentation Team</a></li>
+    <li class="after:text-gray-800 dark:after:text-gray-400"><a href="../asciidoc-intro/">AsciiDoc for Fedora</a></li>
+    <li class="after:text-gray-800 dark:after:text-gray-400"><a href="./">Markup</a></li>
+  </ul>
+</nav>
+
+        <div class="page-languages">
+            <button class="languages-menu-toggle" title="Show other languages of the site">
+                en-US
+            </button>
+            <div class="languages-menu">
+    
+<a class="language" href="../../../../../en-US/fedora-docs/contributing/content/asciidoc-markup/">en-US</a>
+<a class="language" href="../../../../../ar/fedora-docs/contributing/content/asciidoc-markup/">ar</a>
+<a class="language" href="../../../../../ast/fedora-docs/contributing/content/asciidoc-markup/">ast</a>
+<a class="language" href="../../../../../az/fedora-docs/contributing/content/asciidoc-markup/">az</a>
+<a class="language" href="../../../../../be/fedora-docs/contributing/content/asciidoc-markup/">be</a>
+<a class="language" href="../../../../../bg/fedora-docs/contributing/content/asciidoc-markup/">bg</a>
+<a class="language" href="../../../../../bn/fedora-docs/contributing/content/asciidoc-markup/">bn</a>
+<a class="language" href="../../../../../ca/fedora-docs/contributing/content/asciidoc-markup/">ca</a>
+<a class="language" href="../../../../../cs/fedora-docs/contributing/content/asciidoc-markup/">cs</a>
+<a class="language" href="../../../../../de/fedora-docs/contributing/content/asciidoc-markup/">de</a>
+<a class="language" href="../../../../../el/fedora-docs/contributing/content/asciidoc-markup/">el</a>
+<a class="language" href="../../../../../es/fedora-docs/contributing/content/asciidoc-markup/">es</a>
+<a class="language" href="../../../../../es_419/fedora-docs/contributing/content/asciidoc-markup/">es_419</a>
+<a class="language" href="../../../../../fa/fedora-docs/contributing/content/asciidoc-markup/">fa</a>
+<a class="language" href="../../../../../fi/fedora-docs/contributing/content/asciidoc-markup/">fi</a>
+<a class="language" href="../../../../../fil/fedora-docs/contributing/content/asciidoc-markup/">fil</a>
+<a class="language" href="../../../../../fr/fedora-docs/contributing/content/asciidoc-markup/">fr</a>
+<a class="language" href="../../../../../fur/fedora-docs/contributing/content/asciidoc-markup/">fur</a>
+<a class="language" href="../../../../../ga/fedora-docs/contributing/content/asciidoc-markup/">ga</a>
+<a class="language" href="../../../../../gl/fedora-docs/contributing/content/asciidoc-markup/">gl</a>
+<a class="language" href="../../../../../he/fedora-docs/contributing/content/asciidoc-markup/">he</a>
+<a class="language" href="../../../../../hi/fedora-docs/contributing/content/asciidoc-markup/">hi</a>
+<a class="language" href="../../../../../hr/fedora-docs/contributing/content/asciidoc-markup/">hr</a>
+<a class="language" href="../../../../../hu/fedora-docs/contributing/content/asciidoc-markup/">hu</a>
+<a class="language" href="../../../../../hy/fedora-docs/contributing/content/asciidoc-markup/">hy</a>
+<a class="language" href="../../../../../id/fedora-docs/contributing/content/asciidoc-markup/">id</a>
+<a class="language" href="../../../../../it/fedora-docs/contributing/content/asciidoc-markup/">it</a>
+<a class="language" href="../../../../../ja/fedora-docs/contributing/content/asciidoc-markup/">ja</a>
+<a class="language" href="../../../../../jp/fedora-docs/contributing/content/asciidoc-markup/">jp</a>
+<a class="language" href="../../../../../ka/fedora-docs/contributing/content/asciidoc-markup/">ka</a>
+<a class="language" href="../../../../../kab/fedora-docs/contributing/content/asciidoc-markup/">kab</a>
+<a class="language" href="../../../../../km/fedora-docs/contributing/content/asciidoc-markup/">km</a>
+<a class="language" href="../../../../../ko/fedora-docs/contributing/content/asciidoc-markup/">ko</a>
+<a class="language" href="../../../../../lb/fedora-docs/contributing/content/asciidoc-markup/">lb</a>
+<a class="language" href="../../../../../lo/fedora-docs/contributing/content/asciidoc-markup/">lo</a>
+<a class="language" href="../../../../../lt/fedora-docs/contributing/content/asciidoc-markup/">lt</a>
+<a class="language" href="../../../../../mr/fedora-docs/contributing/content/asciidoc-markup/">mr</a>
+<a class="language" href="../../../../../ms/fedora-docs/contributing/content/asciidoc-markup/">ms</a>
+<a class="language" href="../../../../../my/fedora-docs/contributing/content/asciidoc-markup/">my</a>
+<a class="language" href="../../../../../nb_NO/fedora-docs/contributing/content/asciidoc-markup/">nb_NO</a>
+<a class="language" href="../../../../../ne/fedora-docs/contributing/content/asciidoc-markup/">ne</a>
+<a class="language" href="../../../../../nl/fedora-docs/contributing/content/asciidoc-markup/">nl</a>
+<a class="language" href="../../../../../nn/fedora-docs/contributing/content/asciidoc-markup/">nn</a>
+<a class="language" href="../../../../../or/fedora-docs/contributing/content/asciidoc-markup/">or</a>
+<a class="language" href="../../../../../pl/fedora-docs/contributing/content/asciidoc-markup/">pl</a>
+<a class="language" href="../../../../../pt/fedora-docs/contributing/content/asciidoc-markup/">pt</a>
+<a class="language" href="../../../../../pt_BR/fedora-docs/contributing/content/asciidoc-markup/">pt_BR</a>
+<a class="language" href="../../../../../pt_PT/fedora-docs/contributing/content/asciidoc-markup/">pt_PT</a>
+<a class="language" href="../../../../../ro/fedora-docs/contributing/content/asciidoc-markup/">ro</a>
+<a class="language" href="../../../../../ru/fedora-docs/contributing/content/asciidoc-markup/">ru</a>
+<a class="language" href="../../../../../si/fedora-docs/contributing/content/asciidoc-markup/">si</a>
+<a class="language" href="../../../../../sk/fedora-docs/contributing/content/asciidoc-markup/">sk</a>
+<a class="language" href="../../../../../sq/fedora-docs/contributing/content/asciidoc-markup/">sq</a>
+<a class="language" href="../../../../../sv/fedora-docs/contributing/content/asciidoc-markup/">sv</a>
+<a class="language" href="../../../../../sw/fedora-docs/contributing/content/asciidoc-markup/">sw</a>
+<a class="language" href="../../../../../szl/fedora-docs/contributing/content/asciidoc-markup/">szl</a>
+<a class="language" href="../../../../../te/fedora-docs/contributing/content/asciidoc-markup/">te</a>
+<a class="language" href="../../../../../tr/fedora-docs/contributing/content/asciidoc-markup/">tr</a>
+<a class="language" href="../../../../../tzm/fedora-docs/contributing/content/asciidoc-markup/">tzm</a>
+<a class="language" href="../../../../../uk/fedora-docs/contributing/content/asciidoc-markup/">uk</a>
+<a class="language" href="../../../../../ur/fedora-docs/contributing/content/asciidoc-markup/">ur</a>
+<a class="language" href="../../../../../ur_PK/fedora-docs/contributing/content/asciidoc-markup/">ur_PK</a>
+<a class="language" href="../../../../../uz/fedora-docs/contributing/content/asciidoc-markup/">uz</a>
+<a class="language" href="../../../../../vi/fedora-docs/contributing/content/asciidoc-markup/">vi</a>
+<a class="language" href="../../../../../zh_CN/fedora-docs/contributing/content/asciidoc-markup/">zh_CN</a>
+<a class="language" href="../../../../../zh_Hans/fedora-docs/contributing/content/asciidoc-markup/">zh_Hans</a>
+<a class="language" href="../../../../../zh_Hant/fedora-docs/contributing/content/asciidoc-markup/">zh_Hant</a>
+<a class="language" href="../../../../../zh_TW/fedora-docs/contributing/content/asciidoc-markup/">zh_TW</a>
+
+            </div>
+        </div>
+      <div class="edit-this-page"><a href="https://forge.fedoraproject.org/docs/team-docs/commits/branch/main/modules/contributing/pages/content/asciidoc-markup.adoc" title="Page history"><i class="fas fa-history"></i></a></div>
+  <div class="edit-this-page"><a href="https://forge.fedoraproject.org/docs/team-docs/src/branch/main/modules/contributing/pages/content/asciidoc-markup.adoc" title="Edit this Page"><i class="fas fa-edit"></i></a></div>
+  <div class="edit-this-page"><a href="https://forge.fedoraproject.org/docs/team-docs/issues/new?title=[main] Doc issue in file modules/contributing/pages/content/asciidoc-markup.adoc" title="Report an issue"><i class="fas fa-bug"></i></a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar dark:text-fp-gray-light" data-title="Contents" data-levels="3">
+  <div class="toc-content">
+    <div class="toc-menu"></div>
+    <div class="pt-6">
+        </div>
+  </div>
+
+</aside>
+<article class="doc dark:text-gray-100">
+<h1 class="page mt-8 mb-1">AsciiDoc markup</h1>
+<div class="is-before-toc text-xs text-gray-400 border-b border-gray-300 mb-6 pb-1">
+<span>Fedora Documentation Team</span>
+<span class="before:content-['–_']">Version 1.0</span>
+<span class="before:content-['–_']">Last review: 2022-12-10</span>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This page shares general information about writing in AsciiDoc as well as Fedora/Antora-specific syntax that comes up often in Fedora Documentation.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="basics"><a class="anchor" href="#basics"></a>AsciiDoc basics</h2>
+<div class="sectionbody">
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>AsciiDoc is a lightweight markup language for authoring notes, articles, documentation, books, web pages, slide decks and man pages in plain text.</p>
+</div>
+</blockquote>
+<div class="attribution">
+&#8212; asciidoctor.org
+</div>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><a href="https://asciidoctor.org/docs/asciidoc-syntax-quick-reference/"><strong>AsciiDoc Syntax Quick Reference</strong></a></dt>
+<dd>
+<p>Handy cheat sheet of what the AsciiDoc markup looks like.
+Use this for quick references and checking up on how to formatting, lists, media content (images and video), table of contents, and more.</p>
+</dd>
+<dt class="hdlist1"><a href="https://asciidoctor.org/docs/asciidoc-recommended-practices/"><strong>AsciiDoc Recommended Practices</strong></a></dt>
+<dd>
+<p>Best practices about writing in AsciiDoc.
+Most importantly, note that <a href="https://asciidoctor.org/docs/asciidoc-recommended-practices/#one-sentence-per-line">every sentence should be on its own line</a>.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="snippets"><a class="anchor" href="#snippets"></a>Fedora Documentation snippets</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When you write Fedora Documentation, some things come up frequently.
+They may not be documented in general AsciiDoc documentation, like on <code>asciidoctor.org</code>.<br>
+This section contains handy references for Fedora Documentation writers to copy and paste in their own AsciiDoc documents.</p>
+</div>
+<div class="sect2">
+<h3 id="internal-link"><a class="anchor" href="#internal-link"></a>Internal links</h3>
+<div class="paragraph">
+<p>In this section, we will use the following repository structure as an example:</p>
+</div>
+<div class="listingblock">
+<div class="title">Example of documentation repository structure</div>
+<div class="content">
+<pre>📄 antora.yml <i class="conum" data-value="1"></i><b>(1)</b>
+📂 modules
+  📂 ROOT
+    📂 pages
+      📄 index.adoc
+      📄 another-page.adoc
+      📂 sub-dir
+        📄 rules.adoc
+  📂 council
+    📂 pages
+      📄 guiding-policy.adoc</pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Defines the documentation component as <em>test-module</em> (attribute <code>name</code>)</td>
+</tr>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_same_repository"><a class="anchor" href="#_same_repository"></a>Same repository</h4>
+<div class="paragraph">
+<p>Use the local path relative to the <code>pages</code> directory in the same module.</p>
+</div>
+<div class="listingblock">
+<div class="title">Link to a page at the root level</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-adoc hljs" data-lang="adoc">xref:another-page.adoc</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Link to a page in a subdirectory of <code>pages</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-adoc hljs" data-lang="adoc">xref:sub-dir/rules.adoc</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="module-link"><a class="anchor" href="#module-link"></a>Same repository, different module</h4>
+<div class="paragraph">
+<p>Like an internal link, but use a colon (<code>:</code>) to separate the module name.
+If you are not sure if you need this, you likely don&#8217;t!
+Multiple modules bundled in the same repository is not currently a common scenario in Fedora Documentation.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example 1</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-adoc hljs" data-lang="adoc">xref:council:guiding-policy.adoc</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="external-antora-link"><a class="anchor" href="#external-antora-link"></a>Different repository</h4>
+<div class="paragraph">
+<p>Link to another Fedora Documentation page that exists in another repository.
+Note that you <strong>must</strong> use the <code>name</code> field specified in the <code>antora.yml</code> file in the other repository or it will not work.
+In case the target module name is <code>ROOT</code>, you can omit the name but you still need the extra colon (<code>:</code>).</p>
+</div>
+<div class="listingblock">
+<div class="title">Example 1, both links are equivalent</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-adoc hljs" data-lang="adoc">xref:test-module::another-page.adoc
+xref:test-module:ROOT:another-page.adoc</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Example 2</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-adoc hljs" data-lang="adoc">xref:test-module:council:guiding-policy.adoc</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_url_redirects"><a class="anchor" href="#_url_redirects"></a>URL redirects</h3>
+<div class="paragraph">
+<p>You can create a redirect from an old page to a new one by using the <a href="https://docs.antora.org/antora/latest/page/page-aliases/"><code>page-aliases</code></a> attribute.
+The syntax is the same as for <a href="#internal-link">xref links</a>.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example 1. In new-page.adoc</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-adoc hljs" data-lang="adoc">= Page Title
+:page-aliases: old-page.adoc</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can also create a redirect from another module or component.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example 2. In new-page.adoc</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-adoc hljs" data-lang="adoc">= Page Title
+:page-aliases: test-module:council:removed-page.adoc</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_syntax_highlighting"><a class="anchor" href="#_syntax_highlighting"></a>Syntax highlighting</h3>
+<div class="paragraph">
+<p>You can add syntax highlighting to any source block by setting the source language attribute.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example of setting the source language attribute to a code block</div>
+<div class="content">
+<pre>[,yaml]
+----
+output:
+  clean: true
+  dir: ./public
+  destinations:
+  - provider: archive
+----</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Example of rendered code block with such attribute</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">output:
+  clean: true
+  dir: ./public
+  destinations:
+  - provider: archive</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The list of supported languages can be found in the <a href="https://gitlab.com/fedora/docs/docs-website/ui-bundle/-/blob/main/src/js/vendor/highlight.bundle.js">highlight.bundle.js in the Fedora Docs UI</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_datatables"><a class="anchor" href="#_datatables"></a>Datatables</h3>
+<div class="paragraph">
+<p>You can convert a regular table to a <a href="https://datatables.net/">DataTables</a> using the <code>datatable</code> role attribute.
+DataTables provides filtering and ordering capabilities.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example of defining a DataTable</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-asciidoc hljs" data-lang="asciidoc">[.datatable]
+|===
+|colA | colB | colC | colD
+
+| yyy | 123 | zzz | 28%
+| bbb | 242 | aaa | 42%
+| ddd | 8874 | yyy | 99%
+| ccc | 9 | ttt | 2%
+| aaa | 987 | www | 18%
+|===</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch datatable">
+<caption class="title">Table 1. Rendered DataTable</caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">colA</th>
+<th class="tableblock halign-left valign-top">colB</th>
+<th class="tableblock halign-left valign-top">colC</th>
+<th class="tableblock halign-left valign-top">colD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yyy</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">123</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">zzz</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">28%</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">bbb</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">242</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">aaa</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">42%</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ddd</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8874</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yyy</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">99%</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ccc</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">9</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ttt</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2%</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">aaa</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">987</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">www</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">18%</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Additional roles can be used to add DataTables features:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>dt-search</code>: add search box</p>
+</li>
+<li>
+<p><code>dt-paging</code>: add pagination</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You can also alter the styling with the help of <a href="https://datatables.net/manual/styling/classes">built-in DataTables classes</a>, such as <code>display</code> or <code>compact</code>.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example of using additional options</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-asciidoc hljs" data-lang="asciidoc">[.datatable.dt-search.display]
+|===
+|colA | colB | colC | colD
+
+| yyy | 123 | zzz | 28%
+| bbb | 242 | aaa | 42%
+| ddd | 8874 | yyy | 99%
+|===</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>DataTables real usage can be seen on the <a href="../../../../legal/not-allowed-licenses/" class="xref page">Legal documentation</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_tabs_block"><a class="anchor" href="#_tabs_block"></a>Tabs block</h3>
+<div class="paragraph">
+<p>You can create a set of tabs to organize documentation content in a block.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example of defining a tab set</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-asciidoc hljs" data-lang="asciidoc">[tabs]
+====
+Tab A:: Contents of Tab A.
+
+Tab B::
++
+Contents of Tab B.
+
+Tab C::
++
+--
+Contents of Tab C.
+
+Contains more than one block.
+--
+====</code></pre>
+</div>
+</div>
+<div id="_tabs_1" class="openblock tabs is-loading">
+<div class="title">Resulting tab set</div>
+<div class="content">
+<div class="ulist tablist">
+<ul>
+<li id="_tabs_1_tab_a" class="tab">
+<p>Tab A</p>
+</li>
+<li id="_tabs_1_tab_b" class="tab">
+<p>Tab B</p>
+</li>
+<li id="_tabs_1_tab_c" class="tab">
+<p>Tab C</p>
+</li>
+</ul>
+</div>
+<div id="_tabs_1_tab_a--panel" class="tabpanel" aria-labelledby="_tabs_1_tab_a">
+<div class="paragraph">
+<p>Contents of Tab A.</p>
+</div>
+</div>
+<div id="_tabs_1_tab_b--panel" class="tabpanel" aria-labelledby="_tabs_1_tab_b">
+<div class="paragraph">
+<p>Contents of Tab B.</p>
+</div>
+</div>
+<div id="_tabs_1_tab_c--panel" class="tabpanel" aria-labelledby="_tabs_1_tab_c">
+<div class="paragraph">
+<p>Contents of Tab C.</p>
+</div>
+<div class="paragraph">
+<p>Contains more than one block.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>For more information about tabs, refer to the Asciidoctor Tabs extension at <a href="https://github.com/asciidoctor/asciidoctor-tabs" class="bare">https://github.com/asciidoctor/asciidoctor-tabs</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_table_of_content"><a class="anchor" href="#_table_of_content"></a>Table of content</h3>
+<div class="paragraph">
+<p>A table of content is automatically generated on the right of each pages.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+There is no need to add the <code>:toc:</code> attribute as it will then add a duplicate table of content to the document.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The right-sided table of content only displays title levels up to level 2 by default.
+You can change this setting with the <code>page-toclevels</code> attribute.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-asciidoc hljs" data-lang="asciidoc">= Page Title
+:page-toclevels: 3</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_pagination"><a class="anchor" href="#_pagination"></a>Pagination</h3>
+<div class="paragraph">
+<p>If you have several pages that follow the same topic, you might be interested in enabling the pagination.<br>
+Pagination allows the reader to easily navigate to next and previous pages from the navigation tree by adding navigation links at the bottom of the page.</p>
+</div>
+<div class="paragraph">
+<p>This option is enabled by the <code>page-pagination</code> attribute.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-asciidoc hljs" data-lang="asciidoc">= Page Title
+:page-pagination:</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can see a live example on this page.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_button_and_menu_ui_macro"><a class="anchor" href="#_button_and_menu_ui_macro"></a>Button and Menu UI macro</h3>
+<div class="paragraph">
+<p>To keep consistency in presenting a button, keyboard bindings, or a menu item (path), Button and Menu UI Macros communicate to the reader what actions they need to take.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+Although this attribute is named experimental, the UI macros are considered a stable feature of the AsciiDoc and used in latest Quick Docs edited.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>This option is enabled by the experimental attribute.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-asciidoc hljs" data-lang="asciidoc">= Page Title
+:experimental:</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Examples of defining Button UI Macro</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-asciidoc hljs" data-lang="asciidoc">. Click btn:[Create].
+
+. Choose a passphrase that is strong but also easy to remember in the dialog that is displayed.
+
+. Click btn:[OK] and the key is created.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Examples of defining Menu UI Macro</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-asciidoc hljs" data-lang="asciidoc">To save the file, select menu:File[Save].
+
+Select menu:View[Zoom &gt; Reset] to reset the zoom level to the default setting.</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_best_practices"><a class="anchor" href="#_best_practices"></a>Best practices</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A few recommendation when writing a new pages, or editing an existing one.</p>
+</div>
+<div class="sect2">
+<h3 id="_document_header"><a class="anchor" href="#_document_header"></a>Document header</h3>
+<div class="paragraph">
+<p>All pages <strong>must</strong> start with a level 1 title.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-asciidoc hljs" data-lang="asciidoc">= Page Title</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Optionally, you can add <a href="https://docs.asciidoctor.org/asciidoc/latest/document/author-line/">authors</a> and <a href="https://docs.asciidoctor.org/asciidoc/latest/document/revision-line/">review</a> metadata.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example 1 - Authors and revision information</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-asciidoc hljs" data-lang="asciidoc">= Page Title
+Ben Cotton; Peter Boy; Petr Bokoc
+2.0, 2022-11-26: fix for F37</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can decide to omit the version number, if you don&#8217;t need that information.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example 2 - Revision information without version</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-asciidoc hljs" data-lang="asciidoc">= Page Title
+Francois Andrieu
+2022-12-10: Added revision metadata example</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>While these metadata are optional, try to keep at least the revision date so readers know how up-to-date the page is.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example 3 - Revision date only</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-asciidoc hljs" data-lang="asciidoc">= Page Title
+Fedora Documentation Team
+2022-12-10</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="prev"><a href="../asciidoc-intro/">AsciiDoc for Fedora</a></span>
+  <span class="next"><a href="../asciidoc-reusable-attributes/">Reusable attributes</a></span>
+</nav>
+<div id="" class="mt-16">
+    <p class="contribute px-6 py-3 w-fit bg-gray-100 dark:bg-fp-blue-darker rounded-full">Want to help? <a class="" href="https://docs.fedoraproject.org/en-US/fedora-docs/contributing/">Learn how to contribute to Fedora Docs <span class="ml-2 inline-block text-3xl leading-4 h-max align-top text-black dark:text-white">›</span></a></p>
+</div>
+</article>
+
+  </div>
+</main>
+</div>
+<footer class="flex flex-col bg-fp-gray-lightest dark:bg-fp-blue-darkest dark:text-fp-gray-light text-sm dark:border-t dark:border-gray-800">
+  <section class="pt-2 pb-6 px-2">
+
+    <p class="text-center">All Fedora Documentation content available under <a href="http://creativecommons.org/licenses/by-sa/4.0/legalcode">CC BY-SA 4.0</a> or, when specifically noted, under another <a href="https://fedoraproject.org/wiki/Licensing:Main">accepted</a> free and open content license.</p>
+
+    <div class="container mx-auto flex flex-col lg:flex-row my-4">
+      <div class="mx-auto lg:mx-0 lg:basis-3/12">
+        <img
+          src="../../../../_/img/fedora-blue.svg"
+          alt="Fedora Logo"
+          class="w-36 mb-4 lg:mb-0"
+        />
+      </div>
+      <ul
+        class="mx-4 flex items-center grow justify-center gap-4 lg:mx-0 lg:gap-12 xl:gap-20 2xl:gap-28 lg:justify-start"
+      >
+        <li class="list-none">
+          <a
+            href="/en-US/legal/privacy/"
+            class="text-fp-gray-darkest dark:text-fp-gray transition duration-300 ease-in-out hover:text-fp-gray dark:hover:text-fp-gray-light"
+            >Privacy Statement</a
+          >
+        </li>
+        <li class="list-none">
+          <a
+            href="/en-US/legal/"
+            class="text-fp-gray-darkest transition duration-300 ease-in-out hover:text-fp-gray dark:text-fp-gray dark:hover:text-fp-gray-light"
+            >Legal</a
+          >
+        </li>
+        <li class="list-none">
+          <a
+            href="/en-US/project/code-of-conduct/"
+            class="text-fp-gray-darkest transition duration-300 ease-in-out hover:text-fp-gray dark:text-fp-gray dark:hover:text-fp-gray-light"
+            >Code of Conduct</a
+          >
+        </li>
+        <li class="list-none">
+          <a
+            href="https://getfedora.org/en/sponsors/"
+            class="text-fp-gray-darkest transition duration-300 ease-in-out hover:text-fp-gray dark:text-fp-gray dark:hover:text-fp-gray-light"
+            >Sponsors</a
+          >
+        </li>
+      </ul>
+    </div>
+    <p class="text-center text-xs text-fp-gray-dark">Last build: 2026-10-17 04:50:06 UTC  | Last content update: 2026-08-27 </p>
+  </section>
+  <!-- Red Hat Sponsorship Section -->
+  <section class="bg-black py-6 text-center md:text-left px-2">
+    <div class="container mx-auto flex flex-col lg:flex-row">
+      <div class="mx-auto items-center lg:mx-0 lg:basis-3/12">
+        <img
+          src="../../../../_/img/logo-sponsored-by-red-hat.png"
+          alt="Sponsored by Red Hat Logo"
+          class="mb-4 xl:mb-0"
+        />
+      </div>
+
+      <div class="flex items-center justify-center text-center lg:text-left lg:ml-8 xl:-ml-8 2xl:ml-5">
+        <p class="text-white">
+          Fedora is sponsored by Red Hat.
+          <a class="block text-fp-gray xl:ml-2 xl:inline" href="https://www.redhat.com/en/technologies/linux-platforms/articles/relationship-between-fedora-and-rhel">
+            Learn more about the relationship between Red Hat and Fedora.
+          </a>
+        </p>
+      </div>
+    </div>
+  </section>
+</footer>
+<script id="site-script" src="../../../../_/js/site.js" data-ui-root-path="../../../../_"></script>
+<script async src="../../../../_/js/vendor/highlight.js"></script>
+<script async src="../../../../_/js/vendor/datatables.js"></script>
+<script async src="../../../../_/js/vendor/tabs.js"></script>
+<script src="../../../../_/js/vendor/lunr.js"></script>
+<script src="../../../../_/js/search-ui.js" id="search-ui-script" data-site-root-path="../../../.." data-snippet-length="100" data-stylesheet="../../../../_/css/search.css"></script>
+<script async src="../../../../search-index.js"></script>
+  </body>
+</html>

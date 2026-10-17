@@ -42,6 +42,14 @@ class Measure(unittest.TestCase):
         self.assertEqual((m["tabs"], m["unresolved"], m["ids"]), (2, 1, 2))
         self.assertEqual(m["edit_titles"], ["Edit this Page"])
 
+    def test_tabs_are_counted_by_class_token_or_set_id(self) -> None:
+        # Antora's own markup puts the id first, which a `<div class="tabs`
+        # prefix match never sees.
+        page = (fixtures.ROOT / "fixtures/generators/antora/tabs.html").read_text()
+        self.assertEqual(fixtures.tab_sets(page), 1)
+        self.assertEqual(fixtures.tab_sets('<div id="_tabs_2" class="x">'), 1)
+        self.assertEqual(fixtures.tab_sets('<p class="tabsy tab"><li id="_tabs_1_tab_a">'), 0)
+
     def test_a_page_with_no_features_measures_empty(self) -> None:
         m = fixtures.measure("u", 404, b"<html></html>")
         self.assertIsNone(m["generator"])
