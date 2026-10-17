@@ -262,6 +262,9 @@ standing docs, the skills and the source comments; not the centering, not
 history — has grown past its budget since. Red is the trigger; so is a wrap,
 before its consolidation; a keystone includes one. It is never deferred to the
 next keystone, which is how the record went unread for the life of a phase.
+**Before any code exists there is nothing to read against**, so the stamp is
+set to the commit the code starts from, and the first repoint is the first
+wrap's.
 
 **What it does** (`.claude/skills/repoint/SKILL.md` is the procedure):
 
