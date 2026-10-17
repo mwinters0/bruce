@@ -128,7 +128,8 @@ component, version and module among them, group reports by what owns a page. Bod
 xxh3-128 (not adversarial; faster than BLAKE3) over tags, attributes and decoded text in a scope `hash_root`/`hash_exclude` set, by
 default the profile's region; a page matching no root is hashed whole. Rejected: storing bodies by default (about 140 MB per en-US
 run, uncompressed); raw bytes (docs.fp.o's `Last build:` changes every page every build); one fixed default root (an exclusion
-alone would barely act). Code: `extract::hash`. Evidence: `tests/extract.rs`, the `Last build:` test.
+alone would barely act); an empty or region fallback for a set root matching nothing, hiding the misconfiguration a page changing
+every build shows. Code: `extract::hash`. Evidence: `tests/extract.rs`, the `Last build:` test.
 
 ### D17 Each page stores its source file and repo, read from its edit link
 This routes a breakage to the repo and file that own it, maps CI builds to repos, and groups more
@@ -193,10 +194,10 @@ accepted. Rejected: failing on all breakage, which keeps CI permanently red.
 The Antora profile records `(component, version, module, rel_path)` as facts (D37): module and
 `rel_path` from the edit URL (I8); component and version, verbatim, from the nav container, or on a
 page with none the component from the URL under the site root (I13) and no version. A refspec
-resolves relative to its page by Antora's rules; a placeholder or absent version (I8) means the
-component's only or latest version in the DB. Rejected: inferring the module from the URL
-(ambiguous with subdirectories); no component without a nav container, leaving xrefs into it
-unresolvable; a version from the URL, as no versioned component lacks a nav container.
+resolves by Antora's rules; a placeholder or absent version (I8) means the DB's only or latest one.
+Rejected: the module from the URL (ambiguous with subdirectories); no component without a nav
+container (xrefs into it unresolvable); a version from the URL (no versioned component lacks one); the
+fallback keyed on a nav container lacking `data-component`, inert where that happens (no lunr, I12).
 
 ### D21 CI consumes a single-run baseline file, not the history DB
 `bruce export-baseline` writes one run as a compact DuckDB file. CI takes `--baseline <path|url>`.

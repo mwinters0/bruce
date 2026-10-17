@@ -60,22 +60,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **`antora` takes a component from the URL only where the page has no nav
-  container at all** (P2.4). A UI whose nav container omits `data-component`
-  (asciidoctor.org, couchbase.com, I12) therefore records no component, and
-  D19 cannot resolve an xref into its pages. That follows the spec's wording
-  ("Antora's coordinates": "a page with no nav container"), whose evidence is
-  docs.fp.o's `without_menu` pages alone. Keying the fallback on a missing
-  `data-component` instead would cover those UIs, but they have versioned
-  components, and a component from the URL with no version reads as the
-  latest (D19), which on a frozen version's page is wrong. Reconsidering
-  changes one condition in `Page::finish` (`src/profile/antora.rs`) and D19's
-  wording.
-- **A set `hash_root` matching nothing on a page hashes the whole page**,
-  less `hash_exclude` (P2.5). The spec's table says "set: the root" and is
-  silent on a page without one; hashing an empty scope instead would give
-  every such page one constant hash, so an edit to it would never read as a
-  change. The fallback is the one the default already has, so one rule
-  covers both. Reconsidering changes `Hash::finish` (`src/extract/hash.rs`),
-  D15's wording and the manual's sentence under its scope table.

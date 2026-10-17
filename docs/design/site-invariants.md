@@ -137,6 +137,9 @@ not as an error.
   - `rel=edit` marks the edit link in MkDocs Material and Furo. Elsewhere it is told apart by a
     class (`edit-this-page`, `td-page-meta--edit`, `theme-edit-this-page`), a `title`, or its text.
   - Some Antora UIs (asciidoctor.org, couchbase.com) omit `data-component` on the nav container.
+    Both search with DocSearch, not lunr (no `data-site-root-path`, I13), and put the version in
+    the URL. Couchbase names its coordinates in `docsearch:component`/`docsearch:cversion` metas,
+    asciidoctor.org its component in `<meta name="page-spec" content="<component>::<page>">`.
 - **Proof.** Upstream source: antora-ui-default `0e38223a` and Docsy `6d6e98b7`. The rest is
   observed output.
 - **Scope limit.** A sample of public sites. Any theme can change its markup. The MkDocs Material
@@ -144,7 +147,7 @@ not as an error.
 - **Verified against.** docs.antora.org, docs.asciidoctor.org, docs.spring.io, docs.couchbase.com,
   docsy.dev, kubernetes.io, pradyunsg.me/furo, docs.readthedocs.io, 2026-10-17.
 - **Relied on by.** D35, D36, D19.
-- **Re-verify.** `curl -s https://docs.antora.org/antora/latest/ | grep -oE '<meta name="generator"[^>]*>|data-component="[^"]*"'`
+- **Re-verify.** `for u in docs.antora.org/antora/latest/ docs.asciidoctor.org/asciidoctor/latest/ docs.couchbase.com/server/current/introduction/intro.html; do curl -sL https://$u | grep -oE '<meta name="(generator|page-spec|docsearch:c[a-z]*)"[^>]*>|data-component="[^"]*"|data-site-root-path'; done`
 
 ### I13 Antora's search script names the site root, and a page's URL begins with its component
 - **Claim.** With `@antora/lunr-extension`, every page has
