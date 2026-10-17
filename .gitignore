@@ -1,5 +1,4 @@
 /target
-/spikes/*/target
 /runs
 /scripts/.venv
 __pycache__/
