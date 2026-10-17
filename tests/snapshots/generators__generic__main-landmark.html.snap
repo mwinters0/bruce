@@ -8,4 +8,5 @@ edit: -
 anchors: 7 (content 4, chrome 3, unknown 0)
 by tag: footer 1, h1 1, h2 1, header 1, main 1, nav 1, p 1
 links: 1 (anchor 1)
+hash: 108ecc87e2e6d0e0581550f546fe80db
 facts: none

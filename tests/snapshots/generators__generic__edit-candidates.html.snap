@@ -8,4 +8,5 @@ edit: https://forge.example.org/docs/site/src/branch/main/pages/edit-candidates.
 anchors: 1 (content 1, chrome 0, unknown 0)
 by tag: h1 1
 links: 4 (anchor 4)
+hash: d2ff1fe4fad560ab8fb9494339cbcb5e
 facts: none

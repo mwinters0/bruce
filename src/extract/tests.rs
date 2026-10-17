@@ -78,7 +78,7 @@ impl Profile for Plain {
 fn run(html: &str, choice: &ProfileChoice) -> Result<Extracted, Error> {
     let registry = Registry::new(Box::new(Plain)).with(Box::new(Stub));
     let url = Url::parse("https://example.org/a/").unwrap();
-    extract(html, &url, choice, &registry)
+    extract(html, &url, choice, &HashScope::default(), &registry)
 }
 
 fn auto(html: &str) -> Extracted {

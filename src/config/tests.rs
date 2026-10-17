@@ -20,6 +20,7 @@ fn a_run_given_only_a_url_has_every_default() {
     assert!(r.include.is_empty() && r.exclude.is_empty());
     assert_eq!(r.sitemap, None);
     assert_eq!(r.profile, ProfileChoice::Auto);
+    assert_eq!(r.hash, HashScope::default());
     assert!(c.allowlist.is_empty());
     assert_eq!(c.rate.per_second, DEFAULT_PER_SECOND);
     assert!(c.hosts.is_empty());
@@ -242,6 +243,57 @@ fn include_replaces_the_prefix_and_exclude_wins() {
     assert!(!r.in_scope(&url("https://docs.example.org/en-US/quick-docs/")));
     // `*` stops at `/`.
     assert!(!r.in_scope(&url("https://docs.example.org/a/b/fedora/x")));
+}
+
+fn hash_scope(keys: &str) -> Result<HashScope, Error> {
+    let text = format!("[[root]]\nurl = \"https://a.example/\"\n{keys}");
+    Config::parse(&text).map(|c| c.roots[0].hash.clone())
+}
+
+#[test]
+fn the_hash_keys_are_lists_of_single_selectors() {
+    let scope = hash_scope(
+        r#"hash_root = ["main, [role=main]"]
+        hash_exclude = ["footer", "a[title='x, y'] > p", "p:not(.a, .b)"]"#,
+    )
+    .unwrap();
+    assert_eq!(scope.root, ["main", "[role=main]"]);
+    assert_eq!(
+        scope.exclude,
+        ["footer", "a[title='x, y'] > p", "p:not(.a, .b)"]
+    );
+    let only = hash_scope("hash_exclude = [\"footer\"]").unwrap();
+    assert!(only.root.is_empty());
+}
+
+#[test]
+fn a_hash_selector_lol_html_cannot_stream_is_refused_with_its_reason() {
+    for (keys, want) in [
+        (
+            "hash_root = [\"h1 + p\"]",
+            "hash_root: \"h1 + p\": Unsupported combinator `+`",
+        ),
+        (
+            "hash_exclude = [\"a ~ b\"]",
+            "hash_exclude: \"a ~ b\": Unsupported combinator `~`",
+        ),
+        (
+            "hash_exclude = [\"div:has(p)\"]",
+            "hash_exclude: \"div:has(p)\"",
+        ),
+        (
+            "hash_root = [\"main,\"]",
+            "hash_root: \"main,\" holds an empty selector",
+        ),
+        ("hash_root = [\"\"]", "hash_root:"),
+    ] {
+        let msg = match hash_scope(keys) {
+            Err(Error::Invalid(msg)) => msg,
+            other => panic!("{keys}: expected Invalid, got {other:?}"),
+        };
+        assert!(msg.starts_with("root[0]: "), "{msg}");
+        assert!(msg.contains(want), "{keys}: {msg}");
+    }
 }
 
 #[test]

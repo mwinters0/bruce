@@ -124,8 +124,11 @@ pruned explicitly (`bruce prune`). Rejected: latest-state upsert, which cannot d
 
 ### D15 Pages store metadata, a content hash and their profile's facts; bodies only on request
 The hash detects change because validators are unreliable (I3). Profile facts (D37), Antora's
-component, version and module among them, group reports by what owns a page. Bodies go in an opt-in, prunable table. Rejected: storing
-bodies by default (about 140 MB per en-US run, uncompressed).
+component, version and module among them, group reports by what owns a page. Bodies go in an opt-in, prunable table. The hash is
+xxh3-128 (not adversarial; faster than BLAKE3) over tags, attributes and decoded text in a scope `hash_root`/`hash_exclude` set, by
+default the profile's region; a page matching no root is hashed whole. Rejected: storing bodies by default (about 140 MB per en-US
+run, uncompressed); raw bytes (docs.fp.o's `Last build:` changes every page every build); one fixed default root (an exclusion
+alone would barely act). Code: `extract::hash`. Evidence: `tests/extract.rs`, the `Last build:` test.
 
 ### D17 Each page stores its source file and repo, read from its edit link
 This routes a breakage to the repo and file that own it, maps CI builds to repos, and groups more

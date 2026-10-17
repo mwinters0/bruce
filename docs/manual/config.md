@@ -39,6 +39,8 @@ default.
 | `exclude` | `[]` | URL globs that keep a page out, even when `include` matches it. |
 | `sitemap` | discovered | The sitemap to start from. By default, the `Sitemap:` lines of the host's `robots.txt`, then `sitemap.xml` under the root, then `sitemap.xml` at the host. |
 | `profile` | `"auto"` | How the root's pages are read: `"auto"`, `"generic"` or `"antora"` (below). |
+| `hash_root` | `[]` | CSS selectors for the part of each page whose change counts as the page changing (below). |
+| `hash_exclude` | `[]` | CSS selectors for parts of each page whose change never counts (below). |
 
 The `url` must be in the root's own scope: a root whose `include` or `exclude`
 rules out its starting page is an error.
@@ -67,6 +69,34 @@ crawls every locale's `fedora/` pages, except versions `f20` to `f29`.
   component and version.
 - `"auto"` picks one for each page from its `<meta name="generator">`, and
   uses `"generic"` when there is none.
+
+**The content hash** tells a changed page from an unchanged one. It covers
+each page's tags, attributes and text within a scope that `hash_root` and
+`hash_exclude` set:
+
+| `hash_root` | `hash_exclude` | What is hashed |
+|---|---|---|
+| unset | unset | The page's content region, as its profile finds it, or the whole page where it has none. |
+| set | unset | The elements `hash_root` matches. |
+| unset | set | The whole page, minus the elements `hash_exclude` matches. |
+| set | set | The elements `hash_root` matches, minus those `hash_exclude` matches. |
+
+A page where nothing matches the root, set or default, is hashed whole, less
+the exclusions. Exclude a part of the page that changes at every build, such
+as a footer stamped with the build time, and the rest of the page, its
+stylesheet and script links included, is still watched:
+
+```toml
+[[root]]
+url = "https://docs.example.org/en-US/"
+hash_exclude = ["footer"]
+```
+
+Each entry is one selector, or several separated by commas. Tag, class, id
+and attribute selectors, descendant (` `) and child (`>`) combinators,
+`:not()`, `:first-child` and `:nth-child()` are accepted; sibling
+combinators (`+`, `~`) and `:has()` are errors, since `bruce` reads a page
+in one pass. Changing either key changes every page's hash once.
 
 ## Allowlist
 

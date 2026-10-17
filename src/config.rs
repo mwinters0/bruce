@@ -57,6 +57,21 @@ pub struct Root {
     pub sitemap: Option<Url>,
     /// The profile the root's pages are extracted with (D35).
     pub profile: ProfileChoice,
+    /// What part of each page its content hash covers (D15).
+    pub hash: HashScope,
+}
+
+/// The part of a page its content hash covers (D15), from a root's
+/// `hash_root` and `hash_exclude`. Each is a list of single selectors,
+/// a list written inside one string split at its commas, and each one
+/// parses as `lol_html` reads it. Empty is unset; what each combination
+/// covers is `extract`'s to decide.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct HashScope {
+    /// The elements whose content is hashed.
+    pub root: Vec<String>,
+    /// The elements subtracted from the scope, content and all.
+    pub exclude: Vec<String>,
 }
 
 /// A root's profile (D35). A name is checked against the profiles compiled
@@ -249,12 +264,18 @@ impl Root {
             Some("") => return Err(invalid("profile: empty")),
             Some(name) => ProfileChoice::Named(name.to_owned()),
         };
+        let hash = HashScope {
+            root: selectors(&raw.hash_root).map_err(|e| invalid(format!("hash_root: {e}")))?,
+            exclude: selectors(&raw.hash_exclude)
+                .map_err(|e| invalid(format!("hash_exclude: {e}")))?,
+        };
         let root = Root {
             url,
             include: Patterns::new(raw.include).map_err(|e| invalid(format!("include: {e}")))?,
             exclude: Patterns::new(raw.exclude).map_err(|e| invalid(format!("exclude: {e}")))?,
             sitemap,
             profile,
+            hash,
         };
         if !root.in_scope(&root.url) {
             return Err(invalid(format!(
@@ -348,6 +369,54 @@ impl Patterns {
     }
 }
 
+/// Each selector of `list` on its own, a string holding a selector list
+/// split at its commas, and each checked against what `lol_html` parses:
+/// a combinator or pseudo-class it does not stream (`+`, `~`, `:has`) is
+/// refused with its reason (D33).
+fn selectors(list: &[String]) -> Result<Vec<String>, String> {
+    let mut out = Vec::new();
+    for written in list {
+        for part in split_list(written) {
+            let part = part.trim();
+            if part.is_empty() {
+                return Err(format!("{written:?} holds an empty selector"));
+            }
+            part.parse::<lol_html::Selector>()
+                .map_err(|e| format!("{part:?}: {e}"))?;
+            out.push(part.to_owned());
+        }
+    }
+    Ok(out)
+}
+
+/// `s` split at each comma outside quotes, brackets and parentheses, a
+/// backslash escaping the character after it.
+fn split_list(s: &str) -> Vec<&str> {
+    let mut parts = Vec::new();
+    let (mut depth, mut quote, mut escaped, mut start) = (0u32, None, false, 0);
+    for (i, c) in s.char_indices() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+        match (c, quote) {
+            ('\\', _) => escaped = true,
+            (q, Some(open)) if q == open => quote = None,
+            (_, Some(_)) => {}
+            ('"' | '\'', None) => quote = Some(c),
+            ('[' | '(', None) => depth += 1,
+            (']' | ')', None) => depth = depth.saturating_sub(1),
+            (',', None) if depth == 0 => {
+                parts.push(&s[start..i]);
+                start = i + 1;
+            }
+            _ => {}
+        }
+    }
+    parts.push(&s[start..]);
+    parts
+}
+
 fn http_url(s: &str) -> Result<Url, String> {
     let url = Url::parse(s).map_err(|e| format!("{s}: {e}"))?;
     match url.scheme() {
@@ -396,6 +465,10 @@ struct RawRoot {
     exclude: Vec<String>,
     sitemap: Option<String>,
     profile: Option<String>,
+    #[serde(default)]
+    hash_root: Vec<String>,
+    #[serde(default)]
+    hash_exclude: Vec<String>,
 }
 
 #[derive(Deserialize, Default)]

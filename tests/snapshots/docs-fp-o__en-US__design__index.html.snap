@@ -8,6 +8,7 @@ edit: https://forge.fedoraproject.org/design/docs/src/branch/main/modules/ROOT/p
 anchors: 7 (content 2, chrome 5, unknown 0)
 by tag: button 1, div 1, h2 2, input 1, script 2
 links: 201 (anchor 187, image 3, canonical 1, stylesheet 3, script 7)
+hash: 2a8a07d18f4ba0474d886c9149e38b34
 facts:
   antora.component = design
   antora.version = 

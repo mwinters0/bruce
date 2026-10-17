@@ -8,6 +8,7 @@ edit: https://forge.fedoraproject.org/docs/quick-docs/src/branch/main/modules/RO
 anchors: 24 (content 19, chrome 5, unknown 0)
 by tag: button 1, div 2, h2 6, h3 12, input 1, script 2
 links: 377 (anchor 358, image 8, canonical 1, stylesheet 3, script 7)
+hash: 0bea401637fb45f0faf2e606141d5b79
 facts:
   antora.component = quick-docs
   antora.version = master

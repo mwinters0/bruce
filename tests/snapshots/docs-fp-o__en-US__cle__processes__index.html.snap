@@ -8,6 +8,7 @@ edit: https://forge.fedoraproject.org/cle/docs/src/branch/master/modules/ROOT/pa
 anchors: 5 (content 0, chrome 5, unknown 0)
 by tag: button 1, div 1, input 1, script 2
 links: 196 (anchor 182, image 3, canonical 1, stylesheet 3, script 7)
+hash: 78c61388fa722a458181f9f1bee582f7
 facts:
   antora.component = cle
   antora.version = master

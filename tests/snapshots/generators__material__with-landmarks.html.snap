@@ -8,4 +8,5 @@ edit: https://github.com/example/site/edit/master/docs/getting-started.md (repo 
 anchors: 3 (content 2, chrome 1, unknown 0)
 by tag: h1 1, h2 1, input 1
 links: 7 (anchor 6, canonical 1)
+hash: 2cc65d646b7f85962f20121539d816e5
 facts: none

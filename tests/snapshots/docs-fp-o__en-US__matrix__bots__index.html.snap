@@ -8,6 +8,7 @@ edit: https://forge.fedoraproject.org/matrix/docs/src/branch/main/modules/bots/p
 anchors: 5 (content 0, chrome 5, unknown 0)
 by tag: button 1, div 1, input 1, script 2
 links: 189 (anchor 175, image 3, canonical 1, stylesheet 3, script 7)
+hash: 1dbc778ce3503137f98c56d7408584e3
 facts:
   antora.component = matrix
   antora.version = 

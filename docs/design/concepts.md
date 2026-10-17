@@ -44,7 +44,8 @@ decisions each carries are cited in its module's doc.
 - **bruce** — `extract/`: the pass, the page's result, the generator pre-pass
   and the title in the parent file, anchors (validity and placement) in the
   `anchors` child, links (kinds, `srcset`, `<base>`, refresh) in the `links`
-  child, and the edit-link ranking in the `edit_link` child. It sits above `profile` because it drives the pass the
+  child, the edit-link ranking in the `edit_link` child, and the scoped
+  content hash in the `hash` child. It sits above `profile` because it drives the pass the
   profile's Extract hook adds to, and reads no concrete profile (D39).
 
 ## Storage

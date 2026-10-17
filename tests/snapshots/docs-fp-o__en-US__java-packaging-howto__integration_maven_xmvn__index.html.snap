@@ -8,6 +8,7 @@ edit: https://github.com/fedora-java/howto/edit/master/modules/ROOT/pages/integr
 anchors: 6 (content 1, chrome 5, unknown 0)
 by tag: button 1, div 1, h2 1, input 1, script 2
 links: 184 (anchor 170, image 3, canonical 1, stylesheet 3, script 7)
+hash: cb0e090ac91bfac223903f460a84dbb2
 facts:
   antora.component = java-packaging-howto
   antora.version = master

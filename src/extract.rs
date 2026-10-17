@@ -1,8 +1,8 @@
-//! The extraction pass and its core heuristics: anchors, links, placement and
-//! the edit link (D12, D13, D34, D36).
+//! The extraction pass and its core heuristics: anchors, links, placement,
+//! the edit link and the content hash (D12, D13, D15, D34, D36).
 //!
 //! [`extract`] is a pure function of one page: its body, its URL and the
-//! root's profile choice in, an [`Extracted`] out. The generator meta is read
+//! root's profile choice and hash scope in, an [`Extracted`] out. The generator meta is read
 //! first, by a pass that stops at `<body>`, so the profile is chosen before
 //! anything it extracts (D35). One `lol_html` rewriter then reads the page
 //! with the core's handlers and the profile's (D11, D38). The caller decides
@@ -10,6 +10,7 @@
 
 mod anchors;
 mod edit_link;
+mod hash;
 mod links;
 
 use std::cell::RefCell;
@@ -19,13 +20,14 @@ use lol_html::{HtmlRewriter, Settings};
 use lol_html::{element, text};
 use url::Url;
 
-use crate::config::ProfileChoice;
+use crate::config::{HashScope, ProfileChoice};
 use crate::forge::EditLink;
 use crate::profile::{ElementHandlers, Extract, Facts, Registry, Settled, Sink, UnknownProfile};
 
 pub use anchors::{Anchor, Placement};
 use anchors::{Anchors, attribute};
 use edit_link::EditLinks;
+use hash::Hash;
 use links::Links;
 pub use links::{Kind, Link};
 
@@ -46,6 +48,9 @@ pub struct Extracted {
     pub edit_link: Option<EditLink>,
     /// The profile's facts about the page (D37).
     pub facts: Facts,
+    /// The xxh3-128 hash of the page's content, scoped by the root's
+    /// `hash_root` and `hash_exclude` (D15).
+    pub hash: u128,
 }
 
 /// Why a page could not be extracted.
@@ -81,11 +86,12 @@ impl From<RewritingError> for Error {
 }
 
 /// Extracts `html`, the body of the page at `url`, under the profile
-/// `choice` picks from `registry`.
+/// `choice` picks from `registry`, hashing what `scope` covers.
 pub fn extract(
     html: &str,
     url: &Url,
     choice: &ProfileChoice,
+    scope: &HashScope,
     registry: &Registry,
 ) -> Result<Extracted, Error> {
     let generator = match choice {
@@ -99,6 +105,7 @@ pub fn extract(
     let title = RefCell::new(Title::default());
     let links = RefCell::new(Links::new(url));
     let edit_links = RefCell::new(EditLinks::default());
+    let hash = RefCell::new(Hash::default());
     let Extract {
         region,
         handlers,
@@ -114,6 +121,7 @@ pub fn extract(
         .chain(EditLinks::handlers(&edit_links, &links))
         .chain(handlers)
         .chain(tag)
+        .chain(Hash::handlers(&hash, scope, region))
     {
         settings = settings.append_element_content_handler(handler);
     }
@@ -140,6 +148,7 @@ pub fn extract(
         links: links.finish(),
         edit_link,
         facts: sink.into_facts(),
+        hash: hash.into_inner().finish(),
     })
 }
 

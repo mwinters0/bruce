@@ -109,7 +109,8 @@ pub struct Extract<'h> {
     /// Selectors for the elements that hold the page's content (D34). The
     /// core turns them into its own descendant handlers and decides each
     /// anchor's placement when the page ends, since a page with no region
-    /// anywhere makes every placement `unknown`. Each is one compound
+    /// anywhere makes every placement `unknown`. It is also the content
+    /// hash's default scope (D15). Each is one compound
     /// selector with no list or combinator, which the core extends with
     /// `[id]`, ` [id]` and ` a[name]`.
     pub region: &'static [&'static str],

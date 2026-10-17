@@ -9,7 +9,7 @@ mod common;
 use std::hint::black_box;
 
 use bruce::cli::registry;
-use bruce::config::ProfileChoice;
+use bruce::config::{HashScope, ProfileChoice};
 use bruce::extract::extract;
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 
@@ -31,6 +31,7 @@ fn bench(c: &mut Criterion) {
                         black_box(&page.html),
                         &page.url,
                         &ProfileChoice::Auto,
+                        &HashScope::default(),
                         &registry,
                     )
                     .unwrap(),

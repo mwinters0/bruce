@@ -8,6 +8,7 @@ edit: https://forge.fedoraproject.org/cloud/docs-site/src/branch/master/modules/
 anchors: 5 (content 0, chrome 5, unknown 0)
 by tag: button 1, div 1, input 1, script 2
 links: 190 (anchor 176, image 3, canonical 1, stylesheet 3, script 7)
+hash: 0edd32674df61ea4d8b237a11bd158eb
 facts:
   antora.component = cloud
   antora.version = 

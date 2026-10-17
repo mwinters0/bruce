@@ -7,12 +7,17 @@ mod common;
 use std::collections::BTreeMap;
 
 use bruce::cli::registry;
-use bruce::config::ProfileChoice;
+use bruce::config::{HashScope, ProfileChoice};
 use bruce::extract::{Extracted, Kind, Placement, extract};
 use common::{Fixture, fixtures};
 
 fn run(f: &Fixture) -> Extracted {
-    extract(&f.html, &f.url, &ProfileChoice::Auto, &registry())
+    run_as(f, &f.html, &HashScope::default())
+}
+
+/// `f` with `html` for its body, hashed over `scope`.
+fn run_as(f: &Fixture, html: &str, scope: &HashScope) -> Extracted {
+    extract(html, &f.url, &ProfileChoice::Auto, scope, &registry())
         .unwrap_or_else(|e| panic!("{}: {e}", f.path))
 }
 
@@ -55,7 +60,7 @@ fn summary(x: &Extracted) -> String {
         },
     };
     format!(
-        "profile: {}\ntitle: {}\nedit: {edit}\nanchors: {} (content {}, chrome {}, unknown {})\nby tag: {}\nlinks: {} ({})\nfacts:{}\n",
+        "profile: {}\ntitle: {}\nedit: {edit}\nanchors: {} (content {}, chrome {}, unknown {})\nby tag: {}\nlinks: {} ({})\nhash: {:032x}\nfacts:{}\n",
         x.profile,
         x.title.as_deref().unwrap_or("-"),
         x.anchors.len(),
@@ -65,6 +70,7 @@ fn summary(x: &Extracted) -> String {
         tags.join(", "),
         x.links.len(),
         kinds.join(", "),
+        x.hash,
         if facts.is_empty() {
             " none".to_string()
         } else {
@@ -415,4 +421,64 @@ fn unresolved_xrefs_are_tagged_with_their_refspec() {
         "docs-fp-o/en-US/fesco/Spins/index.html".to_string(),
         "program_management::changes_policy.adoc#_system_wide_changes".to_string()
     )));
+}
+
+/// D15: docs.fp.o's `Last build:` line changes every page's bytes at every
+/// build, and neither the default scope (`article.doc`) nor
+/// `hash_exclude = ["footer"]` sees it; the whole page does. A prose edit
+/// changes both.
+#[test]
+fn a_new_build_of_a_docs_fp_o_page_keeps_its_hash() {
+    let scopes = |root: &[&str], exclude: &[&str]| HashScope {
+        root: root.iter().map(|s| s.to_string()).collect(),
+        exclude: exclude.iter().map(|s| s.to_string()).collect(),
+    };
+    let (default, footer, whole) = (
+        scopes(&[], &[]),
+        scopes(&[], &["footer"]),
+        scopes(&["html"], &[]),
+    );
+    let mut built = 0;
+    for f in fixtures()
+        .iter()
+        .filter(|f| f.path.starts_with("docs-fp-o/"))
+    {
+        let Some(at) = f.html.find("Last build: ") else {
+            continue;
+        };
+        built += 1;
+        let at = at + "Last build: ".len();
+        let rebuilt = format!(
+            "{}1999-01-01 00:00:00 UTC{}",
+            &f.html[..at],
+            &f.html[at + 23..]
+        );
+        assert_ne!(rebuilt, f.html, "{}", f.path);
+        for scope in [&default, &footer] {
+            assert_eq!(
+                run_as(f, &f.html, scope).hash,
+                run_as(f, &rebuilt, scope).hash,
+                "{}: {scope:?}",
+                f.path
+            );
+        }
+        assert_ne!(
+            run_as(f, &f.html, &whole).hash,
+            run_as(f, &rebuilt, &whole).hash,
+            "{}",
+            f.path
+        );
+        let article = f.html.find("<article class=\"doc").expect(&f.path);
+        let open = article + f.html[article..].find('>').unwrap() + 1;
+        let edited = format!("{}<p>new</p>{}", &f.html[..open], &f.html[open..]);
+        for scope in [&default, &footer] {
+            assert_ne!(
+                run_as(f, &f.html, scope).hash,
+                run_as(f, &edited, scope).hash,
+                "{}: {scope:?}",
+                f.path
+            );
+        }
+    }
+    assert_eq!(built, 30);
 }

@@ -8,4 +8,5 @@ edit: https://github.com/example/site/edit/main/content/en/docs/get-started/_ind
 anchors: 2 (content 1, chrome 1, unknown 0)
 by tag: div 1, h2 1
 links: 9 (anchor 8, canonical 1)
+hash: 7e39b1d3636a68de3095dfa41e889ed3
 facts: none

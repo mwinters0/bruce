@@ -8,6 +8,7 @@ edit: https://forge.fedoraproject.org/kde/user-docs/src/branch/main/modules/ROOT
 anchors: 5 (content 0, chrome 5, unknown 0)
 by tag: button 1, div 1, input 1, script 2
 links: 194 (anchor 180, image 3, canonical 1, stylesheet 3, script 7)
+hash: 57e604ab73ca9bb4ecb60e9e91a804e1
 facts:
   antora.component = kde
   antora.version = 

@@ -20,8 +20,8 @@ code: `config`, the loader; `store`, the DuckDB schema, its version check and
 the single writer for two tables; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views and Extract, with Resolve
 declared and empty; `extract`, the pass over one page, which yields its
-profile, title, anchors with placement, links with kind and tag, the edit link
-and the profile's facts; and
+profile, title, anchors with placement, links with kind and tag, the edit link,
+the profile's facts and the content hash; and
 `forge`, the edit-URL shape parse. The rest hold only their doc.
 `docs/manual/` holds the config reference. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
@@ -44,8 +44,8 @@ The spec is [`../wip/roadmap-P2-extractor.md`](../wip/roadmap-P2-extractor.md).
   ([notes](../wip/roadmap-P2.3-edit-link-notes.md)).
 - [x] **2.4** Antora's Extract: its region, coordinates and unresolved-xref
   tags ([notes](../wip/roadmap-P2.4-antora-extract-notes.md)).
-- [ ] **2.5** The content hash: xxh3-128 over a scope set by `hash_root` and
-  `hash_exclude`.
+- [x] **2.5** The content hash: xxh3-128 over a scope set by `hash_root` and
+  `hash_exclude` ([notes](../wip/roadmap-P2.5-content-hash-notes.md)).
 
 ## Not started
 
@@ -72,3 +72,10 @@ reasoning goes beside the mechanism it governs first. Full rules:
   latest (D19), which on a frozen version's page is wrong. Reconsidering
   changes one condition in `Page::finish` (`src/profile/antora.rs`) and D19's
   wording.
+- **A set `hash_root` matching nothing on a page hashes the whole page**,
+  less `hash_exclude` (P2.5). The spec's table says "set: the root" and is
+  silent on a page without one; hashing an empty scope instead would give
+  every such page one constant hash, so an edit to it would never read as a
+  change. The fallback is the one the default already has, so one rule
+  covers both. Reconsidering changes `Hash::finish` (`src/extract/hash.rs`),
+  D15's wording and the manual's sentence under its scope table.

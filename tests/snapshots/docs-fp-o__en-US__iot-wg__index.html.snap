@@ -8,6 +8,7 @@ edit: https://github.com/fedora-iot/iot-docs/edit/main/wg-docs/modules/ROOT/page
 anchors: 8 (content 3, chrome 5, unknown 0)
 by tag: button 1, div 2, h2 2, input 1, script 2
 links: 202 (anchor 188, image 3, canonical 1, stylesheet 3, script 7)
+hash: 03413aabf5ef3223e300be151e0e87aa
 facts:
   antora.component = iot-wg
   antora.version = master
