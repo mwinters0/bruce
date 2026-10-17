@@ -1,7 +1,7 @@
 //! Storage: the DuckDB schema, its version and the single writer (D26, D28,
-//! D37, D43). A [`Store`] is one database file. Opening it creates the schema
-//! in a new file, refuses a file of another version, and creates every
-//! profile's views (D39).
+//! D37, D43). A [`Store`] is one database, a file or in memory. Opening it
+//! creates the schema in a new database, refuses a file of another version,
+//! and creates every profile's views (D39).
 
 mod schema;
 mod writer;

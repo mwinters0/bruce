@@ -15,7 +15,7 @@ records, each part saying why its module holds it. **Not in one place** names wh
 does not explain.
 
 Every concept below is, so far, one top-level module, placed by P1's spec (`../wip/roadmap-P1-scaffold.md`, "Where the concepts
-live"). `config`, `store` and `profile` hold code; the rest hold only their doc. The
+live"). `cli`, `config`, `store` and `profile` hold code; the rest hold only their doc. The
 decisions each carries are cited in its module's doc.
 
 ## Subcommands

@@ -78,7 +78,7 @@ D19) and unresolved-xref tagging (D20). Tested on the P1 fixtures.
 
 The URL frontier and canonicalisation (D7, D26), sitemap seeding (D14),
 per-host rate limits, backoff and robots.txt (D8, D18), redirects and retries
-(D7, D16), and the single writer task (D28). Tested against wiremock (D24).
+(D7, D16), and the single writer (D28). Tested against wiremock (D24).
 
 ## P4 — Verdicts, reports, and the first en-US crawl
 

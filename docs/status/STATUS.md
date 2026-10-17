@@ -7,8 +7,8 @@ index table is the schedule. Where what is built falls short is
 [`deficiencies.md`](deficiencies.md). Dated pickup notes and plan-changing
 discoveries are in `history/`.
 
-<!-- repointed: d8a6d8b --> The marker names the commit `scripts/repoint.py`
-measures the record's growth from, here the commit P1's code starts from.
+<!-- repointed: 5404bcf --> The marker names the commit `scripts/repoint.py`
+measures the record's growth from.
 Red means a repoint is due ([`../process.md`](../process.md),
 "Repointing").
 

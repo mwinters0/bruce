@@ -1,5 +1,6 @@
-//! The `generic` profile: any site, read by the core heuristics alone (D34,
-//! D36). It is `auto`'s fallback, so it claims no generator string, and it
+//! The `generic` profile: any site. Its content region is `<main>` or
+//! `[role=main]` (D34), for its Extract to draw, the core's heuristics doing
+//! the rest (D36). It is `auto`'s fallback, so it claims no generator string, and it
 //! records no facts, ships no views and resolves no reference (D38).
 
 use std::cell::RefCell;

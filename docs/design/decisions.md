@@ -73,7 +73,7 @@ parses. Rejected: discovery in the Antora profile only, which leaves CI's build 
 D17) resting on one generator.
 
 ### D37 Profile facts live in one core table, `page_facts`, under namespaced keys
-`(run_id, url_id, key, value)`, keys like `antora.component`. Each profile ships views pivoting its
+`(run_id, url_id, key, value)`, keys like `antora.component`. A profile ships views pivoting its
 keys into columns, and D19 resolves through Antora's. D33's rules can write only a key and a value.
 Rejected: a typed table per profile (a migration story each); a JSON column (no typed joins, no
 simpler). Reopens: D19 slow over the view, fixed by materializing that view alone.
@@ -101,8 +101,8 @@ Detect claims a generator string (D35). Extract records facts, draws the content
 may override the edit link (D36), and tags links the core cannot read (I6), by handing the core's
 one lol_html pass selector/handler pairs rather than tokens (D11). Resolve maps a tagged
 reference to a URL through a lookup the store provides (D19, D20, D22). Views is its SQL (D37).
-`generic` leaves only Resolve empty, having no reference that is not a URL. Reopens: a second hook
-empty in `generic`, the sign the trait is bending around Antora.
+`generic` leaves Resolve and Views empty, having no reference that is not a URL and no facts to
+pivot. Reopens: a hook empty in `generic` for any other reason, the trait bending around Antora.
 
 ### D39 The layering: `cli` › `crawl`, `ci`, `report` › `fetch`, `extract`, `store` › `profile` › `forge`, `url`, `config`
 Edges point down only. `store` implements `profile`'s lookup trait and asks each profile for its
@@ -140,7 +140,7 @@ mismatch, which silently destroys the history D2 keeps; migrations from day one,
 
 ### D28 Fragment verdicts are computed in SQL after the crawl, not during it
 The crawler holds no anchor state and need not order fetches around targets. The same join feeds
-the reports. One writer task feeds DuckDB appenders through a bounded channel, DuckDB allowing one
+the reports. One writer feeds DuckDB appenders through a bounded channel, DuckDB allowing one
 writing process per file. Rejected: checking fragments in memory as pages arrive.
 
 ## Classification

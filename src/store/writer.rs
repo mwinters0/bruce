@@ -12,7 +12,8 @@ use duckdb::params;
 
 use super::{Error, Store};
 
-/// Rows an appender takes before it is flushed to the file.
+/// Rows the writer takes, counted across tables, before it flushes every
+/// appender.
 const FLUSH_EVERY: usize = 10_000;
 
 /// A row of `pages` (D26, D34–D36).
@@ -34,7 +35,8 @@ pub struct PageRow {
     pub via_links: bool,
 }
 
-/// A row of `page_facts` (D37): `key` is the full `<profile>.<key>`.
+/// A row of `page_facts` (D37): `key` is the full `<profile>.<key>`, as
+/// [`crate::profile::Facts::record`] builds it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FactRow {
     pub run_id: u64,

@@ -5,7 +5,8 @@
 //! A file is read into the `Raw*` shapes serde derives, unknown keys refused,
 //! and then validated into [`Config`]: URLs parsed, globs compiled, hosts
 //! normalised, numbers range-checked. Nothing past this module sees a string
-//! it would have to check again.
+//! it would have to check again, but a profile's name, which only `cli` can
+//! check against the registry (D39).
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -42,8 +43,9 @@ pub struct Config {
 /// One site crawled fully (D5).
 #[derive(Debug, Clone)]
 pub struct Root {
-    /// Where the crawl starts, and always in the root's own scope. Its path,
-    /// up to the last `/`, is the scope when `include` is empty (D40).
+    /// Where the crawl starts, and always in the root's own scope. Without
+    /// its query, up to the last `/` of its path, it is the scope's prefix
+    /// when `include` is empty (D40, D44).
     pub url: Url,
     /// URL globs a page must match to be in scope; empty means the root's
     /// path prefix.
