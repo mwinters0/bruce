@@ -72,6 +72,19 @@ fn a_ref_with_a_slash_splits_at_its_first_segment() {
 }
 
 #[test]
+fn a_repo_named_for_a_marker_is_read_as_one() {
+    // KD2: the leftmost marker decides, and a path's own `edit` does not.
+    assert_eq!(
+        parsed("https://github.com/o/edit/blob/main/a.md"),
+        shape("https://github.com/o", "blob", "main/a.md")
+    );
+    assert_eq!(
+        parsed("https://github.com/o/r/blob/main/edit/a.md"),
+        shape("https://github.com/o/r", "main", "edit/a.md")
+    );
+}
+
+#[test]
 fn a_url_without_a_shape_or_without_a_file_is_none() {
     for url in [
         "https://forge.example.org/docs/site",

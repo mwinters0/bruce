@@ -11,11 +11,9 @@
 //! | GitHub | `/blob\|edit/<ref>/<path>` |
 //!
 //! The leftmost marker past the first segment that leaves a ref and a file
-//! path decides, so a repo or group named for a marker (`edit`, `blob`) is
-//! misread, where scanning from the right would misread a path holding one,
-//! which is likelier. Pagure's is tried before GitHub's, whose
-//! `/blob/<ref>/f/…` it shadows. Query and fragment are dropped, and the path is kept as the URL
-//! spells it, percent-encoding included.
+//! path decides. Pagure's is tried before GitHub's, whose `/blob/<ref>/f/…`
+//! it shadows. Query and fragment are dropped, and the path is kept as the
+//! URL spells it, percent-encoding included.
 
 use url::Url;
 
@@ -51,6 +49,11 @@ impl EditLink {
 /// The repo, ref and path `url` names, if its path has a forge's shape.
 pub fn parse(url: &Url) -> Option<Source> {
     let segments: Vec<&str> = url.path_segments()?.collect();
+    // deficiency: KD2 The scan runs from the left, so a repo or group named
+    // for a marker (`https://github.com/o/edit/blob/main/a.md`) is read as
+    // one, giving the repo `https://github.com/o` and the ref `blob`.
+    // Deliberate: scanning from the right would misread a file path holding
+    // an `edit` or `blob` directory, which is likelier than a repo named so.
     for at in 1..segments.len() {
         let rest = &segments[at..];
         let (marker, pagure) = match rest {

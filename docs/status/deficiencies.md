@@ -30,5 +30,9 @@ roadmap's phase index.
   into the wrong ref and path, though `source_repo` and `source_url` stay right.
   **(a) deliberate tradeoff**: telling them apart takes one forge API call per repo. Detail:
   `src/forge.rs`
+- **KD2** — A forge edit URL whose repo or group is named for a shape's marker
+  (`edit`, `blob`) parses at that name, giving the wrong repo, ref and path.
+  **(a) deliberate tradeoff**: the right-to-left scan that avoids it misreads a
+  file path holding such a directory, which is likelier. Detail: `src/forge.rs`
 
-<!-- deficiency-watermark: KD1 -->
+<!-- deficiency-watermark: KD2 -->
