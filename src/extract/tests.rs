@@ -23,6 +23,10 @@ impl Profile for Stub {
             }
             Ok(())
         }));
+        extract.handlers.push(element!(".tagme", move |_| {
+            sink.borrow_mut().tag_link("tag");
+            Ok(())
+        }));
         extract.finish = Some(|settled, sink| sink.fact("host", settled.url.host_str().unwrap()));
         extract
     }
@@ -189,4 +193,133 @@ fn markup_lol_html_cannot_place_does_not_stop_the_pass() {
 #[should_panic(expected = "a profile declared the region selector")]
 fn a_region_selector_that_does_not_parse_is_a_bug_in_the_profile() {
     let _ = anchors::Anchors::handlers(&RefCell::default(), &["a + b"]);
+}
+
+/// A link as `(raw, resolved, kind)`, against `https://example.org/a/`.
+fn links(html: &str) -> Vec<(String, String, &'static str)> {
+    auto(html)
+        .links
+        .iter()
+        .map(|l| {
+            let url = l.url.as_ref().map_or("-", |u| u.as_str());
+            (l.raw.clone(), url.to_string(), l.kind.as_str())
+        })
+        .collect()
+}
+
+fn link(raw: &str, url: &str, kind: &'static str) -> (String, String, &'static str) {
+    (raw.to_string(), url.to_string(), kind)
+}
+
+#[test]
+fn every_kind_is_read_in_document_order_d13() {
+    let html = r#"<head>
+        <link rel="canonical" href="/c/"><link rel="stylesheet" href="s.css">
+        <link rel="icon" href="/i.ico"><link rel="alternate" href="/feed">
+        <link rel="preconnect" href="https://cdn.example.net"><link href="/norel">
+        <meta http-equiv="Refresh" content="0; url=../r/"><meta name="refresh" content="0; url=/no">
+        </head><body>
+        <a href="b">a</a><a>no href</a><area href="/area"><img src="p.png" srcset="p2.png 2x, p3.png 3x">
+        <picture><source srcset="s.webp"><img src="p.png"></picture>
+        <script src="/j.js"></script><script>inline</script><iframe src="/f"></iframe>
+        <video src="v.mp4" poster="v.jpg"><source src="v.webm"><track src="v.vtt"></video>
+        <audio src="a.ogg"></audio>"#;
+    assert_eq!(
+        links(html),
+        [
+            link("/c/", "https://example.org/c/", "canonical"),
+            link("s.css", "https://example.org/a/s.css", "stylesheet"),
+            link("/i.ico", "https://example.org/i.ico", "icon"),
+            link("/feed", "https://example.org/feed", "link"),
+            link("../r/", "https://example.org/r/", "refresh"),
+            link("b", "https://example.org/a/b", "anchor"),
+            link("/area", "https://example.org/area", "anchor"),
+            link("p.png", "https://example.org/a/p.png", "image"),
+            link("p2.png", "https://example.org/a/p2.png", "image"),
+            link("p3.png", "https://example.org/a/p3.png", "image"),
+            link("s.webp", "https://example.org/a/s.webp", "image"),
+            link("p.png", "https://example.org/a/p.png", "image"),
+            link("/j.js", "https://example.org/j.js", "script"),
+            link("/f", "https://example.org/f", "frame"),
+            link("v.mp4", "https://example.org/a/v.mp4", "media"),
+            link("v.jpg", "https://example.org/a/v.jpg", "media"),
+            link("v.webm", "https://example.org/a/v.webm", "media"),
+            link("v.vtt", "https://example.org/a/v.vtt", "media"),
+            link("a.ogg", "https://example.org/a/a.ogg", "media"),
+        ]
+    );
+}
+
+#[test]
+fn an_href_is_kept_raw_and_resolved_against_the_page() {
+    let html = r##"<a href="#frag">1</a><a href="">2</a><a href="?q=1">3</a><a href="//cdn.example.net/x">4</a>
+        <a href="mailto:me@example.org">5</a><a href="http://[bad">6</a><a href="x&amp;y">7</a>
+        <img src="" srcset=""><script src="  "></script>"##;
+    assert_eq!(
+        links(html),
+        [
+            link("#frag", "https://example.org/a/#frag", "anchor"),
+            link("", "https://example.org/a/", "anchor"),
+            link("?q=1", "https://example.org/a/?q=1", "anchor"),
+            link("//cdn.example.net/x", "https://cdn.example.net/x", "anchor"),
+            link("mailto:me@example.org", "mailto:me@example.org", "anchor"),
+            link("http://[bad", "-", "anchor"),
+            link("x&y", "https://example.org/a/x&y", "anchor"),
+        ],
+        "an empty src names no resource, an empty href is the page"
+    );
+}
+
+#[test]
+fn the_first_base_href_resolves_every_later_link() {
+    let html = r##"<a href="before">0</a><base target="_blank"><base href="/b/dir/"><base href="/other/">
+        <a href="x">1</a><a href="#f">2</a><a href="/abs">3</a><img src="i.png">"##;
+    assert_eq!(
+        links(html),
+        [
+            link("before", "https://example.org/a/before", "anchor"),
+            link("x", "https://example.org/b/dir/x", "anchor"),
+            link("#f", "https://example.org/b/dir/#f", "anchor"),
+            link("/abs", "https://example.org/abs", "anchor"),
+            link("i.png", "https://example.org/b/dir/i.png", "image"),
+        ]
+    );
+    let relative = r#"<base href="sub/"><a href="x">1</a>"#;
+    assert_eq!(
+        links(relative),
+        [link("x", "https://example.org/a/sub/x", "anchor")],
+        "a relative base resolves against the page"
+    );
+    let broken = r#"<base href="http://[bad"><base href="/b/"><a href="x">1</a>"#;
+    assert_eq!(
+        links(broken),
+        [link("x", "https://example.org/a/x", "anchor")],
+        "a first base that does not parse is the one that counts, and counts for nothing"
+    );
+}
+
+#[test]
+fn a_tag_set_by_a_profiles_handler_lands_on_the_links_of_its_element() {
+    let x = auto(
+        r#"<meta name="generator" content="Stub"><a href="1">a</a><a class="tagme" href="2">b</a>
+        <img class="tagme" src="p.png" srcset="p2.png"><a href="3">c</a><span class="tagme"></span>
+        <a href="4">d</a>"#,
+    );
+    let tags: Vec<_> = x
+        .links
+        .iter()
+        .map(|l| (l.raw.as_str(), l.tag.as_deref()))
+        .collect();
+    assert_eq!(
+        tags,
+        [
+            ("1", None),
+            ("2", Some("tag")),
+            ("p.png", Some("tag")),
+            ("p2.png", Some("tag")),
+            ("3", None),
+            ("4", None),
+        ],
+        "a tag set on an element that yields no link is dropped, not carried to the next"
+    );
 }

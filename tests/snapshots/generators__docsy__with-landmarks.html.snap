@@ -6,4 +6,5 @@ profile: generic
 title: Getting Started | Example
 anchors: 2 (content 1, chrome 1, unknown 0)
 by tag: div 1, h2 1
+links: 9 (anchor 8, canonical 1)
 facts: none

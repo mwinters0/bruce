@@ -9,6 +9,7 @@
 //! whether a response is extracted at all, and hands over decoded text.
 
 mod anchors;
+mod links;
 
 use std::cell::RefCell;
 
@@ -22,6 +23,8 @@ use crate::profile::{ElementHandlers, Extract, Facts, Registry, Settled, Sink, U
 
 pub use anchors::{Anchor, Placement};
 use anchors::{Anchors, attribute};
+use links::Links;
+pub use links::{Kind, Link};
 
 /// Everything the pass yields for one page.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -33,6 +36,8 @@ pub struct Extracted {
     pub title: Option<String>,
     /// Each anchor in document order (D12).
     pub anchors: Vec<Anchor>,
+    /// Each link in document order (D13).
+    pub links: Vec<Link>,
     /// The profile's facts about the page (D37).
     pub facts: Facts,
 }
@@ -86,17 +91,21 @@ pub fn extract(
     let sink = RefCell::new(Sink::new(profile.name()));
     let anchors = RefCell::new(Anchors::default());
     let title = RefCell::new(Title::default());
+    let links = RefCell::new(Links::new(url));
     let Extract {
         region,
         handlers,
         finish,
     } = profile.extract(&sink);
 
+    let (read, tag) = Links::handlers(&links, &sink);
     let mut settings = Settings::new().with_strict(false);
     for handler in Title::handlers(&title)
         .into_iter()
         .chain(Anchors::handlers(&anchors, region))
+        .chain(read)
         .chain(handlers)
+        .chain(tag)
     {
         settings = settings.append_element_content_handler(handler);
     }
@@ -112,6 +121,7 @@ pub fn extract(
         profile: profile.name(),
         title: title.into_inner().text,
         anchors: anchors.into_inner().finish(),
+        links: links.into_inner().finish(),
         facts: sink.into_facts(),
     })
 }

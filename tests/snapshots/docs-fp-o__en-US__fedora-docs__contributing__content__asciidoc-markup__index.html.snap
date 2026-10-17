@@ -6,4 +6,5 @@ profile: antora
 title: AsciiDoc markup :: Fedora Docs
 anchors: 28 (content 23, chrome 5, unknown 0)
 by tag: button 1, div 6, h2 3, h3 9, h4 3, input 1, li 3, script 2
+links: 238 (anchor 224, image 3, canonical 1, stylesheet 3, script 7)
 facts: none

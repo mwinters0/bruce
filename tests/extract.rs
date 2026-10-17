@@ -8,7 +8,7 @@ use std::collections::BTreeMap;
 
 use bruce::cli::registry;
 use bruce::config::ProfileChoice;
-use bruce::extract::{Extracted, Placement, extract};
+use bruce::extract::{Extracted, Kind, Placement, extract};
 use common::{Fixture, fixtures};
 
 fn run(f: &Fixture) -> Extracted {
@@ -30,6 +30,14 @@ fn summary(x: &Extracted) -> String {
         *tags.entry(a.tag.as_str()).or_insert(0) += 1;
     }
     let tags: Vec<_> = tags.iter().map(|(t, n)| format!("{t} {n}")).collect();
+    let mut kinds = BTreeMap::new();
+    for l in &x.links {
+        *kinds.entry(l.kind).or_insert(0) += 1;
+    }
+    let kinds: Vec<_> = kinds
+        .iter()
+        .map(|(k, n)| format!("{} {n}", k.as_str()))
+        .collect();
     let facts: Vec<_> = x
         .facts
         .pairs()
@@ -37,7 +45,7 @@ fn summary(x: &Extracted) -> String {
         .map(|(k, v)| format!("  {k} = {v}"))
         .collect();
     format!(
-        "profile: {}\ntitle: {}\nanchors: {} (content {}, chrome {}, unknown {})\nby tag: {}\nfacts:{}\n",
+        "profile: {}\ntitle: {}\nanchors: {} (content {}, chrome {}, unknown {})\nby tag: {}\nlinks: {} ({})\nfacts:{}\n",
         x.profile,
         x.title.as_deref().unwrap_or("-"),
         x.anchors.len(),
@@ -45,6 +53,8 @@ fn summary(x: &Extracted) -> String {
         count(x, Placement::Chrome),
         count(x, Placement::Unknown),
         tags.join(", "),
+        x.links.len(),
+        kinds.join(", "),
         if facts.is_empty() {
             " none".to_string()
         } else {
@@ -141,4 +151,58 @@ fn generic_regions_follow_the_landmarks() {
     let none = by_path("generators/generic/no-landmarks.html");
     assert!(!none.anchors.is_empty());
     assert_eq!(count(&none, Placement::Unknown), none.anchors.len());
+}
+
+/// D13: the survey's markup, every docs.fp.o page: three stylesheets and a
+/// canonical on each but the 404, which has no canonical, and every href
+/// resolving to an absolute URL.
+#[test]
+fn docs_fp_o_links_carry_every_kind_the_pages_use() {
+    let of = |x: &Extracted, kind: Kind| x.links.iter().filter(|l| l.kind == kind).count();
+    let mut canonicals = 0;
+    for f in fixtures()
+        .iter()
+        .filter(|f| f.path.starts_with("docs-fp-o/"))
+    {
+        let x = run(f);
+        assert_eq!(of(&x, Kind::Stylesheet), 3, "{}", f.path);
+        canonicals += of(&x, Kind::Canonical);
+        assert!(of(&x, Kind::Anchor) > 50, "{}", f.path);
+        for l in &x.links {
+            let url = l
+                .url
+                .as_ref()
+                .unwrap_or_else(|| panic!("{}: {}", f.path, l.raw));
+            assert!(
+                matches!(
+                    url.scheme(),
+                    "http" | "https" | "mailto" | "irc" | "matrix" | "tel"
+                ),
+                "{}: {}",
+                f.path,
+                l.raw
+            );
+        }
+    }
+    assert_eq!(canonicals, 29);
+}
+
+/// D13: a canonical is resolved to an absolute docs.fp.o URL, which for a
+/// frozen version (`fedora/f39`) is the latest one's, not the page's own.
+#[test]
+fn a_canonical_is_absolute_and_may_name_another_page() {
+    let canonical = |path: &str| {
+        let f = fixtures().into_iter().find(|f| f.path == path).unwrap();
+        let x = run(&f);
+        let link = x.links.iter().find(|l| l.kind == Kind::Canonical).unwrap();
+        (link.raw.clone(), link.url.clone().unwrap().to_string())
+    };
+    let (_, own) = canonical("docs-fp-o/en-US/a11y/index.html");
+    assert_eq!(own, "https://docs.fedoraproject.org/en-US/a11y/");
+    let (raw, frozen) = canonical("docs-fp-o/en-US/fedora/f39/index.html");
+    assert!(raw.starts_with("https://"), "{raw}");
+    assert_eq!(
+        frozen,
+        "https://docs.fedoraproject.org/en-US/fedora/latest/"
+    );
 }

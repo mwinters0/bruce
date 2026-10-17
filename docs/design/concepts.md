@@ -42,8 +42,9 @@ decisions each carries are cited in its module's doc.
 ## The extraction pass and its core heuristics
 
 - **bruce** — `extract/`: the pass, the page's result, the generator pre-pass
-  and the title in the parent file, and anchors (validity and placement) in the
-  `anchors` child. It sits above `profile` because it drives the pass the
+  and the title in the parent file, anchors (validity and placement) in the
+  `anchors` child, and links (kinds, `srcset`, `<base>`, refresh) in the `links`
+  child. It sits above `profile` because it drives the pass the
   profile's Extract hook adds to, and reads no concrete profile (D39).
 
 ## Storage

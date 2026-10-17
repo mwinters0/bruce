@@ -6,4 +6,5 @@ profile: antora
 title: Guides & How-Tos :: Fedora Docs
 anchors: 9 (content 4, chrome 5, unknown 0)
 by tag: button 1, div 2, h3 3, input 1, script 2
+links: 196 (anchor 182, image 3, canonical 1, stylesheet 3, script 7)
 facts: none

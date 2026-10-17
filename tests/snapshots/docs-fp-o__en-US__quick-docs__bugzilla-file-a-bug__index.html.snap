@@ -6,4 +6,5 @@ profile: antora
 title: How to file a bug :: Fedora Docs
 anchors: 24 (content 19, chrome 5, unknown 0)
 by tag: button 1, div 2, h2 6, h3 12, input 1, script 2
+links: 377 (anchor 358, image 8, canonical 1, stylesheet 3, script 7)
 facts: none

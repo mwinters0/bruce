@@ -6,4 +6,5 @@ profile: antora
 title: Fedora Diversity, Equity, & Inclusion (DEI) Team :: Fedora Docs
 anchors: 15 (content 10, chrome 5, unknown 0)
 by tag: button 1, div 2, h2 6, h3 3, input 1, script 2
+links: 238 (anchor 223, image 4, canonical 1, stylesheet 3, script 7)
 facts: none

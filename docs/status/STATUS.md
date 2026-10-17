@@ -20,7 +20,7 @@ code: `config`, the loader; `store`, the DuckDB schema, its version check and
 the single writer for two tables; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views and content region, with Resolve
 declared and empty; and `extract`, the pass over one page, which yields its
-profile, title and anchors with placement. The rest hold only their doc.
+profile, title, anchors with placement and links with kind. The rest hold only their doc.
 `docs/manual/` holds the config reference. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -35,8 +35,9 @@ The spec is [`../wip/roadmap-P2-extractor.md`](../wip/roadmap-P2-extractor.md).
   generator pre-pass, the title, anchors with tag and placement, the fixture
   snapshots, and the bench moved into `bruce`
   ([notes](../wip/roadmap-P2.1-pass-and-anchors-notes.md)).
-- [ ] **2.2** Links: every kind, `srcset`, `<base href>` and `refresh`,
-  resolved against the page's URL.
+- [x] **2.2** Links: every kind, `srcset`, `<base href>` and `refresh`,
+  resolved against the page's URL
+  ([notes](../wip/roadmap-P2.2-links-notes.md)).
 - [ ] **2.3** The edit link and `forge`: the core ranking and the shape parse.
 - [ ] **2.4** Antora's Extract: its region, coordinates and unresolved-xref
   tags.

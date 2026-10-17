@@ -6,4 +6,5 @@ profile: antora
 title: Package Review Guidelines :: Fedora Docs
 anchors: 51 (content 46, chrome 5, unknown 0)
 by tag: a 40, button 1, div 2, h2 5, input 1, script 2
+links: 316 (anchor 302, image 3, canonical 1, stylesheet 3, script 7)
 facts: none

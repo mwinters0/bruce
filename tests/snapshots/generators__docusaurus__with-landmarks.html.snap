@@ -6,4 +6,5 @@ profile: generic
 title: Installation | Example
 anchors: 3 (content 1, chrome 2, unknown 0)
 by tag: div 2, h2 1
+links: 7 (anchor 6, canonical 1)
 facts: none

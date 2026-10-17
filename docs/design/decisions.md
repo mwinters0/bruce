@@ -30,10 +30,13 @@ Translated heading ids can break fragments, but the translation team owns that (
 latest-only, which leaves inbound links to frozen versions unverifiable.
 
 ### D13 Every reference kind is extracted, each target fetched once per run
-`<a>`, `<img>`/`srcset`, `<link>` (canonical included), `<script>`, `<iframe>`, `<source>`, each
-link carrying its `kind`. Assets get a HEAD request with GET fallback, and reports default to
-`kind = anchor`. `mailto:`, `tel:`, `javascript:` and `data:` are stored as `unchecked`. Rejected:
-`<a href>` only, which misses broken images and canonicals at near-zero cost.
+`<a>`, `<area>`, `<img>`/`srcset`, `<link>` (canonical included), `<script>`, `<iframe>`, media
+(`src` on `<video>`, `<audio>`, `<source>`, `<track>`; `poster`) and the `url=` of a meta refresh,
+each link carrying its `kind`. Assets get a HEAD request with GET fallback, and reports default to
+`kind = anchor`. `mailto:`, `tel:`, `javascript:` and `data:` are stored as `unchecked`. A `<link>`
+whose `rel` is only `preconnect` or `dns-prefetch` names an origin and is skipped. The first
+`<base href>` resolves every href after it. Rejected: `<a href>` only, which misses broken images
+and canonicals at near-zero cost; ignoring `<base>`, which resolves a whole site wrongly and silently.
 
 ### D14 Discovery is sitemap and link-following both, and each page records which
 Each root's sitemap is discovered (D40) or set (docs.fp.o's must be, I1). Recording both

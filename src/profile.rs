@@ -39,8 +39,9 @@ pub trait Profile: Send + Sync {
     /// Extract: what the profile adds to the core's one `HtmlRewriter` for a
     /// page: its content region, its handlers and its finish step (D38). The
     /// handlers write into `sink` and run on one element in registration
-    /// order, after the core's own, and none sees an ancestor, so context is
-    /// a flag an earlier handler set.
+    /// order, after the core's title, anchor and link readers and before the
+    /// core takes the link's tag, and none sees an ancestor, so context is a
+    /// flag an earlier handler set.
     fn extract<'h>(&self, sink: &'h RefCell<Sink>) -> Extract<'h>;
 
     /// Resolve: the URL a reference tagged by [`Profile::extract`] names, as
@@ -160,8 +161,9 @@ impl Sink {
 
     /// Tags the link the core is reading, for the profile's Resolve to
     /// find: `tag` is what Resolve is handed as the reference (I6). The
-    /// core takes it with the link it belongs to, so it must be set by a
-    /// handler on that link's own element.
+    /// core takes it after the profile's handlers have run, with the links
+    /// the element yielded, so it must be set by a handler on that link's
+    /// own element; one set elsewhere is dropped.
     pub fn tag_link(&mut self, tag: impl Into<String>) {
         self.link_tag = Some(tag.into());
     }
