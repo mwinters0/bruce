@@ -28,10 +28,15 @@ The spec is [`../wip/roadmap-P1-scaffold.md`](../wip/roadmap-P1-scaffold.md).
   hand-written pages for other generators' markup, with a tabs page
   reconstructed from I9.
   [notes](../wip/roadmap-P1.1-fixtures-notes.md)
-- [ ] **1.1.1** A real docs.fp.o page with tabs (I9): none is among the 698
-  sampled. Scan the unsampled sitemap URLs, a detached job of about 35 minutes,
-  or take a page the maintainer names; if none exists, strike the row and amend
-  I9.
+- [ ] **1.1.1** A real docs.fp.o page with tabs (I9). The survey's count
+  (`scripts/fixtures.py`, `tabs`) only sees `<div class="tabs` and measures
+  `generators/antora/tabs.html` at zero, so the 698 sampled are unmeasured for
+  tabs. Count a `tabs` class token or a `_tabs_<n>` id, with a test on
+  `tabs.html`; re-measure the 698 into a fresh partial file, since
+  `runs/fixtures/survey.jsonl` resumes the stale counts; only if none is found,
+  scan the ~1609 unsampled sitemap URLs, a detached job of about 35 minutes, or
+  take a page the maintainer names. If none exists, strike the row and amend
+  I9. 1.1's notes take whichever result comes back.
 - [ ] **1.2** Tokenizer spike: html5gum against lol_html in `spikes/tokenizer/`;
   D11 names the winner.
 - [ ] **1.3** Scaffold: the crate, the Rust pin, the mise tasks, the D39
@@ -54,3 +59,4 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+

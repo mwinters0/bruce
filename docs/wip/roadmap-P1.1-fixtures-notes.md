@@ -45,8 +45,10 @@ connection reset.
 
 ## Negative results
 
-- **No docs.fp.o page with tabs was found.** None of the 698 sampled pages has
-  an `@asciidoctor/tabs` block, and the `[tabs]` search of the quick-docs,
+- **No docs.fp.o page with tabs was found, and the sample is no evidence.**
+  The survey's `tabs` count matches only `<div class="tabs` and measures
+  `generators/antora/tabs.html` at zero, so the 698 are unmeasured for tabs
+  (`P1.1.1`). The `[tabs]` search of the quick-docs,
   release-notes, beginners-guide, accounts-docs and fedora-coreos-docs sources
   came up empty. The image does carry the extension (`historical/initial.md`).
   `generators/antora/tabs.html` is reconstructed from I9's ids and is not
