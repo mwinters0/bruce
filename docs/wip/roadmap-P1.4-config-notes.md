@@ -17,8 +17,9 @@ What landed, and what the next slices inherit. The row is `P1.4` in
   (D8). A file may name no root, leaving the URL on the command line to.
 - **A root's scope** is D44. `Root::in_scope` is in `config` because it is
   what `include` and `exclude` mean, and the crawler will call it.
-- **The manual starts** as `../manual/config.md`, one table a section. Its
-  examples are checked by hand against the loader, and by nothing else.
+- **The manual starts** as `../manual/config.md`, one table a section. A test
+  parses each of its `toml` examples, and `--affected` runs it when the
+  manual changes.
 - **New dependencies:** `serde`, `toml`, `globset` and `url`; `tempfile` for
   tests.
 
@@ -39,8 +40,3 @@ What landed, and what the next slices inherit. The row is `P1.4` in
   and `crawl_delay = 1` need no decimal point; a test holds this.
 - **`url::Host::parse` refuses a URL or `host:port` only as `IdnaError`**,
   so `allowlist` and `rate.host` refuse a `/` or `:` first, to say why.
-- **A Rust test reading the manual's `toml` blocks** was written and
-  removed: `scripts/check.py` holds that no Rust target reads `docs/`
-  (`test_check`'s `test_no_rust_target_reads_a_path_no_test_reads`), so
-  `--affected` can skip cargo for a docs change. D42's `mise run sim`, which
-  executes the deployment guide, is where the manual meets the tool.

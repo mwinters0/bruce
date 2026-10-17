@@ -80,16 +80,18 @@ first of the other three rules it meets gives it:
   code -- formats and lints that package alone and runs none of its tests,
   doctests or dependents: clippy reads doc comments, and no build reads the
   rest. A target reading the file still runs, by the first rule.
-- **`docs/`, `.claude/` or a Markdown file** runs nothing. No Rust target
-  names such a path or reads `docs/` or `.claude/` whole, a Markdown file in
-  a data directory documenting it; a Rust test reaching one does so through
-  a `test_*` module the scripts' `unittest` runs already (`test_check` pins
-  both).
+- **`docs/`, `.claude/` or a Markdown file** runs only a target whose
+  literal names that file itself, as `include_str!` does for a test checking
+  the manual's examples. No Rust target reads `docs/` or `.claude/` whole, or
+  a directory under them, a Markdown file in a data directory documenting it;
+  a Rust test reaching one otherwise does so through a `test_*` module the
+  scripts' `unittest` runs already (`test_check` pins both).
 - **Anything else no test reads** -- the workspace manifest, the lockfile,
   `vendor/`, a tool's config -- runs every check, as without the flag.
 
-A change touching only the third kind runs no cargo at all, not even
-`cargo metadata`; nor does any change before a workspace exists. A phase wrap
+A change touching only the third kind, and named by no target, runs no
+cargo check, `cargo metadata` aside; nor does any change before a workspace
+exists. A phase wrap
 runs every check
 (`.claude/skills/process/SKILL.md`, "Wrapping a phase").
 
@@ -376,8 +378,9 @@ def head_tree(repo: Path) -> tuple[str | None, str | None]:
         return None, None
 
 
-#: Paths taken as read by no Rust target: `test_check` asserts that no literal
-#: names one, nor the repository, `docs/` or `.claude/` whole.
+#: Paths read only by a Rust target whose literal names the file itself, as a
+#: test checking the manual's examples does: `test_check` asserts that none
+#: names the repository, `docs/` or `.claude/` whole, nor a directory under them.
 UNTESTED_RE = re.compile(r"^(docs/|\.claude/)|\.md$")
 #: The directories of a package whose change runs none of its dependents.
 PACKAGE_LOCAL = ("tests/", "benches/", "examples/")
@@ -795,12 +798,6 @@ def plan_changes(
     always = tuple(c for c in CHECKS if c.name in ALWAYS)
     if not changed:
         return Plan(always, "affected: nothing changed since HEAD, so no cargo check runs")
-    if all(UNTESTED_RE.search(p) for p in changed):
-        return Plan(
-            always,
-            f"affected: {_paths(len(changed))} changed since HEAD, none read by a test, "
-            "so no cargo check runs",
-        )
     packages = load(repo)
     by_name = {p.name: p for p in packages}
     prefixes = {
@@ -832,6 +829,12 @@ def plan_changes(
                 (local if rest.startswith(PACKAGE_LOCAL) else roots).add(home.name)
         elif not found and whole is None:
             whole = path
+    if not reader_ids and all(UNTESTED_RE.search(p) for p in changed):
+        return Plan(
+            always,
+            f"affected: {_paths(len(changed))} changed since HEAD, none read by a test, "
+            "so no cargo check runs",
+        )
     if whole is not None:
         return Plan(
             every_check(repo, load),

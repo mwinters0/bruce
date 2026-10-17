@@ -583,9 +583,10 @@ WORKSPACE = {
         '[dependencies]\nbase = { path = "../base" }\n'
     ),
     "app/src/main.rs": 'fn main() { let _ = "../base/tests/data/x.sql"; }\n',
-    "app/tests/cli.rs": '// "../docs"\n#[test]\nfn t() {}\n',
+    "app/tests/cli.rs": '// "../docs"\n#[test]\nfn t() { let _ = ("../docs", "../docs/guide.md"); }\n',
     "fixtures/a.sql": "",
     "docs/d.md": "",
+    "docs/guide.md": "",
 }
 
 
@@ -628,13 +629,19 @@ class Affected(unittest.TestCase):
         self.assertTrue(check.reads("p/README.md", "p/README.md"))
         self.assertTrue(check.reads("p/tests/data", "p/tests/data/x.sql"))
 
-    def test_only_paths_no_test_reads_run_no_cargo_and_read_no_metadata(self):
-        def refuse(_):
-            raise AssertionError("cargo metadata was read")
-
-        plan = check.plan_changes(self.repo, ["docs/d.md", "app/README.md", ".claude/x"], refuse)
+    def test_only_paths_no_test_names_run_no_cargo(self):
+        # `app::cli` names `docs` whole, which reads none of it.
+        plan = self.plan("docs/d.md", "app/README.md", ".claude/x")
         self.assertEqual([c.name for c in plan.checks], ["unittest", "repoint", "seams"])
         self.assertIn("none read by a test", plan.note)
+
+    def test_a_docs_file_a_target_names_runs_that_target_alone(self):
+        plan = self.plan("docs/guide.md", "docs/d.md")
+        self.assertEqual([c.name for c in plan.checks], ["nextest", "unittest", "repoint", "seams"])
+        self.assertEqual(
+            argv_of(plan)["nextest"],
+            ["cargo", "nextest", "run", "--no-fail-fast", "-p", "app", "-E", "binary_id(=app::cli)"],
+        )
 
     def test_a_library_change_runs_its_dependents(self):
         argv = argv_of(self.plan("base/src/lib.rs"))
@@ -789,15 +796,14 @@ class RealWorkspace(unittest.TestCase):
             for t in p.targets
         }
 
-    def test_no_rust_target_reads_a_path_no_test_reads(self):
-        tracked = git(check.REPO, "ls-files", "--cached", "--others", "--exclude-standard").splitlines()
-        untested = [p for p in tracked if check.UNTESTED_RE.search(p)]
-        self.assertTrue(untested)
+    def test_no_rust_target_reads_docs_or_claude_but_by_naming_a_file(self):
+        # A docs change runs only a target naming the changed file, so one
+        # reading a directory of them would be skipped.
         for bid, prefixes in self.prefixes.items():
-            read = [p for p in untested if any(check.reads(x, p) for x in prefixes)]
-            self.assertEqual(read, [], bid)
             whole = [x for x in prefixes if x in (".", "docs", ".claude")]
             self.assertEqual(whole, [], bid)
+            dirs = [x for x in prefixes if check.UNTESTED_RE.search(x) and (check.REPO / x).is_dir()]
+            self.assertEqual(dirs, [], bid)
 
     def test_a_script_module_a_rust_test_runs_is_one_the_scripts_check_runs(self):
         named = {

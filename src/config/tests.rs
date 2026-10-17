@@ -199,3 +199,16 @@ fn a_file_is_read_from_disk_and_a_missing_one_says_where() {
     assert!(matches!(err, Error::Read { .. }));
     assert!(err.to_string().starts_with(&missing.display().to_string()));
 }
+
+#[test]
+fn every_toml_example_in_the_manual_parses() {
+    let manual = include_str!("../../docs/manual/config.md");
+    let mut blocks = manual.split("```toml\n").skip(1).peekable();
+    assert!(blocks.peek().is_some(), "the manual has no toml example");
+    for block in blocks {
+        let toml = block.split("```").next().unwrap();
+        if let Err(e) = Config::parse(toml) {
+            panic!("{e}\nin the manual's example:\n{toml}");
+        }
+    }
+}
