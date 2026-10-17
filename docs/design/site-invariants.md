@@ -6,7 +6,7 @@ discovery and never reused. Walk this file whenever Antora's version changes (I8
 names it), or when docs.fp.o's build or hosting moves: a change here surfaces as wrong verdicts,
 not as an error.
 
-<!-- invariant-watermark: I12 -->
+<!-- invariant-watermark: I13 -->
 
 ### I1 docs.fp.o's sitemap is an index at `/en-US/sitemap.xml`, and lists no translated page
 - **Claim.** `/sitemap.xml` is 404, and robots.txt names no `Sitemap:`. `/en-US/sitemap.xml` is
@@ -145,3 +145,17 @@ not as an error.
   docsy.dev, kubernetes.io, pradyunsg.me/furo, docs.readthedocs.io, 2026-10-17.
 - **Relied on by.** D35, D36, D19.
 - **Re-verify.** `curl -s https://docs.antora.org/antora/latest/ | grep -oE '<meta name="generator"[^>]*>|data-component="[^"]*"'`
+
+### I13 Antora's search script names the site root, and a page's URL begins with its component
+- **Claim.** With `@antora/lunr-extension`, every page has
+  `<script id="search-ui-script" data-site-root-path="…">`: the path from the page's directory to
+  the site root (`..`, `../../..`), or the site URL's absolute path (`/en-US`) on a page with no
+  publish root, such as the 404. A page's URL under that root begins with its component's name.
+- **Proof.** Upstream source: lunr-extension `e5973ed7` `data/partials/search-scripts.hbs` writes
+  `siteRootPath`, which Antora v3.1.x `packages/page-composer/lib/build-ui-model.js` sets to
+  `file.pub.rootPath || site.path`. Observed on all 30 docs.fp.o fixtures.
+- **Scope limit.** A site without the lunr extension has no such script, and a page there with no
+  nav container (I8) gets no component. A UI may render the partial differently.
+- **Verified against.** docs.fp.o fixtures, lunr-extension `main` and Antora v3.1.x, 2026-10-17.
+- **Relied on by.** D19.
+- **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/arm-sbc/ | grep -o '<script[^>]*search-ui-script[^>]*>'; curl -s https://gitlab.com/antora/antora-lunr-extension/-/raw/main/data/partials/search-scripts.hbs | grep search-ui-script`

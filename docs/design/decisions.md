@@ -187,11 +187,13 @@ be configured down to a warning. Renamed pages make all their links look new; th
 accepted. Rejected: failing on all breakage, which keeps CI permanently red.
 
 ### D19 Pages carry Antora resource IDs, and unresolved refspecs resolve through them
-The Antora profile records `(component, version, module, path)` as facts (D37), from the nav
-container and the edit URL (I8). A refspec is
-resolved relative to its containing page by Antora's rules. A missing version means the
-component's only or latest version in the DB, since unversioned components report a placeholder
-(I8). Rejected: inferring the module from the URL, which is ambiguous with subdirectories.
+The Antora profile records `(component, version, module, rel_path)` as facts (D37): module and
+`rel_path` from the edit URL (I8); component and version, verbatim, from the nav container, or on a
+page with none the component from the URL under the site root (I13) and no version. A refspec
+resolves relative to its page by Antora's rules; a placeholder or absent version (I8) means the
+component's only or latest version in the DB. Rejected: inferring the module from the URL
+(ambiguous with subdirectories); no component without a nav container, leaving xrefs into it
+unresolvable; a version from the URL, as no versioned component lacks a nav container.
 
 ### D21 CI consumes a single-run baseline file, not the history DB
 `bruce export-baseline` writes one run as a compact DuckDB file. CI takes `--baseline <path|url>`.

@@ -32,12 +32,12 @@ impl Profile for Stub {
             sink.borrow_mut().tag_link("tag");
             Ok(())
         }));
-        extract.finish = Some(|settled, sink| {
+        extract.finish = Some(Box::new(|settled, sink| {
             sink.fact("host", settled.url.host_str().unwrap());
             if let Some(edit) = settled.edit_link {
                 sink.fact("edit", edit.url.as_str());
             }
-        });
+        }));
         extract
     }
 

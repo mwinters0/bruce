@@ -8,4 +8,8 @@ edit: https://forge.fedoraproject.org/packaging/guidelines/src/branch/main/guide
 anchors: 51 (content 46, chrome 5, unknown 0)
 by tag: a 40, button 1, div 2, h2 5, input 1, script 2
 links: 316 (anchor 302, image 3, canonical 1, stylesheet 3, script 7)
-facts: none
+facts:
+  antora.component = packaging-guidelines
+  antora.version = master
+  antora.module = ROOT
+  antora.rel_path = ReviewGuidelines.adoc

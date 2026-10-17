@@ -8,4 +8,8 @@ edit: https://forge.fedoraproject.org/commops/community-docs/src/branch/main/mod
 anchors: 7 (content 2, chrome 5, unknown 0)
 by tag: button 1, div 2, h2 1, input 1, script 2
 links: 192 (anchor 178, image 3, canonical 1, stylesheet 3, script 7)
-facts: none
+facts:
+  antora.component = community
+  antora.version = 
+  antora.module = ROOT
+  antora.rel_path = appendix.adoc

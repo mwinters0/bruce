@@ -100,6 +100,10 @@ impl Facts {
     }
 }
 
+/// A profile's finish step (D38). It owns what it reads, the core having
+/// taken the sink back by the time it runs, so it borrows nothing.
+pub type Finish = Box<dyn FnOnce(&Settled, &mut Sink)>;
+
 /// What a profile's Extract hook hands the core for one page (D38).
 pub struct Extract<'h> {
     /// Selectors for the elements that hold the page's content (D34). The
@@ -111,8 +115,10 @@ pub struct Extract<'h> {
     pub region: &'static [&'static str],
     /// Handlers added to the core's pass.
     pub handlers: ElementHandlers<'h>,
-    /// Runs once the pass has ended, over the core's settled result.
-    pub finish: Option<fn(&Settled, &mut Sink)>,
+    /// Runs once the pass has ended, over the core's settled result. It may
+    /// share what the profile's handlers gathered (an `Rc`), which is how a
+    /// handler's reading reaches it.
+    pub finish: Option<Finish>,
 }
 
 impl Extract<'_> {

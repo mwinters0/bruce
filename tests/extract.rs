@@ -321,3 +321,98 @@ fn a_page_without_an_edit_signal_has_no_edit_link() {
     assert!(edit_link("generators/generic/main-landmark.html").is_none());
     assert!(edit_link("generators/generic/role-main.html").is_none());
 }
+
+fn fact<'x>(x: &'x Extracted, key: &str) -> Option<&'x str> {
+    x.facts
+        .pairs()
+        .iter()
+        .find(|(k, _)| k == key)
+        .map(|(_, v)| v.as_str())
+}
+
+/// D19, I8, I13: every docs.fp.o Antora page has a component, a module and a
+/// `rel_path`. A version is recorded verbatim, placeholder included, exactly
+/// where the page has a nav container; `arm-sbc` has none, and takes its
+/// component from its URL. On every page with both, the URL's first segment
+/// under `/en-US/` agrees with the nav container.
+#[test]
+fn antora_coordinates_come_from_the_nav_container_url_and_edit_link() {
+    let mut versions = BTreeMap::new();
+    for f in fixtures()
+        .iter()
+        .filter(|f| f.path.starts_with("docs-fp-o/") && !f.path.ends_with("404.html"))
+    {
+        let x = run(f);
+        let under_root = f.url.path().strip_prefix("/en-US/").unwrap();
+        let first = under_root.split('/').next().unwrap();
+        assert_eq!(fact(&x, "antora.component"), Some(first), "{}", f.path);
+        let edit = x.edit_link.as_ref().unwrap().source.as_ref().unwrap();
+        let module = fact(&x, "antora.module").unwrap();
+        let rel_path = fact(&x, "antora.rel_path").unwrap();
+        assert!(
+            edit.path
+                .ends_with(&format!("modules/{module}/pages/{rel_path}")),
+            "{}: {}",
+            f.path,
+            edit.path
+        );
+        let has_nav = f.html.contains("data-component=");
+        assert_eq!(fact(&x, "antora.version").is_some(), has_nav, "{}", f.path);
+        if let Some(v) = fact(&x, "antora.version") {
+            versions.insert(v.to_string(), ());
+        }
+    }
+    // The placeholders `""` and `master` are kept as written (I8).
+    assert_eq!(
+        versions.into_keys().collect::<Vec<_>>(),
+        ["", "f39", "f44", "master"]
+    );
+    let arm = fixtures()
+        .into_iter()
+        .find(|f| f.path == "docs-fp-o/en-US/arm-sbc/index.html")
+        .unwrap();
+    let x = run(&arm);
+    assert_eq!(
+        x.facts.pairs(),
+        [
+            ("antora.component".to_string(), "arm-sbc".to_string()),
+            ("antora.module".to_string(), "ROOT".to_string()),
+            ("antora.rel_path".to_string(), "index.adoc".to_string()),
+        ]
+    );
+}
+
+/// I6, D20: each `a.xref.unresolved` link is tagged with its href less the
+/// leading `#`, the raw refspec, a fragment after a second `#` included; no
+/// other link is tagged.
+#[test]
+fn unresolved_xrefs_are_tagged_with_their_refspec() {
+    let mut tagged = Vec::new();
+    for f in fixtures() {
+        let x = run(&f);
+        for l in x.links.iter().filter(|l| l.tag.is_some()) {
+            let tag = l.tag.as_deref().unwrap();
+            assert_eq!(l.raw.strip_prefix('#'), Some(tag), "{}", f.path);
+            assert_eq!(l.kind, Kind::Anchor);
+            tagged.push((f.path.clone(), tag.to_string()));
+        }
+    }
+    // The survey's nine across five docs.fp.o pages ("Facts found while
+    // grilling"), and the hand-written Antora page's one.
+    let fp: Vec<_> = tagged
+        .iter()
+        .filter(|(p, _)| p.starts_with("docs-fp-o/"))
+        .collect();
+    assert_eq!(fp.len(), 9);
+    let pages: std::collections::BTreeSet<_> = fp.iter().map(|(p, _)| p.as_str()).collect();
+    assert_eq!(pages.len(), 5);
+    assert!(tagged.contains(&(
+        "generators/antora/tabs.html".to_string(),
+        "example::missing.adoc#frag".to_string()
+    )));
+    assert_eq!(tagged.len(), 10);
+    assert!(tagged.contains(&(
+        "docs-fp-o/en-US/fesco/Spins/index.html".to_string(),
+        "program_management::changes_policy.adoc#_system_wide_changes".to_string()
+    )));
+}

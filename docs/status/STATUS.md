@@ -18,9 +18,10 @@ The `bruce` crate is a scaffold: D39's top-level modules, a binary that says
 no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Five modules hold
 code: `config`, the loader; `store`, the DuckDB schema, its version check and
 the single writer for two tables; `profile`, the trait, the registry and the
-`generic` and `antora` profiles' Detect, Views and content region, with Resolve
+`generic` and `antora` profiles' Detect, Views and Extract, with Resolve
 declared and empty; `extract`, the pass over one page, which yields its
-profile, title, anchors with placement, links with kind and the edit link; and
+profile, title, anchors with placement, links with kind and tag, the edit link
+and the profile's facts; and
 `forge`, the edit-URL shape parse. The rest hold only their doc.
 `docs/manual/` holds the config reference. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
@@ -41,8 +42,8 @@ The spec is [`../wip/roadmap-P2-extractor.md`](../wip/roadmap-P2-extractor.md).
   ([notes](../wip/roadmap-P2.2-links-notes.md)).
 - [x] **2.3** The edit link and `forge`: the core ranking and the shape parse
   ([notes](../wip/roadmap-P2.3-edit-link-notes.md)).
-- [ ] **2.4** Antora's Extract: its region, coordinates and unresolved-xref
-  tags.
+- [x] **2.4** Antora's Extract: its region, coordinates and unresolved-xref
+  tags ([notes](../wip/roadmap-P2.4-antora-extract-notes.md)).
 - [ ] **2.5** The content hash: xxh3-128 over a scope set by `hash_root` and
   `hash_exclude`.
 
@@ -60,3 +61,14 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
+- **`antora` takes a component from the URL only where the page has no nav
+  container at all** (P2.4). A UI whose nav container omits `data-component`
+  (asciidoctor.org, couchbase.com, I12) therefore records no component, and
+  D19 cannot resolve an xref into its pages. That follows the spec's wording
+  ("Antora's coordinates": "a page with no nav container"), whose evidence is
+  docs.fp.o's `without_menu` pages alone. Keying the fallback on a missing
+  `data-component` instead would cover those UIs, but they have versioned
+  components, and a component from the URL with no version reads as the
+  latest (D19), which on a frozen version's page is wrong. Reconsidering
+  changes one condition in `Page::finish` (`src/profile/antora.rs`) and D19's
+  wording.

@@ -11,6 +11,7 @@ duckdb = { version = "1.10506.1", features = ["bundled"] }
 globset = "0.4.20"
 htmlize = { version = "1.1.0", features = ["unescape_fast"] }
 lol_html = "3.0.1"
+percent-encoding = "2.3.2"
 serde = { version = "1.0.229", features = ["derive"] }
 toml = "1.1.8"
 url = "2.5.8"

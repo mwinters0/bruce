@@ -1,20 +1,31 @@
 //! The `antora` profile: Antora's generator meta, nav container, content
-//! region and xrefs (D19, D20). Detect, Views and Extract's region are built;
-//! the rest of Extract is the extractor's (P2) and Resolve the resolver's (P5),
-//! and until then both do nothing.
+//! region and xrefs (D19, D20). Detect, Views and Extract are built; Resolve
+//! is the resolver's (P5) and until then does nothing.
+//!
+//! Extract records a page's coordinates as facts (D19, I8): `component` and
+//! `version` from the nav container, verbatim; `module` and `rel_path` from
+//! the edit URL's `modules/<module>/pages/<rel_path>` tail. A page with no
+//! nav container (a `without_menu` layout) takes its `component` from the first
+//! path segment under the site root the search script names (I13), and
+//! records no `version`, so a component with no version fact *is* a
+//! URL-derived one. An unresolved xref is tagged with its raw refspec (I6, D20).
 
 use std::cell::RefCell;
+use std::rc::Rc;
 
+use lol_html::element;
+use percent_encoding::percent_decode_str;
 use url::Url;
 
-use super::{BoxError, Extract, Lookup, Profile, Sink, View};
+use super::{BoxError, Extract, Lookup, Profile, Settled, Sink, View};
 
 /// The profile for sites built by Antora.
 pub struct Antora;
 
-/// A page's Antora coordinates as columns (D19, D37). A page with no nav
-/// container has no `antora.version`, which D19 reads as the component's only
-/// or latest version, so the column is NULL there.
+/// A page's Antora coordinates as columns (D19, D37). `version` is the nav
+/// container's, verbatim, a placeholder (`""`, `master`) included, and NULL on
+/// a page with none, whose `component` came from its URL. D19 reads a
+/// placeholder and a NULL alike, as the component's only or latest version.
 const PAGES: View = View {
     name: "antora_pages",
     select: "SELECT run_id, url_id, \
@@ -24,6 +35,68 @@ const PAGES: View = View {
         max(value) FILTER (WHERE key = 'antora.rel_path') AS rel_path \
         FROM page_facts WHERE key LIKE 'antora.%' GROUP BY run_id, url_id",
 };
+
+/// What the pass read that the finish step needs.
+#[derive(Default)]
+struct Page {
+    /// The page has a nav container, which carries its component.
+    nav_container: bool,
+    /// `data-site-root-path` on the search script (I13).
+    site_root_path: Option<String>,
+}
+
+impl Page {
+    /// Records what only the settled page can give: the component of a page
+    /// with no nav container, from its URL, and the module and `rel_path`
+    /// from the edit link.
+    fn finish(&self, settled: &Settled, sink: &mut Sink) {
+        if !self.nav_container {
+            let root = self.site_root_path.as_deref();
+            if let Some(component) = root.and_then(|root| component_under(settled.url, root)) {
+                sink.fact("component", component);
+            }
+        }
+        let source = settled.edit_link.and_then(|e| e.source.as_ref());
+        if let Some((module, rel_path)) = source.and_then(|s| module_and_path(&s.path)) {
+            sink.fact("module", module);
+            sink.fact("rel_path", rel_path);
+        }
+    }
+}
+
+/// The first directory of `page` under the site root `root_path` names: the
+/// search script's `data-site-root-path`, relative to the page's directory or
+/// absolute (I13). `None` where the page is not inside a directory under the
+/// root, or the root is on another origin.
+fn component_under(page: &Url, root_path: &str) -> Option<String> {
+    let root = page.join(root_path).ok()?;
+    if root.origin() != page.origin() {
+        return None;
+    }
+    let root = root.path().trim_end_matches('/');
+    let below = page.path().strip_prefix(root)?.strip_prefix('/')?;
+    let (component, _) = below.split_once('/')?;
+    (!component.is_empty()).then(|| decode(component))
+}
+
+/// `(module, rel_path)` from an edit path holding `modules/<module>/pages/<rel_path>`
+/// somewhere below a start path, as Antora lays a repo out.
+fn module_and_path(path: &str) -> Option<(String, String)> {
+    let segments: Vec<&str> = path.split('/').collect();
+    let at = segments
+        .windows(3)
+        .position(|w| w[0] == "modules" && w[2] == "pages")?;
+    let rel_path = &segments[at + 3..];
+    if rel_path.is_empty() || rel_path.iter().any(|s| s.is_empty()) {
+        return None;
+    }
+    let module = decode(segments[at + 1]);
+    Some((module, decode(&rel_path.join("/"))))
+}
+
+fn decode(segment: &str) -> String {
+    percent_decode_str(segment).decode_utf8_lossy().into_owned()
+}
 
 impl Profile for Antora {
     fn name(&self) -> &'static str {
@@ -38,8 +111,47 @@ impl Profile for Antora {
             .is_some_and(|word| word.eq_ignore_ascii_case("antora"))
     }
 
-    fn extract<'h>(&self, _sink: &'h RefCell<Sink>) -> Extract<'h> {
-        Extract::region(&["article.doc"])
+    fn extract<'h>(&self, sink: &'h RefCell<Sink>) -> Extract<'h> {
+        let page = Rc::new(RefCell::new(Page::default()));
+        let mut extract = Extract::region(&["article.doc"]);
+        let seen = Rc::clone(&page);
+        extract.handlers.push(element!(".nav-container", move |el| {
+            let mut page = seen.borrow_mut();
+            if !std::mem::replace(&mut page.nav_container, true) {
+                let mut sink = sink.borrow_mut();
+                if let Some(component) = el.get_attribute("data-component") {
+                    sink.fact("component", component);
+                }
+                if let Some(version) = el.get_attribute("data-version") {
+                    sink.fact("version", version);
+                }
+            }
+            Ok(())
+        }));
+        let seen = Rc::clone(&page);
+        extract.handlers.push(element!(
+            "script#search-ui-script[data-site-root-path]",
+            move |el| {
+                let mut page = seen.borrow_mut();
+                if page.site_root_path.is_none() {
+                    page.site_root_path = el.get_attribute("data-site-root-path");
+                }
+                Ok(())
+            }
+        ));
+        extract
+            .handlers
+            .push(element!("a.xref.unresolved[href]", move |el| {
+                let href = el.get_attribute("href").unwrap_or_default();
+                if let Some(refspec) = href.strip_prefix('#') {
+                    sink.borrow_mut().tag_link(refspec);
+                }
+                Ok(())
+            }));
+        extract.finish = Some(Box::new(move |settled, sink| {
+            page.borrow().finish(settled, sink);
+        }));
+        extract
     }
 
     fn resolve(
@@ -67,6 +179,49 @@ mod tests {
         assert!(!Antora.detect("Docusaurus v4.0.0"));
         assert!(!Antora.detect("Antoraesque 1.0"));
         assert!(!Antora.detect(""));
+    }
+
+    fn component(page: &str, root: &str) -> Option<String> {
+        component_under(&Url::parse(page).unwrap(), root)
+    }
+
+    /// The search script's root is relative to the page's directory on a
+    /// page and absolute on the 404 (I13).
+    #[test]
+    fn a_component_is_the_first_directory_under_the_site_root() {
+        let arm = "https://docs.fedoraproject.org/en-US/arm-sbc/";
+        assert_eq!(component(arm, "..").as_deref(), Some("arm-sbc"));
+        let deep = "https://docs.fedoraproject.org/en-US/guide/a/b/";
+        assert_eq!(component(deep, "../../..").as_deref(), Some("guide"));
+        assert_eq!(component(deep, "/en-US").as_deref(), Some("guide"));
+        assert_eq!(component(deep, "/en-US/").as_deref(), Some("guide"));
+        let file = "https://example.org/site/tools/page.html";
+        assert_eq!(component(file, "..").as_deref(), Some("tools"));
+        let encoded = "https://example.org/a%20b/";
+        assert_eq!(component(encoded, "..").as_deref(), Some("a b"));
+        assert_eq!(component(encoded, "."), None, "the page is the root");
+        assert_eq!(component("https://example.org/", "."), None);
+        assert_eq!(component("https://example.org/page.html", "."), None);
+        assert_eq!(component(arm, "/elsewhere"), None, "not under the root");
+        assert_eq!(component(arm, "/en-U"), None, "a prefix is no directory");
+        assert_eq!(component(arm, "https://other.org/en-US"), None);
+    }
+
+    #[test]
+    fn module_and_rel_path_are_the_tail_under_a_start_path() {
+        let pair = |m: &str, p: &str| Some((m.to_string(), p.to_string()));
+        assert_eq!(
+            module_and_path("arm-sbc/modules/ROOT/pages/index.adoc"),
+            pair("ROOT", "index.adoc")
+        );
+        assert_eq!(
+            module_and_path("modules/user/pages/a/b%20c.adoc"),
+            pair("user", "a/b c.adoc")
+        );
+        assert_eq!(module_and_path("start/pages/index.adoc"), None);
+        assert_eq!(module_and_path("modules/ROOT/pages/"), None);
+        assert_eq!(module_and_path("modules/ROOT/pages"), None);
+        assert_eq!(module_and_path("modules/ROOT/pages/a//b.adoc"), None);
     }
 
     #[test]

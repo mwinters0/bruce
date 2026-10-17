@@ -273,6 +273,7 @@ dependencies = [
  "htmlize",
  "insta",
  "lol_html",
+ "percent-encoding",
  "serde",
  "tempfile",
  "toml",

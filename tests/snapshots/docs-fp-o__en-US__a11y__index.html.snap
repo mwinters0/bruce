@@ -8,4 +8,8 @@ edit: https://forge.fedoraproject.org/dei/fedora-accessibility/src/branch/main/d
 anchors: 7 (content 2, chrome 5, unknown 0)
 by tag: button 1, div 1, h2 2, input 1, script 2
 links: 189 (anchor 175, image 3, canonical 1, stylesheet 3, script 7)
-facts: none
+facts:
+  antora.component = a11y
+  antora.version = 
+  antora.module = ROOT
+  antora.rel_path = index.adoc
