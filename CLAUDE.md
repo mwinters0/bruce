@@ -5,8 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **bruce** is a Rust link checker for docs.fedoraproject.org. It validates
 anchors (`page#fragment`), keeps a DuckDB link graph with run history, and
 gates a content repo's CI on the breakage that repo introduced. **The code is
-a scaffold**: the `bruce` crate's modules, still empty. The design is settled,
-and P1 is the open phase (`docs/design/roadmap.md`). **The code is the ground
+early**: `docs/status/STATUS.md` says which of the `bruce` crate's modules are
+built. The design is settled, and P1 is the open phase
+(`docs/design/roadmap.md`). **The code is the ground
 truth.**
 Docs exist to locate it quickly and to record what it cannot explain.
 
