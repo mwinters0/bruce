@@ -144,8 +144,10 @@ markup is I8.
 Cross-run joins then need no URL comparison. `links` keeps one row per occurrence, raw href
 included, so a report can point at the link in its source. Tables: `runs`, `targets`, `pages`,
 `page_facts` (D37), `anchors`, `links`, and opt-in `bodies`. The drafted columns are in
-`historical/initial.md`, "D26", as D34, D36 and D37 amend them.
-Rejected: deduplicated links with a count, which is smaller but loses the raw href.
+`historical/initial.md`, "D26", as D34, D36 and D37 amend them. An href resolving to no URL is a
+target keyed by its raw text (`url` that text, `broken_url`, `invalid_url`), one per text per run.
+Rejected: deduplicated links with a count, which is smaller but loses the raw href; for an
+unresolvable href, no link row (reported nowhere) or a crawl-time `links.outcome` and no target.
 
 ### D43 A DB records its schema version, and `bruce` refuses a DB of another version
 A `meta` table holds `schema_version`, and the refusal names both versions. Before a release every

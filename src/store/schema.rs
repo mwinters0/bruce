@@ -15,7 +15,8 @@ const OUTCOME: &str = "('ok', 'broken_url', 'broken_anchor', 'error', 'unchecked
 
 /// Every table, created together in one transaction on a new file. A URL's
 /// `url_id` is the u64 hash of its canonical form (D26), so it joins across
-/// runs without comparing URLs.
+/// runs without comparing URLs; a target with reason `invalid_url` has its
+/// raw href in place of a form.
 pub fn create() -> String {
     format!(
         "BEGIN;

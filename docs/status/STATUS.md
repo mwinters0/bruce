@@ -66,10 +66,3 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-- **An href that resolves to no URL is a target.** P3.5 gives `http://[bad` a
-  `targets` row, `broken_url` with reason `invalid_url`, its `url` the raw text
-  and its `url_id` the hash of that text, so the link has a `target_url_id`
-  (the column is NOT NULL). The alternative is no link row for it, which loses
-  a broken link from every report. Reconsidering changes what P4's join and the
-  CI gate (D9) count: `targets.url` is no longer always a URL, and the same
-  raw text on two pages is one target.

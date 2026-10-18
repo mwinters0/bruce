@@ -446,7 +446,9 @@ where
                 }
                 None => {
                     // An href that resolves to no URL is a broken link, and
-                    // the raw text is all that names it.
+                    // the raw text is all that names it (D26). Only a
+                    // `<base href>` that cannot be a base makes that depend
+                    // on the page, its relative hrefs then sharing a target.
                     let id = xxh3_64(link.raw.as_bytes());
                     if self.frontier.claim(id) {
                         self.send_target(unchecked(
