@@ -73,4 +73,4 @@ decisions each carries are cited in its module's doc.
 ## Configuration
 
 - **bruce** — `config.rs`: the loader, its defaults and its validation, at
-  the bottom of the layering so every module may read a setting (D39).
+  the bottom of the layering but for `url`, so every module may read a setting (D39).

@@ -112,10 +112,13 @@ pivot. Rejected: region handlers in each profile, each re-deciding `unknown` (D3
 alone settles. Reopens: a hook empty in `generic` for any other reason, the trait bending around Antora.
 
 ### D39 The layering: `cli` › `crawl`, `ci`, `report` › `fetch`, `extract`, `store` › `profile` › `forge`, `config` › `url`
-Edges point down only; `config` reads `url`, whose canonical form its scope globs match (D44). `store` implements `profile`'s lookup trait and asks each profile for its
-views, so a profile never reaches the DB. Only `cli` names a concrete profile, to build the
-registry. Rejected: `profile` above `extract`, driving the pass, which makes the core a library of
-the profile, the inverse of D32.
+Edges point down only. `config` reads `url`, its scope matching the canonical form (D44). `store`
+implements `profile`'s lookup trait and asks each profile for its views, so a profile never reaches
+the DB. Only `cli` names a concrete profile, to build the registry. Rejected: `profile` above
+`extract`, driving the pass, which makes the core a library of the profile, the inverse of D32;
+scope moved to `crawl` to keep `config` lowest, splitting it and losing D44's refusal at load; a tier
+check in `module_graph.py`, its cycle check catching nearly every upward edge. Reopens: a skip-tier
+edge passing review.
 
 ## Storage and history
 

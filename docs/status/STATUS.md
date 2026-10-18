@@ -62,10 +62,4 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-- **D39's layering now reads `config` › `url`.** P3.1 made `config` read
-  `url` (the canonical form its scope globs and prefix match), so I edited
-  D39's title and `lib.rs`'s doc from `forge`, `url`, `config` to `forge`,
-  `config` › `url`, the edge being one-way. The alternative, `Root` holding no
-  canonical form and a caller passing one in, leaves the prefix uncanonical
-  and the scope check split across two modules. Reconsidering moves the
-  prefix and `Root::canonical` out of `config` into `crawl`.
+None open.
