@@ -59,8 +59,9 @@ fn a_links_rel_decides_its_kind() {
 }
 
 #[test]
-fn a_sitemap_entry_has_a_kind_no_page_yields() {
+fn sitemap_entries_and_files_have_kinds_no_page_yields() {
     assert_eq!(Kind::Sitemap.as_str(), "sitemap");
+    assert_eq!(Kind::SitemapFile.as_str(), "sitemap_file");
 }
 
 #[test]

@@ -111,7 +111,7 @@ pub struct LinkRow {
     pub target_url_id: u64,
     pub fragment: Option<String>,
     pub raw_href: String,
-    /// One of D13's kinds, or `sitemap`.
+    /// One of D13's kinds, `sitemap` and `sitemap_file` included.
     pub kind: &'static str,
     pub xref_refspec: Option<String>,
     /// The verdict, which the join after the crawl computes (D28); the

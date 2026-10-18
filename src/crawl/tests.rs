@@ -864,11 +864,38 @@ impl Done {
     /// The `sitemap` links as (source URL, raw href), the server's address
     /// stripped from both.
     fn sitemap_links(&self) -> Vec<(String, String)> {
+        self.links_of("sitemap")
+    }
+
+    /// The `sitemap_file` links as (source URL, raw href, target URL), the
+    /// server's address stripped from each.
+    fn file_links(&self) -> Vec<(String, String, String)> {
         let mut found: Vec<_> = rows(
             &self.store,
-            "SELECT t.url, l.raw_href FROM links l JOIN targets t \
-             ON t.run_id = l.run_id AND t.url_id = l.src_url_id \
-             WHERE l.kind = 'sitemap' AND l.outcome IS NULL ORDER BY ALL",
+            "SELECT s.url, l.raw_href, t.url FROM links l \
+             JOIN targets s ON s.run_id = l.run_id AND s.url_id = l.src_url_id \
+             JOIN targets t ON t.run_id = l.run_id AND t.url_id = l.target_url_id \
+             WHERE l.kind = 'sitemap_file' AND l.outcome IS NULL",
+            |r| Ok((r.get::<_, String>(0)?, r.get(1)?, r.get::<_, String>(2)?)),
+        )
+        .into_iter()
+        .map(|(s, h, t)| {
+            let strip = |u: String| u.replace(&self.base, "");
+            (strip(s), strip(h), strip(t))
+        })
+        .collect();
+        found.sort();
+        found
+    }
+
+    fn links_of(&self, kind: &str) -> Vec<(String, String)> {
+        let mut found: Vec<_> = rows(
+            &self.store,
+            &format!(
+                "SELECT t.url, l.raw_href FROM links l JOIN targets t \
+                 ON t.run_id = l.run_id AND t.url_id = l.src_url_id \
+                 WHERE l.kind = '{kind}' AND l.outcome IS NULL ORDER BY ALL"
+            ),
             |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)),
         )
         .into_iter()
@@ -958,9 +985,18 @@ async fn a_sitemap_index_seeds_its_pages_and_each_entry_is_a_link() {
             s("/docs/a.xml", "::bad"),
             s("/docs/b.xml.gz", "/docs/gone"),
             s("/docs/b.xml.gz", "/docs/listed"),
-            s("/docs/sitemap.xml", "/docs/a.xml"),
-            s("/docs/sitemap.xml", "/docs/b.xml.gz"),
-        ]
+        ],
+        "an index's children are files, not entries"
+    );
+    let f = |src: &str, href: &str, to: &str| (src.to_owned(), href.to_owned(), to.to_owned());
+    assert_eq!(
+        done.file_links(),
+        [
+            f("/docs/", "/docs/sitemap.xml", "/docs/sitemap.xml"),
+            f("/docs/sitemap.xml", "/docs/a.xml", "/docs/a.xml"),
+            f("/docs/sitemap.xml", "/docs/b.xml.gz", "/docs/b.xml.gz"),
+        ],
+        "the root links to what robots.txt named, its line the raw href"
     );
     assert_eq!((done.summary.sitemaps, done.summary.dropped), (3, 1));
 }
@@ -990,6 +1026,15 @@ async fn discovery_falls_back_to_the_host_and_a_miss_writes_nothing() {
             t("/sitemap.xml", "ok", None, Some(200)),
         ]
     );
+    assert_eq!(
+        done.file_links(),
+        [(
+            "/docs/".to_owned(),
+            "/sitemap.xml".to_owned(),
+            "/sitemap.xml".to_owned()
+        )],
+        "the probe that found it is the raw href; the one that missed has no link"
+    );
     assert_eq!(done.summary.sitemaps, 1);
 }
 
@@ -1004,6 +1049,7 @@ async fn a_run_with_no_sitemap_follows_links_alone() {
     assert_eq!(done.pages(), ["/docs/", "/docs/two"]);
     assert_eq!(done.summary.sitemaps, 0);
     assert!(done.sitemap_links().is_empty());
+    assert!(done.file_links().is_empty(), "the root has no sitemap");
     let probed: Vec<_> = requests(&server)
         .await
         .into_iter()
@@ -1032,6 +1078,15 @@ async fn a_set_sitemap_is_a_target_whatever_it_answers() {
             t("/docs/missing.xml", "broken_url", None, Some(404)),
         ],
         "the root's own sitemap.xml is not probed"
+    );
+    assert_eq!(
+        done.file_links(),
+        [(
+            "/docs/".to_owned(),
+            "/docs/missing.xml".to_owned(),
+            "/docs/missing.xml".to_owned()
+        )],
+        "a broken set sitemap shows as a broken link from its root"
     );
     assert_eq!(done.summary.sitemaps, 0);
 }
@@ -1079,11 +1134,89 @@ async fn an_index_is_followed_through_a_redirect_and_three_files_deep() {
         done.chain(&format!("{base}/docs/old.xml")),
         [(format!("{base}/docs/old.xml"), 301, false)]
     );
+    let f = |src: &str, href: &str, to: &str| (src.to_owned(), href.to_owned(), to.to_owned());
+    assert_eq!(
+        done.file_links(),
+        [
+            f("/docs/", "sitemap.xml", "/docs/sitemap.xml"),
+            f("/docs/sitemap.xml", "/docs/old.xml", "/docs/old.xml"),
+            f("/docs/three.xml", "/docs/four.xml", "/docs/four.xml"),
+            f("/docs/two.xml", "/docs/three.xml", "/docs/three.xml"),
+        ],
+        "a moved index links from where it landed"
+    );
+    assert!(done.sitemap_links().is_empty());
     assert_eq!(done.summary.sitemaps, 3);
     assert!(
         requests(&server)
             .await
             .iter()
             .all(|(_, p)| p != "/docs/four.xml")
+    );
+}
+
+#[tokio::test]
+async fn each_root_links_once_to_each_sitemap_it_read() {
+    let server = MockServer::start().await;
+    let base = server.uri();
+    // Two roots on one host read the same robots.txt, which names one file
+    // twice.
+    Mock::given(path("/robots.txt"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(
+            "User-agent: *\nSitemap: /map.xml\nSitemap: /map.xml\nSitemap: ftp://x/m.xml\n",
+        ))
+        .mount(&server)
+        .await;
+    xml(&server, "/map.xml", &urlset(&base, &["/a/", "/b/"])).await;
+    page(&server, "/a/", "<title>A</title>").await;
+    page(&server, "/b/", "<title>B</title>").await;
+    let config = format!("[[root]]\nurl = \"{base}/a/\"\n[[root]]\nurl = \"{base}/b/\"\n");
+
+    let done = crawl_config(&server, &config, quick()).await;
+
+    let f = |src: &str| (src.to_owned(), "/map.xml".to_owned(), "/map.xml".to_owned());
+    assert_eq!(
+        done.file_links(),
+        [f("/a/"), f("/b/")],
+        "a shared file is read once and linked from each root"
+    );
+    assert_eq!(done.summary.sitemaps, 1);
+    assert_eq!(
+        requests(&server)
+            .await
+            .iter()
+            .filter(|(_, p)| p == "/map.xml")
+            .count(),
+        1
+    );
+}
+
+#[tokio::test]
+async fn a_probe_another_root_found_is_linked_from_both() {
+    let server = MockServer::start().await;
+    let base = server.uri();
+    xml(&server, "/sitemap.xml", &urlset(&base, &["/a/"])).await;
+    page(&server, "/a/", "<title>A</title>").await;
+    page(&server, "/b/", "<title>B</title>").await;
+    let config = format!("[[root]]\nurl = \"{base}/a/\"\n[[root]]\nurl = \"{base}/b/\"\n");
+
+    let done = crawl_config(&server, &config, quick()).await;
+
+    let f = |src: &str| {
+        (
+            src.to_owned(),
+            "/sitemap.xml".to_owned(),
+            "/sitemap.xml".to_owned(),
+        )
+    };
+    assert_eq!(done.file_links(), [f("/a/"), f("/b/")]);
+    assert_eq!(
+        requests(&server)
+            .await
+            .iter()
+            .filter(|(_, p)| p == "/sitemap.xml")
+            .count(),
+        1,
+        "the second root does not ask again"
     );
 }

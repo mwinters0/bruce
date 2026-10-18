@@ -50,8 +50,9 @@ The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
   [Notes](../wip/roadmap-P3.5-crawl-notes.md).
 - [x] **3.6** Sitemaps: discovery, indexes, gzip and `sitemap` links; adds
   D47. [Notes](../wip/roadmap-P3.6-sitemaps-notes.md).
-- [ ] **3.6.1** Sitemap files as links: `sitemap_file` from each root and
+- [x] **3.6.1** Sitemap files as links: `sitemap_file` from each root and
   each index; amends D13 and D47.
+  [Notes](../wip/roadmap-P3.6.1-sitemap-files-notes.md).
 - [ ] **3.7** `bruce crawl`: the subcommand, Ctrl-C and the manual; amends D5.
 - [ ] **3.8** The live crawl of `/en-US/fedora-docs/`.
 

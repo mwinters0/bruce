@@ -33,7 +33,7 @@ latest-only, which leaves inbound links to frozen versions unverifiable.
 ### D13 Every reference kind is extracted, each target fetched once per run
 `<a>`, `<area>`, `<img>`/`srcset`, `<link>` (canonical included), `<script>`, `<iframe>`, media
 (`src` on `<video>`, `<audio>`, `<source>`, `<track>`; `poster`) and the `url=` of a meta refresh,
-each link carrying its `kind`; a sitemap entry is a link of kind `sitemap`, which no page yields.
+each link carrying its `kind`; no page yields `sitemap` (an entry) or `sitemap_file` (a file, D47).
 Assets get a HEAD request with GET fallback; reports default to `kind = anchor`. `mailto:`, `tel:`,
 `javascript:` and `data:` are `unchecked`. A `<link>` whose `rel` is only `preconnect` or
 `dns-prefetch` is skipped; the first `<base href>` resolves every href after it. Rejected: `<a href>`
@@ -44,14 +44,14 @@ Each root's sitemap is discovered (D40) or set (docs.fp.o's is under its en-US r
 sources yields orphans (in the sitemap, with no inbound link) and unlisted pages (reachable, absent
 from the sitemap). Rejected: either source alone, which loses one of those reports.
 
-### D47 A run reads its sitemaps before any page, and a probe that finds none writes nothing
+### D47 A run reads its sitemaps before any page, and each root links to the files it read
 A listed page is then claimed by its sitemap before a link can name it, so `pages.in_sitemap` holds
-for every listed page; the files (69 at docs.fp.o) cost about a minute on a host whose pace bounds
-the run anyway. A probe of D40's `sitemap.xml` that answers with no sitemap is no target, nothing
-having named it; a sitemap set or named by robots.txt is one whatever it answers. Rejected: reading
-sitemaps beside the pages, which leaves `in_sitemap` to a race; a target per failed probe, a broken
-URL nobody linked. Code: `crawl::Shared::discover`.
-Evidence: `crawl::tests::a_sitemap_index_seeds_its_pages_and_each_entry_is_a_link`.
+for every listed page; the files (69 at docs.fp.o) cost about a minute on a pace-bound run. Each
+file a root read is a `sitemap_file` link from it, so a broken one shows as any broken link and "no
+sitemap" is per root; a probe that misses writes nothing, nothing having named it. Rejected: reading
+sitemaps beside the pages (`in_sitemap` left to a race); a target per failed probe; a `runs` column,
+per run and naming no broken file. Code: `crawl::Shared::discover`.
+Evidence: `crawl::tests::each_root_links_once_to_each_sitemap_it_read`.
 
 ## Profiles
 

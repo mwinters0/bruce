@@ -56,13 +56,15 @@ by destination").
   `page_facts`. `pages.via_links` and `pages.in_sitemap` record the
   discovery that claimed the page, so the sitemap and link joins are the
   authority for orphans and unlisted pages. A sitemap file is a target and
-  each entry a `links` row of kind `sitemap` from it, an index's children
-  included; entries outside every root's scope have no row. A run with no
-  `sitemap` link had no sitemap to find orphans in.
+  each entry naming a page a `links` row of kind `sitemap` from it; entries
+  outside every root's scope have no row. Each root links to each sitemap
+  file it read, and an index to each child, by kind `sitemap_file` (D47), so
+  a root with no such link had no sitemap to find orphans in, and a broken
+  or `unreadable` file is a broken link from it.
 - **Why P4 cares.** Its verdict for a fragment link depends on which of these
   its target is: `too_large`, a target that errored and an allowlisted URL
   first named by a non-anchor link (KD4) all have no anchors to check against.
-- **Origin.** P3.5 and P3.6, 2026-10-18.
+- **Origin.** P3.5, P3.6 and P3.6.1, 2026-10-18.
 
 ## An interrupted crawl leaves an unfinished run
 

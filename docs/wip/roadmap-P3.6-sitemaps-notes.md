@@ -4,8 +4,8 @@ What P3.7 onward inherits, and what was refused.
 
 - **`Summary` gained `sitemaps` and `dropped`**: the files read as sitemaps,
   and the entries outside every root's scope. P3.7 prints both; a run with
-  `sitemaps == 0` had none, and says so. In the DB the same fact is a run with
-  no `links` row of kind `sitemap` (STATUS, "Decisions worth another look").
+  `sitemaps == 0` had none, and says so. In the DB the same fact is per root,
+  a root with no `sitemap_file` link (P3.6.1).
 - **A run has two passes** (D47): `Shared::discover` claims each root's
   sitemaps, `drive` reads them and their children with every page they list
   held back, and then the held pages and the roots' seeds are crawled

@@ -16,12 +16,14 @@
 //! The run writes every target's HTTP-level outcome and leaves
 //! `links.outcome` NULL, the verdicts being SQL's after the crawl (D28).
 //!
-//! A sitemap is a target, and each of its entries a link of kind `sitemap`
-//! from it (D13). A root's sitemap is the one it sets, or else those its
-//! host's robots.txt names, or else the first of `sitemap.xml` under the root
-//! and at the host that answers with one (D40); a file probed and not found
-//! writes nothing, since nothing named it (D47). A run with no sitemap goes on by
-//! links alone, and has no `sitemap` link to show for it.
+//! A sitemap is a target, and each of its entries a link from it, of kind
+//! `sitemap` for a page and `sitemap_file` for an index's sitemap (D13). A
+//! root's sitemap is the one it sets, or else those its host's robots.txt
+//! names, or else the first of `sitemap.xml` under the root and at the host
+//! that answers with one (D40), and the root links to each of them, kind
+//! `sitemap_file`, once though two roots share the file; a file probed and not
+//! found writes nothing, since nothing named it (D47). A root with no sitemap
+//! goes on by links alone, and has no `sitemap_file` link to show for it.
 
 mod frontier;
 mod hops;
@@ -266,30 +268,43 @@ where
     /// in which case what it listed is returned in its place.
     async fn discover(self: &Arc<Self>) -> Result<Vec<Item>, Error> {
         let mut found = Vec::new();
+        let mut links = Vec::new();
         for root in &self.frontier.config().roots {
-            let named: Vec<Url> = match &root.sitemap {
-                Some(url) => vec![url.clone()],
+            let (_, root_form) = self.frontier.plan(&root.url, Kind::Anchor);
+            // Each file the root read is a link from it, once (D13, D47).
+            let mut read = Vec::new();
+            let mut link = |raw: &str, form: &Canonical| {
+                if !read.contains(&form.id()) {
+                    read.push(form.id());
+                    links.push(self.link(&root_form, form.id(), None, raw, Kind::SitemapFile));
+                }
+            };
+            let named: Vec<(String, Url)> = match &root.sitemap {
+                Some(url) => vec![(url.to_string(), url.clone())],
                 None => self
                     .fetcher
                     .sitemaps(&root.url)
                     .await
-                    .iter()
-                    .filter_map(|line| root.url.join(line).ok())
-                    .filter(|url| matches!(url.scheme(), "http" | "https"))
+                    .into_iter()
+                    .filter_map(|line| Some((line.clone(), root.url.join(&line).ok()?)))
+                    .filter(|(_, url)| matches!(url.scheme(), "http" | "https"))
                     .collect(),
             };
             if !named.is_empty() {
-                for url in named {
+                for (raw, url) in named {
                     let item = self.sitemap_item(url, 1);
+                    link(&raw, &item.form);
                     if self.frontier.claim(item.form.id()) {
                         found.push(item);
                     }
                 }
                 continue;
             }
-            let probes = ["sitemap.xml", "/sitemap.xml"].map(|p| root.url.join(p));
             let mut probed = Vec::new();
-            for url in probes.into_iter().flatten() {
+            for probe in ["sitemap.xml", "/sitemap.xml"] {
+                let Ok(url) = root.url.join(probe) else {
+                    continue;
+                };
                 if probed.contains(&url) {
                     continue;
                 }
@@ -297,26 +312,63 @@ where
                 let item = self.sitemap_item(url, 1);
                 if self.frontier.is_claimed(item.form.id()) {
                     // Another root's sitemap, read already or to be.
+                    link(probe, &item.form);
                     break;
                 }
                 let done = Arc::clone(self).follow(item).await?;
                 let is_sitemap = matches!(&done.end, End::Answered(a)
                     if a.sitemap.is_some() || a.body == Body::TooLarge);
+                if is_sitemap {
+                    link(probe, &done.item.form);
+                }
                 if is_sitemap && self.frontier.claim(done.item.form.id()) {
                     found.extend(Arc::clone(self).write_blocking(done).await?);
                     break;
                 }
             }
         }
+        let shared = Arc::clone(self);
+        tokio::task::spawn_blocking(move || {
+            links
+                .into_iter()
+                .try_for_each(|row| shared.rows.send(Row::Link(row)))
+        })
+        .await
+        .map_err(|_| Error::Panicked)??;
         Ok(found)
+    }
+
+    /// A link from the URL `src` names to the target `target_url_id`, as a
+    /// crawl writes it rather than a page yields it.
+    fn link(
+        &self,
+        src: &Canonical,
+        target_url_id: u64,
+        fragment: Option<String>,
+        raw: &str,
+        kind: Kind,
+    ) -> LinkRow {
+        LinkRow {
+            run_id: self.run.0,
+            src_url_id: src.id(),
+            target_url_id,
+            fragment,
+            raw_href: raw.to_owned(),
+            kind: kind.as_str(),
+            xref_refspec: None,
+            outcome: None,
+            reason: None,
+            // KD3, as for a page's links.
+            redirected: false,
+        }
     }
 
     /// A sitemap at `url`, `depth` files deep, not yet claimed.
     fn sitemap_item(&self, url: Url, depth: u8) -> Item {
-        let (_, form) = self.frontier.plan(&url, Kind::Sitemap);
+        let (_, form) = self.frontier.plan(&url, Kind::SitemapFile);
         Item {
             url,
-            kind: Kind::Sitemap,
+            kind: Kind::SitemapFile,
             via_links: false,
             in_sitemap: false,
             plan: Plan::Sitemap { depth },
@@ -512,8 +564,9 @@ where
         Ok(found)
     }
 
-    /// Writes a link of kind `sitemap` from the sitemap `form` names to each
-    /// entry it lists, and claims what is new. A page outside every root's
+    /// Writes a link from the sitemap `form` names to each entry it lists, of
+    /// kind `sitemap` for a page and `sitemap_file` for an index's sitemap,
+    /// and claims what is new. A page outside every root's
     /// scope is dropped, a sitemap being broader than its root (D10); an
     /// index's sitemaps are followed wherever they are, down to
     /// [`MAX_SITEMAP_DEPTH`].
@@ -569,19 +622,13 @@ where
                     (id, url.fragment().map(str::to_owned))
                 }
             };
-            self.rows.send(Row::Link(LinkRow {
-                run_id: self.run.0,
-                src_url_id: form.id(),
-                target_url_id,
-                fragment,
-                raw_href: loc.clone(),
-                kind: Kind::Sitemap.as_str(),
-                xref_refspec: None,
-                outcome: None,
-                reason: None,
-                // KD3, as for a page's links.
-                redirected: false,
-            }))?;
+            let kind = if index {
+                Kind::SitemapFile
+            } else {
+                Kind::Sitemap
+            };
+            let row = self.link(form, target_url_id, fragment, loc, kind);
+            self.rows.send(Row::Link(row))?;
         }
         Ok(())
     }
