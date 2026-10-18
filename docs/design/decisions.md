@@ -288,9 +288,10 @@ Evidence: `crawl::tests::a_target_unfinished_at_the_grace_is_cut`.
 ### D49 An abandoned run waits for the writes it has begun, and only for them
 The second Ctrl-C closes the run's `Writes`: a write not yet begun sends nothing, and the close blocks,
 unbounded, until each begun has sent its last row, the writer draining meanwhile. Rejected: dropping
-the runtime, whose wait also covers an extraction or a sitemap's parse whose result nobody reads;
-a bound on the wait, which can only end it mid-target; a third press, a wedged DuckDB being a bug
-to fix. Code: `crawl::Writes`, `cli::crawl::crawl`.
+the runtime, whose wait covers all blocking work, an extraction or a parse nobody reads and whatever a
+dependency adds (a resolver off hickory runs `getaddrinfo` there), and whose skipping of queued work
+tokio does not guarantee; a bound on the wait, which can only end it mid-target; a third press, a
+wedged DuckDB being a bug to fix. Code: `crawl::Writes`, `cli::crawl::crawl`.
 Evidence: `crawl::tests::an_abandoned_run_holds_the_page_it_was_writing_whole`.
 
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`

@@ -75,12 +75,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **The second Ctrl-C waits behind a gate on writes, not on the runtime's
-  shutdown** (D49, `crawl::Writes`). Dropping the runtime instead of
-  `shutdown_background` would also wait for every begun write, tokio
-  cancelling blocking tasks not yet started, in one line and no new type;
-  its cost is waiting for any extraction or sitemap parse already running,
-  bounded by the 50 MiB sitemap cap. The gate was taken as the spec's
-  "waits for every write already on the blocking pool" read exactly.
-  Reconsidering swaps `Writes` for `drop(runtime)` and amends D49.
