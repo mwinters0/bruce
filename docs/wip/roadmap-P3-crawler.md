@@ -218,12 +218,14 @@ D44).
 ## An interrupted run
 
 Settled 2026-10-18, amended the same day
-(`../status/history/2026-10-18.md`, "A stop is bounded in time").
+(`../status/history/2026-10-18.md`, "A stop is bounded in time" and "An
+abandoned run holds whole targets").
 **The first Ctrl-C** is done within 30 s: no target starts, a started one
 takes no further hop, retry or fallback, a target not finished by then is
 left unwritten, and the writer is flushed, leaving `runs.finished_at` NULL. A
 stopped run holds fewer targets rather than taking longer. **A second**
-abandons the fetches at once but still flushes what reached the writer.
+abandons the fetches at once, lets a target already being written finish,
+and flushes the writer, so an abandoned run too holds whole targets.
 **No run resumes**: an
 unfinished run's rows stay (D2) and the next run starts afresh. Rejected: a
 persisted frontier, much machinery for a 40-minute job. Which run a report
@@ -380,6 +382,15 @@ amended). The 30 s stop, no hop, retry or fallback after it, a waiter
 dropped at once, the cut counted, and the manual; the shape is in
 `../status/history/2026-10-18.md`, "A stop is bounded in time". Against
 wiremock.
+
+### P3.7.2 An abandoned run holds whole targets
+
+Earned: P3.7.1 shipped a second Ctrl-C that finishes the writer while a
+target may be half written ("An interrupted run", as amended). The second
+press waits, unbounded, for every write already on the blocking pool, the
+writer draining meanwhile, then flushes; no third press. The manual's
+"Stopping a crawl". Reasoning: `../status/history/2026-10-18.md`, "An
+abandoned run holds whole targets".
 
 ### P3.8 The live crawl
 

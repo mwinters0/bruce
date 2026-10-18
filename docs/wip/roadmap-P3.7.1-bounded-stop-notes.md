@@ -17,13 +17,12 @@ What P3.8 onward inherits, and what was refused.
   stop, and the write that follows is left to finish. The settled shape
   (history, "A stop is bounded in time") had `drive` abort what is left;
   aborting a task in its write would leave its rows half sent from the
-  blocking pool and make the cut count wrong. The bound is the same. The
-  sitemap discovery's robots.txt and probes are under the same grace.
+  blocking pool and make the cut count wrong (D48). The bound is the same.
+  The sitemap discovery's robots.txt and probes are under the same grace.
 - **"Cut" is every target claimed and not written**, `Frontier::claimed`
   less the target rows sent, since each claim writes exactly one row in a
   whole run. So the URLs queued and never started count as well as those
-  dropped mid-hop: the number says how much the run lacks. A call beyond the
-  spec, which said only that what is cut is counted.
+  dropped mid-hop: a lower bound on what the run lacks (D48).
 - **A robots.txt fetch the stop cut caches the host as unavailable** for
   the rest of the run. Harmless: `walk` checks the stop after every
   `access`, so no row is written from it.

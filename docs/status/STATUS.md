@@ -57,6 +57,8 @@ The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
   [Notes](../wip/roadmap-P3.7-bruce-crawl-notes.md).
 - [x] **3.7.1** A stop bounded in time: 30 s, nothing after it, the second
   Ctrl-C flushing. [Notes](../wip/roadmap-P3.7.1-bounded-stop-notes.md).
+- [ ] **3.7.2** An abandoned run holds whole targets: the second Ctrl-C
+  waits for writes already started.
 - [ ] **3.8** The live crawl of `/en-US/fedora-docs/`.
 
 ## Not started
@@ -72,18 +74,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **The 30 s bound is per target, not an abort in `drive`** (P3.7.1). The
-  shape settled in `history/2026-10-18.md`, "A stop is bounded in time", has
-  `drive` stop waiting at 30 s and abort what is left. The code drops each
-  target's hops at 30 s (`Shared::follow`, `in_grace`) and lets a target
-  whose hops ended finish its write. Why: an aborted task can be mid-write on
-  the blocking pool, where abort does not reach, leaving its rows half sent
-  and the cut count off. Reconsidering means the abort in `drive` and a
-  count of what was aborted rather than claimed less written.
-- **"K cut" counts every target claimed and not written** (P3.7.1), the
-  queued ones never started included, so a stop early in a docs.fp.o run
-  prints thousands. Why: it says how much the run lacks, and it is exact
-  (`Frontier::claimed` less the target rows). Reconsidering means counting
-  only targets started and dropped, which the manual's `bruce crawl` page
-  and `Summary::cut` would then describe.

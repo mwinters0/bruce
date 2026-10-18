@@ -85,7 +85,8 @@ pub struct Summary {
     /// A [`Stopper`] came while targets were still to be asked about, so the
     /// run is not whole.
     pub stopped: bool,
-    /// Targets claimed and never written, the stop having come first.
+    /// Targets found and never written, the stop having come first: a lower
+    /// bound on what the run lacks (D48).
     pub cut: u64,
 }
 
@@ -288,7 +289,7 @@ where
     }
 
     /// `work`, unless the stop's grace runs out first: `None` then, the
-    /// stop marking the run cut short.
+    /// stop marking the run cut short. The bound is per target (D48).
     async fn in_grace<T>(&self, work: impl Future<Output = T>) -> Option<T> {
         let out = tokio::select! {
             biased;

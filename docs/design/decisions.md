@@ -11,7 +11,7 @@ in the bootstrap grilling (2026-10-17, frozen as `historical/initial.md`), D31 t
 an entry's **Code** is the module that will hold it once built. D25 and D29 are spent: D25 was superseded by D30, and D29
 became `roadmap.md`'s phase index.
 
-<!-- decision-watermark: D47 -->
+<!-- decision-watermark: D48 -->
 
 ## Scope and modes
 
@@ -275,6 +275,15 @@ whoever has permission. On any other host the slower wins, and the default rate 
 Rejected: a `crawl_delay` key, a per-host rate in other units; `robots = false` alone passing
 `Crawl-delay`, when docs.fp.o wants its disallows obeyed. Performance work targets the local-dir
 mode and the pipeline.
+
+### D48 A stop drops each target's hops 30 s after it; "cut" is every target found and not written
+Every started target's hops end at the same instant, the stop plus `STOP_GRACE`, and one whose hops
+ended still writes whole, so a stopped run holds whole targets and its counts are exact. "Cut" is
+claimed less written, the queued included: a lower bound on what the run lacks, unfound URLs not in
+it. Rejected: aborting the tasks in `drive`, which cannot reach a write already on the blocking pool,
+its rows landing after `drive` returns; counting only targets started and dropped, which says how the
+stop went, not what the run lacks. Code: `crawl::Shared::in_grace`, `crawl::Summary::cut`.
+Evidence: `crawl::tests::a_target_unfinished_at_the_grace_is_cut`.
 
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
 `check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status
