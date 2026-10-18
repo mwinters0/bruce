@@ -27,6 +27,9 @@ fn a_run_given_only_a_url_has_every_default() {
     assert_eq!(r.hash, HashScope::default());
     assert!(c.allowlist.is_empty());
     assert_eq!(c.rate.per_second, DEFAULT_PER_SECOND);
+    assert_eq!(c.rate.concurrency, 4);
+    assert_eq!(c.user_agent, concat!("bruce/", env!("CARGO_PKG_VERSION")));
+    assert_eq!(c.robots_token(), "bruce");
     assert!(c.hosts.is_empty());
     assert!(c.is_root_host("docs.example.org"));
     assert!(!c.is_root_host("example.org"));
@@ -38,6 +41,7 @@ fn an_empty_file_is_every_default_with_no_root() {
     assert!(c.roots.is_empty());
     assert!(c.allowlist.is_empty());
     assert_eq!(c.rate.per_second, DEFAULT_PER_SECOND);
+    assert_eq!(c.user_agent, DEFAULT_USER_AGENT);
 }
 
 #[test]
@@ -53,12 +57,15 @@ fn every_key_is_read() {
     let c = Config::parse(
         r#"
         allowlist = ["GitHub.com", "pagure.io"]
+        user_agent = "Acme-Docs/2 (+https://acme.example/bot)"
 
         [rate]
         per_second = 5
+        concurrency = 8
 
         [host."GitLab.com"]
         per_second = 0.5
+        concurrency = 1
 
         [host."docs.example.org"]
         per_second = 0.25
@@ -79,10 +86,14 @@ fn every_key_is_read() {
     .unwrap();
     assert_eq!(c.allowlist, ["github.com", "pagure.io"]);
     assert_eq!(c.rate.per_second, 5.0);
+    assert_eq!(c.rate.concurrency, 8);
+    assert_eq!(c.user_agent, "Acme-Docs/2 (+https://acme.example/bot)");
+    assert_eq!(c.robots_token(), "acme-docs");
     assert_eq!(
         c.hosts["gitlab.com"],
         HostSettings {
             per_second: Some(0.5),
+            concurrency: Some(1),
             robots: true
         }
     );
@@ -90,6 +101,7 @@ fn every_key_is_read() {
         c.hosts["docs.example.org"],
         HostSettings {
             per_second: Some(0.25),
+            concurrency: None,
             robots: false
         }
     );
@@ -159,6 +171,14 @@ fn bad_values_name_their_key() {
         ),
         ("allowlist = [\"https://a.example/\"]", "allowlist:"),
         ("[rate]\nper_second = 0", "rate.per_second:"),
+        ("[rate]\nconcurrency = 0", "rate.concurrency:"),
+        (
+            "[host.\"a.example\"]\nconcurrency = 0",
+            "host.\"a.example\".concurrency:",
+        ),
+        ("user_agent = \"\"", "user_agent:"),
+        ("user_agent = \"/1.0\"", "user_agent:"),
+        ("user_agent = \"bot\\u00e9/1\"", "user_agent:"),
         (
             "[host.\"a.example\"]\nper_second = -2",
             "host.\"a.example\".per_second:",
@@ -172,6 +192,21 @@ fn bad_values_name_their_key() {
     for (text, want) in cases {
         let msg = invalid_msg(text);
         assert!(msg.contains(want), "{text}: {msg}");
+    }
+}
+
+#[test]
+fn the_robots_token_is_the_first_product_name_lowercased() {
+    for (agent, token) in [
+        ("bruce/0.1.0", "bruce"),
+        (
+            "Fedora-Docs-Bot/3 (+https://example.org)",
+            "fedora-docs-bot",
+        ),
+        ("LinkCheck", "linkcheck"),
+        ("my_bot.v2 extra", "my_bot.v2"),
+    ] {
+        assert_eq!(robots_token(agent).as_deref(), Ok(token), "{agent}");
     }
 }
 

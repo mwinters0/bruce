@@ -38,9 +38,11 @@ decisions each carries are cited in its module's doc.
 ## Fetchers
 
 - **bruce** — `fetch/`: the trait, one hop's response and the failure
-  causes in the parent file, the reqwest fetcher in the `http` child, and
+  causes in the parent file, the reqwest fetcher in the `http` child, each
+  host's pace, in-flight cap and robots.txt in `http`'s `host` child, and
   the body-to-text decoding in the `charset` child, which P5's local fetcher
-  reuses. It sits above `url` only; the crawler above it follows the hops (D39).
+  reuses. It sits above `config` (it reads the rate and `user_agent`) and
+  `url`; the crawler above it follows the hops (D39).
 
 ## The extraction pass and its core heuristics
 

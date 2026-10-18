@@ -21,7 +21,8 @@ percent-encoding = "2.3.2"
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "http2", "gzip", "deflate", "hickory-dns"] }
 rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
 serde = { version = "1.0.229", features = ["derive"] }
-tokio = { version = "1.53.3", features = ["rt-multi-thread", "macros", "time"] }
+texting_robots = "0.2.2"
+tokio = { version = "1.53.3", features = ["rt-multi-thread", "macros", "sync", "time"] }
 toml = "1.1.8"
 url = "2.5.8"
 xxhash-rust = { version = "0.8.19", features = ["xxh3"] }

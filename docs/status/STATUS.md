@@ -24,7 +24,7 @@ profile, title, anchors with placement, links with kind and tag, the edit link,
 the profile's facts and the content hash; and
 `forge`, the edit-URL shape parse;
 `url`, the canonical form and `url_id`; and
-`fetch`, the fetcher trait, the HTTP fetcher for one hop and the body decoding. The rest hold only their doc.
+`fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, and the body decoding. The rest hold only their doc.
 `docs/manual/` holds the config reference. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -42,8 +42,8 @@ The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
   [Notes](../wip/roadmap-P3.2-store-rows-notes.md).
 - [x] **3.3** One hop over HTTP: the fetcher trait, reqwest, retries, the size
   cap and the charset. [Notes](../wip/roadmap-P3.3-one-hop-notes.md).
-- [ ] **3.4** Per-host politeness: rate, `concurrency`, robots.txt and
-  `user_agent`; amends D11.
+- [x] **3.4** Per-host politeness: rate, `concurrency`, robots.txt and
+  `user_agent`; amends D11. [Notes](../wip/roadmap-P3.4-politeness-notes.md).
 - [ ] **3.5** The crawl: the frontier, URL classes, hops, outcomes and the
   writer feed.
 - [ ] **3.6** Sitemaps: discovery, indexes, gzip and `sitemap` links.

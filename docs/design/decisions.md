@@ -242,9 +242,11 @@ Ad-hoc `duckdb` users see the same views as the CLI. Output is text, or `--forma
 ### D8 Rate limits, concurrency and robots.txt are per host; only a root's host may skip robots.txt
 Defaults in config (D40), with per-host settings in `[host]`. Back off on 429/503 and honour
 `Retry-After`. robots.txt is always honoured for external hosts and switchable only for a host a
-root starts on, refused at load otherwise. Every run refetches every page (I3). Rejected: one
-global rate, which throttles the root to the slowest host's courtesy; `robots` on a root, where two
-roots on one host could disagree and a host an `include` reaches had no setting.
+root starts on, refused at load otherwise. Every run refetches every page (I3). A host's robots.txt
+follows RFC 9309: a 4xx allows all; a 5xx, no answer or a 429 outlasting the retries (which says nothing
+of the file) closes the host for the run. Rejected: one global rate, which throttles the root to the
+slowest host's courtesy; `robots` on a root, where two roots on one host could disagree and a host an
+`include` reaches had no setting. Code: `fetch::http::host`. Evidence: `fetch::http::host::tests`.
 
 ### D18 A host's `Crawl-delay` is obeyed unless a root's host overrides it with `per_second`
 The default (D40). For docs.fp.o (I2), a nightly baseline does not need speed. A `per_second`
@@ -264,12 +266,12 @@ It was free on crates.io on 2026-10-17. `anchorage` (D25) was taken there.
 ## Build
 
 ### D11 Our own stack, not lychee-lib; lol_html is the tokenizer
-reqwest, governor, lol_html and duckdb. What is ours (crawl frontier, link graph, anchor semantics)
-lychee does not model, and its extractor would need working around (D12's rejection). lol_html and
-html5gum tied on the spike's workload (every fixture equal, speed within noise); lol_html matches
-CSS selectors while streaming, which profiles and D33's rules want. Rejected: html5gum (2 crates to
-lol_html's 42), which leaves us an open-element stack and a selector matcher to write. lol_html's
-other costs were weighed and accepted: undecoded attributes and text, and context only by handler order.
+reqwest, texting_robots, lol_html and duckdb, a host's pace its own next-allowed instant (`fetch::http::host`),
+governor having no per-key quota (boinkor-net/governor#193). What is ours (crawl frontier, link graph,
+anchor semantics) lychee does not model, and its extractor would need working around (D12's rejection).
+lol_html and html5gum tied on the spike's workload; lol_html matches CSS selectors while streaming,
+which profiles and D33's rules want. Rejected: html5gum (2 crates to lol_html's 42), which leaves us an
+open-element stack and a selector matcher to write; a governor limiter per host, rebuilt as a host's rate changes.
 Evidence: `historical/initial.md`, "Existing tools"; `spikes/tokenizer/` at commit b436db8, its numbers in P1's notes.
 
 ### D23 DuckDB is bundled; distribution is a release binary on the forge

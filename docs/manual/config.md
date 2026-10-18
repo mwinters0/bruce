@@ -11,9 +11,11 @@ error, so a misspelt key never passes silently as a default.
 
 ```toml
 allowlist = ["github.com", "gitlab.com"]
+user_agent = "docs-example-bot/1.0 (+https://docs.example.org/bot)"
 
 [rate]
 per_second = 2
+concurrency = 4
 
 [host."github.com"]
 per_second = 1
@@ -133,6 +135,20 @@ precedence over it, and `[host]` (below) says when a host's own rate does.
 | Key | Default | Meaning |
 |---|---|---|
 | `rate.per_second` | `2` | Requests a second to any one host. |
+| `rate.concurrency` | `4` | Requests in flight to any one host at once. At the default rate it binds only on a host slow to answer. At least 1. |
+
+## User agent
+
+Every request names `bruce` and its version, `bruce/0.1.0`. `user_agent` names
+your deployment instead, so a site operator can tell whose crawler it is.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `user_agent` | `bruce/<version>` | Sent as `User-Agent`. Visible ASCII, starting with a product name of letters, digits, `-`, `_` or `.`. |
+
+A site's `robots.txt` knows the crawler by that first product name, lowercased:
+`docs-example-bot` for the example above, `bruce` by default. A `robots.txt`
+group written for `User-agent: docs-example-bot` is the one that applies.
 
 ## Hosts
 
@@ -153,6 +169,7 @@ per_second = 10
 | Key | Default | Meaning |
 |---|---|---|
 | `host."<host>".per_second` | none | Requests a second to that host. |
+| `host."<host>".concurrency` | `rate.concurrency` | Requests in flight to that host at once. |
 | `host."<host>".robots` | `true` | Whether the host's `robots.txt` is obeyed, its `Crawl-delay` included. |
 
 **Which rate applies** to a host:
@@ -165,3 +182,11 @@ per_second = 10
 
 `robots = false` is an error on a host that no root starts on: an external
 host's `robots.txt` is always obeyed.
+
+**What `robots.txt` does** is as RFC 9309 says. Each host's is read once a
+run, before any other request to it. A URL a rule forbids is not requested and
+is reported as not checked. If the file is absent (a 4xx answer), everything
+is allowed. If it cannot be read (a 5xx answer, no answer, more than five
+redirects, or a 429 that outlasts the retries), the whole host is not
+requested for the run, and its links are reported as not checked. A
+`Crawl-delay` of more than an hour is read as an hour.

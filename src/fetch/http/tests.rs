@@ -28,7 +28,7 @@ fn quick() -> Settings {
 }
 
 fn fetcher(settings: Settings) -> HttpFetcher {
-    HttpFetcher::new(settings).unwrap()
+    HttpFetcher::new(settings, Hosts::unlimited()).unwrap()
 }
 
 fn url_of(server: &MockServer, path: &str) -> Url {

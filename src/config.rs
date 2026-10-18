@@ -22,6 +22,14 @@ use crate::url::{Canonical, canonical};
 /// (D40).
 pub const DEFAULT_PER_SECOND: f64 = 2.0;
 
+/// Requests in flight to one host at once, when no `[host]` says otherwise
+/// (D8). It binds only on a slow host: at the default rate and a response of
+/// a third of a second, one request is in flight.
+pub const DEFAULT_CONCURRENCY: u32 = 4;
+
+/// Sent as `User-Agent` unless the file names one (D40).
+pub const DEFAULT_USER_AGENT: &str = concat!("bruce/", env!("CARGO_PKG_VERSION"));
+
 /// The profile value that picks one per page by its generator meta (D35).
 pub const AUTO_PROFILE: &str = "auto";
 
@@ -37,9 +45,13 @@ pub struct Config {
     pub allowlist: Vec<String>,
     /// The rate no host setting or `Crawl-delay` overrides (D8).
     pub rate: Rate,
+    /// Sent as `User-Agent`; its robots.txt token is [`Config::robots_token`].
+    pub user_agent: String,
     /// Per-host settings, keyed as [`Host`] prints a host (D8). A host not
     /// here has [`HostSettings::default`].
     pub hosts: BTreeMap<String, HostSettings>,
+    /// What robots.txt calls `user_agent`: its first product name, lowercased.
+    token: String,
 }
 
 /// One site crawled fully (D5).
@@ -97,6 +109,8 @@ pub struct Rate {
     /// Requests a second to a host with no `[host]` rate. It never beats a
     /// `Crawl-delay` (D18).
     pub per_second: f64,
+    /// Requests in flight to a host with no `[host]` concurrency.
+    pub concurrency: u32,
 }
 
 /// What a file says about fetching one host (D8). The crawler combines this
@@ -110,6 +124,9 @@ pub struct Rate {
 pub struct HostSettings {
     /// Requests a second, if the file gave one.
     pub per_second: Option<f64>,
+    /// Requests in flight at once, if the file gave a number; else
+    /// [`Rate::concurrency`].
+    pub concurrency: Option<u32>,
     /// Whether the host's robots.txt is obeyed. On by default (D40).
     /// Only a host a root starts on can turn it off (D8).
     pub robots: bool,
@@ -119,6 +136,7 @@ impl Default for HostSettings {
     fn default() -> HostSettings {
         HostSettings {
             per_second: None,
+            concurrency: None,
             robots: true,
         }
     }
@@ -178,7 +196,9 @@ impl Config {
             roots: vec![Root::new(url)?],
             allowlist: Vec::new(),
             rate: Rate::default(),
+            user_agent: DEFAULT_USER_AGENT.to_owned(),
             hosts: BTreeMap::new(),
+            token: robots_token(DEFAULT_USER_AGENT).expect("the default names a product"),
         })
     }
 
@@ -210,11 +230,17 @@ impl Config {
             .iter()
             .map(|h| host(h).map_err(|e| invalid(format!("allowlist: {e}"))))
             .collect::<Result<_, _>>()?;
+        let user_agent = raw
+            .user_agent
+            .unwrap_or_else(|| DEFAULT_USER_AGENT.to_owned());
+        let token = robots_token(&user_agent).map_err(|e| invalid(format!("user_agent: {e}")))?;
         let config = Config {
             roots,
             allowlist,
             rate: Rate::from_raw(raw.rate)?,
+            user_agent,
             hosts: host_settings(raw.host)?,
+            token,
         };
         // A file naming no root leaves one to the command line, which may
         // start on the host, so the check waits for it.
@@ -222,6 +248,12 @@ impl Config {
             config.check_robots_hosts()?;
         }
         Ok(config)
+    }
+
+    /// The name robots.txt knows this crawler by: the first product name of
+    /// `user_agent`, up to the `/`, lowercased (`bruce` for `bruce/0.1`).
+    pub fn robots_token(&self) -> &str {
+        &self.token
     }
 
     /// Whether a root starts on `host`, compared as [`Host`] prints it.
@@ -333,6 +365,7 @@ impl Default for Rate {
     fn default() -> Rate {
         Rate {
             per_second: DEFAULT_PER_SECOND,
+            concurrency: DEFAULT_CONCURRENCY,
         }
     }
 }
@@ -341,7 +374,12 @@ impl Rate {
     fn from_raw(raw: RawRate) -> Result<Rate, Error> {
         let per_second = raw.per_second.unwrap_or(DEFAULT_PER_SECOND);
         positive(per_second).map_err(|e| invalid(format!("rate.per_second: {e}")))?;
-        Ok(Rate { per_second })
+        let concurrency = raw.concurrency.unwrap_or(DEFAULT_CONCURRENCY);
+        at_least_one(concurrency).map_err(|e| invalid(format!("rate.concurrency: {e}")))?;
+        Ok(Rate {
+            per_second,
+            concurrency,
+        })
     }
 }
 
@@ -352,8 +390,12 @@ fn host_settings(raw: BTreeMap<String, RawHost>) -> Result<BTreeMap<String, Host
         if let Some(n) = h.per_second {
             positive(n).map_err(|e| invalid(format!("host.\"{name}\".per_second: {e}")))?;
         }
+        if let Some(n) = h.concurrency {
+            at_least_one(n).map_err(|e| invalid(format!("host.\"{name}\".concurrency: {e}")))?;
+        }
         let settings = HostSettings {
             per_second: h.per_second,
+            concurrency: h.concurrency,
             robots: h.robots.unwrap_or(true),
         };
         if hosts.insert(key, settings).is_some() {
@@ -456,6 +498,39 @@ fn host(s: &str) -> Result<String, String> {
         .map_err(|e| format!("{s}: {e}"))
 }
 
+/// The token robots.txt names this crawler by, from a `User-Agent`: its first
+/// product name, up to the `/` or the first space, lowercased. It is what a
+/// site operator writes after `User-agent:`, so it must be one.
+fn robots_token(user_agent: &str) -> Result<String, String> {
+    if user_agent.is_empty() || !user_agent.bytes().all(|b| (0x20..0x7f).contains(&b)) {
+        return Err(format!(
+            "{user_agent:?} is empty or holds a character a header cannot"
+        ));
+    }
+    let name = user_agent
+        .split(['/', ' '])
+        .next()
+        .expect("a split yields at least one piece");
+    if name.is_empty()
+        || !name
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'.'))
+    {
+        return Err(format!(
+            "{user_agent:?} does not start with a product name (letters, digits, - _ .)"
+        ));
+    }
+    Ok(name.to_ascii_lowercase())
+}
+
+fn at_least_one(n: u32) -> Result<(), String> {
+    if n >= 1 {
+        Ok(())
+    } else {
+        Err("0 is not at least 1".to_owned())
+    }
+}
+
 fn positive(n: f64) -> Result<(), String> {
     if n.is_finite() && n > 0.0 {
         Ok(())
@@ -473,6 +548,7 @@ struct RawConfig {
     allowlist: Vec<String>,
     #[serde(default)]
     rate: RawRate,
+    user_agent: Option<String>,
     #[serde(default)]
     host: BTreeMap<String, RawHost>,
 }
@@ -499,12 +575,14 @@ struct RawRoot {
 #[serde(deny_unknown_fields)]
 struct RawRate {
     per_second: Option<f64>,
+    concurrency: Option<u32>,
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawHost {
     per_second: Option<f64>,
+    concurrency: Option<u32>,
     robots: Option<bool>,
 }
 
