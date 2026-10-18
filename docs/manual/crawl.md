@@ -59,8 +59,9 @@ unfinished, and its line counts the URLs it found but did not write:
 run 3: 1210 targets, 1187 pages, 69 sitemap files, 1102 cut; stopped before the end, so the run is left unfinished
 ```
 
-**Ctrl-C again** gives up on the requests still out at once. Everything
-already fetched is still written.
+**Ctrl-C again** gives up on the requests still out at once. A URL whose
+answer is already being written to the database is written in full first,
+so no URL is left half recorded; the rest are left out.
 
 An unfinished run is never resumed: the next `bruce crawl` starts a new run
 from the beginning, and the unfinished one's rows stay in the database.

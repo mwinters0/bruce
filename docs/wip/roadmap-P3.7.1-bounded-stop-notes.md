@@ -28,7 +28,7 @@ What P3.8 onward inherits, and what was refused.
   `access`, so no row is written from it.
 - **The second Ctrl-C** drops the crawl's future, shuts the runtime down in
   the background without waiting for its blocking tasks, and finishes the
-  writer, so every row sent before the finish is written. It prints `run N:
+  writer; the wait for writes begun is P3.7.2's. It prints `run N:
   abandoned at the second Ctrl-C, …` and exits 130. `process::exit` is gone.
 - **Observed once, not a test**: against a local server holding three
   requests for 40 s, the first `kill -INT` ended the run 28 s later (the

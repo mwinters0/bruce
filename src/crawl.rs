@@ -30,7 +30,8 @@
 //! the fetcher sends no retry or fallback (`fetch`'s doc). A target whose
 //! hops have not ended [`STOP_GRACE`] after the stop is dropped there. What a
 //! stopped run wrote is whole targets, and every target claimed and not
-//! written is counted as cut.
+//! written is counted as cut. A run abandoned without waiting for its grace
+//! [`Writes::close`]s first, so it too holds whole targets.
 
 mod frontier;
 mod hops;
@@ -39,8 +40,8 @@ mod sitemap;
 
 use std::collections::VecDeque;
 use std::fmt;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::{Arc, Condvar, Mutex, MutexGuard};
 use std::time::{Duration, Instant, SystemTime};
 
 use tokio::task::JoinSet;
@@ -90,6 +91,61 @@ pub struct Summary {
     pub cut: u64,
 }
 
+/// The writes a run has begun, so one abandoned mid-write can wait for them
+/// to end rather than leave a target half written (D49).
+#[derive(Debug, Clone, Default)]
+pub struct Writes(Arc<(Mutex<Gate>, Condvar)>);
+
+#[derive(Debug, Default)]
+struct Gate {
+    closed: bool,
+    writing: usize,
+}
+
+/// One write begun, ended when dropped.
+struct Writing<'a>(&'a Writes);
+
+impl Writes {
+    fn gate(&self) -> MutexGuard<'_, Gate> {
+        // A write that panicked leaves the count right: its guard's drop ran.
+        self.0.0.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    /// A write begun, or `None` once closed: it then sends nothing.
+    fn begin(&self) -> Option<Writing<'_>> {
+        let mut gate = self.gate();
+        if gate.closed {
+            return None;
+        }
+        gate.writing += 1;
+        Some(Writing(self))
+    }
+
+    /// Begins no further write, and blocks until those begun have ended.
+    /// The writer must still be draining, or a write waiting on its full
+    /// channel never ends.
+    pub fn close(&self) {
+        let mut gate = self.gate();
+        gate.closed = true;
+        while gate.writing > 0 {
+            gate = self.0.1.wait(gate).unwrap_or_else(|e| e.into_inner());
+        }
+    }
+
+    /// The writes begun and not yet ended.
+    #[cfg(test)]
+    fn writing(&self) -> usize {
+        self.gate().writing
+    }
+}
+
+impl Drop for Writing<'_> {
+    fn drop(&mut self) {
+        self.0.gate().writing -= 1;
+        self.0.0.1.notify_all();
+    }
+}
+
 /// Why a run stopped before it was done.
 #[derive(Debug)]
 pub enum Error {
@@ -136,6 +192,7 @@ struct Shared<F> {
     grace: Duration,
     /// Work was left undone when the stop came.
     cut: AtomicBool,
+    writes: Writes,
 }
 
 /// A target claimed and waiting to be asked about.
@@ -221,6 +278,7 @@ where
                 stop,
                 grace: STOP_GRACE,
                 cut: AtomicBool::new(false),
+                writes: Writes::default(),
             }),
         }
     }
@@ -228,6 +286,12 @@ where
     /// What stops this run early, to be called from elsewhere while it runs.
     pub fn stopper(&self) -> Stopper {
         self.shared.stop.clone()
+    }
+
+    /// The run's writes, to be closed when it is abandoned rather than
+    /// stopped.
+    pub fn writes(&self) -> Writes {
+        self.shared.writes.clone()
     }
 
     /// This run, with `grace` in place of [`STOP_GRACE`].
@@ -410,6 +474,9 @@ where
         }
         let shared = Arc::clone(self);
         tokio::task::spawn_blocking(move || {
+            let Some(_writing) = shared.writes.begin() else {
+                return Ok(());
+            };
             links
                 .into_iter()
                 .try_for_each(|row| shared.rows.send(Row::Link(row)))
@@ -467,11 +534,15 @@ where
     }
 
     /// [`Shared::write`], on the blocking pool, so a full writer channel
-    /// blocks a pool thread and never the runtime (D28).
+    /// blocks a pool thread and never the runtime (D28), and only while the
+    /// run's [`Writes`] are open.
     async fn write_blocking(self: Arc<Self>, done: Done) -> Result<Vec<Item>, Error> {
-        tokio::task::spawn_blocking(move || self.write(done))
-            .await
-            .map_err(|_| Error::Panicked)?
+        tokio::task::spawn_blocking(move || match self.writes.begin() {
+            Some(_writing) => self.write(done),
+            None => Ok(Vec::new()),
+        })
+        .await
+        .map_err(|_| Error::Panicked)?
     }
 
     /// The plan and form of `next`, where a hop from a URL planned `plan`

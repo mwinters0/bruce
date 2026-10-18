@@ -9,8 +9,9 @@
 //! registry holds, which only this layer can check (D39). The first Ctrl-C
 //! stops the crawl, which is done within [`STOP_GRACE`] (`crawl`'s doc), and
 //! flushes the writer, leaving `runs.finished_at` NULL; a second abandons the
-//! requests still out and flushes what reached the writer. No run resumes:
-//! the next starts afresh.
+//! requests still out, waits for the targets already being written, and
+//! flushes the writer, so the run holds whole targets either way (D49). No
+//! run resumes: the next starts afresh.
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -121,15 +122,19 @@ fn crawl(args: &Args, registry: Registry) -> Result<(RunId, Option<Summary>), St
     let writer = Writer::start(store, WRITER_CAPACITY);
     let crawl = Crawl::new(fetcher, config, registry, run, writer.handle());
     let stop = crawl.stopper();
+    let writes = crawl.writes();
     let crawled = runtime.block_on(async {
         tokio::select! {
             crawled = crawl.run() => Some(crawled),
             () = interrupt(stop) => None,
         }
     });
-    // An abandoned crawl's tasks are not waited for; what they sent before
-    // the writer's finish is written.
+    // An abandoned crawl's tasks are not waited for, but its writes begun
+    // are, the writer draining meanwhile (D49).
     runtime.shutdown_background();
+    if crawled.is_none() {
+        writes.close();
+    }
     // The writer's own error says why a crawl lost it, so it goes first.
     let store = writer.finish().map_err(in_db)?;
     let Some(crawled) = crawled else {

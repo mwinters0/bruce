@@ -1356,3 +1356,62 @@ async fn a_stop_before_the_run_asks_about_nothing() {
     assert!(requests(&server).await.is_empty());
     writer.finish().unwrap();
 }
+
+/// Closing the writes waits for one begun, and begins none after.
+#[test]
+fn closed_writes_wait_for_those_begun_and_begin_none() {
+    let writes = Writes::default();
+    let writing = writes.begin().unwrap();
+    let closer = std::thread::spawn({
+        let writes = writes.clone();
+        move || writes.close()
+    });
+    std::thread::sleep(Duration::from_millis(50));
+    assert!(!closer.is_finished(), "close returned with a write begun");
+    drop(writing);
+    closer.join().unwrap();
+    assert!(writes.begin().is_none());
+    assert_eq!(writes.writing(), 0);
+}
+
+/// A run abandoned while a page is being written, its writes then closed,
+/// holds that page whole: every link, not the first few.
+#[tokio::test]
+async fn an_abandoned_run_holds_the_page_it_was_writing_whole() {
+    const LINKS: usize = 20_000;
+    let server = MockServer::start().await;
+    let body: String = (0..LINKS)
+        .map(|i| format!(r#"<a href="p{i}">{i}</a>"#))
+        .collect();
+    page(&server, "/docs/", &body).await;
+    let config = format!("[[root]]\nurl = \"{}/docs/\"\n", server.uri());
+    let config = Config::parse(&config).unwrap();
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let run = store.begin_run(Mode::Crawl, "test", None).unwrap();
+    let writer = Writer::start(store, 1);
+    let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();
+    let crawl = Crawl::new(fetcher, config, registry(), run, writer.handle());
+    let writes = crawl.writes();
+    // The sitemap probes' links are written before /docs/ is asked about,
+    // so a write begun after that request is the page's or a later one's.
+    let mid_write = async {
+        loop {
+            if writes.writing() > 0 && has_requested(&requests(&server).await, "/docs/") {
+                return;
+            }
+            tokio::task::yield_now().await;
+        }
+    };
+    tokio::select! {
+        _ = crawl.run() => panic!("the run ended before it was abandoned"),
+        () = mid_write => {}
+    }
+    writes.close();
+    let store = writer.finish().unwrap();
+    let links = count(
+        &store,
+        "SELECT count(*) FROM links l JOIN targets t ON t.url_id = l.src_url_id \
+         WHERE t.url LIKE '%/docs/'",
+    );
+    assert_eq!(links, LINKS as i64);
+}
