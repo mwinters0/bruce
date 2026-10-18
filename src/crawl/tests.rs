@@ -239,6 +239,7 @@ async fn every_target_gets_its_outcome_and_every_link_a_row() {
             pages: 2,
             sitemaps: 0,
             dropped: 0,
+            stopped: false,
         }
     );
     assert_eq!(done.pages(), ["/docs/", "/docs/ok"]);
@@ -1219,4 +1220,79 @@ async fn a_probe_another_root_found_is_linked_from_both() {
         1,
         "the second root does not ask again"
     );
+}
+
+/// A stop lets the target in flight finish and starts nothing after it.
+#[tokio::test]
+async fn a_stop_finishes_what_started_and_starts_nothing_more() {
+    let server = MockServer::start().await;
+    page(&server, "/docs/", r#"<a href="slow">slow</a>"#).await;
+    Mock::given(path("/docs/slow"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_raw(r#"<a href="next">next</a>"#, "text/html")
+                .set_delay(Duration::from_millis(600)),
+        )
+        .mount(&server)
+        .await;
+    page(&server, "/docs/next", "").await;
+    let config = format!("[[root]]\nurl = \"{}/docs/\"\n", server.uri());
+    let config = Config::parse(&config).unwrap();
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let run = store.begin_run(Mode::Crawl, "test", None).unwrap();
+    let writer = Writer::start(store, 16);
+    let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();
+    let crawl = Crawl::new(fetcher, config, registry(), run, writer.handle());
+    let stop = crawl.stopper();
+    let running = tokio::spawn(crawl.run());
+    while !requests(&server)
+        .await
+        .iter()
+        .any(|(_, p)| p == "/docs/slow")
+    {
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    }
+    stop.stop();
+    let summary = running.await.unwrap().unwrap();
+    assert!(summary.stopped);
+    let done = Done {
+        store: writer.finish().unwrap(),
+        summary,
+        base: server.uri(),
+    };
+    assert_eq!(done.pages(), ["/docs/", "/docs/slow"]);
+    assert!(
+        !requests(&server)
+            .await
+            .iter()
+            .any(|(_, p)| p == "/docs/next")
+    );
+    assert_eq!(
+        count(
+            &done.store,
+            "SELECT count(*) FROM targets WHERE url LIKE '%/next'"
+        ),
+        0
+    );
+}
+
+/// A stop before the run asks about nothing, the sitemaps included, and
+/// says the run is not whole.
+#[tokio::test]
+async fn a_stop_before_the_run_asks_about_nothing() {
+    let server = MockServer::start().await;
+    page(&server, "/docs/", "").await;
+    let config = format!("[[root]]\nurl = \"{}/docs/\"\n", server.uri());
+    let config = Config::parse(&config).unwrap();
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let run = store.begin_run(Mode::Crawl, "test", None).unwrap();
+    let writer = Writer::start(store, 16);
+    let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();
+    let crawl = Crawl::new(fetcher, config, registry(), run, writer.handle());
+    crawl.stopper().stop();
+    let summary = crawl.run().await.unwrap();
+    assert!(summary.stopped);
+    assert_eq!((summary.targets, summary.pages), (0, 0));
+    assert!(requests(&server).await.is_empty());
+    writer.finish().unwrap();
 }

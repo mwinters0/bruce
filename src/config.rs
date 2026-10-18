@@ -1,6 +1,7 @@
-//! Configuration: optional TOML, CLI overrides and the defaults a run needs no
-//! file for (D5, D35, D40). Every key and its default is documented for users
-//! in `docs/manual/config.md`, which changes with this file.
+//! Configuration: optional TOML and the defaults a run needs no file for
+//! (D5, D35, D40), no flag overriding a key. Every key and its default is
+//! documented for users in `docs/manual/config.md`, which changes with this
+//! file.
 //!
 //! A file is read into the `Raw*` shapes serde derives, unknown keys refused,
 //! and then validated into [`Config`]: URLs parsed, globs compiled, hosts

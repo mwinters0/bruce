@@ -14,9 +14,9 @@ Red means a repoint is due ([`../process.md`](../process.md),
 
 ## What exists
 
-The `bruce` crate is a scaffold: D39's top-level modules, a binary that says
-no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Nine modules hold
-code: `cli`, the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check and
+The `bruce` crate is D39's top-level modules, a binary whose one subcommand
+is `bruce crawl`, and Rust 1.99.1 pinned in `mise.toml`. Nine modules hold
+code: `cli`, the command line, `crawl`'s subcommand and the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check and
 the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views and Extract, with Resolve
 declared and empty; `extract`, the pass over one page, which yields its
@@ -25,8 +25,8 @@ the profile's facts and the content hash;
 `forge`, the edit-URL shape parse;
 `url`, the canonical form and `url_id`;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, and the body decoding; and
-`crawl`, the frontier, the hops of a redirect, D16's outcomes, sitemaps and the run that writes a target's rows, a library with no subcommand yet. The rest hold only their doc.
-`docs/manual/` holds the config reference. The design is settled ([`../design/decisions.md`](../design/decisions.md))
+`crawl`, the frontier, the hops of a redirect, D16's outcomes, sitemaps, the run that writes a target's rows and its stop. The rest hold only their doc.
+`docs/manual/` holds the config reference and `bruce crawl`'s. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
@@ -53,7 +53,8 @@ The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
 - [x] **3.6.1** Sitemap files as links: `sitemap_file` from each root and
   each index; amends D13 and D47.
   [Notes](../wip/roadmap-P3.6.1-sitemap-files-notes.md).
-- [ ] **3.7** `bruce crawl`: the subcommand, Ctrl-C and the manual; amends D5.
+- [x] **3.7** `bruce crawl`: the subcommand, Ctrl-C and the manual; amends D5.
+  [Notes](../wip/roadmap-P3.7-bruce-crawl-notes.md).
 - [ ] **3.8** The live crawl of `/en-US/fedora-docs/`.
 
 ## Not started
@@ -69,3 +70,15 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **The first Ctrl-C waits for every target started, its host's pace
+  included.** The spec ("An interrupted run") lets "those in flight finish
+  (the 30 s timeout bounds it)". `crawl::Shared::drive` stops starting
+  targets, but up to `WORKERS` (64) are started at once, and most of them
+  are waiting for their host's next slot inside `Fetcher::fetch`, not on a
+  request. At docs.fp.o's `Crawl-delay: 1` the wait can pass a minute, which
+  the 30 s timeout does not bound. Made this way because telling a request
+  sent from one queued would put a stop in `fetch::http::host`'s admission,
+  P3.4's tested core. A second Ctrl-C still exits at once. Reconsidering
+  means a stop the host's admission obeys, so a queued target is dropped
+  unwritten, a stopped run then holding fewer targets.

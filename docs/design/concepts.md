@@ -20,8 +20,11 @@ decisions each carries are cited in its module's doc.
 
 ## Subcommands
 
-- **bruce** — `cli.rs` and the binary's `main.rs`, which only calls it: the
-  top of the layering, and the one module naming a concrete profile (D39).
+- **bruce** — `cli/` and the binary's `main.rs`, which only calls it: the
+  command line and the registry in the parent file, and a child module for
+  each subcommand, `crawl` (its roots from the file or the URL, the run and
+  Ctrl-C). It is the top of the layering, and the one module naming a
+  concrete profile (D39).
 
 ## The crawl
 

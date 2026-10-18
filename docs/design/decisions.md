@@ -238,14 +238,14 @@ unresolved xref: D19, then the same steps. Externals default to the baseline's v
 
 ## Operation
 
-### D5 Configuration is optional TOML, with CLI overrides; roots are separate from the allowlist
-`[[root]]` entries are crawled fully, each with include/exclude globs and its own sitemap URL.
-`allowlist` lists hosts checked one hop deep, `[rate]` holds the default limit and `[host."<h>"]`
-a host's own `per_second` and `robots` (D8). Each root names its profile (D35). Roots are
-configurable so the tool is not tied to Fedora, and every key but a root's `url` has a default (D40). Keys are
-snake_case and `[[root]]` singular, as Cargo's `[[bin]]`; rejected: kebab-case, which lychee and
-mise, the nearest tools, do not use; `allowlist` inside `[host]`, since a root's own host belongs
-there and in no allowlist, so the two answer different questions.
+### D5 Configuration is optional TOML, and no flag overrides a key; roots are separate from the allowlist
+`[[root]]` entries are crawled fully, each with include/exclude globs, its own sitemap URL and its
+profile (D35); `allowlist` lists hosts checked one hop deep, `[rate]` holds the default limit and
+`[host."<h>"]` a host's own `per_second` and `robots` (D8). Roots are configurable so the tool is not
+tied to Fedora, and every key but a root's `url` has a default (D40). `bruce crawl`'s URL stands in
+for a file's absent roots and nothing else; per-key flags wait for someone to ask (`cli::crawl`). Keys
+are snake_case and `[[root]]` singular, as Cargo's `[[bin]]`. Rejected: kebab-case, which lychee and
+mise do not use; `allowlist` inside `[host]`, a root's own host belonging there and in no allowlist.
 
 ### D44 A root's scope is its path prefix until `include` names globs, which match the whole canonical URL
 `include` replaces the prefix rather than narrowing it, so one root can span locales; `exclude` always

@@ -31,8 +31,9 @@ profile = "auto"
 A **root** is a site crawled fully: every page in its scope is fetched, and
 every link on those pages is recorded. Each root is a `[[root]]` table.
 
-With no file, the URL given is the only root, with every key below at its
-default.
+With no file, the URL given to `bruce crawl` is the only root, with every key
+below at its default. A file naming no root takes the URL as its only root,
+and a file naming roots refuses one ([`crawl.md`](crawl.md)).
 
 | Key | Default | Meaning |
 |---|---|---|

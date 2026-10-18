@@ -24,6 +24,11 @@
 //! `sitemap_file`, once though two roots share the file; a file probed and not
 //! found writes nothing, since nothing named it (D47). A root with no sitemap
 //! goes on by links alone, and has no `sitemap_file` link to show for it.
+//!
+//! A [`Stopper`] ends a run early (`roadmap-P3-crawler.md`, "An interrupted
+//! run"): no target starts after it, and every target already started is
+//! followed to its end and written, so what a stopped run wrote is whole
+//! targets.
 
 mod frontier;
 mod hops;
@@ -33,7 +38,7 @@ mod sitemap;
 use std::collections::VecDeque;
 use std::fmt;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Instant, SystemTime};
 
 use tokio::task::JoinSet;
@@ -69,6 +74,26 @@ pub struct Summary {
     pub sitemaps: u64,
     /// Sitemap entries outside every root's scope, which are dropped.
     pub dropped: u64,
+    /// A [`Stopper`] came while targets were still to be asked about, so the
+    /// run is not whole.
+    pub stopped: bool,
+}
+
+/// Ends a run early: a target not yet started never is, and those started
+/// finish. Clones share one flag.
+#[derive(Debug, Clone, Default)]
+pub struct Stopper(Arc<AtomicBool>);
+
+impl Stopper {
+    /// Asks the run to stop.
+    pub fn stop(&self) {
+        self.0.store(true, Ordering::Relaxed);
+    }
+
+    /// Whether [`Stopper::stop`] has been called.
+    pub fn is_stopped(&self) -> bool {
+        self.0.load(Ordering::Relaxed)
+    }
 }
 
 /// Why a run stopped before it was done.
@@ -112,6 +137,9 @@ struct Shared<F> {
     pages: AtomicU64,
     sitemaps: AtomicU64,
     dropped: AtomicU64,
+    stop: Stopper,
+    /// Work was left undone when the stop came.
+    cut: AtomicBool,
 }
 
 /// A target claimed and waiting to be asked about.
@@ -193,8 +221,15 @@ where
                 pages: AtomicU64::new(0),
                 sitemaps: AtomicU64::new(0),
                 dropped: AtomicU64::new(0),
+                stop: Stopper::default(),
+                cut: AtomicBool::new(false),
             }),
         }
+    }
+
+    /// What stops this run early, to be called from elsewhere while it runs.
+    pub fn stopper(&self) -> Stopper {
+        self.shared.stop.clone()
     }
 
     /// Crawls from the roots' sitemaps and URLs until nothing is left to ask
@@ -224,6 +259,7 @@ where
             pages: load(&shared.pages),
             sitemaps: load(&shared.sitemaps),
             dropped: load(&shared.dropped),
+            stopped: shared.cut.load(Ordering::Relaxed),
         })
     }
 }
@@ -232,9 +268,20 @@ impl<F> Shared<F>
 where
     F: Fetcher + Send + Sync + 'static,
 {
+    /// Whether the run has been stopped, asked only where work is left, so
+    /// a yes marks the run cut short.
+    fn stopping(&self) -> bool {
+        let stopped = self.stop.is_stopped();
+        if stopped {
+            self.cut.store(true, Ordering::Relaxed);
+        }
+        stopped
+    }
+
     /// Asks about `start` and every target it leads to, at most [`WORKERS`]
     /// at a time. With `hold`, only sitemaps are asked about and every other
-    /// target found goes there instead.
+    /// target found goes there instead. Once stopped it starts nothing, and
+    /// returns when the targets started are done.
     async fn drive(
         self: &Arc<Self>,
         start: Vec<Item>,
@@ -249,6 +296,9 @@ where
                     Some(held) if !matches!(item.plan, Plan::Sitemap { .. }) => held.push(item),
                     _ => queue.push_back(item),
                 }
+            }
+            if !queue.is_empty() && self.stopping() {
+                queue.clear();
             }
             while tasks.len() < WORKERS
                 && let Some(item) = queue.pop_front()
@@ -270,6 +320,9 @@ where
         let mut found = Vec::new();
         let mut links = Vec::new();
         for root in &self.frontier.config().roots {
+            if self.stopping() {
+                break;
+            }
             let (_, root_form) = self.frontier.plan(&root.url, Kind::Anchor);
             // Each file the root read is a link from it, once (D13, D47).
             let mut read = Vec::new();
