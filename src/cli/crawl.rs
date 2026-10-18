@@ -7,9 +7,10 @@
 //! settings silently, and a file naming none takes the URL as its only root,
 //! its other settings applying (D40). A root's profile must be one the
 //! registry holds, which only this layer can check (D39). The first Ctrl-C
-//! stops new requests, lets the targets started finish and flushes the
-//! writer, leaving `runs.finished_at` NULL; a second exits at once. No run
-//! resumes: the next starts afresh.
+//! stops the crawl, which is done within [`STOP_GRACE`] (`crawl`'s doc), and
+//! flushes the writer, leaving `runs.finished_at` NULL; a second abandons the
+//! requests still out and flushes what reached the writer. No run resumes:
+//! the next starts afresh.
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -18,7 +19,7 @@ use clap::{Arg, ArgMatches, Command};
 use xxhash_rust::xxh3::xxh3_64;
 
 use crate::config::{Config, ProfileChoice, Root};
-use crate::crawl::{Crawl, Stopper, Summary};
+use crate::crawl::{Crawl, STOP_GRACE, Stopper, Summary};
 use crate::fetch::http::host::Hosts;
 use crate::fetch::http::{HttpFetcher, Settings};
 use crate::profile::Registry;
@@ -77,13 +78,20 @@ pub fn command() -> Command {
 /// stderr.
 pub fn run(args: &Args, registry: Registry) -> ExitCode {
     match crawl(args, registry) {
-        Ok((run, summary)) => {
+        Ok((run, Some(summary))) => {
             println!("{}", report(run, &summary));
             if summary.stopped {
                 ExitCode::from(INTERRUPTED)
             } else {
                 ExitCode::SUCCESS
             }
+        }
+        Ok((run, None)) => {
+            println!(
+                "run {}: abandoned at the second Ctrl-C, so the run is left unfinished",
+                run.0
+            );
+            ExitCode::from(INTERRUPTED)
         }
         Err(e) => {
             eprintln!("bruce crawl: {e}");
@@ -92,8 +100,9 @@ pub fn run(args: &Args, registry: Registry) -> ExitCode {
     }
 }
 
-/// Crawls and writes one run, finishing it unless it was stopped.
-fn crawl(args: &Args, registry: Registry) -> Result<(RunId, Summary), String> {
+/// Crawls and writes one run, finishing it unless it was stopped. No summary
+/// means the second Ctrl-C abandoned the crawl.
+fn crawl(args: &Args, registry: Registry) -> Result<(RunId, Option<Summary>), String> {
     let (config, hash) = configure(args, &registry)?;
     let db = args.db.as_deref().unwrap_or(Path::new(DEFAULT_DB));
     let in_db = |e: crate::store::Error| format!("{}: {e}", db.display());
@@ -113,27 +122,39 @@ fn crawl(args: &Args, registry: Registry) -> Result<(RunId, Summary), String> {
     let crawl = Crawl::new(fetcher, config, registry, run, writer.handle());
     let stop = crawl.stopper();
     let crawled = runtime.block_on(async {
-        tokio::spawn(interrupt(stop));
-        crawl.run().await
+        tokio::select! {
+            crawled = crawl.run() => Some(crawled),
+            () = interrupt(stop) => None,
+        }
     });
+    // An abandoned crawl's tasks are not waited for; what they sent before
+    // the writer's finish is written.
+    runtime.shutdown_background();
     // The writer's own error says why a crawl lost it, so it goes first.
     let store = writer.finish().map_err(in_db)?;
+    let Some(crawled) = crawled else {
+        return Ok((run, None));
+    };
     let summary = crawled.map_err(|e| e.to_string())?;
     if !summary.stopped {
         store.finish_run(run).map_err(in_db)?;
     }
-    Ok((run, summary))
+    Ok((run, Some(summary)))
 }
 
-/// Stops the run at the first Ctrl-C and exits at the second.
+/// Stops the run at the first Ctrl-C, and returns at the second.
 async fn interrupt(stop: Stopper) {
     if tokio::signal::ctrl_c().await.is_err() {
-        return;
+        return std::future::pending().await;
     }
     stop.stop();
-    eprintln!("bruce crawl: stopping once the targets started are done; Ctrl-C again to abort");
-    if tokio::signal::ctrl_c().await.is_ok() {
-        std::process::exit(INTERRUPTED.into());
+    eprintln!(
+        "bruce crawl: stopping: finishing requests in flight ({} s at most); Ctrl-C again to \
+         abandon them",
+        STOP_GRACE.as_secs()
+    );
+    if tokio::signal::ctrl_c().await.is_err() {
+        std::future::pending().await
     }
 }
 
@@ -210,6 +231,9 @@ fn report(run: RunId, s: &Summary) -> String {
             ", {} sitemap entries outside every root dropped",
             s.dropped
         ));
+    }
+    if s.cut > 0 {
+        line.push_str(&format!(", {} cut", s.cut));
     }
     if s.stopped {
         line.push_str("; stopped before the end, so the run is left unfinished");

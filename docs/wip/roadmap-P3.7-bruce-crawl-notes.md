@@ -17,12 +17,11 @@ What P3.8 onward inherits, and what was refused.
 - **`crawl::Stopper`**, from `Crawl::stopper`, is checked where a target
   would start (`drive`) and before each root's discovery. `Summary::stopped`
   is true only when the stop found work left, so a stop after the last
-  target still finishes the run. A stopped run wrote whole targets: a task
-  started is followed to its end and written.
+  target still finishes the run. What a started target may still do is
+  P3.7.1's.
 - **Exit status**: 0 a run finished, broken links or not (verdicts are P4's);
   1 the config, DB or crawl failed; 2 clap's usage error; 130 stopped, at the
-  first Ctrl-C after the flush or at once at the second (`process::exit`,
-  the writer unflushed). The output is one line, `run N: … targets, … pages,
+  first Ctrl-C or the second, after the flush (P3.7.1). The output is one line, `run N: … targets, … pages,
   … sitemap files`, `no sitemap` when none was read.
 - **Calls beyond the spec**, none touching a contract: the exit statuses;
   the writer channel's 4096 rows; a file naming no root and no URL refused

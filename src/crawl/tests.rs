@@ -240,6 +240,7 @@ async fn every_target_gets_its_outcome_and_every_link_a_row() {
             sitemaps: 0,
             dropped: 0,
             stopped: false,
+            cut: 0,
         }
     );
     assert_eq!(done.pages(), ["/docs/", "/docs/ok"]);
@@ -1222,7 +1223,41 @@ async fn a_probe_another_root_found_is_linked_from_both() {
     );
 }
 
-/// A stop lets the target in flight finish and starts nothing after it.
+/// Crawls the root `/docs/` of `server` with `grace` after a stop, stops
+/// once `at` has been requested, and returns the run and how long it went
+/// on after the stop.
+async fn stop_at(server: &MockServer, at: &str, grace: Duration) -> (Done, Duration) {
+    let config = format!("[[root]]\nurl = \"{}/docs/\"\n", server.uri());
+    let config = Config::parse(&config).unwrap();
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let run = store.begin_run(Mode::Crawl, "test", None).unwrap();
+    let writer = Writer::start(store, 16);
+    let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();
+    let crawl = Crawl::new(fetcher, config, registry(), run, writer.handle()).with_grace(grace);
+    let stop = crawl.stopper();
+    let running = tokio::spawn(crawl.run());
+    while !requests(server).await.iter().any(|(_, p)| p == at) {
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    }
+    stop.stop();
+    let stopped = Instant::now();
+    let summary = running.await.unwrap().unwrap();
+    let after = stopped.elapsed();
+    assert!(summary.stopped);
+    let done = Done {
+        store: writer.finish().unwrap(),
+        summary,
+        base: server.uri(),
+    };
+    (done, after)
+}
+
+fn has_requested(requests: &[(String, String)], at: &str) -> bool {
+    requests.iter().any(|(_, p)| p == at)
+}
+
+/// A stop lets the request in flight finish and starts nothing after it,
+/// counting what it left unwritten as cut.
 #[tokio::test]
 async fn a_stop_finishes_what_started_and_starts_nothing_more() {
     let server = MockServer::start().await;
@@ -1236,43 +1271,68 @@ async fn a_stop_finishes_what_started_and_starts_nothing_more() {
         .mount(&server)
         .await;
     page(&server, "/docs/next", "").await;
-    let config = format!("[[root]]\nurl = \"{}/docs/\"\n", server.uri());
-    let config = Config::parse(&config).unwrap();
-    let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "test", None).unwrap();
-    let writer = Writer::start(store, 16);
-    let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();
-    let crawl = Crawl::new(fetcher, config, registry(), run, writer.handle());
-    let stop = crawl.stopper();
-    let running = tokio::spawn(crawl.run());
-    while !requests(&server)
-        .await
-        .iter()
-        .any(|(_, p)| p == "/docs/slow")
-    {
-        tokio::time::sleep(Duration::from_millis(10)).await;
-    }
-    stop.stop();
-    let summary = running.await.unwrap().unwrap();
-    assert!(summary.stopped);
-    let done = Done {
-        store: writer.finish().unwrap(),
-        summary,
-        base: server.uri(),
-    };
+    let (done, _) = stop_at(&server, "/docs/slow", STOP_GRACE).await;
     assert_eq!(done.pages(), ["/docs/", "/docs/slow"]);
-    assert!(
-        !requests(&server)
-            .await
-            .iter()
-            .any(|(_, p)| p == "/docs/next")
-    );
+    assert!(!has_requested(&requests(&server).await, "/docs/next"));
     assert_eq!(
         count(
             &done.store,
             "SELECT count(*) FROM targets WHERE url LIKE '%/next'"
         ),
         0
+    );
+    assert_eq!(done.summary.cut, 1, "the link to /next was claimed");
+}
+
+/// A redirect answered after the stop is not followed, and its target is
+/// cut rather than written half done.
+#[tokio::test]
+async fn a_stop_takes_no_further_hop() {
+    let server = MockServer::start().await;
+    page(&server, "/docs/", r#"<a href="hop">hop</a>"#).await;
+    Mock::given(path("/docs/hop"))
+        .respond_with(
+            ResponseTemplate::new(301)
+                .insert_header("location", "/docs/there")
+                .set_delay(Duration::from_millis(600)),
+        )
+        .mount(&server)
+        .await;
+    page(&server, "/docs/there", "").await;
+    let (done, _) = stop_at(&server, "/docs/hop", STOP_GRACE).await;
+    assert!(!has_requested(&requests(&server).await, "/docs/there"));
+    assert_eq!(done.pages(), ["/docs/"]);
+    assert_eq!(
+        count(
+            &done.store,
+            "SELECT count(*) FROM targets WHERE url LIKE '%/hop'"
+        ),
+        0
+    );
+    assert_eq!(done.summary.cut, 1);
+}
+
+/// A target still unanswered when the grace runs out is dropped there, and
+/// the run ends then rather than when the answer comes.
+#[tokio::test]
+async fn a_target_unfinished_at_the_grace_is_cut() {
+    let server = MockServer::start().await;
+    page(&server, "/docs/", r#"<a href="slow">slow</a>"#).await;
+    Mock::given(path("/docs/slow"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_raw("", "text/html")
+                .set_delay(Duration::from_millis(1500)),
+        )
+        .mount(&server)
+        .await;
+    let (done, after) = stop_at(&server, "/docs/slow", Duration::from_millis(200)).await;
+    assert!(after < Duration::from_millis(1000), "waited {after:?}");
+    assert_eq!(done.pages(), ["/docs/"]);
+    assert_eq!(
+        (done.summary.targets, done.summary.cut),
+        (1, 1),
+        "/docs/ written, /docs/slow cut"
     );
 }
 

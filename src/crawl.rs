@@ -26,9 +26,11 @@
 //! goes on by links alone, and has no `sitemap_file` link to show for it.
 //!
 //! A [`Stopper`] ends a run early (`roadmap-P3-crawler.md`, "An interrupted
-//! run"): no target starts after it, and every target already started is
-//! followed to its end and written, so what a stopped run wrote is whole
-//! targets.
+//! run"): no target starts after it, a started one takes no further hop, and
+//! the fetcher sends no retry or fallback (`fetch`'s doc). A target whose
+//! hops have not ended [`STOP_GRACE`] after the stop is dropped there. What a
+//! stopped run wrote is whole targets, and every target claimed and not
+//! written is counted as cut.
 
 mod frontier;
 mod hops;
@@ -39,7 +41,7 @@ use std::collections::VecDeque;
 use std::fmt;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::time::{Instant, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 
 use tokio::task::JoinSet;
 use url::Url;
@@ -47,7 +49,7 @@ use xxhash_rust::xxh3::xxh3_64;
 
 use crate::config::{Config, HashScope, ProfileChoice};
 use crate::extract::{self, Extracted, Kind};
-use crate::fetch::{Access, Body, Failure, Fetcher, MAX_SITEMAP, Mode};
+use crate::fetch::{Access, Body, Failure, FailureKind, Fetcher, MAX_SITEMAP, Mode};
 use crate::profile::Registry;
 use crate::store::{
     AnchorRow, FactRow, Hop, LinkRow, Outcome, PageRow, Row, RunId, TargetRow, WriteHandle,
@@ -58,12 +60,18 @@ use frontier::{Frontier, Plan};
 use hops::{Chain, Stop};
 use sitemap::Sitemap;
 
+pub use crate::fetch::Stopper;
+
 /// Targets in flight at once, across hosts. A host's own cap and pace are
 /// the fetcher's (D8); this only bounds the tasks a run holds.
 const WORKERS: usize = 64;
 
 /// How many files deep sitemap indexes are followed, the first counting as 1.
 const MAX_SITEMAP_DEPTH: u8 = 3;
+
+/// How long after a stop a target may go on with its hops; one not done by
+/// then is dropped unwritten.
+pub const STOP_GRACE: Duration = Duration::from_secs(30);
 
 /// What a finished run wrote.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -77,23 +85,8 @@ pub struct Summary {
     /// A [`Stopper`] came while targets were still to be asked about, so the
     /// run is not whole.
     pub stopped: bool,
-}
-
-/// Ends a run early: a target not yet started never is, and those started
-/// finish. Clones share one flag.
-#[derive(Debug, Clone, Default)]
-pub struct Stopper(Arc<AtomicBool>);
-
-impl Stopper {
-    /// Asks the run to stop.
-    pub fn stop(&self) {
-        self.0.store(true, Ordering::Relaxed);
-    }
-
-    /// Whether [`Stopper::stop`] has been called.
-    pub fn is_stopped(&self) -> bool {
-        self.0.load(Ordering::Relaxed)
-    }
+    /// Targets claimed and never written, the stop having come first.
+    pub cut: u64,
 }
 
 /// Why a run stopped before it was done.
@@ -138,6 +131,8 @@ struct Shared<F> {
     sitemaps: AtomicU64,
     dropped: AtomicU64,
     stop: Stopper,
+    /// How long a started target may go on after the stop.
+    grace: Duration,
     /// Work was left undone when the stop came.
     cut: AtomicBool,
 }
@@ -210,9 +205,10 @@ where
         run: RunId,
         rows: WriteHandle,
     ) -> Crawl<F> {
+        let stop = Stopper::default();
         Crawl {
             shared: Arc::new(Shared {
-                fetcher,
+                fetcher: fetcher.with_stop(stop.clone()),
                 frontier: Frontier::new(config),
                 registry,
                 run,
@@ -221,7 +217,8 @@ where
                 pages: AtomicU64::new(0),
                 sitemaps: AtomicU64::new(0),
                 dropped: AtomicU64::new(0),
-                stop: Stopper::default(),
+                stop,
+                grace: STOP_GRACE,
                 cut: AtomicBool::new(false),
             }),
         }
@@ -230,6 +227,15 @@ where
     /// What stops this run early, to be called from elsewhere while it runs.
     pub fn stopper(&self) -> Stopper {
         self.shared.stop.clone()
+    }
+
+    /// This run, with `grace` in place of [`STOP_GRACE`].
+    #[cfg(test)]
+    fn with_grace(mut self, grace: Duration) -> Crawl<F> {
+        Arc::get_mut(&mut self.shared)
+            .expect("not yet shared")
+            .grace = grace;
+        self
     }
 
     /// Crawls from the roots' sitemaps and URLs until nothing is left to ask
@@ -254,12 +260,15 @@ where
         }
         shared.drive(listed, None).await?;
         let load = |n: &AtomicU64| n.load(Ordering::Relaxed);
+        let targets = load(&shared.targets);
         Ok(Summary {
-            targets: load(&shared.targets),
+            targets,
             pages: load(&shared.pages),
             sitemaps: load(&shared.sitemaps),
             dropped: load(&shared.dropped),
             stopped: shared.cut.load(Ordering::Relaxed),
+            // Every claim writes one target row unless the stop cut it.
+            cut: shared.frontier.claimed().saturating_sub(targets),
         })
     }
 }
@@ -276,6 +285,20 @@ where
             self.cut.store(true, Ordering::Relaxed);
         }
         stopped
+    }
+
+    /// `work`, unless the stop's grace runs out first: `None` then, the
+    /// stop marking the run cut short.
+    async fn in_grace<T>(&self, work: impl Future<Output = T>) -> Option<T> {
+        let out = tokio::select! {
+            biased;
+            () = async { tokio::time::sleep_until(self.stop.stopped().await + self.grace).await } => None,
+            out = work => Some(out),
+        };
+        if out.is_none() {
+            self.stopping();
+        }
+        out
     }
 
     /// Asks about `start` and every target it leads to, at most [`WORKERS`]
@@ -334,14 +357,16 @@ where
             };
             let named: Vec<(String, Url)> = match &root.sitemap {
                 Some(url) => vec![(url.to_string(), url.clone())],
-                None => self
-                    .fetcher
-                    .sitemaps(&root.url)
-                    .await
-                    .into_iter()
-                    .filter_map(|line| Some((line.clone(), root.url.join(&line).ok()?)))
-                    .filter(|(_, url)| matches!(url.scheme(), "http" | "https"))
-                    .collect(),
+                None => {
+                    let Some(lines) = self.in_grace(self.fetcher.sitemaps(&root.url)).await else {
+                        break;
+                    };
+                    lines
+                }
+                .into_iter()
+                .filter_map(|line| Some((line.clone(), root.url.join(&line).ok()?)))
+                .filter(|(_, url)| matches!(url.scheme(), "http" | "https"))
+                .collect(),
             };
             if !named.is_empty() {
                 for (raw, url) in named {
@@ -368,7 +393,9 @@ where
                     link(probe, &item.form);
                     break;
                 }
-                let done = Arc::clone(self).follow(item).await?;
+                let Some(done) = Arc::clone(self).follow(item).await? else {
+                    break;
+                };
                 let is_sitemap = matches!(&done.end, End::Answered(a)
                     if a.sitemap.is_some() || a.body == Body::TooLarge);
                 if is_sitemap {
@@ -432,8 +459,10 @@ where
     /// Follows one target's hops and writes what they came to. Returns the
     /// targets its page or sitemap named that this run has not met.
     async fn process(self: Arc<Self>, item: Item) -> Result<Vec<Item>, Error> {
-        let done = Arc::clone(&self).follow(item).await?;
-        self.write_blocking(done).await
+        match Arc::clone(&self).follow(item).await? {
+            Some(done) => self.write_blocking(done).await,
+            None => Ok(Vec::new()),
+        }
     }
 
     /// [`Shared::write`], on the blocking pool, so a full writer channel
@@ -453,15 +482,32 @@ where
         }
     }
 
-    /// Follows one target's hops to where they end.
-    async fn follow(self: Arc<Self>, item: Item) -> Result<Done, Error> {
+    /// Follows one target's hops to where they end; `None` if the stop
+    /// cut them short, or its grace ran out first.
+    async fn follow(self: Arc<Self>, item: Item) -> Result<Option<Done>, Error> {
+        let shared = Arc::clone(&self);
+        let walked = shared.in_grace(self.walk(item)).await;
+        Ok(walked.transpose()?.flatten())
+    }
+
+    /// [`Shared::follow`], with no bound in time.
+    async fn walk(self: Arc<Self>, item: Item) -> Result<Option<Done>, Error> {
         let started = SystemTime::now();
         let clock = Instant::now();
         let mut chain = Chain::new(item.form.as_str());
         let (mut url, mut plan, mut form) = (item.url.clone(), item.plan, item.form.clone());
         let mut asked = false;
         let end = loop {
-            match self.fetcher.access(&url).await {
+            // No target starts, and none takes a hop, once stopped; a
+            // robots.txt the stop kept from being read says nothing.
+            if self.stopping() {
+                return Ok(None);
+            }
+            let access = self.fetcher.access(&url).await;
+            if self.stopping() {
+                return Ok(None);
+            }
+            match access {
                 Access::Allowed => {}
                 Access::Disallowed => break End::Blocked("robots"),
                 Access::Unavailable => break End::Blocked("robots_unavailable"),
@@ -474,6 +520,10 @@ where
             };
             let mut response = match self.fetcher.fetch(&url, mode).await {
                 Ok(response) => response,
+                Err(failure) if failure.kind == FailureKind::Stopped => {
+                    self.stopping();
+                    return Ok(None);
+                }
                 Err(failure) => break End::Failed(failure),
             };
             if let Some(next) = hops::location(&url, &response) {
@@ -519,7 +569,7 @@ where
                 sitemap: listed,
             }));
         };
-        Ok(Done {
+        Ok(Some(Done {
             item,
             chain: chain.into_hops(),
             plan,
@@ -528,7 +578,7 @@ where
             started,
             asked,
             elapsed: clock.elapsed(),
-        })
+        }))
     }
 
     /// Extracts `text`, the body of the page at `url`, on the blocking pool

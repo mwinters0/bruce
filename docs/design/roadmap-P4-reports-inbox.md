@@ -69,9 +69,10 @@ by destination").
 ## An interrupted crawl leaves an unfinished run
 
 - **Fact.** A Ctrl-C'd `bruce crawl` flushes what it fetched and leaves
-  `runs.finished_at` NULL; no run resumes, and its rows stay (D2).
+  `runs.finished_at` NULL; no run resumes, and its rows stay (D2). Its
+  links can name targets it never wrote, the stop having cut them.
 - **Why P4 cares.** A report's default run, and a diff's pair, should be the
   latest *finished* ones, and `prune` decides what becomes of unfinished
   runs.
 - **Origin.** P3's grilling, 2026-10-18 (`../wip/roadmap-P3-crawler.md`,
-  "An interrupted run").
+  "An interrupted run"); the cut targets, P3.7.1.

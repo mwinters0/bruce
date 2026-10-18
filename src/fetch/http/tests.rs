@@ -574,3 +574,69 @@ fn only_a_timeout_or_a_lost_connection_is_transient() {
         .collect();
     assert_eq!(transient, [Timeout, Reset]);
 }
+
+/// Waits until `server` has had `n` requests.
+async fn until_requests(server: &MockServer, n: usize) {
+    while requests(server).await < n {
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    }
+}
+
+#[tokio::test]
+async fn a_stopped_fetcher_sends_nothing() {
+    let server = MockServer::start().await;
+    Mock::given(path("/p"))
+        .respond_with(html(""))
+        .mount(&server)
+        .await;
+    let stop = Stopper::default();
+    stop.stop();
+    let f = fetcher(quick()).with_stop(stop);
+    let got = f.fetch(&url_of(&server, "/p"), Mode::Page).await;
+    assert_eq!(got.unwrap_err().kind, FailureKind::Stopped);
+    assert_eq!(requests(&server).await, 0);
+}
+
+/// A stop during a backoff ends the wait at once, with no retry.
+#[tokio::test]
+async fn a_stop_takes_no_retry() {
+    let server = MockServer::start().await;
+    Mock::given(path("/p"))
+        .respond_with(ResponseTemplate::new(503))
+        .mount(&server)
+        .await;
+    let stop = Stopper::default();
+    let settings = Settings {
+        backoff: vec![Duration::from_secs(10)],
+        ..quick()
+    };
+    let f = fetcher(settings).with_stop(stop.clone());
+    let url = url_of(&server, "/p");
+    let fetching = tokio::spawn(async move { f.fetch(&url, Mode::Page).await });
+    until_requests(&server, 1).await;
+    let stopped = Instant::now();
+    stop.stop();
+    let got = fetching.await.unwrap();
+    assert_eq!(got.unwrap_err().kind, FailureKind::Stopped);
+    assert!(stopped.elapsed() < Duration::from_secs(1));
+    assert_eq!(requests(&server).await, 1);
+}
+
+/// A HEAD refused after the stop is not retried as a GET.
+#[tokio::test]
+async fn a_stop_takes_no_fallback() {
+    let server = MockServer::start().await;
+    Mock::given(method("HEAD"))
+        .respond_with(ResponseTemplate::new(405).set_delay(Duration::from_millis(300)))
+        .mount(&server)
+        .await;
+    let stop = Stopper::default();
+    let f = fetcher(quick()).with_stop(stop.clone());
+    let url = url_of(&server, "/a.png");
+    let fetching = tokio::spawn(async move { f.fetch(&url, Mode::Asset).await });
+    until_requests(&server, 1).await;
+    stop.stop();
+    let got = fetching.await.unwrap();
+    assert_eq!(got.unwrap_err().kind, FailureKind::Stopped);
+    assert_eq!(requests(&server).await, 1, "no GET followed the HEAD");
+}

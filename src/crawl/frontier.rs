@@ -64,6 +64,11 @@ impl Frontier {
             .insert(url_id)
     }
 
+    /// How many URLs have been claimed.
+    pub fn claimed(&self) -> u64 {
+        self.seen.lock().expect("no panic holds the lock").len() as u64
+    }
+
     /// Whether `url_id` has been claimed, claiming nothing.
     pub fn is_claimed(&self, url_id: u64) -> bool {
         self.seen

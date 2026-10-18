@@ -48,7 +48,8 @@ decisions each carries are cited in its module's doc.
 ## Fetchers
 
 - **bruce** — `fetch/`: the trait (a hop, and whether robots.txt lets it
-  be asked), one hop's response and the failure causes in the parent file, the reqwest fetcher in the `http` child, each
+  be asked), one hop's response, the failure causes and the stop a crawl
+  hands its fetcher in the parent file, the reqwest fetcher in the `http` child, each
   host's pace, in-flight cap and robots.txt in `http`'s `host` child, and
   the body-to-text decoding in the `charset` child, which P5's local fetcher
   reuses. It sits above `config` (it reads the rate and `user_agent`) and

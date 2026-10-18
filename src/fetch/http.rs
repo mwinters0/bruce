@@ -15,6 +15,10 @@
 //! rate and the in-flight cap hold for retries and robots.txt alike. Whether
 //! a URL may be requested at all is [`Fetcher::access`], which the
 //! crawler asks before each hop; `fetch` does not.
+//!
+//! Once its [`Stopper`] is stopped, a request waiting for its host's permit
+//! or a backoff returns [`FailureKind::Stopped`] at once, robots.txt's
+//! included, and nothing more is sent (`super`'s doc).
 
 use std::error::Error as _;
 use std::io;
@@ -29,7 +33,7 @@ use url::Url;
 use crate::config::DEFAULT_USER_AGENT;
 
 use super::charset::decode;
-use super::{Body, Failure, FailureKind, Fetcher, MAX_SITEMAP, Mode, Response};
+use super::{Body, Failure, FailureKind, Fetcher, MAX_SITEMAP, Mode, Response, Stopper};
 
 pub mod host;
 
@@ -82,6 +86,7 @@ pub struct HttpFetcher {
     client: Client,
     settings: Settings,
     hosts: Hosts,
+    stop: Stopper,
 }
 
 /// What a request reads of the body.
@@ -126,12 +131,19 @@ impl HttpFetcher {
             client,
             settings,
             hosts,
+            stop: Stopper::default(),
         })
     }
 
-    /// One request, no retry, after its host's permit and slot.
+    /// One request, no retry, after its host's permit and slot, unless the
+    /// stop comes first.
     async fn once(&self, method: Method, url: &Url, want: Want) -> Result<Attempt, Failure> {
-        let _permit = self.hosts.host(url).admit().await;
+        let host = self.hosts.host(url);
+        let _permit = tokio::select! {
+            biased;
+            _ = self.stop.stopped() => return Err(Failure::stopped()),
+            permit = host.admit() => permit,
+        };
         let mut response = self
             .client
             .request(method, url.clone())
@@ -210,7 +222,11 @@ impl HttpFetcher {
             let Some(step) = backoff.next() else {
                 return result;
             };
-            tokio::time::sleep(asked.unwrap_or(step)).await;
+            tokio::select! {
+                biased;
+                _ = self.stop.stopped() => return Err(Failure::stopped()),
+                () = tokio::time::sleep(asked.unwrap_or(step)) => {}
+            }
         }
     }
 
@@ -276,6 +292,10 @@ impl Fetcher for HttpFetcher {
             },
         };
         attempt.map(|attempt| attempt.response)
+    }
+
+    fn with_stop(self, stop: Stopper) -> HttpFetcher {
+        HttpFetcher { stop, ..self }
     }
 }
 

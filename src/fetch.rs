@@ -9,10 +9,19 @@
 //! PDF costs one request and no download (D16). Classifying a status into an
 //! outcome is the crawler's; what a fetcher owes it is a [`Response`], or a
 //! [`Failure`] saying why there was none.
+//!
+//! A [`Stopper`] ends a crawl early (`roadmap-P3-crawler.md`, "An interrupted
+//! run"). The crawler owns it and hands it to its fetcher, which sends
+//! nothing more once it is stopped: no request, retry or fallback leaves,
+//! and a request still waiting for its host's place or a backoff returns at
+//! once as [`FailureKind::Stopped`]. A request already sent runs to its end.
 
 use std::fmt;
 use std::future::Future;
+use std::sync::Arc;
 
+use tokio::sync::watch;
+use tokio::time::Instant;
 use url::Url;
 
 pub mod charset;
@@ -95,6 +104,9 @@ pub enum FailureKind {
     Reset,
     /// Anything else, a malformed response included.
     Other,
+    /// The crawl was stopped before the request was sent. The crawler
+    /// writes nothing for it.
+    Stopped,
 }
 
 impl FailureKind {
@@ -107,6 +119,7 @@ impl FailureKind {
             FailureKind::Connect => "connect",
             FailureKind::Reset => "reset",
             FailureKind::Other => "other",
+            FailureKind::Stopped => "stopped",
         }
     }
 
@@ -125,6 +138,55 @@ impl fmt::Display for Failure {
 }
 
 impl std::error::Error for Failure {}
+
+impl Failure {
+    /// The failure of a request a [`Stopper`] kept from being sent.
+    pub fn stopped() -> Failure {
+        Failure {
+            kind: FailureKind::Stopped,
+            detail: "the crawl was stopped".to_owned(),
+        }
+    }
+}
+
+/// Ends a crawl early. Clones share one state, which records when the first
+/// [`Stopper::stop`] came.
+#[derive(Debug, Clone)]
+pub struct Stopper(Arc<watch::Sender<Option<Instant>>>);
+
+impl Default for Stopper {
+    fn default() -> Self {
+        Stopper(Arc::new(watch::Sender::new(None)))
+    }
+}
+
+impl Stopper {
+    /// Asks the crawl to stop; a second call changes nothing.
+    pub fn stop(&self) {
+        self.0.send_if_modified(|at| {
+            let first = at.is_none();
+            if first {
+                *at = Some(Instant::now());
+            }
+            first
+        });
+    }
+
+    /// Whether [`Stopper::stop`] has been called.
+    pub fn is_stopped(&self) -> bool {
+        self.0.borrow().is_some()
+    }
+
+    /// Waits for the stop, at once if it has come, and returns when it came.
+    pub async fn stopped(&self) -> Instant {
+        let mut seen = self.0.subscribe();
+        let at = seen
+            .wait_for(Option::is_some)
+            .await
+            .expect("the sender lives as long as self");
+        at.expect("waited for")
+    }
+}
 
 /// Something that answers a URL (D1). The futures are `Send` so a crawl can
 /// spawn them.
@@ -147,5 +209,14 @@ pub trait Fetcher {
     /// and for a host whose robots.txt is not read.
     fn sitemaps(&self, _url: &Url) -> impl Future<Output = Vec<String>> + Send {
         async { Vec::new() }
+    }
+
+    /// This fetcher, sending nothing more once `stop` is stopped. One that
+    /// never waits, as a local build does not, may ignore it.
+    fn with_stop(self, _stop: Stopper) -> Self
+    where
+        Self: Sized,
+    {
+        self
     }
 }

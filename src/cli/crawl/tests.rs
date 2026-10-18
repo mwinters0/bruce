@@ -120,6 +120,7 @@ fn the_report_says_what_the_run_wrote_and_whether_it_finished() {
         sitemaps: 0,
         dropped: 0,
         stopped: false,
+        cut: 0,
     };
     assert_eq!(
         report(RunId(4), &s),
@@ -129,12 +130,13 @@ fn the_report_says_what_the_run_wrote_and_whether_it_finished() {
         sitemaps: 2,
         dropped: 5,
         stopped: true,
+        cut: 7,
         ..s
     };
     assert_eq!(
         report(RunId(4), &s),
         "run 4: 12 targets, 3 pages, 2 sitemap files, 5 sitemap entries outside every root \
-         dropped; stopped before the end, so the run is left unfinished"
+         dropped, 7 cut; stopped before the end, so the run is left unfinished"
     );
 }
 

@@ -5,7 +5,7 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use super::super::{HttpFetcher, Settings};
 use super::*;
-use crate::fetch::{Fetcher, Mode};
+use crate::fetch::{FailureKind, Fetcher, Mode, Stopper};
 
 fn settings(per_second: Option<f64>) -> HostSettings {
     HostSettings {
@@ -294,4 +294,29 @@ async fn concurrency_caps_the_requests_in_flight_to_a_host() {
         timed("[rate]\nper_second = 1000\nconcurrency = 4\n[host.\"127.0.0.1\"]\nconcurrency = 1")
             .await;
     assert!(host >= Duration::from_millis(800), "{host:?}");
+}
+
+/// A request waiting for its host's next slot returns at once on a stop,
+/// and is never sent.
+#[tokio::test]
+async fn a_stop_ends_the_wait_for_a_hosts_place() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    let stop = Stopper::default();
+    let f = fetcher(&config(&server, "[rate]\nper_second = 0.2")).with_stop(stop.clone());
+    f.fetch(&url_of(&server, "/first"), Mode::Page)
+        .await
+        .unwrap();
+    let url = url_of(&server, "/second");
+    let waiting = tokio::spawn(async move { f.fetch(&url, Mode::Page).await });
+    tokio::time::sleep(Duration::from_millis(100)).await;
+    let stopped = StdInstant::now();
+    stop.stop();
+    let got = waiting.await.unwrap();
+    assert_eq!(got.unwrap_err().kind, FailureKind::Stopped);
+    assert!(stopped.elapsed() < Duration::from_secs(1));
+    assert_eq!(count(&server, "/second").await, 0);
 }

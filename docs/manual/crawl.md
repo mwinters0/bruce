@@ -44,10 +44,23 @@ following links. Sitemap entries outside every root are counted and dropped.
 
 ## Stopping a crawl
 
-**Ctrl-C once** stops new requests. The requests already started finish,
-which can take a little while on a slow host, everything fetched is written,
-and the run is left marked unfinished. **Ctrl-C again** exits at once, and
-what was not yet written is lost.
+**Ctrl-C once** stops the crawl within 30 seconds:
+
+```text
+bruce crawl: stopping: finishing requests in flight (30 s at most); Ctrl-C again to abandon them
+```
+
+No new request is sent, not even a retry or the next step of a redirect.
+A request already sent may finish, and what it answered is written; a URL
+still unanswered after 30 seconds is left out. The run is left marked
+unfinished, and its line counts the URLs it found but did not write:
+
+```text
+run 3: 1210 targets, 1187 pages, 69 sitemap files, 1102 cut; stopped before the end, so the run is left unfinished
+```
+
+**Ctrl-C again** gives up on the requests still out at once. Everything
+already fetched is still written.
 
 An unfinished run is never resumed: the next `bruce crawl` starts a new run
 from the beginning, and the unfinished one's rows stay in the database.
