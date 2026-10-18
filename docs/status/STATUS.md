@@ -15,14 +15,15 @@ Red means a repoint is due ([`../process.md`](../process.md),
 ## What exists
 
 The `bruce` crate is a scaffold: D39's top-level modules, a binary that says
-no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Six modules hold
+no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Seven modules hold
 code: `cli`, the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check and
 the single writer for two tables; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views and Extract, with Resolve
 declared and empty; `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
 the profile's facts and the content hash; and
-`forge`, the edit-URL shape parse. The rest hold only their doc.
+`forge`, the edit-URL shape parse; and
+`url`, the canonical form and `url_id`. The rest hold only their doc.
 `docs/manual/` holds the config reference. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -33,8 +34,8 @@ pages, chosen and saved by `scripts/fixtures.py`.
 
 The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
 
-- [ ] **3.1** Canonical URLs: `url`, `strip_query`, and scope matched on the
-  canonical form; amends D44.
+- [x] **3.1** Canonical URLs: `url`, `strip_query`, and scope matched on the
+  canonical form; amends D44. [Notes](../wip/roadmap-P3.1-canonical-urls-notes.md).
 - [ ] **3.2** The store's rows: schema 2, hop structs, the `sitemap` kind, and
   the writer's `targets`, `anchors` and `links`; amends D13.
 - [ ] **3.3** One hop over HTTP: the fetcher trait, reqwest, retries, the size
@@ -60,3 +61,11 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **D39's layering now reads `config` › `url`.** P3.1 made `config` read
+  `url` (the canonical form its scope globs and prefix match), so I edited
+  D39's title and `lib.rs`'s doc from `forge`, `url`, `config` to `forge`,
+  `config` › `url`, the edge being one-way. The alternative, `Root` holding no
+  canonical form and a caller passing one in, leaves the prefix uncanonical
+  and the scope check split across two modules. Reconsidering moves the
+  prefix and `Root::canonical` out of `config` into `crawl`.

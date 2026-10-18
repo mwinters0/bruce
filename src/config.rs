@@ -16,6 +16,8 @@ use globset::{GlobBuilder, GlobSet, GlobSetBuilder};
 use serde::Deserialize;
 use url::{Host, Url};
 
+use crate::url::{Canonical, canonical};
+
 /// Requests a second to one host that no `Crawl-delay` or `[host]` governs
 /// (D40).
 pub const DEFAULT_PER_SECOND: f64 = 2.0;
@@ -52,6 +54,9 @@ pub struct Root {
     pub include: Patterns,
     /// URL globs that put a page out of scope whatever `include` says.
     pub exclude: Patterns,
+    /// Whether the query is dropped from the canonical form of URLs in this
+    /// root's scope (D7, D44), so `url_id` there depends on it.
+    pub strip_query: bool,
     /// The sitemap to seed from. `None` discovers it: robots.txt `Sitemap:`
     /// lines, then `sitemap.xml` under the root, then at the host (D40).
     pub sitemap: Option<Url>,
@@ -59,6 +64,8 @@ pub struct Root {
     pub profile: ProfileChoice,
     /// What part of each page its content hash covers (D15).
     pub hash: HashScope,
+    /// The scope's prefix when `include` is empty, from the canonical form.
+    prefix: String,
 }
 
 /// The part of a page its content hash covers (D15), from a root's
@@ -269,15 +276,25 @@ impl Root {
             exclude: selectors(&raw.hash_exclude)
                 .map_err(|e| invalid(format!("hash_exclude: {e}")))?,
         };
+        let prefix = {
+            let s = canonical(&url, true);
+            s.as_str()[..=s
+                .as_str()
+                .rfind('/')
+                .expect("an http URL's path starts with /")]
+                .to_owned()
+        };
         let root = Root {
             url,
             include: Patterns::new(raw.include).map_err(|e| invalid(format!("include: {e}")))?,
             exclude: Patterns::new(raw.exclude).map_err(|e| invalid(format!("exclude: {e}")))?,
+            strip_query: raw.strip_query,
             sitemap,
             profile,
             hash,
+            prefix,
         };
-        if !root.in_scope(&root.url) {
+        if !root.in_scope(&root.canonical(&root.url)) {
             return Err(invalid(format!(
                 "url: {} is outside the root's own scope",
                 root.url
@@ -286,17 +303,22 @@ impl Root {
         Ok(root)
     }
 
-    /// The root's path prefix: its URL without query, up to the last `/` of
-    /// its path.
+    /// The root's path prefix: its canonical URL without query, up to the
+    /// last `/` of its path.
     pub fn prefix(&self) -> &str {
-        let s = &self.url[..url::Position::AfterPath];
-        &s[..=s.rfind('/').expect("an http URL's path starts with /")]
+        &self.prefix
+    }
+
+    /// `url` in canonical form under this root's `strip_query` (D7).
+    pub fn canonical(&self, url: &Url) -> Canonical {
+        canonical(url, self.strip_query)
     }
 
     /// Whether `url` is in the root's scope: under its prefix, or matching
-    /// an `include` glob if there are any, and matching no `exclude` glob
-    /// (D44).
-    pub fn in_scope(&self, url: &Url) -> bool {
+    /// an `include` glob if there are any, and matching no `exclude` glob.
+    /// The globs and the prefix match the canonical form, so one written
+    /// with a decoded character matches the URL a browser shows (D44).
+    pub fn in_scope(&self, url: &Canonical) -> bool {
         let s = url.as_str();
         let included = if self.include.is_empty() {
             s.starts_with(self.prefix())
@@ -463,6 +485,8 @@ struct RawRoot {
     include: Vec<String>,
     #[serde(default)]
     exclude: Vec<String>,
+    #[serde(default)]
+    strip_query: bool,
     sitemap: Option<String>,
     profile: Option<String>,
     #[serde(default)]

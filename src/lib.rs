@@ -1,7 +1,7 @@
 //! `bruce`, a link checker that validates anchors and keeps a link graph with
 //! run history. Its concepts are top-level modules, layered as
 //! `docs/design/decisions.md`, "D39" records: `cli` › `crawl`, `ci`, `report`
-//! › `fetch`, `extract`, `store` › `profile` › `forge`, `url`, `config`, edges
+//! › `fetch`, `extract`, `store` › `profile` › `forge`, `config` › `url`, edges
 //! pointing down only.
 
 pub mod ci;

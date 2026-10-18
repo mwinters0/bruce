@@ -15,7 +15,7 @@ records, each part saying why its module holds it. **Not in one place** names wh
 does not explain.
 
 Every concept below is, so far, one top-level module, placed by P1's spec (`roadmap-P1-scaffold.md`, "Where the concepts
-live"). `cli`, `config`, `store`, `profile`, `extract` and `forge` hold code; the rest hold only their doc. The
+live"). `cli`, `config`, `store`, `profile`, `extract`, `forge` and `url` hold code; the rest hold only their doc. The
 decisions each carries are cited in its module's doc.
 
 ## Subcommands
@@ -68,7 +68,7 @@ decisions each carries are cited in its module's doc.
 
 ## Canonical URLs and IDs
 
-- **bruce** — `url.rs`.
+- **bruce** — `url.rs`: the canonical form and `url_id`, below `config`, which reads it to match a root's scope on the form (D39, D44).
 
 ## Configuration
 

@@ -37,6 +37,7 @@ default.
 | `url` | required | Where the crawl starts. An `http` or `https` URL with no `#fragment`. |
 | `include` | `[]` | URL globs a page must match to be crawled. Empty means everything under the root's path prefix (below). |
 | `exclude` | `[]` | URL globs that keep a page out, even when `include` matches it. |
+| `strip_query` | `false` | Whether a URL's `?query` is dropped, in this root's scope, when `bruce` decides which URLs are the same page (below). |
 | `sitemap` | discovered | The sitemap to start from. By default, the `Sitemap:` lines of the host's `robots.txt`, then `sitemap.xml` under the root, then `sitemap.xml` at the host. |
 | `profile` | `"auto"` | How the root's pages are read: `"auto"`, `"generic"` or `"antora"` (below). |
 | `hash_root` | `[]` | CSS selectors for the part of each page whose change counts as the page changing (below). |
@@ -62,6 +63,20 @@ exclude = ["https://docs.example.org/*/fedora/f2?/**"]
 ```
 
 crawls every locale's `fedora/` pages, except versions `f20` to `f29`.
+
+**Writing globs.** A glob is matched against a URL in the form `bruce`
+treats as its one spelling: the scheme and host in lower case, no default port,
+`.` and `..` segments resolved, and a `%XX` escape decoded where it stands for
+a letter, digit, `-`, `.`, `_` or `~`, so `%7Euser` is `~user`. Every other
+escape stays, with its hex digits in capitals (`%2F`, `%C3%A9`). Write a glob as
+the URL reads in that form: one written with `%7E` never matches. The `#fragment`
+is never part of it.
+
+**`strip_query`** makes `https://docs.example.org/en-US/a/?v=1` and
+`https://docs.example.org/en-US/a/?v=2` one page, for a site that serves the
+same page whatever the query says. The query is then dropped from the URLs in
+this root's scope before they are compared or matched against globs; it
+is kept by default, since a query can pick a different page.
 
 **Profiles** know how a site generator lays out its pages.
 - `"generic"` reads any HTML page.

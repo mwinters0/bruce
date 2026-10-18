@@ -6,7 +6,7 @@ over an alternative, and obvious changes argued and refused. Nothing here says h
 entry as `docs/design/decisions.md`, "D12"; the rest of the rules, the line cap included, are
 `docs/process.md`, "The decision register".
 
-The modules are P1's scaffold, and `cli`, `config`, `store`, `profile`, `extract` and `forge` hold code. D1–D30 were settled
+The modules are P1's scaffold, and `cli`, `config`, `store`, `profile`, `extract`, `forge` and `url` hold code. D1–D30 were settled
 in the bootstrap grilling (2026-10-17, frozen as `historical/initial.md`), D31 the same day, D32 onward in P1's grilling, and
 an entry's **Code** is the module that will hold it once built. D25 and D29 are spent: D25 was superseded by D30, and D29
 became `roadmap.md`'s phase index.
@@ -111,8 +111,8 @@ Resolve maps a tagged reference to a URL through the store's lookup (D19, D20, D
 pivot. Rejected: region handlers in each profile, each re-deciding `unknown` (D34), which a page's end
 alone settles. Reopens: a hook empty in `generic` for any other reason, the trait bending around Antora.
 
-### D39 The layering: `cli` › `crawl`, `ci`, `report` › `fetch`, `extract`, `store` › `profile` › `forge`, `url`, `config`
-Edges point down only. `store` implements `profile`'s lookup trait and asks each profile for its
+### D39 The layering: `cli` › `crawl`, `ci`, `report` › `fetch`, `extract`, `store` › `profile` › `forge`, `config` › `url`
+Edges point down only; `config` reads `url`, whose canonical form its scope globs match (D44). `store` implements `profile`'s lookup trait and asks each profile for its
 views, so a profile never reaches the DB. Only `cli` names a concrete profile, to build the
 registry. Rejected: `profile` above `extract`, driving the pass, which makes the core a library of
 the profile, the inverse of D32.
@@ -157,10 +157,12 @@ writing process per file. Rejected: checking fragments in memory as pages arrive
 ## Classification
 
 ### D7 Canonical URLs keep the fragment apart; redirects are followed and stated
-Lowercase the scheme and host, drop default ports, percent-decode where safe, keep the query (per
-root it may be stripped), and keep `/foo` and `/foo/` distinct. Follow up to 10 hops; a loop or more
+Lowercase the scheme and host, drop default ports, percent-decode only unreserved bytes (a `%2F`
+must not move the path), keep the query (per root it may be stripped), and keep `/foo` and `/foo/`
+distinct. Follow up to 10 hops; a loop or more
 hops is `broken_url`. The fragment is checked against the final page, and `redirected` is a
 non-failing modifier (I4, I5). Rejected: normalising the trailing slash, which servers do not.
+Code: `url::canonical`. Evidence: `url::tests`.
 
 ### D12 A fragment is valid where a browser would scroll to it
 Valid: any non-empty `id`, `name` on `<a>` only, and always `#` and `#top`. Matching is exact,
@@ -222,14 +224,14 @@ snake_case and `[[root]]` singular, as Cargo's `[[bin]]`; rejected: kebab-case, 
 mise, the nearest tools, do not use; `allowlist` inside `[host]`, since a root's own host belongs
 there and in no allowlist, so the two answer different questions.
 
-### D44 A root's scope is its path prefix until `include` names globs, which match the whole URL
-`include` replaces the prefix rather than narrowing it, so one root can span locales; `exclude`
-always wins. Globs are globset's with `*` and `?` stopping at `/`, so a version segment matches as
-`f2?`. Rejected: globs over the path alone, which cannot scope by host; regexes, which users write
-worse; `include` narrowing the prefix, which keeps a root at `/en-US/` in one locale. Reopens: a
-root needing both its prefix and an include, today written as one glob. A root's `url` must be in
-its own scope, refused at load, so a crawl never starts on a page it would not keep.
-Code: `config::Root::in_scope`. Evidence: `config::tests::include_replaces_the_prefix_and_exclude_wins`.
+### D44 A root's scope is its path prefix until `include` names globs, which match the whole canonical URL
+`include` replaces the prefix rather than narrowing it, so one root can span locales; `exclude` always
+wins. Globs are globset's, `*` and `?` stopping at `/`, so a version segment matches as `f2?`. They
+match the canonical form (D7), so a glob written with a decoded character matches the URL a browser
+shows and one written with an escape the form decodes never does. Rejected: globs over the path alone,
+which cannot scope by host; regexes; `include` narrowing the prefix. Reopens: a root needing both
+its prefix and an include. A root's `url` must be in its own scope, refused at load.
+Code: `config::Root::in_scope`. Evidence: `config::tests::scope_is_matched_on_the_canonical_form`.
 
 ### D6 Reports are SQL views stored in the DB and run by `bruce report <kind>`
 Ad-hoc `duckdb` users see the same views as the CLI. Output is text, or `--format json`.

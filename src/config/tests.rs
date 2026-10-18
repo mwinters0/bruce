@@ -4,6 +4,10 @@ fn url(s: &str) -> Url {
     Url::parse(s).unwrap()
 }
 
+fn in_scope(r: &Root, s: &str) -> bool {
+    r.in_scope(&r.canonical(&url(s)))
+}
+
 fn invalid_msg(text: &str) -> String {
     match Config::parse(text) {
         Err(Error::Invalid(msg)) => msg,
@@ -217,13 +221,16 @@ fn a_roots_url_must_be_in_its_own_scope() {
 fn the_default_scope_is_the_roots_path_prefix() {
     let r = Root::new("https://docs.example.org/en-US/fedora/index.html?x=1").unwrap();
     assert_eq!(r.prefix(), "https://docs.example.org/en-US/fedora/");
-    assert!(r.in_scope(&url("https://docs.example.org/en-US/fedora/f40/a.html")));
-    assert!(!r.in_scope(&url("https://docs.example.org/en-US/quick-docs/")));
-    assert!(!r.in_scope(&url("https://docs.example.org/de/fedora/")));
+    assert!(in_scope(
+        &r,
+        "https://docs.example.org/en-US/fedora/f40/a.html"
+    ));
+    assert!(!in_scope(&r, "https://docs.example.org/en-US/quick-docs/"));
+    assert!(!in_scope(&r, "https://docs.example.org/de/fedora/"));
 
     let bare = Root::new("https://docs.example.org").unwrap();
     assert_eq!(bare.prefix(), "https://docs.example.org/");
-    assert!(!bare.in_scope(&url("https://docs.example.org.evil.example/")));
+    assert!(!in_scope(&bare, "https://docs.example.org.evil.example/"));
 }
 
 #[test]
@@ -238,11 +245,62 @@ fn include_replaces_the_prefix_and_exclude_wins() {
     )
     .unwrap();
     let r = &c.roots[0];
-    assert!(r.in_scope(&url("https://docs.example.org/de/fedora/f40/a.html")));
-    assert!(!r.in_scope(&url("https://docs.example.org/de/fedora/f26/a.html")));
-    assert!(!r.in_scope(&url("https://docs.example.org/en-US/quick-docs/")));
+    assert!(in_scope(r, "https://docs.example.org/de/fedora/f40/a.html"));
+    assert!(!in_scope(
+        r,
+        "https://docs.example.org/de/fedora/f26/a.html"
+    ));
+    assert!(!in_scope(r, "https://docs.example.org/en-US/quick-docs/"));
     // `*` stops at `/`.
-    assert!(!r.in_scope(&url("https://docs.example.org/a/b/fedora/x")));
+    assert!(!in_scope(r, "https://docs.example.org/a/b/fedora/x"));
+}
+
+#[test]
+fn scope_is_matched_on_the_canonical_form() {
+    let c = Config::parse(
+        r#"
+        [[root]]
+        url = "https://a.example/en-US/"
+        include = ["https://a.example/en-US/", "https://a.example/en-US/~*/**"]
+        exclude = ["https://a.example/en-US/~*/private/**"]
+        "#,
+    )
+    .unwrap();
+    let r = &c.roots[0];
+    // A glob written with a decoded character matches the escape it decodes.
+    assert!(in_scope(r, "https://a.example/en-US/%7Euser/page"));
+    assert!(!in_scope(r, "https://a.example/en-US/%7Euser/%70rivate/x"));
+    // The default prefix is canonical too.
+    let p = Root::new("https://A.example:443/%7Ex/y.html").unwrap();
+    assert_eq!(p.prefix(), "https://a.example/~x/");
+    assert!(in_scope(&p, "https://a.example/%7ex/z"));
+    // An escape the form keeps is not the character it encodes.
+    assert!(!in_scope(&p, "https://a.example/~x%2Fz"));
+}
+
+#[test]
+fn strip_query_drops_the_query_from_the_canonical_form() {
+    let c = Config::parse(
+        r#"
+        [[root]]
+        url = "https://a.example/a/"
+        strip_query = true
+
+        [[root]]
+        url = "https://b.example/b/"
+        "#,
+    )
+    .unwrap();
+    let (a, b) = (&c.roots[0], &c.roots[1]);
+    assert!(a.strip_query && !b.strip_query);
+    let u = url("https://a.example/a/p?x=1#f");
+    assert_eq!(a.canonical(&u).as_str(), "https://a.example/a/p");
+    assert_eq!(b.canonical(&u).as_str(), "https://a.example/a/p?x=1");
+    assert_ne!(a.canonical(&u).id(), b.canonical(&u).id());
+    // The key is a boolean.
+    assert!(
+        Config::parse("[[root]]\nurl = \"https://a.example/\"\nstrip_query = \"yes\"").is_err()
+    );
 }
 
 fn hash_scope(keys: &str) -> Result<HashScope, Error> {
