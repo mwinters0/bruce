@@ -18,6 +18,8 @@ use url::Url;
 pub mod charset;
 pub mod http;
 
+pub use http::host::Access;
+
 /// What the caller wants from a URL.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
@@ -114,12 +116,19 @@ impl fmt::Display for Failure {
 
 impl std::error::Error for Failure {}
 
-/// Something that answers a URL (D1). The future is `Send` so a crawl can
-/// spawn it.
+/// Something that answers a URL (D1). The futures are `Send` so a crawl can
+/// spawn them.
 pub trait Fetcher {
     fn fetch(
         &self,
         url: &Url,
         mode: Mode,
     ) -> impl Future<Output = Result<Response, Failure>> + Send;
+
+    /// Whether `url` may be requested at all (D8), which the crawler asks
+    /// before each hop. A fetcher with no robots.txt behind it allows
+    /// everything.
+    fn access(&self, _url: &Url) -> impl Future<Output = Access> + Send {
+        async { Access::Allowed }
+    }
 }

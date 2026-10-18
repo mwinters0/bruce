@@ -9,10 +9,9 @@ What P3.2 onward inherits, and what was refused.
 - **Callers canonicalise per root.** `Root::canonical(&Url)` applies that
   root's `strip_query`, and `Root::in_scope` takes the result, so a crawler
   holding a URL asks each root for its canonical form and tests scope on it.
-  A URL no root claims has no `strip_query` to apply; P3.5's frontier picks
-  one form for it (a plain `canonical(url, false)` is the obvious one), and
-  it must say which, since that string is the `url_id` of every `unchecked`
-  and allowlisted target.
+  A URL no root claims has no `strip_query` to apply and has the plain form,
+  `canonical(url, false)` (`crawl::frontier`), which is the `url_id` of every
+  `unchecked` and allowlisted target.
 - **`config` now reads `url`**, so D39's layering reads `config` › `url`.
 - **An empty query stays**: `/p?` and `/p` are two URLs, as `/p` and `/p/` are.
   Under `strip_query` both are `/p`.

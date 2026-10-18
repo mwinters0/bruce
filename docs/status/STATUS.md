@@ -15,16 +15,17 @@ Red means a repoint is due ([`../process.md`](../process.md),
 ## What exists
 
 The `bruce` crate is a scaffold: D39's top-level modules, a binary that says
-no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Eight modules hold
+no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Nine modules hold
 code: `cli`, the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check and
 the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views and Extract, with Resolve
 declared and empty; `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
-the profile's facts and the content hash; and
+the profile's facts and the content hash;
 `forge`, the edit-URL shape parse;
-`url`, the canonical form and `url_id`; and
-`fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, and the body decoding. The rest hold only their doc.
+`url`, the canonical form and `url_id`;
+`fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, and the body decoding; and
+`crawl`, the frontier, the hops of a redirect, D16's outcomes and the run that writes a target's rows, a library with no subcommand yet. The rest hold only their doc.
 `docs/manual/` holds the config reference. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -44,8 +45,9 @@ The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
   cap and the charset. [Notes](../wip/roadmap-P3.3-one-hop-notes.md).
 - [x] **3.4** Per-host politeness: rate, `concurrency`, robots.txt and
   `user_agent`; amends D11. [Notes](../wip/roadmap-P3.4-politeness-notes.md).
-- [ ] **3.5** The crawl: the frontier, URL classes, hops, outcomes and the
-  writer feed.
+- [x] **3.5** The crawl: the frontier, URL classes, hops, outcomes and the
+  writer feed; adds KD3 and KD4, and D46.
+  [Notes](../wip/roadmap-P3.5-crawl-notes.md).
 - [ ] **3.6** Sitemaps: discovery, indexes, gzip and `sitemap` links.
 - [ ] **3.7** `bruce crawl`: the subcommand, Ctrl-C and the manual; amends D5.
 - [ ] **3.8** The live crawl of `/en-US/fedora-docs/`.
@@ -64,4 +66,10 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-None open.
+- **An href that resolves to no URL is a target.** P3.5 gives `http://[bad` a
+  `targets` row, `broken_url` with reason `invalid_url`, its `url` the raw text
+  and its `url_id` the hash of that text, so the link has a `target_url_id`
+  (the column is NOT NULL). The alternative is no link row for it, which loses
+  a broken link from every report. Reconsidering changes what P4's join and the
+  CI gate (D9) count: `targets.url` is no longer always a URL, and the same
+  raw text on two pages is one target.

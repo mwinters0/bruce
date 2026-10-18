@@ -26,10 +26,8 @@ What P3.3 onward inherits, and what was refused.
   table in arrival order, which nothing reads.
 - **`links.redirected` is a NOT NULL column the writer cannot know**: a page's
   links are written when it is extracted, before the targets they name have
-  been fetched, and D2 lets only `runs.finished_at` change. P3.5 decides who
-  fills it: the row written as `false` and a view deriving the truth from
-  `targets.redirect_chain`, or the links held back until their targets settle.
-  The P4 inbox says P3 records it.
+  been fetched, and D2 lets only `runs.finished_at` change. The crawl writes it
+  false (KD3), and the truth is the target's `redirect_chain`.
 - **Negative results**: binding a list into the INSERT is refused by duckdb
   1.10506.1 as well as appending one (UF1); a chain rendered to text and cast
   breaks on any URL holding a quote, which the test pins with

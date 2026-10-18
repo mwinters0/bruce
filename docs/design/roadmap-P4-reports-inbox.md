@@ -26,15 +26,38 @@ by destination").
 - **Fact.** The maintainer settled that some users care only about broken
   links, while others track every link through a redirect as a task to point
   it at its target, and that both are supported **without configuration**.
-  P3 records each target's redirect chain, its final URL and `redirected`
-  on its links (D7), a meta refresh of delay 0 counting as a
-  hop; a target page's own `rel=canonical` is a `canonical` link.
+  P3 records each target's redirect chain and its final URL (D7, D46), a meta
+  refresh of delay 0 counting as a hop; a target page's own `rel=canonical` is
+  a `canonical` link. **`links.redirected` is false on every row** (KD3): a
+  link is redirected where its target's `redirect_chain` is not NULL. A
+  fragment is checked against `targets.final_url` of the link's target, which
+  names a `targets` row of its own, and from there the page's `anchors`.
 - **Why P4 cares.** `bruce report` serves both as separate views: the broken
   report never lists a working redirected link, and a redirects report (D27
   drafted one) lists them as tasks. P4 decides whether a link to a page whose
-  canonical names another URL belongs in that second view.
+  canonical names another URL belongs in that second view, and whether to drop
+  the `redirected` column (KD3).
 - **Origin.** P3's grilling, 2026-10-17 (`../wip/roadmap-P3-crawler.md`,
-  "Redirects").
+  "Redirects"), and P3.5.
+
+## What a crawl leaves for the join to place
+
+- **Fact.** A crawl writes `targets.reason` values the join must place:
+  `unchecked` for `out_of_scope`, `host_not_allowlisted`, `scheme`, `robots`
+  and `robots_unavailable`; `broken_url` for `invalid_url` (an href resolving
+  to no URL, the target's `url` the raw text and its `url_id` the hash of
+  it), `redirect_loop`, `too_many_redirects`, `bad_redirect` and `nxdomain`;
+  `error` for `unreadable` (a page whose HTML the extractor refused), the
+  transport causes and, with its status kept, a 401, 403, 429 or 5xx; `ok`
+  with `too_large` for a page over the cap, which has no `anchors`. An
+  allowlisted page is a `pages` row and `anchors` with no `links` and no
+  `page_facts`. `pages.via_links` and `pages.in_sitemap` record the
+  discovery that claimed the page, so the sitemap and link joins are the
+  authority for orphans and unlisted pages.
+- **Why P4 cares.** Its verdict for a fragment link depends on which of these
+  its target is: `too_large`, a target that errored and an allowlisted URL
+  first named by a non-anchor link (KD4) all have no anchors to check against.
+- **Origin.** P3.5, 2026-10-18.
 
 ## An interrupted crawl leaves an unfinished run
 

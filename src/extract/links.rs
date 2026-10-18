@@ -75,6 +75,10 @@ pub struct Link {
     pub kind: Kind,
     /// What the profile's handlers tagged the link with (I6).
     pub tag: Option<String>,
+    /// A refresh whose delay is 0: a browser leaves the page at once, so the
+    /// crawler reads the page as an alias, one more hop (D7). False for
+    /// every other link.
+    pub immediate: bool,
 }
 
 /// What the link handlers collect over one pass.
@@ -125,8 +129,12 @@ impl Links {
                 // is no link's.
                 sink.borrow_mut().take_link_tag();
                 let mut state = this.borrow_mut();
+                let before = state.found.len();
                 for (raw, kind) in references(el) {
                     state.push(raw, kind);
+                }
+                if state.found.len() > before && immediate_refresh(el) {
+                    state.found[before].immediate = true;
                 }
                 Ok(())
             }),
@@ -152,6 +160,7 @@ impl Links {
             url,
             kind,
             tag: None,
+            immediate: false,
         });
     }
 
@@ -289,6 +298,22 @@ fn srcset_urls(value: &str) -> Vec<String> {
         });
         rest = stop.map_or("", |(i, _)| &rest[i + 1..]);
     }
+}
+
+/// Whether `el` is a `<meta http-equiv=refresh>` whose delay is 0.
+fn immediate_refresh(el: &Element) -> bool {
+    let refresh =
+        attribute(el, "http-equiv").is_some_and(|v| v.trim().eq_ignore_ascii_case("refresh"));
+    refresh && attribute(el, "content").is_some_and(|c| refresh_delay(&c) == Some(0.0))
+}
+
+/// The delay in seconds a refresh's `content` starts with.
+fn refresh_delay(content: &str) -> Option<f64> {
+    let start = content.trim_start_matches(|c: char| c.is_ascii_whitespace());
+    let digits = start
+        .find(|c: char| !(c.is_ascii_digit() || c == '.'))
+        .unwrap_or(start.len());
+    start[..digits].parse().ok()
 }
 
 /// The URL of a `<meta http-equiv=refresh>`'s `content`, as HTML parses it:

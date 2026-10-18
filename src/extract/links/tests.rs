@@ -62,3 +62,13 @@ fn a_links_rel_decides_its_kind() {
 fn a_sitemap_entry_has_a_kind_no_page_yields() {
     assert_eq!(Kind::Sitemap.as_str(), "sitemap");
 }
+
+#[test]
+fn a_refresh_delay_is_the_number_it_starts_with() {
+    assert_eq!(refresh_delay("0; url=/x"), Some(0.0));
+    assert_eq!(refresh_delay(" 0.0,/x"), Some(0.0));
+    assert_eq!(refresh_delay("5;url=/x"), Some(5.0));
+    assert_eq!(refresh_delay("1.5"), Some(1.5));
+    assert_eq!(refresh_delay("."), None);
+    assert_eq!(refresh_delay("soon"), None);
+}

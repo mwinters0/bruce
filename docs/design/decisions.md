@@ -6,12 +6,12 @@ over an alternative, and obvious changes argued and refused. Nothing here says h
 entry as `docs/design/decisions.md`, "D12"; the rest of the rules, the line cap included, are
 `docs/process.md`, "The decision register".
 
-The modules are P1's scaffold, and `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url` and `fetch` hold code. D1–D30 were settled
+The modules are P1's scaffold, and `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url`, `fetch` and `crawl` hold code. D1–D30 were settled
 in the bootstrap grilling (2026-10-17, frozen as `historical/initial.md`), D31 the same day, D32 onward in P1's grilling, and
 an entry's **Code** is the module that will hold it once built. D25 and D29 are spent: D25 was superseded by D30, and D29
 became `roadmap.md`'s phase index.
 
-<!-- decision-watermark: D45 -->
+<!-- decision-watermark: D46 -->
 
 ## Scope and modes
 
@@ -182,6 +182,15 @@ TLS, 5xx after 3 retries with backoff, and 401/403/429 with status kept), `unche
 Live crawl: `broken_url`, reason `unresolved_xref`, raw refspec kept, with a "did you mean" hint
 from a fuzzy match over resource IDs, run only on failures. CI: resolved via D19 first (I6).
 Rejected: checking `#comp::page.adoc` against the page's own ids, which is what a naive checker does.
+
+### D46 Where a redirect lands is a target of its own, written by whoever claims it first
+A `final_url` then always names a `targets` row, so P4's fragment join is two key lookups from the link
+to the final page's `anchors`. The redirecting target is claimed at discovery, its landing URL after the
+hops end; the first claim writes the landing target and, in scope, its page, and a loser still has its
+own answer from the chain. Rejected: holding the hops open on the landing URL's own task, which makes
+one target's outcome wait on another's; a memo of settled targets, to save a repeat request to a landing
+URL already claimed (about one per such redirect). Reopens: that repeat mattering at docs.fp.o's pace.
+Code: `crawl::Shared::write`. Evidence: `crawl::tests::a_redirect_is_a_chain_and_its_landing_page_is_recorded_once`.
 
 ## Antora and CI
 

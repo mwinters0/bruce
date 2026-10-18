@@ -15,7 +15,7 @@ records, each part saying why its module holds it. **Not in one place** names wh
 does not explain.
 
 Every concept below is, so far, one top-level module, placed by P1's spec (`roadmap-P1-scaffold.md`, "Where the concepts
-live"). `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url` and `fetch` hold code; the rest hold only their doc. The
+live"). `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url`, `fetch` and `crawl` hold code; the rest hold only their doc. The
 decisions each carries are cited in its module's doc.
 
 ## Subcommands
@@ -25,7 +25,12 @@ decisions each carries are cited in its module's doc.
 
 ## The crawl
 
-- **bruce** — `crawl.rs`.
+- **bruce** — `crawl/`: the run, its tasks, the rows a target and its page
+  write, and the landing of a redirect in the parent file; the frontier (a
+  URL's class, its canonical form and the claim that dedups) in the `frontier`
+  child; a target's redirect chain, its limit and where a hop leads in the
+  `hops` child; and D16's classification in the `outcome` child. It sits above
+  `fetch`, `extract` and `store`, driving each (D39).
 
 ## CI mode
 
@@ -37,8 +42,8 @@ decisions each carries are cited in its module's doc.
 
 ## Fetchers
 
-- **bruce** — `fetch/`: the trait, one hop's response and the failure
-  causes in the parent file, the reqwest fetcher in the `http` child, each
+- **bruce** — `fetch/`: the trait (a hop, and whether robots.txt lets it
+  be asked), one hop's response and the failure causes in the parent file, the reqwest fetcher in the `http` child, each
   host's pace, in-flight cap and robots.txt in `http`'s `host` child, and
   the body-to-text decoding in the `charset` child, which P5's local fetcher
   reuses. It sits above `config` (it reads the rate and `user_agent`) and

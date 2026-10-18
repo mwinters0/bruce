@@ -4,14 +4,14 @@ What P3.5 onward inherits, and what was refused.
 
 - **`Hosts::new(&Config)` is the politeness a crawl builds once** and hands to
   `HttpFetcher::new(settings, hosts)`; `Settings::user_agent` is still the
-  caller's to fill from `Config::user_agent` (P3.5 or P3.7 does, with
-  `Config::robots_token`, which `Hosts` reads itself). `HttpFetcher` and
+  caller's to fill from `Config::user_agent` (P3.7 does; `Hosts` reads
+  `Config::robots_token` itself). `HttpFetcher` and
   `Hosts` clone cheaply and share state.
 - **`fetch` paces and `access` gates.** Every request, retries and robots.txt
   included, passes `Host::admit` (the in-flight permit, then the host's next
   slot), so a retry waits for the later of its backoff and the host's own
   interval. `fetch` never consults robots.txt: the crawler calls
-  `HttpFetcher::access(&Url) -> Access` before each hop, and maps
+  `Fetcher::access(&Url) -> Access` before each hop, and maps
   `Disallowed` to `unchecked`/`robots` and `Unavailable` to
   `unchecked`/`robots_unavailable`. `access` fetches the host's robots.txt
   on its first call and every later call is a lookup.

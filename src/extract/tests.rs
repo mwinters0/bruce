@@ -222,6 +222,24 @@ fn link(raw: &str, url: &str, kind: &'static str) -> (String, String, &'static s
 }
 
 #[test]
+fn only_a_refresh_of_delay_zero_is_immediate() {
+    let immediate =
+        |html: &str| -> Vec<bool> { auto(html).links.iter().map(|l| l.immediate).collect() };
+    assert_eq!(
+        immediate(r#"<meta http-equiv="refresh" content="0; url=/a"><a href="/b">b</a>"#),
+        [true, false]
+    );
+    assert_eq!(
+        immediate(r#"<meta http-equiv="refresh" content="5; url=/a">"#),
+        [false]
+    );
+    assert_eq!(
+        immediate(r#"<meta http-equiv="refresh" content="0">"#),
+        [false; 0]
+    );
+}
+
+#[test]
 fn every_kind_is_read_in_document_order_d13() {
     let html = r#"<head>
         <link rel="canonical" href="/c/"><link rel="stylesheet" href="s.css">

@@ -13,7 +13,7 @@
 //!
 //! Every request first takes its host's permit and slot (`host`, D8), so the
 //! rate and the in-flight cap hold for retries and robots.txt alike. Whether
-//! a URL may be requested at all is [`HttpFetcher::access`], which the
+//! a URL may be requested at all is [`Fetcher::access`], which the
 //! crawler asks before each hop; `fetch` does not.
 
 use std::error::Error as _;
@@ -197,15 +197,6 @@ impl HttpFetcher {
         }
     }
 
-    /// Whether `url` may be requested, by its host's robots.txt (D8), which
-    /// is fetched the first time any URL of the host is asked about. RFC
-    /// 9309 decides what its answer means: a 4xx allows everything; a 5xx, a
-    /// failure, a 429 that outlasts the retries or too many redirects make
-    /// the host [`Access::Unavailable`] for the run.
-    pub async fn access(&self, url: &Url) -> Access {
-        self.hosts.host(url).access(url, self.robots_txt(url)).await
-    }
-
     /// The host's robots.txt, from the origin of `url`, redirects followed by
     /// hand so each hop is paced.
     async fn robots_txt(&self, url: &Url) -> Listing {
@@ -237,6 +228,15 @@ impl HttpFetcher {
 }
 
 impl Fetcher for HttpFetcher {
+    /// Whether `url` may be requested, by its host's robots.txt (D8), which
+    /// is fetched the first time any URL of the host is asked about. RFC
+    /// 9309 decides what its answer means: a 4xx allows everything; a 5xx, a
+    /// failure, a 429 that outlasts the retries or too many redirects make
+    /// the host [`Access::Unavailable`] for the run.
+    async fn access(&self, url: &Url) -> Access {
+        self.hosts.host(url).access(url, self.robots_txt(url)).await
+    }
+
     async fn fetch(&self, url: &Url, mode: Mode) -> Result<Response, Failure> {
         let attempt = match mode {
             Mode::Page => self.get(url, Want::Html).await,
