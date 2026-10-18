@@ -11,7 +11,7 @@ in the bootstrap grilling (2026-10-17, frozen as `historical/initial.md`), D31 t
 an entry's **Code** is the module that will hold it once built. D25 and D29 are spent: D25 was superseded by D30, and D29
 became `roadmap.md`'s phase index.
 
-<!-- decision-watermark: D46 -->
+<!-- decision-watermark: D47 -->
 
 ## Scope and modes
 
@@ -40,9 +40,18 @@ Assets get a HEAD request with GET fallback; reports default to `kind = anchor`.
 only, which misses broken images and canonicals; ignoring `<base>`, which resolves a site wrongly.
 
 ### D14 Discovery is sitemap and link-following both, and each page records which
-Each root's sitemap is discovered (D40) or set (docs.fp.o's must be, I1). Recording both
+Each root's sitemap is discovered (D40) or set (docs.fp.o's is under its en-US root, I1). Recording both
 sources yields orphans (in the sitemap, with no inbound link) and unlisted pages (reachable, absent
 from the sitemap). Rejected: either source alone, which loses one of those reports.
+
+### D47 A run reads its sitemaps before any page, and a probe that finds none writes nothing
+A listed page is then claimed by its sitemap before a link can name it, so `pages.in_sitemap` holds
+for every listed page; the files (69 at docs.fp.o) cost about a minute on a host whose pace bounds
+the run anyway. A probe of D40's `sitemap.xml` that answers with no sitemap is no target, nothing
+having named it; a sitemap set or named by robots.txt is one whatever it answers. Rejected: reading
+sitemaps beside the pages, which leaves `in_sitemap` to a race; a target per failed probe, a broken
+URL nobody linked. Code: `crawl::Shared::discover`.
+Evidence: `crawl::tests::a_sitemap_index_seeds_its_pages_and_each_entry_is_a_link`.
 
 ## Profiles
 

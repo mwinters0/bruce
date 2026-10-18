@@ -29,7 +29,9 @@ decisions each carries are cited in its module's doc.
   write, and the landing of a redirect in the parent file; the frontier (a
   URL's class, its canonical form and the claim that dedups) in the `frontier`
   child; a target's redirect chain, its limit and where a hop leads in the
-  `hops` child; and D16's classification in the `outcome` child. It sits above
+  `hops` child; D16's classification in the `outcome` child; and reading one
+  sitemap file, gzip and index included, in the `sitemap` child, discovery
+  staying in the parent. It sits above
   `fetch`, `extract` and `store`, driving each (D39).
 
 ## CI mode

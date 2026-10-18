@@ -32,6 +32,10 @@ pub enum Plan {
     Status,
     /// Not requested; the target row says why.
     Unchecked(&'static str),
+    /// A sitemap, `depth` files below where discovery began (1 for the file
+    /// discovered or set): GET, its body read for its entries (D14). Only
+    /// the crawl plans one; [`Frontier::plan`] never does.
+    Sitemap { depth: u8 },
 }
 
 /// The URLs a run has met, and how each is treated.
@@ -58,6 +62,14 @@ impl Frontier {
             .lock()
             .expect("no panic holds the lock")
             .insert(url_id)
+    }
+
+    /// Whether `url_id` has been claimed, claiming nothing.
+    pub fn is_claimed(&self, url_id: u64) -> bool {
+        self.seen
+            .lock()
+            .expect("no panic holds the lock")
+            .contains(&url_id)
     }
 
     /// How `url` is treated when a link of `kind` names it, and its canonical

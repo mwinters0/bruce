@@ -43,21 +43,26 @@ by destination").
 ## What a crawl leaves for the join to place
 
 - **Fact.** A crawl writes `targets.reason` values the join must place:
-  `unchecked` for `out_of_scope`, `host_not_allowlisted`, `scheme`, `robots`
-  and `robots_unavailable`; `broken_url` for `invalid_url` (an href resolving
+  `unchecked` for `out_of_scope`, `host_not_allowlisted`, `scheme`, `robots`,
+  `robots_unavailable` and `too_deep` (a sitemap past three files deep);
+  `broken_url` for `invalid_url` (an href or sitemap `<loc>` resolving
   to no URL, the target's `url` the raw text and its `url_id` the hash of
   it), `redirect_loop`, `too_many_redirects`, `bad_redirect` and `nxdomain`;
-  `error` for `unreadable` (a page whose HTML the extractor refused), the
+  `error` for `unreadable` (a page whose HTML the extractor refused, or a
+  sitemap file that is not one), the
   transport causes and, with its status kept, a 401, 403, 429 or 5xx; `ok`
   with `too_large` for a page over the cap, which has no `anchors`. An
   allowlisted page is a `pages` row and `anchors` with no `links` and no
   `page_facts`. `pages.via_links` and `pages.in_sitemap` record the
   discovery that claimed the page, so the sitemap and link joins are the
-  authority for orphans and unlisted pages.
+  authority for orphans and unlisted pages. A sitemap file is a target and
+  each entry a `links` row of kind `sitemap` from it, an index's children
+  included; entries outside every root's scope have no row. A run with no
+  `sitemap` link had no sitemap to find orphans in.
 - **Why P4 cares.** Its verdict for a fragment link depends on which of these
   its target is: `too_large`, a target that errored and an allowlisted URL
   first named by a non-anchor link (KD4) all have no anchors to check against.
-- **Origin.** P3.5, 2026-10-18.
+- **Origin.** P3.5 and P3.6, 2026-10-18.
 
 ## An interrupted crawl leaves an unfinished run
 

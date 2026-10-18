@@ -205,6 +205,58 @@ async fn a_gzip_body_is_decompressed_before_the_cap_is_applied() {
 }
 
 #[tokio::test]
+async fn a_sitemap_is_read_as_bytes_whatever_its_type_and_capped() {
+    let server = MockServer::start().await;
+    let packed = vec![0x1f, 0x8b, 1, 2, 3];
+    Mock::given(path("/s.xml.gz"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(packed.clone(), "application/gzip"))
+        .mount(&server)
+        .await;
+    Mock::given(path("/big.xml"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(vec![b'x'; 64], "text/xml"))
+        .mount(&server)
+        .await;
+    Mock::given(path("/gone.xml"))
+        .respond_with(ResponseTemplate::new(404).set_body_raw(b"nope".to_vec(), "text/xml"))
+        .mount(&server)
+        .await;
+    let fetch = fetcher(Settings {
+        max_sitemap: 32,
+        ..quick()
+    });
+    let got = |p: &'static str| {
+        let (fetch, url) = (fetch.clone(), url_of(&server, p));
+        async move { fetch.fetch(&url, Mode::Sitemap).await.unwrap().body }
+    };
+    assert_eq!(got("/s.xml.gz").await, Body::Raw(packed));
+    assert_eq!(got("/big.xml").await, Body::TooLarge);
+    assert_eq!(got("/gone.xml").await, Body::Unread);
+}
+
+#[tokio::test]
+async fn robots_txt_names_the_hosts_sitemaps() {
+    let server = MockServer::start().await;
+    Mock::given(path("/robots.txt"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(
+            "User-agent: *\nDisallow: /private/\nSitemap: https://a.example/s.xml\n\
+             Sitemap: /relative.xml\n",
+        ))
+        .mount(&server)
+        .await;
+    let fetch = fetcher(quick());
+    assert_eq!(
+        fetch.sitemaps(&url_of(&server, "/docs/")).await,
+        ["https://a.example/s.xml", "/relative.xml"]
+    );
+    assert_eq!(requests(&server).await, 1, "robots.txt is read once");
+    assert_eq!(
+        fetch.access(&url_of(&server, "/private/x")).await,
+        Access::Disallowed
+    );
+    assert_eq!(requests(&server).await, 1);
+}
+
+#[tokio::test]
 async fn a_server_error_is_retried_until_it_answers() {
     let server = MockServer::start().await;
     Mock::given(path("/p"))

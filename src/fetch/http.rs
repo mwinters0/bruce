@@ -29,7 +29,7 @@ use url::Url;
 use crate::config::DEFAULT_USER_AGENT;
 
 use super::charset::decode;
-use super::{Body, Failure, FailureKind, Fetcher, Mode, Response};
+use super::{Body, Failure, FailureKind, Fetcher, MAX_SITEMAP, Mode, Response};
 
 pub mod host;
 
@@ -53,6 +53,9 @@ pub struct Settings {
     pub timeout: Duration,
     /// The most an HTML body may come to, after decompression.
     pub max_body: usize,
+    /// The most a [`Mode::Sitemap`] body may come to, before any gzip of its
+    /// own is undone.
+    pub max_sitemap: usize,
     /// The wait before each retry, one retry per entry.
     pub backoff: Vec<Duration>,
     /// The longest `Retry-After` honoured.
@@ -66,6 +69,7 @@ impl Default for Settings {
             connect_timeout: Duration::from_secs(10),
             timeout: Duration::from_secs(30),
             max_body: 16 * 1024 * 1024,
+            max_sitemap: MAX_SITEMAP,
             backoff: [1, 2, 4].map(Duration::from_secs).to_vec(),
             max_retry_after: Duration::from_secs(60),
         }
@@ -89,6 +93,8 @@ enum Want {
     Html,
     /// A robots.txt, as bytes, up to its own cap.
     Robots,
+    /// A sitemap, as bytes, up to its cap.
+    Raw,
 }
 
 /// One request's answer.
@@ -159,6 +165,17 @@ impl HttpFetcher {
                             size: bytes.len() as u64,
                         };
                     }
+                }
+            };
+        } else if want == Want::Raw && status.is_success() {
+            let mut bytes = Vec::new();
+            body = loop {
+                match response.chunk().await.map_err(|e| classify(&e))? {
+                    Some(chunk) if bytes.len() + chunk.len() > self.settings.max_sitemap => {
+                        break Body::TooLarge;
+                    }
+                    Some(chunk) => bytes.extend_from_slice(&chunk),
+                    None => break Body::Raw(bytes),
                 }
             };
         } else if want == Want::Robots && status.is_success() {
@@ -237,9 +254,18 @@ impl Fetcher for HttpFetcher {
         self.hosts.host(url).access(url, self.robots_txt(url)).await
     }
 
+    /// The `Sitemap:` lines of the robots.txt of `url`'s host, which is
+    /// fetched first if no one has asked about the host yet.
+    async fn sitemaps(&self, url: &Url) -> Vec<String> {
+        let host = self.hosts.host(url);
+        host.access(url, self.robots_txt(url)).await;
+        host.sitemaps()
+    }
+
     async fn fetch(&self, url: &Url, mode: Mode) -> Result<Response, Failure> {
         let attempt = match mode {
             Mode::Page => self.get(url, Want::Html).await,
+            Mode::Sitemap => self.get(url, Want::Raw).await,
             Mode::Asset => match self.once(Method::HEAD, url, Want::Status).await {
                 Ok(attempt) if attempt.response.status < 400 => Ok(attempt),
                 // A host refusing HEAD with 403 or 405 is common, and a false

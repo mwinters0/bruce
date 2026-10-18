@@ -45,6 +45,11 @@ default.
 | `hash_root` | `[]` | CSS selectors for the part of each page whose change counts as the page changing (below). |
 | `hash_exclude` | `[]` | CSS selectors for parts of each page whose change never counts (below). |
 
+**The sitemap** may be an index of further sitemaps, followed three files
+deep, and any of them may be gzip-compressed (`.xml.gz`). Its entries outside
+every root's scope are dropped. When none is found, the crawl follows links
+alone.
+
 The `url` must be in the root's own scope: a root whose `include` or `exclude`
 rules out its starting page is an error.
 

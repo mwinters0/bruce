@@ -1,22 +1,32 @@
 //! The crawl: the frontier, hops, outcomes and the rows a run writes (D2,
-//! D3, D7, D13, D16, D28; `roadmap-P3-crawler.md`, "What gets requested",
-//! "Redirects" and "Assets and allowlisted pages").
+//! D3, D7, D13, D14, D16, D28; `roadmap-P3-crawler.md`, "What gets
+//! requested", "Redirects", "Assets and allowlisted pages" and "Sitemaps").
 //!
-//! A run seeds the roots' URLs and asks about each target once, at most
-//! [`WORKERS`] at a time, a host's own pace held by the fetcher (D8). One
-//! task follows one target's hops itself, so each passes robots.txt and its
-//! host's rate (D7), reads the answer, and then, on the blocking pool,
-//! extracts the page and sends its rows to the writer from there, so the
-//! writer's bounded channel pushes back on the pool and not on the
-//! runtime (D28). A URL is asked about by whoever claims its `url_id` first
+//! A run reads the roots' sitemaps first, so a page a sitemap lists is
+//! claimed as listed before any link can name it (D47), and then seeds the
+//! roots' URLs and the pages the sitemaps listed. It asks about each target
+//! once, at most [`WORKERS`] at a time, a host's own pace held by the
+//! fetcher (D8). One task follows one target's hops itself, so each passes
+//! robots.txt and its host's rate (D7), reads the answer, and then, on the
+//! blocking pool, extracts the page and sends its rows to the writer from
+//! there, so the writer's bounded channel pushes back on the pool and not on
+//! the runtime (D28). A URL is asked about by whoever claims its `url_id` first
 //! (`frontier`); a page a redirect lands on is recorded by whichever of the
 //! redirecting target and the landing URL's own discovery claims it first.
 //! The run writes every target's HTTP-level outcome and leaves
 //! `links.outcome` NULL, the verdicts being SQL's after the crawl (D28).
+//!
+//! A sitemap is a target, and each of its entries a link of kind `sitemap`
+//! from it (D13). A root's sitemap is the one it sets, or else those its
+//! host's robots.txt names, or else the first of `sitemap.xml` under the root
+//! and at the host that answers with one (D40); a file probed and not found
+//! writes nothing, since nothing named it (D47). A run with no sitemap goes on by
+//! links alone, and has no `sitemap` link to show for it.
 
 mod frontier;
 mod hops;
 mod outcome;
+mod sitemap;
 
 use std::collections::VecDeque;
 use std::fmt;
@@ -30,7 +40,7 @@ use xxhash_rust::xxh3::xxh3_64;
 
 use crate::config::{Config, HashScope, ProfileChoice};
 use crate::extract::{self, Extracted, Kind};
-use crate::fetch::{Access, Body, Failure, Fetcher, Mode};
+use crate::fetch::{Access, Body, Failure, Fetcher, MAX_SITEMAP, Mode};
 use crate::profile::Registry;
 use crate::store::{
     AnchorRow, FactRow, Hop, LinkRow, Outcome, PageRow, Row, RunId, TargetRow, WriteHandle,
@@ -39,16 +49,24 @@ use crate::store::{
 use crate::url::Canonical;
 use frontier::{Frontier, Plan};
 use hops::{Chain, Stop};
+use sitemap::Sitemap;
 
 /// Targets in flight at once, across hosts. A host's own cap and pace are
 /// the fetcher's (D8); this only bounds the tasks a run holds.
 const WORKERS: usize = 64;
+
+/// How many files deep sitemap indexes are followed, the first counting as 1.
+const MAX_SITEMAP_DEPTH: u8 = 3;
 
 /// What a finished run wrote.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Summary {
     pub targets: u64,
     pub pages: u64,
+    /// Sitemap files read; 0 when the run had none to go on.
+    pub sitemaps: u64,
+    /// Sitemap entries outside every root's scope, which are dropped.
+    pub dropped: u64,
 }
 
 /// Why a run stopped before it was done.
@@ -90,6 +108,8 @@ struct Shared<F> {
     rows: WriteHandle,
     targets: AtomicU64,
     pages: AtomicU64,
+    sitemaps: AtomicU64,
+    dropped: AtomicU64,
 }
 
 /// A target claimed and waiting to be asked about.
@@ -99,6 +119,8 @@ struct Item {
     kind: Kind,
     /// Found by a link, not seeded.
     via_links: bool,
+    /// Listed by a sitemap.
+    in_sitemap: bool,
     plan: Plan,
     form: Canonical,
 }
@@ -117,6 +139,8 @@ struct Answer {
     /// `Unread`, or `TooLarge`: the page's text went to the extractor.
     body: Body,
     page: Option<Page>,
+    /// What a sitemap file listed.
+    sitemap: Option<Sitemap>,
 }
 
 /// How a target's hops ended.
@@ -165,41 +189,39 @@ where
                 rows,
                 targets: AtomicU64::new(0),
                 pages: AtomicU64::new(0),
+                sitemaps: AtomicU64::new(0),
+                dropped: AtomicU64::new(0),
             }),
         }
     }
 
-    /// Crawls from the roots' URLs until nothing is left to ask about.
+    /// Crawls from the roots' sitemaps and URLs until nothing is left to ask
+    /// about.
     pub async fn run(self) -> Result<Summary, Error> {
         let shared = self.shared;
-        let mut queue = VecDeque::new();
+        let mut listed = Vec::new();
+        let sitemaps = shared.discover().await?;
+        shared.drive(sitemaps, Some(&mut listed)).await?;
         for root in &shared.frontier.config().roots {
             let (plan, form) = shared.frontier.plan(&root.url, Kind::Anchor);
             if shared.frontier.claim(form.id()) {
-                queue.push_back(Item {
+                listed.push(Item {
                     url: root.url.clone(),
                     kind: Kind::Anchor,
                     via_links: false,
+                    in_sitemap: false,
                     plan,
                     form,
                 });
             }
         }
-        let mut tasks = JoinSet::new();
-        loop {
-            while tasks.len() < WORKERS
-                && let Some(item) = queue.pop_front()
-            {
-                tasks.spawn(Arc::clone(&shared).process(item));
-            }
-            let Some(joined) = tasks.join_next().await else {
-                break;
-            };
-            queue.extend(joined.map_err(|_| Error::Panicked)??);
-        }
+        shared.drive(listed, None).await?;
+        let load = |n: &AtomicU64| n.load(Ordering::Relaxed);
         Ok(Summary {
-            targets: shared.targets.load(Ordering::Relaxed),
-            pages: shared.pages.load(Ordering::Relaxed),
+            targets: load(&shared.targets),
+            pages: load(&shared.pages),
+            sitemaps: load(&shared.sitemaps),
+            dropped: load(&shared.dropped),
         })
     }
 }
@@ -208,9 +230,126 @@ impl<F> Shared<F>
 where
     F: Fetcher + Send + Sync + 'static,
 {
+    /// Asks about `start` and every target it leads to, at most [`WORKERS`]
+    /// at a time. With `hold`, only sitemaps are asked about and every other
+    /// target found goes there instead.
+    async fn drive(
+        self: &Arc<Self>,
+        start: Vec<Item>,
+        mut hold: Option<&mut Vec<Item>>,
+    ) -> Result<(), Error> {
+        let mut queue = VecDeque::new();
+        let mut tasks = JoinSet::new();
+        let mut found = start;
+        loop {
+            for item in found.drain(..) {
+                match &mut hold {
+                    Some(held) if !matches!(item.plan, Plan::Sitemap { .. }) => held.push(item),
+                    _ => queue.push_back(item),
+                }
+            }
+            while tasks.len() < WORKERS
+                && let Some(item) = queue.pop_front()
+            {
+                tasks.spawn(Arc::clone(self).process(item));
+            }
+            let Some(joined) = tasks.join_next().await else {
+                return Ok(());
+            };
+            found = joined.map_err(|_| Error::Panicked)??;
+        }
+    }
+
+    /// Each root's sitemaps, claimed (D40): the one the root sets, or those
+    /// its host's robots.txt names, each a target whatever it answers; or
+    /// else the first of the probes that answers with a sitemap, read here,
+    /// in which case what it listed is returned in its place.
+    async fn discover(self: &Arc<Self>) -> Result<Vec<Item>, Error> {
+        let mut found = Vec::new();
+        for root in &self.frontier.config().roots {
+            let named: Vec<Url> = match &root.sitemap {
+                Some(url) => vec![url.clone()],
+                None => self
+                    .fetcher
+                    .sitemaps(&root.url)
+                    .await
+                    .iter()
+                    .filter_map(|line| root.url.join(line).ok())
+                    .filter(|url| matches!(url.scheme(), "http" | "https"))
+                    .collect(),
+            };
+            if !named.is_empty() {
+                for url in named {
+                    let item = self.sitemap_item(url, 1);
+                    if self.frontier.claim(item.form.id()) {
+                        found.push(item);
+                    }
+                }
+                continue;
+            }
+            let probes = ["sitemap.xml", "/sitemap.xml"].map(|p| root.url.join(p));
+            let mut probed = Vec::new();
+            for url in probes.into_iter().flatten() {
+                if probed.contains(&url) {
+                    continue;
+                }
+                probed.push(url.clone());
+                let item = self.sitemap_item(url, 1);
+                if self.frontier.is_claimed(item.form.id()) {
+                    // Another root's sitemap, read already or to be.
+                    break;
+                }
+                let done = Arc::clone(self).follow(item).await?;
+                let is_sitemap = matches!(&done.end, End::Answered(a)
+                    if a.sitemap.is_some() || a.body == Body::TooLarge);
+                if is_sitemap && self.frontier.claim(done.item.form.id()) {
+                    found.extend(Arc::clone(self).write_blocking(done).await?);
+                    break;
+                }
+            }
+        }
+        Ok(found)
+    }
+
+    /// A sitemap at `url`, `depth` files deep, not yet claimed.
+    fn sitemap_item(&self, url: Url, depth: u8) -> Item {
+        let (_, form) = self.frontier.plan(&url, Kind::Sitemap);
+        Item {
+            url,
+            kind: Kind::Sitemap,
+            via_links: false,
+            in_sitemap: false,
+            plan: Plan::Sitemap { depth },
+            form,
+        }
+    }
+
     /// Follows one target's hops and writes what they came to. Returns the
-    /// targets its page named that this run has not met.
+    /// targets its page or sitemap named that this run has not met.
     async fn process(self: Arc<Self>, item: Item) -> Result<Vec<Item>, Error> {
+        let done = Arc::clone(&self).follow(item).await?;
+        self.write_blocking(done).await
+    }
+
+    /// [`Shared::write`], on the blocking pool, so a full writer channel
+    /// blocks a pool thread and never the runtime (D28).
+    async fn write_blocking(self: Arc<Self>, done: Done) -> Result<Vec<Item>, Error> {
+        tokio::task::spawn_blocking(move || self.write(done))
+            .await
+            .map_err(|_| Error::Panicked)?
+    }
+
+    /// The plan and form of `next`, where a hop from a URL planned `plan`
+    /// leads: a sitemap stays one wherever it is moved to.
+    fn hop(&self, next: &Url, plan: Plan, kind: Kind) -> (Plan, Canonical) {
+        match plan {
+            Plan::Sitemap { .. } => (plan, self.frontier.plan(next, kind).1),
+            _ => self.frontier.hop_plan(next, kind),
+        }
+    }
+
+    /// Follows one target's hops to where they end.
+    async fn follow(self: Arc<Self>, item: Item) -> Result<Done, Error> {
         let started = SystemTime::now();
         let clock = Instant::now();
         let mut chain = Chain::new(item.form.as_str());
@@ -223,31 +362,31 @@ where
                 Access::Unavailable => break End::Blocked("robots_unavailable"),
             }
             asked = true;
-            let mode = if plan == Plan::Status {
-                Mode::Asset
-            } else {
-                Mode::Page
+            let mode = match plan {
+                Plan::Status => Mode::Asset,
+                Plan::Sitemap { .. } => Mode::Sitemap,
+                _ => Mode::Page,
             };
             let mut response = match self.fetcher.fetch(&url, mode).await {
                 Ok(response) => response,
                 Err(failure) => break End::Failed(failure),
             };
             if let Some(next) = hops::location(&url, &response) {
-                let (next_plan, next_form) = self.frontier.hop_plan(&next, item.kind);
+                let (next_plan, next_form) = self.hop(&next, plan, item.kind);
                 if let Err(stop) = chain.follow(response.status, false, next_form.as_str()) {
                     break End::Stopped(stop);
                 }
                 (url, plan, form) = (next, next_plan, next_form);
                 continue;
             }
-            let mut page = None;
+            let (mut page, mut listed) = (None, None);
             match std::mem::replace(&mut response.body, Body::Unread) {
                 Body::Html { text, size } => {
                     let Ok(extracted) = self.read(&url, plan, text).await? else {
                         break End::Unreadable;
                     };
                     if let Some(next) = hops::refresh_target(&extracted.links) {
-                        let (next_plan, next_form) = self.frontier.hop_plan(&next, item.kind);
+                        let (next_plan, next_form) = self.hop(&next, plan, item.kind);
                         if let Err(stop) = chain.follow(response.status, true, next_form.as_str()) {
                             break End::Stopped(stop);
                         }
@@ -256,6 +395,15 @@ where
                     }
                     page = Some(Page { extracted, size });
                 }
+                Body::Raw(bytes) => {
+                    let read =
+                        tokio::task::spawn_blocking(move || sitemap::read(&bytes, MAX_SITEMAP));
+                    match read.await.map_err(|_| Error::Panicked)? {
+                        Ok(map) => listed = Some(map),
+                        Err(sitemap::Unread::TooLarge) => response.body = Body::TooLarge,
+                        Err(sitemap::Unread::NotASitemap) => break End::Unreadable,
+                    }
+                }
                 unread => response.body = unread,
             }
             break End::Answered(Box::new(Answer {
@@ -263,9 +411,10 @@ where
                 content_type: response.content_type,
                 body: response.body,
                 page,
+                sitemap: listed,
             }));
         };
-        let done = Done {
+        Ok(Done {
             item,
             chain: chain.into_hops(),
             plan,
@@ -274,10 +423,7 @@ where
             started,
             asked,
             elapsed: clock.elapsed(),
-        };
-        tokio::task::spawn_blocking(move || self.write(done))
-            .await
-            .map_err(|_| Error::Panicked)?
+        })
     }
 
     /// Extracts `text`, the body of the page at `url`, on the blocking pool
@@ -354,14 +500,106 @@ where
         self.send_target(row(&item.form, chain, final_url))?;
 
         let mut found = Vec::new();
-        if owns
-            && let End::Answered(answer) = &end
-            && let Some(page) = &answer.page
-        {
-            let content_type = answer.content_type.as_deref();
-            self.write_page(&item, plan, &form, content_type, page, &mut found)?;
+        if owns && let End::Answered(answer) = &end {
+            if let Some(page) = &answer.page {
+                let content_type = answer.content_type.as_deref();
+                self.write_page(&item, plan, &form, content_type, page, &mut found)?;
+            }
+            if let (Some(listed), Plan::Sitemap { depth }) = (&answer.sitemap, plan) {
+                self.write_sitemap(depth, &form, listed, &mut found)?;
+            }
         }
         Ok(found)
+    }
+
+    /// Writes a link of kind `sitemap` from the sitemap `form` names to each
+    /// entry it lists, and claims what is new. A page outside every root's
+    /// scope is dropped, a sitemap being broader than its root (D10); an
+    /// index's sitemaps are followed wherever they are, down to
+    /// [`MAX_SITEMAP_DEPTH`].
+    fn write_sitemap(
+        &self,
+        depth: u8,
+        form: &Canonical,
+        listed: &Sitemap,
+        found: &mut Vec<Item>,
+    ) -> Result<(), Error> {
+        self.sitemaps.fetch_add(1, Ordering::Relaxed);
+        let (locs, index) = match listed {
+            Sitemap::Pages(locs) => (locs, false),
+            Sitemap::Index(locs) => (locs, true),
+        };
+        for loc in locs {
+            let (target_url_id, fragment) = match Url::parse(loc) {
+                Err(_) => (self.invalid(loc)?, None),
+                Ok(url) => {
+                    let mut bare = url.clone();
+                    bare.set_fragment(None);
+                    let (plan, target_form) = self.frontier.plan(&bare, Kind::Sitemap);
+                    let id = target_form.id();
+                    if !index && !matches!(plan, Plan::Page { .. }) {
+                        self.dropped.fetch_add(1, Ordering::Relaxed);
+                        continue;
+                    }
+                    if self.frontier.claim(id) {
+                        let unchecked_as = match plan {
+                            Plan::Unchecked("scheme") => Some("scheme"),
+                            _ if index && depth >= MAX_SITEMAP_DEPTH => Some("too_deep"),
+                            _ => None,
+                        };
+                        match unchecked_as {
+                            Some(reason) => self.send_target(unchecked(
+                                self.run,
+                                id,
+                                target_form.as_str(),
+                                Outcome::Unchecked,
+                                reason,
+                            ))?,
+                            None if index => found.push(self.sitemap_item(bare, depth + 1)),
+                            None => found.push(Item {
+                                url: bare,
+                                kind: Kind::Sitemap,
+                                via_links: false,
+                                in_sitemap: true,
+                                plan,
+                                form: target_form,
+                            }),
+                        }
+                    }
+                    (id, url.fragment().map(str::to_owned))
+                }
+            };
+            self.rows.send(Row::Link(LinkRow {
+                run_id: self.run.0,
+                src_url_id: form.id(),
+                target_url_id,
+                fragment,
+                raw_href: loc.clone(),
+                kind: Kind::Sitemap.as_str(),
+                xref_refspec: None,
+                outcome: None,
+                reason: None,
+                // KD3, as for a page's links.
+                redirected: false,
+            }))?;
+        }
+        Ok(())
+    }
+
+    /// The target of an href or entry that resolves to no URL, which the raw
+    /// text alone names (D26), written by its first claimant.
+    fn invalid(&self, raw: &str) -> Result<u64, Error> {
+        let id = xxh3_64(raw.as_bytes());
+        if self.frontier.claim(id) {
+            self.send_target(unchecked(
+                self.run,
+                id,
+                raw,
+                Outcome::BrokenUrl,
+                "invalid_url",
+            ))?;
+        }
+        Ok(id)
     }
 
     /// Writes the `pages` row, the anchors and, for a page of a root, the
@@ -395,7 +633,7 @@ where
             source_repo: source.map(|s| s.repo.clone()),
             source_ref: source.map(|s| s.git_ref.clone()),
             source_path: source.map(|s| s.path.clone()),
-            in_sitemap: false,
+            in_sitemap: item.in_sitemap,
             via_links: item.via_links,
         }))?;
         for a in &e.anchors {
@@ -437,6 +675,7 @@ where
                                 url: bare,
                                 kind: link.kind,
                                 via_links: true,
+                                in_sitemap: false,
                                 plan,
                                 form: target_form.clone(),
                             }),
@@ -445,21 +684,10 @@ where
                     (target_form.id(), target.fragment().map(str::to_owned))
                 }
                 None => {
-                    // An href that resolves to no URL is a broken link, and
-                    // the raw text is all that names it (D26). Only a
-                    // `<base href>` that cannot be a base makes that depend
-                    // on the page, its relative hrefs then sharing a target.
-                    let id = xxh3_64(link.raw.as_bytes());
-                    if self.frontier.claim(id) {
-                        self.send_target(unchecked(
-                            self.run,
-                            id,
-                            &link.raw,
-                            Outcome::BrokenUrl,
-                            "invalid_url",
-                        ))?;
-                    }
-                    (id, None)
+                    // Only a `<base href>` that cannot be a base makes this
+                    // depend on the page, its relative hrefs then sharing a
+                    // target.
+                    (self.invalid(&link.raw)?, None)
                 }
             };
             self.rows.send(Row::Link(LinkRow {

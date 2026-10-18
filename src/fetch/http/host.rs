@@ -213,6 +213,15 @@ impl Host {
             Robots::Rules(_) => Access::Disallowed,
         }
     }
+
+    /// The host's `Sitemap:` lines, once [`Host::access`] has loaded its
+    /// robots.txt; empty before then, and for a file not read or not there.
+    pub fn sitemaps(&self) -> Vec<String> {
+        match self.robots.get() {
+            Some(Robots::Rules(robot)) => robot.sitemaps.clone(),
+            _ => Vec::new(),
+        }
+    }
 }
 
 /// The time between two requests to a host (D18). `crawl_delay` is the

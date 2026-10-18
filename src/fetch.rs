@@ -20,6 +20,10 @@ pub mod http;
 
 pub use http::host::Access;
 
+/// The most a sitemap file may come to, uncompressed: the sitemap
+/// protocol's own limit.
+pub const MAX_SITEMAP: usize = 50 * 1024 * 1024;
+
 /// What the caller wants from a URL.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
@@ -28,6 +32,9 @@ pub enum Mode {
     /// Only whether it answers (D13): HEAD, retried once as a GET when it
     /// answers 4xx or 5xx, and no body read either way.
     Asset,
+    /// A sitemap (D14): GET, and a 2xx body read as bytes whatever its type,
+    /// a `.xml.gz` file being served under several.
+    Sitemap,
 }
 
 /// What one hop answered.
@@ -54,8 +61,11 @@ pub enum Body {
         /// The bytes, after decompression and before decoding.
         size: u64,
     },
-    /// An HTML body over the cap. The page answered, so it is not an error;
-    /// it is not extracted, half a page's anchors giving false verdicts.
+    /// A 2xx body asked for as bytes ([`Mode::Sitemap`]), as the server sent
+    /// it once any `Content-Encoding` is undone.
+    Raw(Vec<u8>),
+    /// A body over its cap. The page answered, so it is not an error; it is
+    /// not extracted, half a page's anchors giving false verdicts.
     TooLarge,
 }
 
@@ -130,5 +140,12 @@ pub trait Fetcher {
     /// everything.
     fn access(&self, _url: &Url) -> impl Future<Output = Access> + Send {
         async { Access::Allowed }
+    }
+
+    /// The sitemaps the robots.txt of `url`'s host names in `Sitemap:` lines,
+    /// as written (D40). Empty for a fetcher with no robots.txt behind it,
+    /// and for a host whose robots.txt is not read.
+    fn sitemaps(&self, _url: &Url) -> impl Future<Output = Vec<String>> + Send {
+        async { Vec::new() }
     }
 }

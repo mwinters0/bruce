@@ -25,7 +25,7 @@ the profile's facts and the content hash;
 `forge`, the edit-URL shape parse;
 `url`, the canonical form and `url_id`;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, and the body decoding; and
-`crawl`, the frontier, the hops of a redirect, D16's outcomes and the run that writes a target's rows, a library with no subcommand yet. The rest hold only their doc.
+`crawl`, the frontier, the hops of a redirect, D16's outcomes, sitemaps and the run that writes a target's rows, a library with no subcommand yet. The rest hold only their doc.
 `docs/manual/` holds the config reference. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -48,7 +48,8 @@ The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
 - [x] **3.5** The crawl: the frontier, URL classes, hops, outcomes and the
   writer feed; adds KD3 and KD4, and D46.
   [Notes](../wip/roadmap-P3.5-crawl-notes.md).
-- [ ] **3.6** Sitemaps: discovery, indexes, gzip and `sitemap` links.
+- [x] **3.6** Sitemaps: discovery, indexes, gzip and `sitemap` links; adds
+  D47. [Notes](../wip/roadmap-P3.6-sitemaps-notes.md).
 - [ ] **3.7** `bruce crawl`: the subcommand, Ctrl-C and the manual; amends D5.
 - [ ] **3.8** The live crawl of `/en-US/fedora-docs/`.
 
@@ -66,3 +67,13 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
+- **"The run records that it had no sitemap" is read as no `sitemap` link,
+  not a column.** The spec's "Sitemaps" asks the run to record that it had
+  none, so P4's orphan report can say it has nothing to go on. P3.6 adds no
+  `runs` column: the run's `crawl::Summary` counts `sitemaps` for P3.7 to
+  print, and in the DB a run with no `links` row of kind `sitemap` had no
+  sitemap whose entries could be orphans, which is exactly what the report
+  needs; a sitemap set and broken is still a target. The column would cost a
+  schema version (D43) for a fact a join already gives. Reconsidering means
+  a `runs` column (say `sitemaps`), schema 3, and the crawl updating the row
+  at the end, which D2 allows only for `finished_at` today.

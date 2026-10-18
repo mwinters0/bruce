@@ -36,11 +36,13 @@ struct Done {
 /// Crawls the root `/docs/` of `server`, `extra` being top-level keys of the
 /// configuration.
 async fn crawl(server: &MockServer, extra: &str, settings: Settings) -> Done {
-    let config = Config::parse(&format!(
-        "{extra}\n[[root]]\nurl = \"{}/docs/\"\n",
-        server.uri()
-    ))
-    .unwrap();
+    let config = format!("{extra}\n[[root]]\nurl = \"{}/docs/\"\n", server.uri());
+    crawl_config(server, &config, settings).await
+}
+
+/// Crawls `server` under the configuration `config`.
+async fn crawl_config(server: &MockServer, config: &str, settings: Settings) -> Done {
+    let config = Config::parse(config).unwrap();
     let store = Store::open_in_memory(&registry()).unwrap();
     let run = store.begin_run(Mode::Crawl, "test", None).unwrap();
     let writer = Writer::start(store, 16);
@@ -234,7 +236,9 @@ async fn every_target_gets_its_outcome_and_every_link_a_row() {
         done.summary,
         Summary {
             targets: 9,
-            pages: 2
+            pages: 2,
+            sitemaps: 0,
+            dropped: 0,
         }
     );
     assert_eq!(done.pages(), ["/docs/", "/docs/ok"]);
@@ -802,9 +806,284 @@ async fn a_saved_antora_page_yields_its_profile_facts_source_and_links() {
         requests(&server)
             .await
             .iter()
-            .filter(|(_, p)| p != "/robots.txt")
+            .filter(|(_, p)| p != "/robots.txt" && !p.ends_with("/sitemap.xml"))
             .count(),
         1,
         "everything else the page names is out of scope or unlisted"
+    );
+}
+
+async fn xml(server: &MockServer, at: &str, body: &str) {
+    Mock::given(path(at.to_owned()))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(body.as_bytes().to_vec(), "text/xml"))
+        .mount(server)
+        .await;
+}
+
+fn urlset(base: &str, paths: &[&str]) -> String {
+    let urls: String = paths
+        .iter()
+        .map(|p| {
+            let loc = if p.contains(':') {
+                p.to_string()
+            } else {
+                format!("{base}{p}")
+            };
+            format!("<url><loc>{loc}</loc><lastmod>2026-10-18</lastmod></url>")
+        })
+        .collect();
+    format!(
+        r#"<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>"#
+    )
+}
+
+fn index(base: &str, paths: &[&str]) -> String {
+    let maps: String = paths
+        .iter()
+        .map(|p| format!("<sitemap><loc>{base}{p}</loc></sitemap>"))
+        .collect();
+    format!(
+        r#"<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{maps}</sitemapindex>"#
+    )
+}
+
+impl Done {
+    /// The pages' URLs with `in_sitemap` and `via_links`.
+    fn found(&self) -> Vec<(String, bool, bool)> {
+        rows(
+            &self.store,
+            "SELECT t.url, p.in_sitemap, p.via_links FROM pages p \
+             JOIN targets t USING (run_id, url_id) ORDER BY t.url",
+            |r| Ok((r.get::<_, String>(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .into_iter()
+        .map(|(u, s, l)| (u.replace(&self.base, ""), s, l))
+        .collect()
+    }
+
+    /// The `sitemap` links as (source URL, raw href), the server's address
+    /// stripped from both.
+    fn sitemap_links(&self) -> Vec<(String, String)> {
+        let mut found: Vec<_> = rows(
+            &self.store,
+            "SELECT t.url, l.raw_href FROM links l JOIN targets t \
+             ON t.run_id = l.run_id AND t.url_id = l.src_url_id \
+             WHERE l.kind = 'sitemap' AND l.outcome IS NULL ORDER BY ALL",
+            |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)),
+        )
+        .into_iter()
+        .map(|(s, h)| (s.replace(&self.base, ""), h.replace(&self.base, "")))
+        .collect();
+        found.sort();
+        found
+    }
+}
+
+#[tokio::test]
+async fn a_sitemap_index_seeds_its_pages_and_each_entry_is_a_link() {
+    let server = MockServer::start().await;
+    let base = server.uri();
+    Mock::given(path("/robots.txt"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_string(format!("User-agent: *\nSitemap: {base}/docs/sitemap.xml\n")),
+        )
+        .mount(&server)
+        .await;
+    xml(
+        &server,
+        "/docs/sitemap.xml",
+        &index(&base, &["/docs/a.xml", "/docs/b.xml.gz"]),
+    )
+    .await;
+    xml(
+        &server,
+        "/docs/a.xml",
+        &urlset(&base, &["/docs/", "/docs/listed", "/fr/docs/x", "::bad"]),
+    )
+    .await;
+    let mut packed = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+    std::io::Write::write_all(
+        &mut packed,
+        urlset(&base, &["/docs/gone", "/docs/listed"]).as_bytes(),
+    )
+    .unwrap();
+    Mock::given(path("/docs/b.xml.gz"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_raw(packed.finish().unwrap(), "application/gzip"),
+        )
+        .mount(&server)
+        .await;
+    page(
+        &server,
+        "/docs/",
+        r#"<a href="/docs/linked">l</a><a href="/docs/listed">l</a>"#,
+    )
+    .await;
+    page(&server, "/docs/listed", "<title>Listed</title>").await;
+    page(&server, "/docs/linked", "<title>Linked</title>").await;
+    status(&server, "/docs/gone", 404).await;
+
+    let done = crawl(&server, "", quick()).await;
+
+    assert_eq!(
+        done.targets(),
+        [
+            t("::bad", "broken_url", Some("invalid_url"), None),
+            t("/docs/", "ok", None, Some(200)),
+            t("/docs/a.xml", "ok", None, Some(200)),
+            t("/docs/b.xml.gz", "ok", None, Some(200)),
+            t("/docs/gone", "broken_url", None, Some(404)),
+            t("/docs/linked", "ok", None, Some(200)),
+            t("/docs/listed", "ok", None, Some(200)),
+            t("/docs/sitemap.xml", "ok", None, Some(200)),
+        ],
+        "the off-scope entry has no target"
+    );
+    assert_eq!(
+        done.found(),
+        [
+            ("/docs/".to_owned(), true, false),
+            ("/docs/linked".to_owned(), false, true),
+            ("/docs/listed".to_owned(), true, false),
+        ],
+        "a listed page is claimed by its sitemap before any link names it"
+    );
+    let s = |src: &str, href: &str| (src.to_owned(), href.to_owned());
+    assert_eq!(
+        done.sitemap_links(),
+        [
+            s("/docs/a.xml", "/docs/"),
+            s("/docs/a.xml", "/docs/listed"),
+            s("/docs/a.xml", "::bad"),
+            s("/docs/b.xml.gz", "/docs/gone"),
+            s("/docs/b.xml.gz", "/docs/listed"),
+            s("/docs/sitemap.xml", "/docs/a.xml"),
+            s("/docs/sitemap.xml", "/docs/b.xml.gz"),
+        ]
+    );
+    assert_eq!((done.summary.sitemaps, done.summary.dropped), (3, 1));
+}
+
+#[tokio::test]
+async fn discovery_falls_back_to_the_host_and_a_miss_writes_nothing() {
+    let server = MockServer::start().await;
+    let base = server.uri();
+    // A soft 404: the page answers, and is no sitemap.
+    page(&server, "/docs/sitemap.xml", "<title>Not found</title>").await;
+    xml(
+        &server,
+        "/sitemap.xml",
+        &urlset(&base, &["/docs/only-listed"]),
+    )
+    .await;
+    page(&server, "/docs/", "<title>Home</title>").await;
+    page(&server, "/docs/only-listed", "<title>Orphan</title>").await;
+
+    let done = crawl(&server, "", quick()).await;
+
+    assert_eq!(
+        done.targets(),
+        [
+            t("/docs/", "ok", None, Some(200)),
+            t("/docs/only-listed", "ok", None, Some(200)),
+            t("/sitemap.xml", "ok", None, Some(200)),
+        ]
+    );
+    assert_eq!(done.summary.sitemaps, 1);
+}
+
+#[tokio::test]
+async fn a_run_with_no_sitemap_follows_links_alone() {
+    let server = MockServer::start().await;
+    page(&server, "/docs/", r#"<a href="/docs/two">two</a>"#).await;
+    page(&server, "/docs/two", "<title>Two</title>").await;
+
+    let done = crawl(&server, "", quick()).await;
+
+    assert_eq!(done.pages(), ["/docs/", "/docs/two"]);
+    assert_eq!(done.summary.sitemaps, 0);
+    assert!(done.sitemap_links().is_empty());
+    let probed: Vec<_> = requests(&server)
+        .await
+        .into_iter()
+        .map(|(_, p)| p)
+        .filter(|p| p.ends_with("sitemap.xml"))
+        .collect();
+    assert_eq!(probed, ["/docs/sitemap.xml", "/sitemap.xml"]);
+}
+
+#[tokio::test]
+async fn a_set_sitemap_is_a_target_whatever_it_answers() {
+    let server = MockServer::start().await;
+    page(&server, "/docs/", "<title>Home</title>").await;
+    xml(&server, "/docs/sitemap.xml", "<urlset/>").await;
+    let config = format!(
+        "[[root]]\nurl = \"{0}/docs/\"\nsitemap = \"{0}/docs/missing.xml\"\n",
+        server.uri()
+    );
+
+    let done = crawl_config(&server, &config, quick()).await;
+
+    assert_eq!(
+        done.targets(),
+        [
+            t("/docs/", "ok", None, Some(200)),
+            t("/docs/missing.xml", "broken_url", None, Some(404)),
+        ],
+        "the root's own sitemap.xml is not probed"
+    );
+    assert_eq!(done.summary.sitemaps, 0);
+}
+
+#[tokio::test]
+async fn an_index_is_followed_through_a_redirect_and_three_files_deep() {
+    let server = MockServer::start().await;
+    let base = server.uri();
+    xml(
+        &server,
+        "/docs/sitemap.xml",
+        &index(&base, &["/docs/old.xml"]),
+    )
+    .await;
+    redirect(&server, "/docs/old.xml", 301, "/docs/two.xml").await;
+    xml(
+        &server,
+        "/docs/two.xml",
+        &index(&base, &["/docs/three.xml"]),
+    )
+    .await;
+    xml(
+        &server,
+        "/docs/three.xml",
+        &index(&base, &["/docs/four.xml"]),
+    )
+    .await;
+    xml(&server, "/docs/four.xml", &urlset(&base, &["/docs/deep"])).await;
+    page(&server, "/docs/", "<title>Home</title>").await;
+
+    let done = crawl(&server, "", quick()).await;
+
+    assert_eq!(
+        done.targets(),
+        [
+            t("/docs/", "ok", None, Some(200)),
+            t("/docs/four.xml", "unchecked", Some("too_deep"), None),
+            t("/docs/old.xml", "ok", None, Some(200)),
+            t("/docs/sitemap.xml", "ok", None, Some(200)),
+            t("/docs/three.xml", "ok", None, Some(200)),
+            t("/docs/two.xml", "ok", None, Some(200)),
+        ]
+    );
+    assert_eq!(
+        done.chain(&format!("{base}/docs/old.xml")),
+        [(format!("{base}/docs/old.xml"), 301, false)]
+    );
+    assert_eq!(done.summary.sitemaps, 3);
+    assert!(
+        requests(&server)
+            .await
+            .iter()
+            .all(|(_, p)| p != "/docs/four.xml")
     );
 }
