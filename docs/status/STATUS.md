@@ -60,7 +60,8 @@ The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
 - [x] **3.7.2** An abandoned run holds whole targets: the second Ctrl-C
   waits for writes already started; adds D49.
   [Notes](../wip/roadmap-P3.7.2-abandoned-run-notes.md).
-- [ ] **3.8** The live crawl of `/en-US/fedora-docs/`.
+- [x] **3.8** The live crawl of `/en-US/fedora-docs/`; adds I14.
+  [Notes](../wip/roadmap-P3.8-live-crawl-notes.md).
 
 ## Not started
 

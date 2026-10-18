@@ -6,7 +6,7 @@ discovery and never reused. Walk this file whenever Antora's version changes (I8
 names it), or when docs.fp.o's build or hosting moves: a change here surfaces as wrong verdicts,
 not as an error.
 
-<!-- invariant-watermark: I13 -->
+<!-- invariant-watermark: I14 -->
 
 ### I1 docs.fp.o's sitemap is an index at `/en-US/sitemap.xml`, and lists no translated page
 - **Claim.** `/sitemap.xml` is 404, and robots.txt names no `Sitemap:`. `/en-US/sitemap.xml` is
@@ -162,3 +162,17 @@ not as an error.
 - **Verified against.** docs.fp.o fixtures, lunr-extension `main` and Antora v3.1.x, 2026-10-17.
 - **Relied on by.** D19.
 - **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/arm-sbc/ | grep -o '<script[^>]*search-ui-script[^>]*>'; curl -s https://gitlab.com/antora/antora-lunr-extension/-/raw/main/data/partials/search-scripts.hbs | grep search-ui-script`
+
+### I14 A docs.fp.o alias is a 200 HTML page whose meta refresh has delay 0
+- **Claim.** An Antora alias, a component's root among them (`/en-US/fedora-docs/` →
+  `team-info/`), answers HEAD and GET with 200 `text/html`, no `Location`, and a body of about
+  500 bytes carrying `<meta http-equiv="refresh" content="0; url=…">` and a `rel=canonical` to
+  the target.
+- **Proof.** Observed behaviour: the grilling's probe (`runs/p3-grill/probe-20261017/alias.html`)
+  and P3.8's crawl (`runs/p3.8-live-20261018/live.duckdb`, the root's `redirect_chain`).
+- **Scope limit.** Two aliases observed. Were the site to switch Antora's `redirect_facility` from
+  `static` to `httpd`, `nginx` or `netlify`, an alias would be a 3xx, already a hop.
+- **Verified against.** docs.fp.o, 2026-10-18.
+- **Relied on by.** D7, a zero-delay refresh being one of its hops, so an alias is a target whose
+  `final_url` is the page and never a `pages` row.
+- **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/fedora-docs/ | grep -o '<meta http-equiv="refresh"[^>]*>'`

@@ -76,3 +76,20 @@ by destination").
   runs.
 - **Origin.** P3's grilling, 2026-10-18 (`../wip/roadmap-P3-crawler.md`,
   "An interrupted run"); the cut targets, P3.7.1.
+
+## Allowlisting the forge sets a full crawl's length
+
+- **Fact.** Most docs.fp.o pages (24 of the 29 fixtures) link three forge
+  URLs of their own (`src`, `commits` and `issues/new`), and the last is a 303 to `/user/login`,
+  requested again for each page (D46's repeat): four requests a page on a
+  host whose robots.txt asks `Crawl-delay: 1`. In P3.8's run 23 pages made
+  69 such targets and the forge's share took 99 s against docs.fp.o's 48.
+  At about 2300 pages that is over 2 h on the forge alone, hosts running
+  in parallel, against the roadmap's 40 minutes for docs.fp.o.
+- **Why P4 cares.** Its en-US crawl's config decides whether the forge is
+  allowlisted, and so whether the run is 40 minutes or hours; D46's
+  `Reopens` (the repeat mattering at the site's pace) is met on the forge
+  first, a memo saving about a quarter of its requests.
+- **Origin.** P3.8, 2026-10-18 (`../wip/roadmap-P3.8-live-crawl-notes.md`;
+  `runs/p3.8-live-20261018/live.duckdb`). Contingent on Antora's
+  default-UI toolbar links and the forge's `Crawl-delay`.
