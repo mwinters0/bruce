@@ -6,12 +6,12 @@ over an alternative, and obvious changes argued and refused. Nothing here says h
 entry as `docs/design/decisions.md`, "D12"; the rest of the rules, the line cap included, are
 `docs/process.md`, "The decision register".
 
-The modules are P1's scaffold, and `cli`, `config`, `store`, `profile`, `extract`, `forge` and `url` hold code. D1–D30 were settled
+The modules are P1's scaffold, and `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url` and `fetch` hold code. D1–D30 were settled
 in the bootstrap grilling (2026-10-17, frozen as `historical/initial.md`), D31 the same day, D32 onward in P1's grilling, and
 an entry's **Code** is the module that will hold it once built. D25 and D29 are spent: D25 was superseded by D30, and D29
 became `roadmap.md`'s phase index.
 
-<!-- decision-watermark: D44 -->
+<!-- decision-watermark: D45 -->
 
 ## Scope and modes
 
@@ -278,6 +278,14 @@ Fedora-minimal docs image fetches in one step. Rust is pinned in `mise.toml`. Re
 container image, RPM. Its cargo tasks sit beside `check`, which runs the same commands with its own
 flags. Rejected: `check` calling the tasks, which would make `mise run fmt` stop writing or lose
 the check's summaries.
+
+### D45 TLS is rustls on ring and DNS is hickory's, so a failure arrives typed
+reqwest's default `rustls` feature builds aws-lc-rs, a C build, against D23's one self-contained
+binary for the Fedora CI image; `rustls-no-provider` plus ring avoids it. hickory-dns makes NXDOMAIN
+(`broken_url`, D16) a `NetError` down the error chain, where the system resolver gives a message
+string. Cost: about 30 crates, and a resolver reading `resolv.conf`
+itself. Rejected: aws-lc-rs; matching the system resolver's message. Reopens: ring failing to build
+on the CI image. Code: `fetch::http`. Evidence: `fetch::http::tests::the_cause_is_found_down_the_chain`.
 
 ### D31 One crate, `bruce`; its concepts are separated by top-level module, not by crate
 The binary is the only consumer, so a crate boundary buys nothing a module boundary does not.

@@ -15,15 +15,16 @@ Red means a repoint is due ([`../process.md`](../process.md),
 ## What exists
 
 The `bruce` crate is a scaffold: D39's top-level modules, a binary that says
-no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Seven modules hold
+no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Eight modules hold
 code: `cli`, the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check and
 the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views and Extract, with Resolve
 declared and empty; `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
 the profile's facts and the content hash; and
-`forge`, the edit-URL shape parse; and
-`url`, the canonical form and `url_id`. The rest hold only their doc.
+`forge`, the edit-URL shape parse;
+`url`, the canonical form and `url_id`; and
+`fetch`, the fetcher trait, the HTTP fetcher for one hop and the body decoding. The rest hold only their doc.
 `docs/manual/` holds the config reference. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -39,8 +40,8 @@ The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
 - [x] **3.2** The store's rows: schema 2, hop structs, the `sitemap` kind, and
   the writer's `targets`, `anchors` and `links`; amends D13.
   [Notes](../wip/roadmap-P3.2-store-rows-notes.md).
-- [ ] **3.3** One hop over HTTP: the fetcher trait, reqwest, retries, the size
-  cap and the charset.
+- [x] **3.3** One hop over HTTP: the fetcher trait, reqwest, retries, the size
+  cap and the charset. [Notes](../wip/roadmap-P3.3-one-hop-notes.md).
 - [ ] **3.4** Per-host politeness: rate, `concurrency`, robots.txt and
   `user_agent`; amends D11.
 - [ ] **3.5** The crawl: the frontier, URL classes, hops, outcomes and the

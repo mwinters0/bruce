@@ -15,7 +15,7 @@ records, each part saying why its module holds it. **Not in one place** names wh
 does not explain.
 
 Every concept below is, so far, one top-level module, placed by P1's spec (`roadmap-P1-scaffold.md`, "Where the concepts
-live"). `cli`, `config`, `store`, `profile`, `extract`, `forge` and `url` hold code; the rest hold only their doc. The
+live"). `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url` and `fetch` hold code; the rest hold only their doc. The
 decisions each carries are cited in its module's doc.
 
 ## Subcommands
@@ -37,7 +37,10 @@ decisions each carries are cited in its module's doc.
 
 ## Fetchers
 
-- **bruce** — `fetch.rs`.
+- **bruce** — `fetch/`: the trait, one hop's response and the failure
+  causes in the parent file, the reqwest fetcher in the `http` child, and
+  the body-to-text decoding in the `charset` child, which P5's local fetcher
+  reuses. It sits above `url` only; the crawler above it follows the hops (D39).
 
 ## The extraction pass and its core heuristics
 
