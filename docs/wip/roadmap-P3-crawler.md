@@ -187,6 +187,15 @@ Settled 2026-10-18 (D14, D40).
 - **A sitemap not found or not fetched never stops the run**: the crawl
   follows links alone, and the run records that it had no sitemap, so P4's
   orphan report can say it has nothing to go on.
+- **Each root records the sitemaps it read as links of kind `sitemap_file`
+  from the root's URL to each file it found or was set**, one per root per
+  file though the file is read once, `raw_href` the set value, the
+  robots.txt line or the probe path; an index's children are `sitemap_file`
+  links from the index, leaving `sitemap` for an entry naming a page. "No
+  sitemap" is then per root, and a broken, unreadable or `too_large` file
+  shows in the broken-link join. A probe that misses still writes nothing
+  (D47). Settled 2026-10-18, rejecting a `runs` column (history, "The run's
+  sitemaps are links from each root"). Amends D13.
 
 ## The canonical form
 
@@ -346,6 +355,12 @@ pages". Against wiremock.
 
 Discovery (D40), indexes, gzip, scope filtering and `sitemap` links
 ("Sitemaps"). Against wiremock.
+
+### P3.6.1 Sitemap files as links
+
+Earned: P3.6 shipped no record of which sitemaps a root read ("Sitemaps",
+its `sitemap_file` bullet). The `sitemap_file` kind from each root and each
+index, against wiremock. Amends D13 and D47.
 
 ### P3.7 `bruce crawl`
 

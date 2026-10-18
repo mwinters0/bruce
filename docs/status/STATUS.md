@@ -50,6 +50,8 @@ The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
   [Notes](../wip/roadmap-P3.5-crawl-notes.md).
 - [x] **3.6** Sitemaps: discovery, indexes, gzip and `sitemap` links; adds
   D47. [Notes](../wip/roadmap-P3.6-sitemaps-notes.md).
+- [ ] **3.6.1** Sitemap files as links: `sitemap_file` from each root and
+  each index; amends D13 and D47.
 - [ ] **3.7** `bruce crawl`: the subcommand, Ctrl-C and the manual; amends D5.
 - [ ] **3.8** The live crawl of `/en-US/fedora-docs/`.
 
@@ -66,14 +68,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **"The run records that it had no sitemap" is read as no `sitemap` link,
-  not a column.** The spec's "Sitemaps" asks the run to record that it had
-  none, so P4's orphan report can say it has nothing to go on. P3.6 adds no
-  `runs` column: the run's `crawl::Summary` counts `sitemaps` for P3.7 to
-  print, and in the DB a run with no `links` row of kind `sitemap` had no
-  sitemap whose entries could be orphans, which is exactly what the report
-  needs; a sitemap set and broken is still a target. The column would cost a
-  schema version (D43) for a fact a join already gives. Reconsidering means
-  a `runs` column (say `sitemaps`), schema 3, and the crawl updating the row
-  at the end, which D2 allows only for `finished_at` today.
