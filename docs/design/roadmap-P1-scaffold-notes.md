@@ -65,7 +65,7 @@ map.
   found.
 - **`[host]` settings are loaded and enforced nowhere**; their precedence is
   `HostSettings`'s rustdoc and the manual. The keys P3 adds are its
-  spec's (`../wip/roadmap-P3-crawler.md`, "Config keys").
+  spec's (`roadmap-P3-crawler.md`, "Config keys").
 
 ## What P4 inherits
 

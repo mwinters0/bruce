@@ -37,7 +37,7 @@ by destination").
   drafted one) lists them as tasks. P4 decides whether a link to a page whose
   canonical names another URL belongs in that second view, and whether to drop
   the `redirected` column (KD3).
-- **Origin.** P3's grilling, 2026-10-17 (`../wip/roadmap-P3-crawler.md`,
+- **Origin.** P3's grilling, 2026-10-17 (`roadmap-P3-crawler.md`,
   "Redirects"), and P3.5.
 
 ## What a crawl leaves for the join to place
@@ -76,7 +76,7 @@ by destination").
 - **Why P4 cares.** A report's default run, and a diff's pair, should be the
   latest *finished* ones, and `prune` decides what becomes of unfinished
   runs.
-- **Origin.** P3's grilling, 2026-10-18 (`../wip/roadmap-P3-crawler.md`,
+- **Origin.** P3's grilling, 2026-10-18 (`roadmap-P3-crawler.md`,
   "An interrupted run"); the cut targets, P3.7.1.
 
 ## Allowlisting the forge sets a full crawl's length
@@ -92,6 +92,6 @@ by destination").
   allowlisted, and so whether the run is 40 minutes or hours; D46's
   `Reopens` (the repeat mattering at the site's pace) is met on the forge
   first, a memo saving about a quarter of its requests.
-- **Origin.** P3.8, 2026-10-18 (`../wip/roadmap-P3.8-live-crawl-notes.md`;
+- **Origin.** P3.8, 2026-10-18 (`roadmap-P3-crawler-notes.md`;
   `runs/p3.8-live-20261018/live.duckdb`). Contingent on Antora's
   default-UI toolbar links and the forge's `Crawl-delay`.

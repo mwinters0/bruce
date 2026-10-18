@@ -16,7 +16,7 @@ never reused.
 |---|---|---|
 | P1 — scaffold and parser spike | Complete | [`roadmap-P1-scaffold.md`](roadmap-P1-scaffold.md), [notes](roadmap-P1-scaffold-notes.md) |
 | P2 — the extractor | Complete | [`roadmap-P2-extractor.md`](roadmap-P2-extractor.md), [notes](roadmap-P2-extractor-notes.md) |
-| P3 — the crawler | Current | [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md) |
+| P3 — the crawler | Complete | [`roadmap-P3-crawler.md`](roadmap-P3-crawler.md), [notes](roadmap-P3-crawler-notes.md) |
 | P4 — verdicts and reports; the first en-US crawl | Sketched; not grilled | this file, below |
 | P5 — CI mode: baseline and `check-dir` | Sketched; not grilled | this file, below |
 | P6 — release and the deployment guide | Sketched; not grilled | this file, below |
@@ -78,11 +78,12 @@ phases is [`roadmap-P2-extractor-notes.md`](roadmap-P2-extractor-notes.md).
 
 ## P3 — The crawler
 
-The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md):
+The spec is [`roadmap-P3-crawler.md`](roadmap-P3-crawler.md):
 the canonical form and `url_id` (D7, D26), what each URL class costs a
 request, redirects and meta-refresh aliases as hops, per-host politeness (D8,
 D18), sitemaps (D14), the store's remaining rows (D28) and `bruce crawl`,
-closing with a live crawl of one docs.fp.o component.
+closing with a live crawl of one docs.fp.o component. What it left for later
+phases is [`roadmap-P3-crawler-notes.md`](roadmap-P3-crawler-notes.md).
 
 ## P4 — Verdicts, reports, and the first en-US crawl
 

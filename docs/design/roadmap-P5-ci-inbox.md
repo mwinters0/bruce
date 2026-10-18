@@ -13,5 +13,5 @@ destination").
   on introduced breakage.
 - **Why P5 cares.** `check-dir`'s output serves both: introduced redirected
   links listed apart from the breakage that fails the gate, never failing it.
-- **Origin.** P3's grilling, 2026-10-17 (`../wip/roadmap-P3-crawler.md`,
+- **Origin.** P3's grilling, 2026-10-17 (`roadmap-P3-crawler.md`,
   "Redirects").

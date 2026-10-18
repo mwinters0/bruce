@@ -32,37 +32,6 @@ and the development process is in place: [`../process.md`](../process.md), the
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
 pages, chosen and saved by `scripts/fixtures.py`.
 
-## P3 progress
-
-The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
-
-- [x] **3.1** Canonical URLs: `url`, `strip_query`, and scope matched on the
-  canonical form; amends D44. [Notes](../wip/roadmap-P3.1-canonical-urls-notes.md).
-- [x] **3.2** The store's rows: schema 2, hop structs, the `sitemap` kind, and
-  the writer's `targets`, `anchors` and `links`; amends D13.
-  [Notes](../wip/roadmap-P3.2-store-rows-notes.md).
-- [x] **3.3** One hop over HTTP: the fetcher trait, reqwest, retries, the size
-  cap and the charset. [Notes](../wip/roadmap-P3.3-one-hop-notes.md).
-- [x] **3.4** Per-host politeness: rate, `concurrency`, robots.txt and
-  `user_agent`; amends D11. [Notes](../wip/roadmap-P3.4-politeness-notes.md).
-- [x] **3.5** The crawl: the frontier, URL classes, hops, outcomes and the
-  writer feed; adds KD3 and KD4, and D46.
-  [Notes](../wip/roadmap-P3.5-crawl-notes.md).
-- [x] **3.6** Sitemaps: discovery, indexes, gzip and `sitemap` links; adds
-  D47. [Notes](../wip/roadmap-P3.6-sitemaps-notes.md).
-- [x] **3.6.1** Sitemap files as links: `sitemap_file` from each root and
-  each index; amends D13 and D47.
-  [Notes](../wip/roadmap-P3.6.1-sitemap-files-notes.md).
-- [x] **3.7** `bruce crawl`: the subcommand, Ctrl-C and the manual; amends D5.
-  [Notes](../wip/roadmap-P3.7-bruce-crawl-notes.md).
-- [x] **3.7.1** A stop bounded in time: 30 s, nothing after it, the second
-  Ctrl-C flushing. [Notes](../wip/roadmap-P3.7.1-bounded-stop-notes.md).
-- [x] **3.7.2** An abandoned run holds whole targets: the second Ctrl-C
-  waits for writes already started; adds D49.
-  [Notes](../wip/roadmap-P3.7.2-abandoned-run-notes.md).
-- [x] **3.8** The live crawl of `/en-US/fedora-docs/`; adds I14.
-  [Notes](../wip/roadmap-P3.8-live-crawl-notes.md).
-
 ## Not started
 
 P4 onward in [`../design/roadmap.md`](../design/roadmap.md)'s index. None has

@@ -27,7 +27,7 @@ through and tags the xrefs D20 reports. Tested on P1's fixtures (D24).
 - **Not P2's:** the store's rows for anchors, links and facts, the canonical
   URL and its id (D7, D26, P3's `url`), and any subcommand. Whether a body is
   extracted at all (status, content type) and its charset are the caller's
-  (`../wip/roadmap-P3-crawler.md`, "Which responses are read").
+  (`roadmap-P3-crawler.md`, "Which responses are read").
 
 ## The Extract hook
 
@@ -130,7 +130,7 @@ Settled 2026-10-17 (D13's kinds, amended by the slice building them):
 **`<base href>` is honoured** in resolving every later href, though no
 fixture has one: ignoring it resolves every link on such a site wrongly and
 silently. Whether a `refresh` link is followed as a redirect hop (D7) is P3's
-(`../wip/roadmap-P3-crawler.md`, "Redirects"): docs.fp.o's aliases are 200 pages
+(`roadmap-P3-crawler.md`, "Redirects"): docs.fp.o's aliases are 200 pages
 whose only content is one ("Facts found while grilling").
 
 ## The content hash

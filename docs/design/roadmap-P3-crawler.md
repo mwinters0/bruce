@@ -1,9 +1,8 @@
 # P3 — The crawler
 
-What P3 does and why. Its progress is
-[`../status/STATUS.md`](../status/STATUS.md)'s checklist; the decisions are
-in [`../design/decisions.md`](../design/decisions.md) and are cited here,
-never restated.
+What P3 does and why. It is complete; what it left for later phases is
+[`roadmap-P3-crawler-notes.md`](roadmap-P3-crawler-notes.md). The decisions
+are in [`decisions.md`](decisions.md) and are cited here, never restated.
 
 ## Intent
 
