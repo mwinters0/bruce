@@ -23,7 +23,8 @@ concept map.
 
 - **`extract` is a pure function of one page**: body, URL and the root's
   `HashScope` and profile choice in, `Extracted` out. Which responses reach it
-  and the charset are the caller's (`roadmap-P3-crawler-inbox.md`).
+  and the charset are the caller's (`../wip/roadmap-P3-crawler.md`,
+  "Which responses are read").
 - **`Extracted::hash` is a `u128`** and P1's `pages.content_hash` a `BLOB`, so
   the store's writer picks the byte order; nothing reads the hash yet.
 - **`Link::url` is `None` where the raw value does not parse**

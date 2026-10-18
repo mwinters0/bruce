@@ -29,9 +29,27 @@ and the development process is in place: [`../process.md`](../process.md), the
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
 pages, chosen and saved by `scripts/fixtures.py`.
 
+## P3 progress
+
+The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
+
+- [ ] **3.1** Canonical URLs: `url`, `strip_query`, and scope matched on the
+  canonical form; amends D44.
+- [ ] **3.2** The store's rows: schema 2, hop structs, the `sitemap` kind, and
+  the writer's `targets`, `anchors` and `links`; amends D13.
+- [ ] **3.3** One hop over HTTP: the fetcher trait, reqwest, retries, the size
+  cap and the charset.
+- [ ] **3.4** Per-host politeness: rate, `concurrency`, robots.txt and
+  `user_agent`; amends D11.
+- [ ] **3.5** The crawl: the frontier, URL classes, hops, outcomes and the
+  writer feed.
+- [ ] **3.6** Sitemaps: discovery, indexes, gzip and `sitemap` links.
+- [ ] **3.7** `bruce crawl`: the subcommand, Ctrl-C and the manual; amends D5.
+- [ ] **3.8** The live crawl of `/en-US/fedora-docs/`.
+
 ## Not started
 
-P3 onward in [`../design/roadmap.md`](../design/roadmap.md)'s index. None has
+P4 onward in [`../design/roadmap.md`](../design/roadmap.md)'s index. None has
 been grilled.
 
 ## Decisions worth another look

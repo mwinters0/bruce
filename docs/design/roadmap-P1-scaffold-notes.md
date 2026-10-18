@@ -64,7 +64,8 @@ map.
   `(run_id, url_id)`, so the writer needs a `Row::Target` before a page can be
   found.
 - **`[host]` settings are loaded and enforced nowhere**; their precedence is
-  `HostSettings`'s rustdoc and the manual. The rest is the P3 inbox.
+  `HostSettings`'s rustdoc and the manual. The keys P3 adds are its
+  spec's (`../wip/roadmap-P3-crawler.md`, "Config keys").
 
 ## What P4 inherits
 
