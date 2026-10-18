@@ -217,9 +217,14 @@ D44).
 
 ## An interrupted run
 
-Settled 2026-10-18. **The first Ctrl-C** stops new requests, lets those in
-flight finish (the 30 s timeout bounds it), flushes the writer and leaves
-`runs.finished_at` NULL; **a second** aborts. **No run resumes**: an
+Settled 2026-10-18, amended the same day
+(`../status/history/2026-10-18.md`, "A stop is bounded in time").
+**The first Ctrl-C** is done within 30 s: no target starts, a started one
+takes no further hop, retry or fallback, a target not finished by then is
+left unwritten, and the writer is flushed, leaving `runs.finished_at` NULL. A
+stopped run holds fewer targets rather than taking longer. **A second**
+abandons the fetches at once but still flushes what reached the writer.
+**No run resumes**: an
 unfinished run's rows stay (D2) and the next run starts afresh. Rejected: a
 persisted frontier, much machinery for a 40-minute job. Which run a report
 reads by default is P4's (its inbox).
@@ -366,6 +371,15 @@ index, against wiremock. Amends D13 and D47.
 
 The subcommand and its rules ("The command line"), Ctrl-C ("An interrupted
 run"), and the manual. Amends D5.
+
+### P3.7.1 A stop bounded in time
+
+Earned: P3.7 shipped a first Ctrl-C that waits on every started target's
+host pace, and a second that loses unflushed rows ("An interrupted run", as
+amended). The 30 s stop, no hop, retry or fallback after it, a waiter
+dropped at once, the cut counted, and the manual; the shape is in
+`../status/history/2026-10-18.md`, "A stop is bounded in time". Against
+wiremock.
 
 ### P3.8 The live crawl
 

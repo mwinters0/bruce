@@ -27,7 +27,8 @@ What P3.8 onward inherits, and what was refused.
 - **Calls beyond the spec**, none touching a contract: the exit statuses;
   the writer channel's 4096 rows; a file naming no root and no URL refused
   as "neither"; the profile error listing `auto` and the registry's names;
-  the wait at the first Ctrl-C ("Decisions worth another look").
+  the wait at the first Ctrl-C, since amended (P3.7.1;
+  `../status/history/2026-10-18.md`, "A stop is bounded in time").
 - **Observed once, not a test** (a signal to the test process would reach
   every test): `kill -INT` on `bruce crawl` against a local `http.server`
   printed the stop line, wrote four pages and exited 130.

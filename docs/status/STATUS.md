@@ -55,6 +55,8 @@ The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
   [Notes](../wip/roadmap-P3.6.1-sitemap-files-notes.md).
 - [x] **3.7** `bruce crawl`: the subcommand, Ctrl-C and the manual; amends D5.
   [Notes](../wip/roadmap-P3.7-bruce-crawl-notes.md).
+- [ ] **3.7.1** A stop bounded in time: 30 s, nothing after it, the second
+  Ctrl-C flushing.
 - [ ] **3.8** The live crawl of `/en-US/fedora-docs/`.
 
 ## Not started
@@ -70,15 +72,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **The first Ctrl-C waits for every target started, its host's pace
-  included.** The spec ("An interrupted run") lets "those in flight finish
-  (the 30 s timeout bounds it)". `crawl::Shared::drive` stops starting
-  targets, but up to `WORKERS` (64) are started at once, and most of them
-  are waiting for their host's next slot inside `Fetcher::fetch`, not on a
-  request. At docs.fp.o's `Crawl-delay: 1` the wait can pass a minute, which
-  the 30 s timeout does not bound. Made this way because telling a request
-  sent from one queued would put a stop in `fetch::http::host`'s admission,
-  P3.4's tested core. A second Ctrl-C still exits at once. Reconsidering
-  means a stop the host's admission obeys, so a queued target is dropped
-  unwritten, a stopped run then holding fewer targets.
