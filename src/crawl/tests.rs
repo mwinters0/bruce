@@ -95,8 +95,6 @@ fn count(store: &Store, sql: &str) -> i64 {
     store.connection().query_row(sql, [], |r| r.get(0)).unwrap()
 }
 
-/// One target: its URL without the server's address, outcome, reason and
-/// status.
 /// A page's URL, title, content type, size, profile, `via_links` and hash length.
 type PageFacts = (
     String,
@@ -108,6 +106,8 @@ type PageFacts = (
     usize,
 );
 
+/// One target: its URL without the server's address, outcome, reason and
+/// status.
 type Target = (String, String, Option<String>, Option<u16>);
 
 impl Done {

@@ -161,7 +161,8 @@ pub enum Error {
     },
     /// The file is not TOML, or holds a key or type the schema refuses.
     Parse(toml::de::Error),
-    /// A value parsed but is not usable; the message names the key.
+    /// A value parsed but is not usable; the message names the key, or the
+    /// root.
     Invalid(String),
 }
 
@@ -252,7 +253,7 @@ impl Config {
     }
 
     /// The name robots.txt knows this crawler by: the first product name of
-    /// `user_agent`, up to the `/`, lowercased (`bruce` for `bruce/0.1`).
+    /// `user_agent`, up to the first `/` or space, lowercased (`bruce` for `bruce/0.1`).
     pub fn robots_token(&self) -> &str {
         &self.token
     }
@@ -266,8 +267,8 @@ impl Config {
 
     /// Refuses `robots = false` on a host no root starts on, since external
     /// hosts' robots.txt is always obeyed (D8). [`Config::parse`] runs it when
-    /// the file names a root; whoever adds one from the command line runs it
-    /// again.
+    /// the file names a root; whoever adds the root from the command line, to a
+    /// file naming none, runs it then.
     pub fn check_robots_hosts(&self) -> Result<(), Error> {
         for (name, h) in &self.hosts {
             if !h.robots && !self.is_root_host(name) {

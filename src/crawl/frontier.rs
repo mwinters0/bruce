@@ -5,8 +5,8 @@
 //! its `url_id` hashes. A URL in a root's scope has that root's form; every
 //! other URL has the plain form, `canonical(url, false)`, since no root's
 //! `strip_query` governs it. [`Frontier::claim`] is the run's one
-//! deduplication: a target is asked about by whoever claims its `url_id`
-//! first (D13), and a claim is never given back.
+//! deduplication: a target is written by whoever claims its `url_id` first
+//! (D13), and a claim is never given back.
 
 use std::collections::HashSet;
 use std::sync::Mutex;
@@ -27,8 +27,8 @@ pub enum Plan {
     /// for its anchors only (D3).
     Anchors,
     /// On an allowlisted host and named by any other kind of link, or reached
-    /// by a redirect to a host nothing else names: asked for its status
-    /// alone, HEAD with the GET fallback (D13).
+    /// by a redirect where a link would leave it unchecked: asked for its
+    /// status alone, HEAD with the GET fallback (D13).
     Status,
     /// Not requested; the target row says why.
     Unchecked(&'static str),

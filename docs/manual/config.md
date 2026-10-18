@@ -54,7 +54,8 @@ alone.
 The `url` must be in the root's own scope: a root whose `include` or `exclude`
 rules out its starting page is an error.
 
-**The path prefix** is the root's URL without its query, up to the last `/`.
+**The path prefix** is the root's URL in the form under "Writing globs",
+without its query, up to the last `/`.
 For `https://docs.example.org/en-US/` it is the URL itself. For
 `https://docs.example.org/en-US/index.html` it is
 `https://docs.example.org/en-US/`.
@@ -74,7 +75,7 @@ crawls every locale's `fedora/` pages, except versions `f20` to `f29`.
 
 **Writing globs.** A glob is matched against a URL in the form `bruce`
 treats as its one spelling: the scheme and host in lower case, no default port,
-`.` and `..` segments resolved, and a `%XX` escape decoded where it stands for
+`.` and `..` segments resolved, and a `%XX` escape in the path or query decoded where it stands for
 a letter, digit, `-`, `.`, `_` or `~`, so `%7Euser` is `~user`. Every other
 escape stays, with its hex digits in capitals (`%2F`, `%C3%A9`). Write a glob as
 the URL reads in that form: one written with `%7E` never matches. The `#fragment`

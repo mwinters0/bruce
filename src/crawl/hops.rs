@@ -1,7 +1,7 @@
 //! Redirect hops (D7): the chain of one target, its limit, and where a hop
 //! leads.
 //!
-//! A hop is a 3xx with a `Location`, or a 200 HTML page whose `refresh` has
+//! A hop is a 3xx with a `Location`, or a 2xx HTML page whose `refresh` has
 //! delay 0 (`roadmap-P3-crawler.md`, "Redirects"). [`Chain`] records them
 //! in the shape the `targets` row stores; the crawler decides what to ask
 //! next and reads these for the rest.

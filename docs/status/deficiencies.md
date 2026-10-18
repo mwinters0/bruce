@@ -35,9 +35,10 @@ roadmap's phase index.
   **(a) deliberate tradeoff**: the right-to-left scan that avoids it misreads a
   file path holding such a directory, which is likelier. Detail: `src/forge.rs`
 
-- **KD3** — `links.redirected` is `false` on every row, though the schema has
-  the column. **(c) unowned**: P4's grilling would decide to drop the column
-  (a schema change, D43) or fill it by a view. Detail: `src/crawl.rs`
+- **KD3** — `links.redirected` is `false`, and `links.outcome` and `reason`
+  NULL, on every row, though the schema has the columns. **(c) unowned**: P4's
+  grilling would decide to drop them (a schema change, D43) or fill them by a
+  view. Detail: `src/crawl.rs`
 - **KD4** — The first link to an allowlisted URL decides how it is asked, so a
   URL named by an image before an anchor link has no anchors to check that
   link's fragment against. **(c) unowned**: a design holding every link's kind

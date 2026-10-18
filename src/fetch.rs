@@ -3,10 +3,10 @@
 //! A fetcher answers **one hop**: the response to one URL, never the chain a
 //! redirect starts, because the crawler follows hops itself so each one
 //! passes its host's rate limit and robots.txt (D7). It reads a body only
-//! where the extractor can use it: a 2xx `text/html` or
-//! `application/xhtml+xml` response, decoded to a `String` (`charset`).
-//! Every other response is classified by its status alone, so a link to a
-//! PDF costs one request and no download (D16). Classifying a status into an
+//! where the caller can use it: a page's 2xx `text/html` or
+//! `application/xhtml+xml` response, decoded to a `String` (`charset`), or a
+//! sitemap's 2xx body as bytes. Every other response is classified by its
+//! status alone, so a link to a PDF costs one request and no download (D16). Classifying a status into an
 //! outcome is the crawler's; what a fetcher owes it is a [`Response`], or a
 //! [`Failure`] saying why there was none.
 //!
@@ -38,8 +38,9 @@ pub const MAX_SITEMAP: usize = 50 * 1024 * 1024;
 pub enum Mode {
     /// A page: GET, and an HTML body read for the extractor.
     Page,
-    /// Only whether it answers (D13): HEAD, retried once as a GET when it
-    /// answers 4xx or 5xx, and no body read either way.
+    /// Only whether it answers (D13): HEAD, asked again as a page's GET with
+    /// its retries when it answers 4xx or 5xx or fails transiently, and no
+    /// body read either way.
     Asset,
     /// A sitemap (D14): GET, and a 2xx body read as bytes whatever its type,
     /// a `.xml.gz` file being served under several.
@@ -100,9 +101,10 @@ pub enum FailureKind {
     /// No connection was made, and not for any cause above: refused,
     /// unreachable, or a resolver that did not answer.
     Connect,
-    /// A connection was made and then lost before the response was whole.
+    /// A connection was made and then lost before the response was whole,
+    /// or what came back was not HTTP.
     Reset,
-    /// Anything else, a malformed response included.
+    /// Anything else.
     Other,
     /// The crawl was stopped before the request was sent. The crawler
     /// writes nothing for it.

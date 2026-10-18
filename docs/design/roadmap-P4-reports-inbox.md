@@ -54,7 +54,9 @@ by destination").
   with `too_large` for a page over the cap, which has no `anchors`. An
   allowlisted page is a `pages` row and `anchors` with no `links` and no
   `page_facts`. `pages.via_links` and `pages.in_sitemap` record the
-  discovery that claimed the page, so the sitemap and link joins are the
+  discovery that claimed the page, a redirect's landing page taking the
+  redirecting URL's (a listed URL moved to an unlisted page marks it
+  listed), so the sitemap and link joins are the
   authority for orphans and unlisted pages. A sitemap file is a target and
   each entry naming a page a `links` row of kind `sitemap` from it; entries
   outside every root's scope have no row. Each root links to each sitemap

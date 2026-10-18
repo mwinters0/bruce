@@ -173,6 +173,6 @@ not as an error.
 - **Scope limit.** Two aliases observed. Were the site to switch Antora's `redirect_facility` from
   `static` to `httpd`, `nginx` or `netlify`, an alias would be a 3xx, already a hop.
 - **Verified against.** docs.fp.o, 2026-10-18.
-- **Relied on by.** D7, a zero-delay refresh being one of its hops, so an alias is a target whose
-  `final_url` is the page and never a `pages` row.
+- **Relied on by.** D7, a zero-delay refresh being one of its hops, so an alias read as a page is
+  a target whose `final_url` is the page and never a `pages` row.
 - **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/fedora-docs/ | grep -o '<meta http-equiv="refresh"[^>]*>'`

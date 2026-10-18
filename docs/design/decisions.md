@@ -195,12 +195,12 @@ from a fuzzy match over resource IDs, run only on failures. CI: resolved via D19
 Rejected: checking `#comp::page.adoc` against the page's own ids, which is what a naive checker does.
 
 ### D46 Where a redirect lands is a target of its own, written by whoever claims it first
-A `final_url` then always names a `targets` row, so P4's fragment join is two key lookups from the link
-to the final page's `anchors`. The redirecting target is claimed at discovery, its landing URL after the
-hops end; the first claim writes the landing target and, in scope, its page, and a loser still has its
-own answer from the chain. Rejected: holding the hops open on the landing URL's own task, which makes
-one target's outcome wait on another's; a memo of settled targets, to save a repeat request to a landing
-URL already claimed (about one per such redirect). Reopens: that repeat mattering at docs.fp.o's pace.
+A `final_url` then names a `targets` row bar a stopped run's, so P4's fragment join is two key lookups
+from the link to the final page's `anchors`. The redirecting target is claimed at discovery, its landing
+URL after the hops end; the first claim writes the landing target and, if it reads it, its page, a loser
+still has its own answer from the chain. Rejected: holding the hops open on the landing URL's own task,
+which makes one target's outcome wait on another's; a memo of settled targets, to save a repeat request
+to a landing URL already claimed. Reopens: that repeat mattering at docs.fp.o's pace.
 Code: `crawl::Shared::write`. Evidence: `crawl::tests::a_redirect_is_a_chain_and_its_landing_page_is_recorded_once`.
 
 ## Antora and CI
@@ -250,8 +250,8 @@ mise do not use; `allowlist` inside `[host]`, a root's own host belonging there 
 ### D44 A root's scope is its path prefix until `include` names globs, which match the whole canonical URL
 `include` replaces the prefix rather than narrowing it, so one root can span locales; `exclude` always
 wins. Globs are globset's, `*` and `?` stopping at `/`, so a version segment matches as `f2?`. They
-match the canonical form (D7), so a glob written with a decoded character matches the URL a browser
-shows and one written with an escape the form decodes never does. Rejected: globs over the path alone,
+match the canonical form (D7), so a glob written with an unreserved character (`~`) matches its
+escape too, and one written with an escape the form decodes (`%7E`) never does. Rejected: globs over the path alone,
 which cannot scope by host; regexes; `include` narrowing the prefix. Reopens: a root needing both
 its prefix and an include. A root's `url` must be in its own scope, refused at load.
 Code: `config::Root::in_scope`. Evidence: `config::tests::scope_is_matched_on_the_canonical_form`.

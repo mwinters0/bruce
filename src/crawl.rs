@@ -4,19 +4,21 @@
 //!
 //! A run reads the roots' sitemaps first, so a page a sitemap lists is
 //! claimed as listed before any link can name it (D47), and then seeds the
-//! roots' URLs and the pages the sitemaps listed. It asks about each target
+//! roots' URLs and the pages the sitemaps listed. It writes each target
 //! once, at most [`WORKERS`] at a time, a host's own pace held by the
 //! fetcher (D8). One task follows one target's hops itself, so each passes
 //! robots.txt and its host's rate (D7), reads the answer, and then, on the
 //! blocking pool, extracts the page and sends its rows to the writer from
 //! there, so the writer's bounded channel pushes back on the pool and not on
 //! the runtime (D28). A URL is asked about by whoever claims its `url_id` first
-//! (`frontier`); a page a redirect lands on is recorded by whichever of the
+//! (`frontier`), though a redirect's hops are asked again wherever they lead
+//! (D46); a page a redirect lands on is recorded by whichever of the
 //! redirecting target and the landing URL's own discovery claims it first.
 //! The run writes every target's HTTP-level outcome and leaves
 //! `links.outcome` NULL, the verdicts being SQL's after the crawl (D28).
 //!
-//! A sitemap is a target, and each of its entries a link from it, of kind
+//! A sitemap is a target, and each of its entries in a root's scope a link
+//! from it, the rest only counted, of kind
 //! `sitemap` for a page and `sitemap_file` for an index's sitemap (D13). A
 //! root's sitemap is the one it sets, or else those its host's robots.txt
 //! names, or else the first of `sitemap.xml` under the root and at the host
@@ -233,7 +235,7 @@ enum End {
     /// robots.txt forbids the URL, or could not be read: not requested.
     Blocked(&'static str),
     Stopped(Stop),
-    /// The page answered and the extractor could not read it.
+    /// The page or sitemap answered and could not be read as one.
     Unreadable,
 }
 
@@ -920,16 +922,17 @@ where
                 raw_href: link.raw.clone(),
                 kind: link.kind.as_str(),
                 xref_refspec: link.tag.clone(),
+                // deficiency: KD3 The three columns are never filled. A page's
+                // links are written when it is read, before the targets they
+                // name are asked about, and D2 lets only `runs.finished_at`
+                // change once written; a link's verdict (D28) and whether it
+                // goes through a redirect (`targets.redirect_chain` of its
+                // target) are joins. Holding a run's links back until their
+                // targets settle costs memory for the whole link graph. The
+                // columns are vestigial, and dropping them is a schema change
+                // (D43).
                 outcome: None,
                 reason: None,
-                // deficiency: KD3 The column is always false. A page's links
-                // are written when it is read, before the targets they name
-                // are asked about, and D2 lets only `runs.finished_at` change
-                // once written; whether a link goes through a redirect is
-                // `targets.redirect_chain` of its target, a join. Holding a
-                // run's links back until their targets settle costs memory
-                // for the whole link graph. The column is vestigial, and
-                // dropping it is a schema change (D43).
                 redirected: false,
             }))?;
         }

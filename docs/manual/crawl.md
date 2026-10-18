@@ -39,12 +39,12 @@ The run's number and what it wrote are printed when it ends:
 run 3: 2412 targets, 2305 pages, 69 sitemap files
 ```
 
-`no sitemap` there means none was found, and every page was found by
-following links. Sitemap entries outside every root are counted and dropped.
+`no sitemap` there means no sitemap file was read, none being found or the
+one found unreadable, and every page was found by following links. Sitemap entries outside every root are counted and dropped.
 
 ## Stopping a crawl
 
-**Ctrl-C once** stops the crawl within 30 seconds:
+**Ctrl-C once** stops the crawl's requests within 30 seconds:
 
 ```text
 bruce crawl: stopping: finishing requests in flight (30 s at most); Ctrl-C again to abandon them

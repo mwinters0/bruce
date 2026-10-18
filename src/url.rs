@@ -4,8 +4,8 @@
 //! (D44), and [`Canonical::id`] hashes it into the `url_id` every table keys
 //! on. `url` already lowercases the scheme and host (punycode for a
 //! non-ASCII one), drops a default port, resolves dot-segments and makes an
-//! empty path `/`; what this adds is the escapes. A `%XX` is decoded only
-//! where the byte is unreserved (`A-Z a-z 0-9 - . _ ~`), and every other
+//! empty path `/`; what this adds is the escapes. A `%XX` in the path or the
+//! query is decoded only where the byte is unreserved (`A-Z a-z 0-9 - . _ ~`), and every other
 //! escape stays with its hex uppercased, so a `%2F` never becomes a `/`
 //! that moves the path. The fragment is not part of it: it is
 //! `links.fragment`. The query is, unless the root strips it.

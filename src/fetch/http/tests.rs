@@ -640,3 +640,29 @@ async fn a_stop_takes_no_fallback() {
     assert_eq!(got.unwrap_err().kind, FailureKind::Stopped);
     assert_eq!(requests(&server).await, 1, "no GET followed the HEAD");
 }
+
+/// A response that is not HTTP is lost like a dropped connection: hyper's
+/// parse error reaches `classify` as a request error.
+#[tokio::test]
+async fn a_response_that_is_not_http_is_a_reset_and_retried() {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let accepted = Arc::new(AtomicUsize::new(0));
+    let count = accepted.clone();
+    tokio::spawn(async move {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        loop {
+            let Ok((mut stream, _)) = listener.accept().await else {
+                return;
+            };
+            count.fetch_add(1, Ordering::SeqCst);
+            let mut buf = [0u8; 4096];
+            let _ = stream.read(&mut buf).await;
+            let _ = stream.write_all(b"NOT HTTP AT ALL\r\n\r\n").await;
+        }
+    });
+    let url = Url::parse(&format!("http://127.0.0.1:{port}/")).unwrap();
+    let failure = fetcher(quick()).fetch(&url, Mode::Page).await.unwrap_err();
+    assert_eq!(failure.kind, FailureKind::Reset, "{failure}");
+    assert_eq!(accepted.load(Ordering::SeqCst), 4);
+}

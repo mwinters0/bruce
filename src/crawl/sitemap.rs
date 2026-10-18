@@ -36,7 +36,8 @@ pub enum Unread {
 }
 
 /// The `<loc>`s of the sitemap in `bytes`, which may be gzip, each trimmed and
-/// with its entities resolved. `max` caps the decompressed size.
+/// with its entities resolved. `max` caps a gzip's decompressed size; a
+/// plain body is capped by the fetcher.
 pub fn read(bytes: &[u8], max: usize) -> Result<Sitemap, Unread> {
     let inflated;
     let bytes = if bytes.starts_with(&[0x1f, 0x8b]) {

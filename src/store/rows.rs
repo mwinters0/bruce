@@ -114,8 +114,8 @@ pub struct LinkRow {
     /// One of D13's kinds, `sitemap` and `sitemap_file` included.
     pub kind: &'static str,
     pub xref_refspec: Option<String>,
-    /// The verdict, which the join after the crawl computes (D28); the
-    /// crawler leaves it `None`.
+    /// The crawler leaves it `None`: the verdict is the join's after the
+    /// crawl (D28), and a written row never changes (D2).
     pub outcome: Option<Outcome>,
     pub reason: Option<String>,
     pub redirected: bool,

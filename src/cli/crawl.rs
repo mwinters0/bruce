@@ -7,8 +7,8 @@
 //! settings silently, and a file naming none takes the URL as its only root,
 //! its other settings applying (D40). A root's profile must be one the
 //! registry holds, which only this layer can check (D39). The first Ctrl-C
-//! stops the crawl, which is done within [`STOP_GRACE`] (`crawl`'s doc), and
-//! flushes the writer, leaving `runs.finished_at` NULL; a second abandons the
+//! stops the crawl, whose requests end within [`STOP_GRACE`] (`crawl`'s
+//! doc), and flushes the writer, leaving `runs.finished_at` NULL; a second abandons the
 //! requests still out, waits for the targets already being written, and
 //! flushes the writer, so the run holds whole targets either way (D49). No
 //! run resumes: the next starts afresh.
