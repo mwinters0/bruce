@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::time::{Duration, UNIX_EPOCH};
 
 use super::*;
 use crate::profile::{Extract, Profile, Sink, View};
@@ -261,4 +262,239 @@ fn a_lookup_finds_the_pages_carrying_every_fact() {
             .unwrap()
             .is_empty()
     );
+}
+
+fn target(run: RunId, url_id: u64, chain: Vec<Hop>) -> TargetRow {
+    TargetRow {
+        run_id: run.0,
+        url_id,
+        url: format!("https://a.test/{url_id}"),
+        status: Some(200),
+        final_url: None,
+        redirect_chain: chain,
+        outcome: Outcome::Ok,
+        reason: None,
+        checked_at: None,
+        duration_ms: Some(30),
+    }
+}
+
+fn hop(url: &str, status: u16, refresh: bool) -> Hop {
+    Hop {
+        url: url.into(),
+        status,
+        refresh,
+    }
+}
+
+#[test]
+fn a_targets_chain_keeps_each_hops_url_status_and_kind() {
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let run = store.begin_run(Mode::Crawl, "abc", None).unwrap();
+    let writer = Writer::start(store, 4);
+    let h = writer.handle();
+    h.send(Row::Target(target(run, 1, Vec::new()))).unwrap();
+    // A quote and a comma in a URL must reach the column as written.
+    let odd = "https://a.test/it's,here?a=1&b=[2]";
+    let mut moved = target(run, 2, vec![hop(odd, 301, false), hop("b", 200, true)]);
+    moved.final_url = Some("https://a.test/final".into());
+    h.send(Row::Target(moved)).unwrap();
+    h.send(Row::Target(target(run, 3, vec![hop("c", 302, false)])))
+        .unwrap();
+    let store = writer.finish().unwrap();
+    assert_eq!(count(&store, "SELECT count(*) FROM targets"), 3);
+    assert_eq!(
+        count(
+            &store,
+            "SELECT count(*) FROM targets WHERE redirect_chain IS NULL AND url_id = 1"
+        ),
+        1
+    );
+    let chain: (String, u16, bool, u16, bool, usize) = store
+        .connection()
+        .query_row(
+            "SELECT redirect_chain[1].url, redirect_chain[1].status, redirect_chain[1].refresh, \
+             redirect_chain[2].status, redirect_chain[2].refresh, len(redirect_chain) \
+             FROM targets WHERE url_id = 2",
+            [],
+            |r| {
+                Ok((
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                ))
+            },
+        )
+        .unwrap();
+    assert_eq!(chain, (odd.to_string(), 301, false, 200, true, 2));
+    let one: (String, String) = store
+        .connection()
+        .query_row(
+            "SELECT redirect_chain[1].url, outcome FROM targets WHERE url_id = 3",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .unwrap();
+    assert_eq!(one, ("c".to_string(), "ok".to_string()));
+}
+
+#[test]
+fn a_targets_time_and_outcome_round_trip_on_both_write_paths() {
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let run = store.begin_run(Mode::Crawl, "abc", None).unwrap();
+    let at = UNIX_EPOCH + Duration::from_micros(1_700_000_000_123_456);
+    let writer = Writer::start(store, 4);
+    let h = writer.handle();
+    for (id, chain) in [(1, Vec::new()), (2, vec![hop("x", 302, false)])] {
+        let mut t = target(run, id, chain);
+        t.status = None;
+        t.outcome = Outcome::BrokenUrl;
+        t.reason = Some("dns".into());
+        t.checked_at = Some(at);
+        h.send(Row::Target(t)).unwrap();
+    }
+    h.send(Row::Target(target(run, 3, Vec::new()))).unwrap();
+    let store = writer.finish().unwrap();
+    let sql = "SELECT count(*) FROM targets WHERE status IS NULL AND outcome = 'broken_url' \
+               AND reason = 'dns' AND duration_ms = 30 \
+               AND epoch_us(checked_at) = 1700000000123456";
+    assert_eq!(count(&store, sql), 2);
+    assert_eq!(
+        count(
+            &store,
+            "SELECT count(*) FROM targets WHERE checked_at IS NULL"
+        ),
+        1
+    );
+}
+
+#[test]
+fn anchors_and_links_are_appended_with_their_kind() {
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let run = store.begin_run(Mode::Crawl, "abc", None).unwrap();
+    let writer = Writer::start(store, 4);
+    let h = writer.handle();
+    h.send(Row::Anchor(AnchorRow {
+        run_id: run.0,
+        url_id: 1,
+        anchor: "intro".into(),
+        tag: "h2".into(),
+        placement: "content",
+    }))
+    .unwrap();
+    for kind in ["anchor", "sitemap"] {
+        h.send(Row::Link(LinkRow {
+            run_id: run.0,
+            src_url_id: 1,
+            target_url_id: 2,
+            fragment: (kind == "anchor").then(|| "intro".to_string()),
+            raw_href: "../b/".into(),
+            kind,
+            xref_refspec: None,
+            outcome: None,
+            reason: None,
+            redirected: false,
+        }))
+        .unwrap();
+    }
+    let store = writer.finish().unwrap();
+    assert_eq!(
+        count(
+            &store,
+            "SELECT count(*) FROM anchors WHERE placement = 'content'"
+        ),
+        1
+    );
+    assert_eq!(
+        count(
+            &store,
+            "SELECT count(*) FROM links WHERE kind = 'sitemap' AND outcome IS NULL"
+        ),
+        1
+    );
+    assert_eq!(
+        count(
+            &store,
+            "SELECT count(*) FROM links WHERE fragment = 'intro'"
+        ),
+        1
+    );
+}
+
+#[test]
+fn a_verdict_on_a_link_is_stored_as_text() {
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let run = store.begin_run(Mode::Local, "abc", None).unwrap();
+    let writer = Writer::start(store, 1);
+    writer
+        .handle()
+        .send(Row::Link(LinkRow {
+            run_id: run.0,
+            src_url_id: 1,
+            target_url_id: 2,
+            fragment: None,
+            raw_href: "x".into(),
+            kind: "image",
+            xref_refspec: Some("a::b.adoc".into()),
+            outcome: Some(Outcome::BrokenAnchor),
+            reason: Some("unresolved_xref".into()),
+            redirected: true,
+        }))
+        .unwrap();
+    let store = writer.finish().unwrap();
+    let sql = "SELECT count(*) FROM links WHERE outcome = 'broken_anchor' AND redirected \
+               AND xref_refspec = 'a::b.adoc'";
+    assert_eq!(count(&store, sql), 1);
+}
+
+#[test]
+fn a_database_of_schema_version_1_is_refused() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("bruce.duckdb");
+    drop(Store::open(&path, &registry()).unwrap());
+    Connection::open(&path)
+        .unwrap()
+        .execute(
+            "UPDATE meta SET value = '1' WHERE key = 'schema_version'",
+            [],
+        )
+        .unwrap();
+    let err = Store::open(&path, &registry()).err().unwrap();
+    assert!(matches!(err, Error::SchemaVersion { ref found, expected: 2 } if found == "1"));
+}
+
+/// The watch for UF1: this fails on purpose at the duckdb release whose
+/// appender takes a list, when `Tables::insert_redirected` can go.
+// upstream: UF1
+#[test]
+fn the_appender_still_takes_no_list() {
+    use duckdb::types::Value;
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let mut appender = store.connection().appender("targets").unwrap();
+    let chain = Value::List(vec![Value::Struct(
+        vec![
+            ("url".to_string(), Value::Text("x".into())),
+            ("status".to_string(), Value::USmallInt(301)),
+            ("refresh".to_string(), Value::Boolean(false)),
+        ]
+        .into(),
+    )]);
+    let err = appender
+        .append_row(params![
+            1u64,
+            1u64,
+            "u",
+            Value::Null,
+            Value::Null,
+            chain,
+            "ok",
+            Value::Null,
+            Value::Null,
+            Value::Null
+        ])
+        .unwrap_err();
+    assert!(err.to_string().contains("not yet supported"), "{err}");
 }

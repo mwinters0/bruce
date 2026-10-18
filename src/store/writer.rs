@@ -1,56 +1,21 @@
 //! The single writer (D28): one thread owns the [`Store`] and feeds DuckDB
 //! appenders from a bounded channel, so a slow disk pushes back on the
-//! crawl and DuckDB sees one writing process. It handles the rows of the two
-//! tables the extractor's first output fills, `pages` and `page_facts`; the
-//! other tables' rows join [`Row`] with the phase that produces them.
+//! crawl and DuckDB sees one writing process. It writes the rows of
+//! [`Row`], one table each but `bodies`, which waits for its option.
 
 use std::fmt;
 use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
 use std::thread::JoinHandle;
 
-use duckdb::params;
+use duckdb::types::{Null, Value};
+use duckdb::{Appender, params, params_from_iter};
 
+use super::rows::{Hop, Row, TargetRow, timestamp};
 use super::{Error, Store};
 
 /// Rows the writer takes, counted across tables, before it flushes every
 /// appender.
 const FLUSH_EVERY: usize = 10_000;
-
-/// A row of `pages` (D26, D34–D36).
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PageRow {
-    pub run_id: u64,
-    pub url_id: u64,
-    pub title: Option<String>,
-    pub content_type: Option<String>,
-    pub size: Option<u64>,
-    pub content_hash: Option<Vec<u8>>,
-    /// The name of the profile that extracted the page (D35).
-    pub profile: String,
-    pub source_url: Option<String>,
-    pub source_repo: Option<String>,
-    pub source_ref: Option<String>,
-    pub source_path: Option<String>,
-    pub in_sitemap: bool,
-    pub via_links: bool,
-}
-
-/// A row of `page_facts` (D37): `key` is the full `<profile>.<key>`, as
-/// [`crate::profile::Facts::record`] builds it.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FactRow {
-    pub run_id: u64,
-    pub url_id: u64,
-    pub key: String,
-    pub value: String,
-}
-
-/// One row for the writer to append.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Row {
-    Page(PageRow),
-    Fact(FactRow),
-}
 
 enum Msg {
     Row(Box<Row>),
@@ -120,38 +85,149 @@ impl WriteHandle {
 
 fn write_all(store: Store, rx: Receiver<Msg>) -> Result<Store, Error> {
     {
-        let mut pages = store.conn.appender("pages")?;
-        let mut facts = store.conn.appender("page_facts")?;
+        let mut tables = Tables::new(&store)?;
         let mut pending = 0;
         for msg in rx {
             let Msg::Row(row) = msg else { break };
-            match *row {
-                Row::Page(p) => pages.append_row(params![
-                    p.run_id,
-                    p.url_id,
-                    p.title,
-                    p.content_type,
-                    p.size,
-                    p.content_hash,
-                    p.profile,
-                    p.source_url,
-                    p.source_repo,
-                    p.source_ref,
-                    p.source_path,
-                    p.in_sitemap,
-                    p.via_links
-                ])?,
-                Row::Fact(f) => facts.append_row(params![f.run_id, f.url_id, f.key, f.value])?,
-            }
+            tables.append(*row)?;
             pending += 1;
             if pending == FLUSH_EVERY {
-                pages.flush()?;
-                facts.flush()?;
+                tables.flush()?;
                 pending = 0;
             }
         }
-        pages.flush()?;
-        facts.flush()?;
+        tables.flush()?;
     }
     Ok(store)
+}
+
+/// An appender for each table the writer fills.
+struct Tables<'a> {
+    store: &'a Store,
+    pages: Appender<'a>,
+    facts: Appender<'a>,
+    targets: Appender<'a>,
+    anchors: Appender<'a>,
+    links: Appender<'a>,
+}
+
+impl<'a> Tables<'a> {
+    fn new(store: &'a Store) -> Result<Tables<'a>, Error> {
+        Ok(Tables {
+            store,
+            pages: store.conn.appender("pages")?,
+            facts: store.conn.appender("page_facts")?,
+            targets: store.conn.appender("targets")?,
+            anchors: store.conn.appender("anchors")?,
+            links: store.conn.appender("links")?,
+        })
+    }
+
+    fn append(&mut self, row: Row) -> Result<(), Error> {
+        match row {
+            Row::Page(p) => self.pages.append_row(params![
+                p.run_id,
+                p.url_id,
+                p.title,
+                p.content_type,
+                p.size,
+                p.content_hash,
+                p.profile,
+                p.source_url,
+                p.source_repo,
+                p.source_ref,
+                p.source_path,
+                p.in_sitemap,
+                p.via_links
+            ])?,
+            Row::Fact(f) => self
+                .facts
+                .append_row(params![f.run_id, f.url_id, f.key, f.value])?,
+            Row::Target(t) if t.redirect_chain.is_empty() => {
+                self.targets.append_row(params![
+                    t.run_id,
+                    t.url_id,
+                    t.url,
+                    t.status,
+                    t.final_url,
+                    Null,
+                    t.outcome.as_str(),
+                    t.reason,
+                    t.checked_at.map(timestamp),
+                    t.duration_ms
+                ])?;
+            }
+            Row::Target(t) => self.insert_redirected(&t)?,
+            Row::Anchor(a) => self.anchors.append_row(params![
+                a.run_id,
+                a.url_id,
+                a.anchor,
+                a.tag,
+                a.placement
+            ])?,
+            Row::Link(l) => self.links.append_row(params![
+                l.run_id,
+                l.src_url_id,
+                l.target_url_id,
+                l.fragment,
+                l.raw_href,
+                l.kind,
+                l.xref_refspec,
+                l.outcome.map(super::rows::Outcome::as_str),
+                l.reason,
+                l.redirected
+            ])?,
+        }
+        Ok(())
+    }
+
+    /// Inserts a target with a redirect chain by statement, the chain's
+    /// values bound inside a list literal. The statement is cached per chain
+    /// length, at most D7's limit and one more.
+    // upstream: UF1 -- the appender and bound parameters take no list.
+    fn insert_redirected(&self, t: &TargetRow) -> Result<(), Error> {
+        let hops = vec![
+            "{'url': ?::VARCHAR, 'status': ?::USMALLINT, 'refresh': ?::BOOLEAN}";
+            t.redirect_chain.len()
+        ];
+        let sql = format!(
+            "INSERT INTO targets VALUES (?, ?, ?, ?, ?, [{}], ?, ?, ?, ?)",
+            hops.join(", ")
+        );
+        let mut args: Vec<Value> = vec![
+            t.run_id.into(),
+            t.url_id.into(),
+            t.url.clone().into(),
+            t.status.into(),
+            t.final_url.clone().into(),
+        ];
+        for Hop {
+            url,
+            status,
+            refresh,
+        } in &t.redirect_chain
+        {
+            args.extend([url.clone().into(), (*status).into(), (*refresh).into()]);
+        }
+        args.extend([
+            t.outcome.as_str().to_string().into(),
+            t.reason.clone().into(),
+            t.checked_at.map_or(Value::Null, timestamp),
+            t.duration_ms.into(),
+        ]);
+        self.store
+            .conn
+            .prepare_cached(&sql)?
+            .execute(params_from_iter(args))?;
+        Ok(())
+    }
+
+    fn flush(&mut self) -> Result<(), Error> {
+        self.pages.flush()?;
+        self.facts.flush()?;
+        self.targets.flush()?;
+        self.anchors.flush()?;
+        self.links.flush()?;
+        Ok(())
+    }
 }

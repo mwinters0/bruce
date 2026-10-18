@@ -3,6 +3,7 @@
 //! creates the schema in a new database, refuses a file of another version,
 //! and creates every profile's views (D39).
 
+mod rows;
 mod schema;
 mod writer;
 
@@ -14,8 +15,9 @@ use url::Url;
 
 use crate::profile::{BoxError, Lookup, Registry};
 
+pub use rows::{AnchorRow, FactRow, Hop, LinkRow, Outcome, PageRow, Row, TargetRow};
 pub use schema::SCHEMA_VERSION;
-pub use writer::{FactRow, PageRow, Row, WriteHandle, Writer, WriterGone};
+pub use writer::{WriteHandle, Writer, WriterGone};
 
 /// A run's number: allocated in order from 1 (D2).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

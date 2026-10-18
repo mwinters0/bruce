@@ -51,8 +51,9 @@ decisions each carries are cited in its module's doc.
 ## Storage
 
 - **bruce** — `store/`: the connection, the schema's version check and a
-  profile's views in the parent file, the tables in the `schema` child and
-  the single writer thread in the `writer` child. It sits above `profile`
+  profile's views in the parent file, the tables in the `schema` child, the
+  row types in the `rows` child and the single writer thread in the `writer`
+  child. It sits above `profile`
   because it asks each profile for its views and answers its lookups (D39).
 
 ## Profiles

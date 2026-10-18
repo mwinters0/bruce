@@ -5,7 +5,7 @@
 
 /// The version this build writes and reads (D43). A schema change bumps it;
 /// before a release no migration exists (D43).
-pub const SCHEMA_VERSION: u32 = 1;
+pub const SCHEMA_VERSION: u32 = 2;
 
 /// The `meta` key holding [`SCHEMA_VERSION`].
 pub const VERSION_KEY: &str = "schema_version";
@@ -35,7 +35,7 @@ CREATE TABLE targets (
     url VARCHAR NOT NULL,
     status USMALLINT,
     final_url VARCHAR,
-    redirect_chain VARCHAR[],
+    redirect_chain STRUCT(url VARCHAR, status USMALLINT, refresh BOOLEAN)[],
     outcome VARCHAR NOT NULL CHECK (outcome IN {OUTCOME}),
     reason VARCHAR,
     checked_at TIMESTAMPTZ,

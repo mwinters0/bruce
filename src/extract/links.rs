@@ -39,6 +39,9 @@ pub enum Kind {
     Media,
     /// The `url=` of `meta[http-equiv=refresh]`.
     Refresh,
+    /// An entry of a sitemap, its source the sitemap file. The extraction
+    /// pass never yields it: the crawler gives a sitemap's entries this kind.
+    Sitemap,
 }
 
 impl Kind {
@@ -55,6 +58,7 @@ impl Kind {
             Kind::Frame => "frame",
             Kind::Media => "media",
             Kind::Refresh => "refresh",
+            Kind::Sitemap => "sitemap",
         }
     }
 }

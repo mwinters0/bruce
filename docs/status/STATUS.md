@@ -17,7 +17,7 @@ Red means a repoint is due ([`../process.md`](../process.md),
 The `bruce` crate is a scaffold: D39's top-level modules, a binary that says
 no subcommand exists, and Rust 1.99.1 pinned in `mise.toml`. Seven modules hold
 code: `cli`, the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check and
-the single writer for two tables; `profile`, the trait, the registry and the
+the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views and Extract, with Resolve
 declared and empty; `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
@@ -36,8 +36,9 @@ The spec is [`../wip/roadmap-P3-crawler.md`](../wip/roadmap-P3-crawler.md).
 
 - [x] **3.1** Canonical URLs: `url`, `strip_query`, and scope matched on the
   canonical form; amends D44. [Notes](../wip/roadmap-P3.1-canonical-urls-notes.md).
-- [ ] **3.2** The store's rows: schema 2, hop structs, the `sitemap` kind, and
+- [x] **3.2** The store's rows: schema 2, hop structs, the `sitemap` kind, and
   the writer's `targets`, `anchors` and `links`; amends D13.
+  [Notes](../wip/roadmap-P3.2-store-rows-notes.md).
 - [ ] **3.3** One hop over HTTP: the fetcher trait, reqwest, retries, the size
   cap and the charset.
 - [ ] **3.4** Per-host politeness: rate, `concurrency`, robots.txt and
