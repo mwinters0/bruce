@@ -1,7 +1,7 @@
 //! The DuckDB schema (D26 as amended by D28, D34, D35, D36, D37 and D43) and its
 //! version. Rows are append-only (D2), so only `runs.finished_at` is ever
-//! updated; there are no primary keys on the bulk tables, which an appender
-//! would pay to check for nothing.
+//! updated and only `Store::prune` deletes; there are no primary keys on the
+//! bulk tables, which an appender would pay to check for nothing.
 
 /// The version this build writes and reads (D43). A schema change bumps it;
 /// before a release no migration exists (D43).

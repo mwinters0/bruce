@@ -2,7 +2,9 @@
 //! D37, D43). A [`Store`] is one database, a file or in memory. Opening it
 //! creates the schema in a new database, refuses a file of another version,
 //! and creates its own views and every profile's (D39); a layer above hands it more with [`Store::install`].
+//! [`Store::prune`] deletes old runs (D2).
 
+mod prune;
 mod rows;
 mod schema;
 mod views;
@@ -16,6 +18,7 @@ use url::Url;
 
 use crate::profile::{BoxError, Lookup, Registry, View};
 
+pub use prune::Rule;
 pub use rows::{AnchorRow, FactRow, Hop, LinkRow, Outcome, PageRow, Row, TargetRow};
 pub use schema::SCHEMA_VERSION;
 pub use writer::{WriteHandle, Writer, WriterGone};

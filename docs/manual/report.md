@@ -39,6 +39,7 @@ A report reads **the latest finished run**. `--run N` reads any run, one
 that never finished included: `bruce report` then says on stderr that the
 report is incomplete, since a run stopped by Ctrl-C holds only the targets
 it reached. A database with no finished run, and no `--run`, is an error.
+[`bruce prune`](prune.md) deletes the runs a database no longer needs.
 
 `diff` reads two runs. With neither option it compares the latest two
 finished runs; `--to N` alone compares run N with the finished run before it,
