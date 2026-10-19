@@ -155,7 +155,7 @@ impl Store {
     }
 
     /// Starts a run: the next number, recorded with the tool's version, a
-    /// hash of the configuration it ran under and the URLs of its roots, so
+    /// hash of the configuration it ran under and its roots' canonical URLs, so
     /// a root that crawled nothing still shows (D2).
     pub fn begin_run(
         &self,

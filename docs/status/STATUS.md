@@ -60,8 +60,9 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
   [Notes](../wip/roadmap-P4.6.1-stats-targets-notes.md).
 - [x] **4.7** `inbound`, `sitemap`, `orphans`, `unlisted` and `redirects`.
   [Notes](../wip/roadmap-P4.7-page-reports-notes.md).
-- [ ] **4.7.1** `unlisted`'s roots: canonical, and read only when a file
+- [x] **4.7.1** `unlisted`'s roots: canonical, and read only when a file
   answered.
+  [Notes](../wip/roadmap-P4.7.1-unlisted-roots-notes.md).
 - [ ] **4.8** `diff`.
 - [ ] **4.9** `prune`.
 - [ ] **4.10** The second en-US crawl, with the finished tool.

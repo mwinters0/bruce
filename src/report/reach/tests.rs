@@ -127,6 +127,65 @@ fn unlisted_pages_are_absent_from_the_sitemap_of_a_root_that_read_one() {
     );
 }
 
+/// Sets the sitemap file 101's answer, and returns the store.
+fn sitemap_answering(outcome: &str, reason: Option<&str>) -> Store {
+    let store = store();
+    store
+        .connection()
+        .execute(
+            "UPDATE targets SET outcome = ?, reason = ? WHERE url_id = 101",
+            params![outcome, reason],
+        )
+        .unwrap();
+    store
+}
+
+#[test]
+fn a_root_read_a_sitemap_only_when_a_file_answered_ok_with_no_reason() {
+    for (outcome, reason) in [
+        ("broken_url", None),
+        ("unchecked", Some("robots")),
+        ("ok", Some("too_large")),
+    ] {
+        let out = report(
+            &sitemap_answering(outcome, reason),
+            Report::Unlisted,
+            |_| {},
+        );
+        assert!(out.table.rows.is_empty(), "{outcome} {reason:?}");
+        assert_eq!(out.notes.len(), 2, "{outcome} {reason:?}");
+        assert!(out.notes[0].starts_with(ROOT) && out.notes[1].starts_with(OTHER));
+    }
+}
+
+#[test]
+fn an_index_children_count_for_the_root_that_reached_the_index() {
+    // The root links to an index that answered `ok` but was over the cap, and
+    // the index to file 101, which answered.
+    let store = store();
+    let conn = store.connection();
+    conn.execute(
+        "INSERT INTO targets (run_id, url_id, url, status, outcome, reason) \
+         VALUES (1, 102, 'https://e.test/index.xml', 200, 'ok', 'too_large')",
+        [],
+    )
+    .unwrap();
+    conn.execute("DELETE FROM links WHERE kind = 'sitemap_file'", [])
+        .unwrap();
+    link(&store, 1, 100, 102, None, "sitemap_file");
+    link(&store, 1, 102, 101, None, "sitemap_file");
+    let out = report(&store, Report::Unlisted, |_| {});
+    assert_eq!(column(&out.table, "page"), [url(4)]);
+    // The same chain with the child failed reads none.
+    conn.execute(
+        "UPDATE targets SET outcome = 'broken_url' WHERE url_id = 101",
+        [],
+    )
+    .unwrap();
+    let out = report(&store, Report::Unlisted, |_| {});
+    assert!(out.table.rows.is_empty());
+}
+
 #[test]
 fn sitemap_lists_what_was_not_fetched_then_what_it_does_not_list() {
     let out = report(&store(), Report::Sitemap, |_| {});

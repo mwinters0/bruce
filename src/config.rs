@@ -194,9 +194,9 @@ fn invalid(msg: impl Into<String>) -> Error {
 }
 
 impl Config {
-    /// The roots' URLs, as a run records them in `runs.roots`.
+    /// The roots' canonical URLs, as a run records them in `runs.roots`.
     pub fn root_urls(&self) -> Vec<String> {
-        self.roots.iter().map(|r| r.url.to_string()).collect()
+        self.roots.iter().map(Root::canonical_url).collect()
     }
 
     /// The configuration of a run given no file: `url` is the only root, and
@@ -367,6 +367,12 @@ impl Root {
     /// last `/` of its path.
     pub fn prefix(&self) -> &str {
         &self.prefix
+    }
+
+    /// The root's own URL in its canonical form: what `runs.roots` and
+    /// `pages.root` hold, and its own target's `url`.
+    pub fn canonical_url(&self) -> String {
+        self.canonical(&self.url).as_str().to_owned()
     }
 
     /// `url` in canonical form under this root's `strip_query` (D7).

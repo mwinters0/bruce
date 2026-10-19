@@ -80,17 +80,32 @@ WHERE v.kind NOT IN ('sitemap', 'sitemap_file')
     AND v.src_url_id <> coalesce(landing.url_id, v.target_url_id)",
 };
 
-/// A root of a run, and whether it read a sitemap: the root's page links to
-/// each sitemap file it read (D47). The root's page is the target whose URL
-/// is the root's, which holds for a root that is its canonical form.
+/// A root of a run, and whether it read a sitemap: a file reached from the
+/// root's page by `sitemap_file` links, an index's children included (D47),
+/// answered `ok` with no reason. A file that failed, was blocked or ran past
+/// the cap listed nothing. The root's page is the target whose URL is the
+/// root's, `runs.roots` being canonical.
 const ROOTS: View = View {
     name: "report_roots",
     select: "\
+WITH RECURSIVE r AS (SELECT run_id, unnest(roots) AS root FROM runs),
+files AS (SELECT run_id, src_url_id, target_url_id FROM links WHERE kind = 'sitemap_file'),
+reached(run_id, root, url_id) AS (
+    SELECT r.run_id, r.root, f.target_url_id
+    FROM r
+    JOIN targets s ON s.run_id = r.run_id AND s.url = r.root
+    JOIN files f ON f.run_id = s.run_id AND f.src_url_id = s.url_id
+    UNION
+    SELECT d.run_id, d.root, f.target_url_id
+    FROM reached d
+    JOIN files f ON f.run_id = d.run_id AND f.src_url_id = d.url_id
+)
 SELECT r.run_id, r.root,
-    EXISTS (SELECT 1 FROM links l
-        JOIN targets s ON s.run_id = l.run_id AND s.url_id = l.src_url_id
-        WHERE l.run_id = r.run_id AND l.kind = 'sitemap_file' AND s.url = r.root) AS has_sitemap
-FROM (SELECT run_id, unnest(roots) AS root FROM runs) r",
+    EXISTS (SELECT 1 FROM reached d
+        JOIN targets t ON t.run_id = d.run_id AND t.url_id = d.url_id
+        WHERE d.run_id = r.run_id AND d.root = r.root
+            AND t.outcome = 'ok' AND t.reason IS NULL) AS has_sitemap
+FROM r",
 };
 
 /// The pages a sitemap report lists: every crawled page, and every sitemap

@@ -45,8 +45,9 @@ pub(super) fn orphans(conn: &Connection, run: RunId, request: &Request) -> Resul
 }
 
 /// Crawled pages absent from the sitemap of their root, where the root read
-/// one; the roots that read none are named in the notes, there being nothing
-/// to be absent from.
+/// one (`report_roots`: a file reached from it answered `ok` with no reason);
+/// the roots that read none are named in the notes, there being nothing to be
+/// absent from.
 pub(super) fn unlisted(
     conn: &Connection,
     run: RunId,

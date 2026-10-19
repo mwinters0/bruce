@@ -25,8 +25,9 @@ pub struct PageRow {
     pub source_path: Option<String>,
     pub in_sitemap: bool,
     pub via_links: bool,
-    /// The root whose scope claimed the page, as the root's URL; `None` for
-    /// an allowlisted page, which no root's scope holds (D3).
+    /// The root whose scope claimed the page, as the root's canonical URL
+    /// (`Root::canonical_url`); `None` for an allowlisted page, which no
+    /// root's scope holds (D3).
     pub root: Option<String>,
 }
 

@@ -866,7 +866,7 @@ where
             in_sitemap: item.in_sitemap,
             via_links: item.via_links,
             root: match plan {
-                Plan::Page { root } => Some(self.frontier.config().roots[root].url.to_string()),
+                Plan::Page { root } => Some(self.frontier.config().roots[root].canonical_url()),
                 _ => None,
             },
         }))?;

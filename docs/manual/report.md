@@ -91,8 +91,13 @@ the links `--kind` chooses: `page`, `title`, `root`, `source_repo` and
 `source_path`.
 
 **`unlisted`** has the pages a root's scope covers that its sitemap does not
-list, in the same columns. A root that read no sitemap has nothing to be
-absent from, so the text output names it below the table and JSON does not.
+list, in the same columns. A root read a sitemap when a sitemap file reached
+from it (those it names or robots.txt does, and the files an index lists)
+answered with a page and no note: a file that failed, was refused by
+robots.txt or ran past the size cap listed nothing, and shows in `broken` or
+`errors`. A root that read none has nothing to be absent from, so the text
+output names it below the table and JSON does not. The `root` column is the
+root's URL in canonical form.
 
 **`redirects`** has a row for each URL that links landed on after a
 redirect, the one with the most links first: `landing`, `links` (how many

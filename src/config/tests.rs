@@ -479,3 +479,22 @@ fn the_guide_turns_robots_off_for_the_root_host_alone() {
     assert!(!c.hosts["docs.fedoraproject.org"].robots);
     assert!(c.hosts["forge.fedoraproject.org"].robots);
 }
+
+#[test]
+fn a_run_records_its_roots_in_canonical_form() {
+    let c = Config::parse(
+        r#"
+        [[root]]
+        url = "https://a.example/a%7Eb/?x=1"
+        strip_query = true
+
+        [[root]]
+        url = "https://b.example/b/?x=1"
+        "#,
+    )
+    .unwrap();
+    assert_eq!(
+        c.root_urls(),
+        ["https://a.example/a~b/", "https://b.example/b/?x=1"]
+    );
+}
