@@ -60,6 +60,8 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
   [Notes](../wip/roadmap-P4.6.1-stats-targets-notes.md).
 - [x] **4.7** `inbound`, `sitemap`, `orphans`, `unlisted` and `redirects`.
   [Notes](../wip/roadmap-P4.7-page-reports-notes.md).
+- [ ] **4.7.1** `unlisted`'s roots: canonical, and read only when a file
+  answered.
 - [ ] **4.8** `diff`.
 - [ ] **4.9** `prune`.
 - [ ] **4.10** The second en-US crawl, with the finished tool.
@@ -77,11 +79,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **`unlisted` names a root with no sitemap in the text notes, not in a row.**
-  The spec says such a root is "listed as having none"; a row would mix a
-  root and a page in one table, so the line follows the table as `stats`'
-  totals do and `--format json` omits it. Reconsidering moves it to a row of
-  its own, or a second JSON shape (D6). A root counts as having read one when
-  a `sitemap_file` link leaves the target whose URL is the root's string
-  (`report_roots`), so a root whose canonical form differs would read as none.

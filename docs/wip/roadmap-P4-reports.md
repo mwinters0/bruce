@@ -101,15 +101,24 @@ nine 404s and a sitemap page behind docs.fp.o's robots.txt. Rejected: an
 - **`orphans`**: pages in their root's sitemap that no other page links to
   by an `anchor` link.
 - **`unlisted`**: crawled pages absent from the sitemap of a root that read
-  one; a root with no sitemap is listed as having none (D47).
+  one; a root with no sitemap is named as having none below the text table
+  (D6's `Rejected`). **A root read one when a sitemap file reached from it**
+  (its own `sitemap_file` links, D47, and those of the indexes they lead to)
+  **answered `ok` with no reason**: one that failed, was blocked or ran past
+  the cap (`too_large`) listed nothing, so a root whose files all did reads
+  as having none, the files showing in `broken` or `errors`. Rejected:
+  "named one", which lists every page of a root whose sitemap 404s.
 - **`diff`**: links, keyed by source, target and fragment, broken in `--to`
   and not in `--from` ("new"), and the reverse ("fixed").
 
 ### A page's root is recorded
 
-Settled 2026-10-19. **`pages.root`** is the root URL whose scope claimed the
-page, NULL for an allowlisted page, and **`runs.roots`** lists the run's
-roots, so a root that crawled nothing still shows as having no pages. Both
+Settled 2026-10-19. **`pages.root`** is the canonical form (`src/url.rs`) of
+the root URL whose scope claimed the page, NULL for an allowlisted page, and
+**`runs.roots`** lists the run's roots in the same form, so a root that
+crawled nothing still shows as having no pages, and a root is its own
+target's `url`. Rejected: the URL as configured, which a root with an
+escape `canonical` rewrites, or a query it strips, fails to match. Both
 are written where the frontier claims, which knows the root, and are part
 of schema 3. Before them the DB stored no roots, and an allowlisted page
 was told from a crawled one only by having no links, as a crawled page
@@ -311,6 +320,15 @@ reasons hold. The manual's `stats` section says so.
 ### P4.7 The other single-run reports
 
 `inbound`, `sitemap`, `orphans`, `unlisted` and `redirects`.
+
+### P4.7.1 `unlisted`'s roots: canonical, and read only when a file answered
+
+Earned by P4.7, whose `report_roots` counted a root as having a sitemap
+when it named one, and matched the root as configured against canonical
+target URLs. `runs.roots` and `pages.root` are written in canonical form,
+and a root read one under "What each report holds"' rule; the manual's
+`unlisted` and root columns say so. No schema bump: older DBs keep the
+configured form.
 
 ### P4.8 `diff`
 
