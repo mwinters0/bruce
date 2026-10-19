@@ -15,16 +15,18 @@ records, each part saying why its module holds it. **Not in one place** names wh
 does not explain.
 
 Every concept below is, so far, one top-level module, placed by P1's spec (`roadmap-P1-scaffold.md`, "Where the concepts
-live"). `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url`, `fetch` and `crawl` hold code; the rest hold only their doc. The
+live"). `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url`, `fetch`, `crawl` and `report` hold code; the rest hold only their doc. The
 decisions each carries are cited in its module's doc.
 
 ## Subcommands
 
 - **bruce** — `cli/` and the binary's `main.rs`, which only calls it: the
-  command line and the registry in the parent file, and a child module for
+  command line and the registry in the parent file, a child module for
   each subcommand, `crawl` (its roots from the file or the URL, the run and
-  Ctrl-C). It is the top of the layering, and the one module naming a
-  concrete profile (D39).
+  Ctrl-C) and `report` (its options and printing the output), and the `db`
+  child, which both open the database through, installing the reports' views
+  that only this layer can hand `store` (D6, D39). It is the top of the
+  layering, and the one module naming a concrete profile (D39).
 
 ## The crawl
 
@@ -43,7 +45,13 @@ decisions each carries are cited in its module's doc.
 
 ## Reports and pruning
 
-- **bruce** — `report.rs`.
+- **bruce** — `report/`: running one report in the parent file, the request
+  and the output in the `request` child, choosing the run in `run`, each
+  report's query, filters and order in `query`, the views they read in
+  `views`, the table's text and JSON in `table` and the failures in `error`.
+  It sits above `store`, whose `link_verdicts` its views join, and below
+  `cli`, which installs its views at every open (D39). Pruning (D2) is not
+  built.
 
 ## Fetchers
 

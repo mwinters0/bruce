@@ -6,7 +6,7 @@ over an alternative, and obvious changes argued and refused. Nothing here says h
 entry as `docs/design/decisions.md`, "D12"; the rest of the rules, the line cap included, are
 `docs/process.md`, "The decision register".
 
-The modules are P1's scaffold, and `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url`, `fetch` and `crawl` hold code. D1–D30 were settled
+The modules are P1's scaffold, and `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url`, `fetch`, `crawl` and `report` hold code. D1–D30 were settled
 in the bootstrap grilling (2026-10-17, frozen as `historical/initial.md`), D31 the same day, D32 onward in P1's grilling, and
 an entry's **Code** is the module that will hold it once built. D25 and D29 are spent: D25 was superseded by D30, and D29
 became `roadmap.md`'s phase index.
@@ -270,7 +270,11 @@ from the first logins; `*` crossing `/` in a query, or the query unmatched, whic
 Code: `crawl::frontier::Frontier::hop_plan`. Evidence: `crawl::tests::a_redirect_onto_a_skipped_url_ends_the_chain`.
 
 ### D6 Reports are SQL views stored in the DB and run by `bruce report <kind>`
-Ad-hoc `duckdb` users see the same views as the CLI. Output is text, or `--format json`.
+Ad-hoc `duckdb` users see the same views as the CLI. Output is text, or `--format json`. A view
+takes no parameter, so each `report_*` view holds every run and `bruce report` binds the run and the
+filters in its query; `cli` installs them at every open, `store` being below `report` (D39).
+Rejected: a view per run; installing them only when `bruce report` runs, which hides them from
+`duckdb` after a crawl. Code: `report`, `cli::db`.
 
 ### D8 Rate limits, concurrency and robots.txt are per host; only a root's host may skip robots.txt
 Defaults in config (D40), with per-host settings in `[host]`. Back off on 429/503 and honour

@@ -19,15 +19,13 @@ use std::process::ExitCode;
 use clap::{Arg, ArgMatches, Command};
 use xxhash_rust::xxh3::xxh3_64;
 
+use super::db;
 use crate::config::{Config, ProfileChoice, Root};
 use crate::crawl::{Crawl, STOP_GRACE, Stopper, Summary};
 use crate::fetch::http::host::Hosts;
 use crate::fetch::http::{HttpFetcher, Settings};
 use crate::profile::Registry;
-use crate::store::{Mode, RunId, Store, Writer};
-
-/// The database a run writes when `--db` names none.
-pub const DEFAULT_DB: &str = "bruce.duckdb";
+use crate::store::{Mode, RunId, Writer};
 
 /// Rows the writer's channel holds before a sender waits (D28).
 const WRITER_CAPACITY: usize = 4096;
@@ -105,9 +103,9 @@ pub fn run(args: &Args, registry: Registry) -> ExitCode {
 /// means the second Ctrl-C abandoned the crawl.
 fn crawl(args: &Args, registry: Registry) -> Result<(RunId, Option<Summary>), String> {
     let (config, hash) = configure(args, &registry)?;
-    let db = args.db.as_deref().unwrap_or(Path::new(DEFAULT_DB));
+    let db = db::path(args.db.as_deref());
     let in_db = |e: crate::store::Error| format!("{}: {e}", db.display());
-    let store = Store::open(db, &registry).map_err(in_db)?;
+    let store = db::open(db, &registry).map_err(in_db)?;
     let settings = Settings {
         user_agent: config.user_agent.clone(),
         ..Settings::default()

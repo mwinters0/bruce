@@ -1,7 +1,7 @@
 //! Storage: the DuckDB schema, its version and the single writer (D26, D28,
 //! D37, D43). A [`Store`] is one database, a file or in memory. Opening it
 //! creates the schema in a new database, refuses a file of another version,
-//! and creates its own views and every profile's (D39).
+//! and creates its own views and every profile's (D39); a layer above hands it more with [`Store::install`].
 
 mod rows;
 mod schema;
@@ -14,7 +14,7 @@ use std::path::Path;
 use duckdb::{Connection, params, params_from_iter};
 use url::Url;
 
-use crate::profile::{BoxError, Lookup, Registry};
+use crate::profile::{BoxError, Lookup, Registry, View};
 
 pub use rows::{AnchorRow, FactRow, Hop, LinkRow, Outcome, PageRow, Row, TargetRow};
 pub use schema::SCHEMA_VERSION;
@@ -133,14 +133,25 @@ impl Store {
                 params![schema::VERSION_KEY, SCHEMA_VERSION.to_string()],
             )?;
         }
-        let own = views::ALL.iter();
-        for view in own.chain(profiles.iter().flat_map(|p| p.views())) {
-            conn.execute_batch(&format!(
+        let store = Store { conn };
+        store.install(views::ALL)?;
+        for profile in profiles.iter() {
+            store.install(profile.views())?;
+        }
+        Ok(store)
+    }
+
+    /// Creates, or replaces, each of `views`. A layer above `store` hands its
+    /// own views here after every open, so an ad-hoc `duckdb` user finds them
+    /// after a crawl alone (D6, D39).
+    pub fn install(&self, views: &[View]) -> Result<(), Error> {
+        for view in views {
+            self.conn.execute_batch(&format!(
                 "CREATE OR REPLACE VIEW {} AS {}",
                 view.name, view.select
             ))?;
         }
-        Ok(Store { conn })
+        Ok(())
     }
 
     /// Starts a run: the next number, recorded with the tool's version, a

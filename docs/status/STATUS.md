@@ -14,9 +14,9 @@ Red means a repoint is due ([`../process.md`](../process.md),
 
 ## What exists
 
-The `bruce` crate is D39's top-level modules, a binary whose one subcommand
-is `bruce crawl`, and Rust 1.99.1 pinned in `mise.toml`. Nine modules hold
-code: `cli`, the command line, `crawl`'s subcommand and the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check, the
+The `bruce` crate is D39's top-level modules, a binary whose subcommands
+are `bruce crawl` and `bruce report`, and Rust 1.99.1 pinned in `mise.toml`. Ten modules hold
+code: `cli`, the command line, the two subcommands and the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check, the
 `link_verdicts` view and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views and Extract, with Resolve
 declared and empty; `extract`, the pass over one page, which yields its
@@ -25,8 +25,9 @@ the profile's facts and the content hash;
 `forge`, the edit-URL shape parse;
 `url`, the canonical form and `url_id`;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, and the body decoding; and
-`crawl`, the frontier, the hops of a redirect, D16's outcomes, sitemaps, the run that writes a target's rows and its stop. The rest hold only their doc.
-`docs/manual/` holds the config reference, `bruce crawl`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
+`crawl`, the frontier, the hops of a redirect, D16's outcomes, sitemaps, the run that writes a target's rows and its stop; and
+`report`, the `report_*` views, the choice of run, and `broken`, `errors` and `stats` as a text table or JSON. The rest hold only their doc.
+`docs/manual/` holds the config reference, `bruce crawl`'s, `bruce report`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
@@ -52,8 +53,9 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
   [Notes](../wip/roadmap-P4.4-first-crawl-notes.md).
 - [x] **4.5** `link_verdicts`, timed on 4.4's DB; amends D28.
   [Notes](../wip/roadmap-P4.5-link-verdicts-notes.md).
-- [ ] **4.6** `bruce report`: the run, filters, formats, and `broken`,
+- [x] **4.6** `bruce report`: the run, filters, formats, and `broken`,
   `errors` and `stats`.
+  [Notes](../wip/roadmap-P4.6-report-notes.md).
 - [ ] **4.7** `inbound`, `sitemap`, `orphans`, `unlisted` and `redirects`.
 - [ ] **4.8** `diff`.
 - [ ] **4.9** `prune`.
@@ -73,3 +75,9 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
+- **`stats` counts `unchecked` links by reason, not targets.** The spec says
+  targets ("What each report holds"). Links is what the totals line sits
+  beside, and it is the only count that holds `text_fragment`, `no_anchors`
+  and `cut`, reasons a link has and a target does not (P4.5's notes expect
+  them shown). A per-target count is `report_stats`' sibling query on
+  `targets`; the totals line would then miss those three.

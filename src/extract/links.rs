@@ -49,6 +49,22 @@ pub enum Kind {
 }
 
 impl Kind {
+    /// Every kind, in declaration order.
+    pub const ALL: [Kind; 12] = [
+        Kind::Anchor,
+        Kind::Image,
+        Kind::Canonical,
+        Kind::Stylesheet,
+        Kind::Icon,
+        Kind::Link,
+        Kind::Script,
+        Kind::Frame,
+        Kind::Media,
+        Kind::Refresh,
+        Kind::Sitemap,
+        Kind::SitemapFile,
+    ];
+
     /// The value the `links` table holds.
     pub fn as_str(self) -> &'static str {
         match self {

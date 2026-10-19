@@ -1,8 +1,10 @@
-//! Subcommands (D27), one child module each. The only module that names a
+//! Subcommands (D27), one child module each: `crawl` and `report`. The only module that names a
 //! concrete profile, to build the registry (D39).
 
 /// Public so `examples/sim_config.rs` loads a config exactly as `crawl` does.
 pub mod crawl;
+mod db;
+mod report;
 
 use std::ffi::OsString;
 use std::process::ExitCode;
@@ -46,6 +48,7 @@ where
     };
     match matches.subcommand() {
         Some(("crawl", m)) => crawl::run(&crawl::Args::from(m), registry()),
+        Some(("report", m)) => report::run(&report::Args::from(m), registry()),
         _ => unreachable!("clap requires a subcommand"),
     }
 }
@@ -58,6 +61,7 @@ fn command() -> Command {
         .subcommand_required(true)
         .arg_required_else_help(true)
         .subcommand(crawl::command())
+        .subcommand(report::command())
 }
 
 #[cfg(test)]
