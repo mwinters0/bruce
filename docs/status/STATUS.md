@@ -45,7 +45,8 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
   [Notes](../wip/roadmap-P4.2.1-skipped-hop-notes.md).
 - [x] **4.3** The deployment guide's config section and `mise run sim`.
   [Notes](../wip/roadmap-P4.3-deploy-guide-notes.md).
-- [ ] **4.4** The first en-US crawl, detached from `sim/`.
+- [x] **4.4** The first en-US crawl, detached from `sim/`.
+  [Notes](../wip/roadmap-P4.4-first-crawl-notes.md).
 - [ ] **4.5** `link_verdicts`, timed on 4.4's DB; amends D28.
 - [ ] **4.6** `bruce report`: the run, filters, formats, and `broken`,
   `errors` and `stats`.
@@ -67,3 +68,19 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **4.4 is ticked with one sitemap page not fetched.** The spec's pass is
+  "every sitemap page fetched"; 2304 of 2305 were. The 2305th,
+  `/en-US/fesco/Fedora_Council_Engineering_Rep/`, matches docs.fp.o's own
+  `Disallow: /*/Fedora*/` (I2) and is `unchecked` / `robots` (D8). The slice
+  was read as asking that the crawl lose no page it may fetch, which the DB
+  bears out. Reconsidering leaves the box empty and the spec's criterion
+  amended to name a robots exception, or the sitemap's entry reported upstream.
+- **The guide's skip glob was left wrong.** `issues/new*` misses the 1908 forge
+  links whose query holds a `/`, which cost 32 minutes of requests but still
+  ended `skipped` at the login hop (P4.4's notes, "What the next slice
+  inherits"). The fix, a second glob `…/issues/new?*/**` (offline it covers
+  1904 of 1921 and, with the first, 1920), changes the guide the maintainer
+  approved and `sim/bruce.toml`, and nothing before P4.10 depends on it, so it
+  waits for a decision. Reconsidering means editing `docs/manual/deploy.md`'s
+  `skip` block and its "no request is sent" sentence, and may earn a `4.3.1`.

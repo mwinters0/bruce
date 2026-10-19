@@ -19,10 +19,12 @@ uses, and sends no request. `cli::crawl` is `pub` for it.
 - **`sim.py` writes only the files the guide names.** A file the guide stops
   naming stays in `sim/` until it is deleted by hand; the crawl's own files
   never need to live there.
-- **The skip globs were matched by hand** against P3.8's shapes: `issues/new`
-  with and without a query, and `/user/login?redirect_to=…` match; a file
-  under `src/branch/main/` and `issues/12` do not. No test holds this; P4.4's
-  `skipped` count is the evidence on the real site.
+- **The skip globs match `issues/new` without a query, or with one holding no
+  `/`**, and `/user/login?redirect_to=…`; a file under `src/branch/main/` and
+  `issues/12` do not. `issues/new?title=…modules/ROOT/…` escapes the first
+  glob, since `*` stops at `/` and the forge's edit links carry the page's path
+  in the query; the second glob catches it at the redirect. P4.4's notes hold
+  the counts.
 
 ## Negative results
 
