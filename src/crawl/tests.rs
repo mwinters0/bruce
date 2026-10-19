@@ -44,7 +44,9 @@ async fn crawl(server: &MockServer, extra: &str, settings: Settings) -> Done {
 async fn crawl_config(server: &MockServer, config: &str, settings: Settings) -> Done {
     let config = Config::parse(config).unwrap();
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "test", None).unwrap();
+    let run = store
+        .begin_run(Mode::Crawl, "test", None, &config.root_urls())
+        .unwrap();
     let writer = Writer::start(store, 16);
     let fetcher = HttpFetcher::new(settings, Hosts::unlimited()).unwrap();
     let summary = Crawl::new(fetcher, config, registry(), run, writer.handle())
@@ -253,7 +255,7 @@ async fn every_target_gets_its_outcome_and_every_link_a_row() {
         count(
             &done.store,
             "SELECT count(*) FROM links WHERE fragment = 'sec' AND raw_href = '/docs/ok#sec' \
-             AND kind = 'anchor' AND outcome IS NULL AND NOT redirected"
+             AND kind = 'anchor'"
         ),
         1
     );
@@ -403,6 +405,22 @@ async fn an_allowlisted_host_is_one_hop_deep() {
     assert!(
         done.pages()
             .contains(&format!("http://localhost:{port}/page"))
+    );
+    let root = format!("{}/docs/", server.uri());
+    let roots = |sql: &str| count(&done.store, sql);
+    assert_eq!(
+        roots(&format!(
+            "SELECT count(*) FROM pages WHERE root = '{root}' AND list_contains((SELECT roots FROM runs), '{root}')"
+        )),
+        1,
+        "the root's page names its root, the run lists it"
+    );
+    assert_eq!(
+        roots(
+            "SELECT count(*) FROM pages p JOIN targets t USING (run_id, url_id) WHERE t.url LIKE '%/page' AND p.root IS NULL"
+        ),
+        1,
+        "an allowlisted page has no root"
     );
     assert_eq!(
         count(
@@ -877,7 +895,7 @@ impl Done {
             "SELECT s.url, l.raw_href, t.url FROM links l \
              JOIN targets s ON s.run_id = l.run_id AND s.url_id = l.src_url_id \
              JOIN targets t ON t.run_id = l.run_id AND t.url_id = l.target_url_id \
-             WHERE l.kind = 'sitemap_file' AND l.outcome IS NULL",
+             WHERE l.kind = 'sitemap_file'",
             |r| Ok((r.get::<_, String>(0)?, r.get(1)?, r.get::<_, String>(2)?)),
         )
         .into_iter()
@@ -896,7 +914,7 @@ impl Done {
             &format!(
                 "SELECT t.url, l.raw_href FROM links l JOIN targets t \
                  ON t.run_id = l.run_id AND t.url_id = l.src_url_id \
-                 WHERE l.kind = '{kind}' AND l.outcome IS NULL ORDER BY ALL"
+                 WHERE l.kind = '{kind}' ORDER BY ALL"
             ),
             |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)),
         )
@@ -1230,7 +1248,9 @@ async fn stop_at(server: &MockServer, at: &str, grace: Duration) -> (Done, Durat
     let config = format!("[[root]]\nurl = \"{}/docs/\"\n", server.uri());
     let config = Config::parse(&config).unwrap();
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "test", None).unwrap();
+    let run = store
+        .begin_run(Mode::Crawl, "test", None, &config.root_urls())
+        .unwrap();
     let writer = Writer::start(store, 16);
     let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();
     let crawl = Crawl::new(fetcher, config, registry(), run, writer.handle()).with_grace(grace);
@@ -1345,7 +1365,9 @@ async fn a_stop_before_the_run_asks_about_nothing() {
     let config = format!("[[root]]\nurl = \"{}/docs/\"\n", server.uri());
     let config = Config::parse(&config).unwrap();
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "test", None).unwrap();
+    let run = store
+        .begin_run(Mode::Crawl, "test", None, &config.root_urls())
+        .unwrap();
     let writer = Writer::start(store, 16);
     let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();
     let crawl = Crawl::new(fetcher, config, registry(), run, writer.handle());
@@ -1387,7 +1409,9 @@ async fn an_abandoned_run_holds_the_page_it_was_writing_whole() {
     let config = format!("[[root]]\nurl = \"{}/docs/\"\n", server.uri());
     let config = Config::parse(&config).unwrap();
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "test", None).unwrap();
+    let run = store
+        .begin_run(Mode::Crawl, "test", None, &config.root_urls())
+        .unwrap();
     let writer = Writer::start(store, 1);
     let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();
     let crawl = Crawl::new(fetcher, config, registry(), run, writer.handle());

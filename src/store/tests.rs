@@ -56,6 +56,7 @@ fn page(run: RunId, url_id: u64) -> PageRow {
         source_path: None,
         in_sitemap: true,
         via_links: false,
+        root: Some("https://example.test/docs/".into()),
     }
 }
 
@@ -88,12 +89,12 @@ fn a_file_reopens_with_its_rows() {
     let path = dir.path().join("bruce.duckdb");
     let run = {
         let store = Store::open(&path, &registry()).unwrap();
-        store.begin_run(Mode::Crawl, "abc", None).unwrap()
+        store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap()
     };
     let store = Store::open(&path, &registry()).unwrap();
     assert_eq!(count(&store, "SELECT count(*) FROM runs"), 1);
     assert_eq!(
-        store.begin_run(Mode::Local, "abc", Some(run)).unwrap(),
+        store.begin_run(Mode::Local, "abc", Some(run), &[]).unwrap(),
         RunId(2)
     );
 }
@@ -148,8 +149,10 @@ fn a_profiles_views_are_created_on_open() {
 #[test]
 fn a_run_is_numbered_in_order_and_finished() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let first = store.begin_run(Mode::Crawl, "abc", None).unwrap();
-    let second = store.begin_run(Mode::Local, "abc", Some(first)).unwrap();
+    let first = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+    let second = store
+        .begin_run(Mode::Local, "abc", Some(first), &[])
+        .unwrap();
     assert_eq!((first, second), (RunId(1), RunId(2)));
     store.finish_run(first).unwrap();
     let finished = "SELECT count(*) FROM runs WHERE finished_at IS NOT NULL";
@@ -178,7 +181,7 @@ fn the_schema_refuses_an_outcome_outside_d16() {
 #[test]
 fn the_writer_appends_what_is_sent_and_returns_the_store() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None).unwrap();
+    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
     let writer = Writer::start(store, 1);
     let handle = writer.handle();
     for url_id in 0..50 {
@@ -196,7 +199,7 @@ fn the_writer_appends_what_is_sent_and_returns_the_store() {
 #[test]
 fn senders_on_several_threads_share_one_writer() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None).unwrap();
+    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
     let writer = Writer::start(store, 2);
     let threads: Vec<_> = (0..4u64)
         .map(|t| {
@@ -221,7 +224,7 @@ fn senders_on_several_threads_share_one_writer() {
 #[test]
 fn a_lookup_finds_the_pages_carrying_every_fact() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None).unwrap();
+    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
     let conn = store.connection();
     for (id, url) in [(1, "https://a.test/one"), (2, "https://a.test/two")] {
         conn.execute(
@@ -290,7 +293,7 @@ fn hop(url: &str, status: u16, refresh: bool) -> Hop {
 #[test]
 fn a_targets_chain_keeps_each_hops_url_status_and_kind() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None).unwrap();
+    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
     let writer = Writer::start(store, 4);
     let h = writer.handle();
     h.send(Row::Target(target(run, 1, Vec::new()))).unwrap();
@@ -344,7 +347,7 @@ fn a_targets_chain_keeps_each_hops_url_status_and_kind() {
 #[test]
 fn a_targets_time_and_outcome_round_trip_on_both_write_paths() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None).unwrap();
+    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
     let at = UNIX_EPOCH + Duration::from_micros(1_700_000_000_123_456);
     let writer = Writer::start(store, 4);
     let h = writer.handle();
@@ -374,7 +377,7 @@ fn a_targets_time_and_outcome_round_trip_on_both_write_paths() {
 #[test]
 fn anchors_and_links_are_appended_with_their_kind() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None).unwrap();
+    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
     let writer = Writer::start(store, 4);
     let h = writer.handle();
     h.send(Row::Anchor(AnchorRow {
@@ -394,9 +397,6 @@ fn anchors_and_links_are_appended_with_their_kind() {
             raw_href: "../b/".into(),
             kind,
             xref_refspec: None,
-            outcome: None,
-            reason: None,
-            redirected: false,
         }))
         .unwrap();
     }
@@ -411,7 +411,7 @@ fn anchors_and_links_are_appended_with_their_kind() {
     assert_eq!(
         count(
             &store,
-            "SELECT count(*) FROM links WHERE kind = 'sitemap' AND outcome IS NULL"
+            "SELECT count(*) FROM links WHERE kind = 'sitemap' AND xref_refspec IS NULL"
         ),
         1
     );
@@ -425,29 +425,69 @@ fn anchors_and_links_are_appended_with_their_kind() {
 }
 
 #[test]
-fn a_verdict_on_a_link_is_stored_as_text() {
+fn a_link_stores_no_verdict() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Local, "abc", None).unwrap();
-    let writer = Writer::start(store, 1);
-    writer
-        .handle()
-        .send(Row::Link(LinkRow {
-            run_id: run.0,
-            src_url_id: 1,
-            target_url_id: 2,
-            fragment: None,
-            raw_href: "x".into(),
-            kind: "image",
-            xref_refspec: Some("a::b.adoc".into()),
-            outcome: Some(Outcome::BrokenAnchor),
-            reason: Some("unresolved_xref".into()),
-            redirected: true,
-        }))
+    let columns: Vec<String> = store
+        .connection()
+        .prepare("SELECT column_name FROM information_schema.columns WHERE table_name = 'links'")
+        .unwrap()
+        .query_map([], |r| r.get(0))
+        .unwrap()
+        .collect::<Result<_, _>>()
         .unwrap();
+    for gone in ["outcome", "reason", "redirected"] {
+        assert!(
+            !columns.iter().any(|c| c == gone),
+            "links.{gone} is a view's"
+        );
+    }
+}
+
+#[test]
+fn a_run_records_its_roots_and_a_page_its_root() {
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let roots = [
+        "https://a.test/docs/".to_string(),
+        "https://b.test/".to_string(),
+    ];
+    let run = store.begin_run(Mode::Crawl, "abc", None, &roots).unwrap();
+    let none = store.begin_run(Mode::Local, "abc", None, &[]).unwrap();
+    let listed: String = store
+        .connection()
+        .query_row(
+            "SELECT array_to_string(roots, ' ') FROM runs WHERE run_id = ?",
+            [run.0],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(listed, "https://a.test/docs/ https://b.test/");
+    assert_eq!(
+        count(
+            &store,
+            &format!("SELECT len(roots) FROM runs WHERE run_id = {}", none.0)
+        ),
+        0
+    );
+    let writer = Writer::start(store, 4);
+    let h = writer.handle();
+    h.send(Row::Page(page(run, 1))).unwrap();
+    h.send(Row::Page(PageRow {
+        root: None,
+        ..page(run, 2)
+    }))
+    .unwrap();
     let store = writer.finish().unwrap();
-    let sql = "SELECT count(*) FROM links WHERE outcome = 'broken_anchor' AND redirected \
-               AND xref_refspec = 'a::b.adoc'";
-    assert_eq!(count(&store, sql), 1);
+    assert_eq!(
+        count(
+            &store,
+            "SELECT count(*) FROM pages WHERE root = 'https://example.test/docs/'"
+        ),
+        1
+    );
+    assert_eq!(
+        count(&store, "SELECT count(*) FROM pages WHERE root IS NULL"),
+        1
+    );
 }
 
 #[test]
@@ -463,7 +503,7 @@ fn a_database_of_schema_version_1_is_refused() {
         )
         .unwrap();
     let err = Store::open(&path, &registry()).err().unwrap();
-    assert!(matches!(err, Error::SchemaVersion { ref found, expected: 2 } if found == "1"));
+    assert!(matches!(err, Error::SchemaVersion { ref found, expected: 3 } if found == "1"));
 }
 
 /// The watch for UF1: this fails on purpose at the duckdb release whose

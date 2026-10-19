@@ -53,10 +53,10 @@ map.
   A chain ending at a failure or at robots.txt gives the landing URL a row of
   its own with the same outcome (D46). A hop's fragment is dropped.
 - **`links.fragment` is as written**, percent-encoded; decoding for the match
-  (D12) is the join's. `links.redirected` is false on every row (KD3).
+  (D12) is the join's. Whether a link was redirected is the join's too: a
+  link has no verdict column.
 - **An allowlisted page's `pages` row has no `source_*`**, profile `auto`, its
-  hash over the whole page. `LinkRow`'s `Outcome` is left NULL for the join
-  (D28). Where the join places each `reason` is P4's spec,
+  hash over the whole page. A link's verdict is the join's (D28). Where the join places each `reason` is P4's spec,
   `../wip/roadmap-P4-reports.md`, "Where the fragment cannot be checked".
 - **`bruce crawl` exits** 0 for a finished run, broken links or not; 1 when
   the config, DB or crawl failed; 2 on a usage error; 130 when stopped. A run
@@ -139,9 +139,9 @@ None touches a contract; each is a place a later reader may ask "why":
 - **duckdb 1.10506.1 refuses a list bound into an INSERT** as well as
   appended (UF1). A chain rendered to text and cast breaks on a URL holding a
   quote, pinned by `it's,here?a=1&b=[2]`.
-- **Holding a run's links back until their targets settle**, to fill
-  `links.redirected`, costs the whole link graph in memory, and D2 forbids
-  updating them afterwards (KD3).
+- **Holding a run's links back until their targets settle**, to fill a
+  verdict column, costs the whole link graph in memory, and D2 forbids
+  updating them afterwards.
 - **A TLS failure is not on `source()`'s path**: it is inside the
   `io::Error` a handshake raises, so the cause walk descends `get_ref`.
 - **`mem::replace` on `Response::body`** dropped `TooLarge` with the text;

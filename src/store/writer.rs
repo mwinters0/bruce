@@ -138,7 +138,8 @@ impl<'a> Tables<'a> {
                 p.source_ref,
                 p.source_path,
                 p.in_sitemap,
-                p.via_links
+                p.via_links,
+                p.root
             ])?,
             Row::Fact(f) => self
                 .facts
@@ -172,10 +173,7 @@ impl<'a> Tables<'a> {
                 l.fragment,
                 l.raw_href,
                 l.kind,
-                l.xref_refspec,
-                l.outcome.map(super::rows::Outcome::as_str),
-                l.reason,
-                l.redirected
+                l.xref_refspec
             ])?,
         }
         Ok(())

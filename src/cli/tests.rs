@@ -82,7 +82,7 @@ fn every_view_is_named_for_its_profile_and_creates() {
 #[test]
 fn the_antora_view_pivots_a_pages_facts() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None).unwrap();
+    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
     let conn = store.connection();
     for (url_id, key, value) in [
         (1, "antora.component", "handbook"),

@@ -25,6 +25,9 @@ pub struct PageRow {
     pub source_path: Option<String>,
     pub in_sitemap: bool,
     pub via_links: bool,
+    /// The root whose scope claimed the page, as the root's URL; `None` for
+    /// an allowlisted page, which no root's scope holds (D3).
+    pub root: Option<String>,
 }
 
 /// A row of `page_facts` (D37): `key` is the full `<profile>.<key>`, as
@@ -37,8 +40,7 @@ pub struct FactRow {
     pub value: String,
 }
 
-/// One of D16's five outcomes, as `targets.outcome` and `links.outcome`
-/// store it.
+/// One of D16's five outcomes, as `targets.outcome` stores it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Outcome {
     Ok,
@@ -114,11 +116,6 @@ pub struct LinkRow {
     /// One of D13's kinds, `sitemap` and `sitemap_file` included.
     pub kind: &'static str,
     pub xref_refspec: Option<String>,
-    /// The crawler leaves it `None`: the verdict is the join's after the
-    /// crawl (D28), and a written row never changes (D2).
-    pub outcome: Option<Outcome>,
-    pub reason: Option<String>,
-    pub redirected: bool,
 }
 
 /// One row for the writer to append.

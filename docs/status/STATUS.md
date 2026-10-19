@@ -36,8 +36,9 @@ pages, chosen and saved by `scripts/fixtures.py`.
 
 The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
 
-- [ ] **4.1** Schema 3: `links`' verdict columns dropped, `pages.root` and
+- [x] **4.1** Schema 3: `links`' verdict columns dropped, `pages.root` and
   `runs.roots`; closes KD3.
+  [Notes](../wip/roadmap-P4.1-schema-3-notes.md).
 - [ ] **4.2** `skip`: the config key and the frontier's `skipped`.
 - [ ] **4.3** The deployment guide's config section and `mise run sim`.
 - [ ] **4.4** The first en-US crawl, detached from `sim/`.

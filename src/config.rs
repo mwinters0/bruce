@@ -191,6 +191,11 @@ fn invalid(msg: impl Into<String>) -> Error {
 }
 
 impl Config {
+    /// The roots' URLs, as a run records them in `runs.roots`.
+    pub fn root_urls(&self) -> Vec<String> {
+        self.roots.iter().map(|r| r.url.to_string()).collect()
+    }
+
     /// The configuration of a run given no file: `url` is the only root, and
     /// every other key is at its default (D40).
     pub fn for_url(url: &str) -> Result<Config, Error> {

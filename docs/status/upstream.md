@@ -29,7 +29,8 @@ back. Numbers up to the watermark are allocated, and none is reused.
 - **Workaround.** A target with a redirect chain is inserted by a cached
   statement, one per chain length, with the chain as a list literal of struct
   literals whose fields are bound scalars (`store/writer.rs`); every other
-  target goes through the appender with a NULL chain. Rejected: `append_record_batch`
+  target goes through the appender with a NULL chain. `runs.roots` is a list
+  too, bound the same way inside a list literal (`Store::begin_run`). Rejected: `append_record_batch`
   (the `appender-arrow` feature), an Arrow dependency for one column; a `hops`
   table, which departs from the spec's list and from every report reading
   `len(redirect_chain)`; a chain rendered to text and cast, which needs
@@ -37,6 +38,7 @@ back. Numbers up to the watermark are allocated, and none is reused.
 - **Watch.** `store::tests::the_appender_still_takes_no_list` asserts the
   error and fails at the release that lifts it.
 - **When it lands.** Delete `Tables::insert_redirected` and send a chain
-  through the appender as a `Value::List` of `Value::Struct`; invert the watch
+  through the appender as a `Value::List` of `Value::Struct`, and bind
+  `runs.roots` as a `Value::List`; invert the watch
   test into one appending a chain; the `a_targets_chain_keeps_each_hops_url_status_and_kind`
   test stays as it is.

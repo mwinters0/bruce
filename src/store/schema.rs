@@ -1,11 +1,11 @@
-//! The DuckDB schema (D26 as amended by D34, D35, D36, D37 and D43) and its
+//! The DuckDB schema (D26 as amended by D28, D34, D35, D36, D37 and D43) and its
 //! version. Rows are append-only (D2), so only `runs.finished_at` is ever
 //! updated; there are no primary keys on the bulk tables, which an appender
 //! would pay to check for nothing.
 
 /// The version this build writes and reads (D43). A schema change bumps it;
 /// before a release no migration exists (D43).
-pub const SCHEMA_VERSION: u32 = 2;
+pub const SCHEMA_VERSION: u32 = 3;
 
 /// The `meta` key holding [`SCHEMA_VERSION`].
 pub const VERSION_KEY: &str = "schema_version";
@@ -28,7 +28,8 @@ CREATE TABLE runs (
     mode VARCHAR NOT NULL CHECK (mode IN ('crawl', 'local')),
     tool_version VARCHAR NOT NULL,
     config_hash VARCHAR NOT NULL,
-    baseline_run UBIGINT
+    baseline_run UBIGINT,
+    roots VARCHAR[] NOT NULL
 );
 CREATE TABLE targets (
     run_id UBIGINT NOT NULL,
@@ -55,7 +56,8 @@ CREATE TABLE pages (
     source_ref VARCHAR,
     source_path VARCHAR,
     in_sitemap BOOLEAN NOT NULL,
-    via_links BOOLEAN NOT NULL
+    via_links BOOLEAN NOT NULL,
+    root VARCHAR
 );
 CREATE TABLE page_facts (
     run_id UBIGINT NOT NULL,
@@ -77,10 +79,7 @@ CREATE TABLE links (
     fragment VARCHAR,
     raw_href VARCHAR NOT NULL,
     kind VARCHAR NOT NULL,
-    xref_refspec VARCHAR,
-    outcome VARCHAR CHECK (outcome IN {OUTCOME}),
-    reason VARCHAR,
-    redirected BOOLEAN NOT NULL
+    xref_refspec VARCHAR
 );
 CREATE TABLE bodies (
     run_id UBIGINT NOT NULL,

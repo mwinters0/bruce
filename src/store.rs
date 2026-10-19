@@ -143,28 +143,39 @@ impl Store {
         Ok(Store { conn })
     }
 
-    /// Starts a run: the next number, recorded with the tool's version and a
-    /// hash of the configuration it ran under.
+    /// Starts a run: the next number, recorded with the tool's version, a
+    /// hash of the configuration it ran under and the URLs of its roots, so
+    /// a root that crawled nothing still shows (D2).
     pub fn begin_run(
         &self,
         mode: Mode,
         config_hash: &str,
         baseline: Option<RunId>,
+        roots: &[String],
     ) -> Result<RunId, Error> {
         let id: u64 =
             self.conn
                 .query_row("SELECT coalesce(max(run_id), 0) + 1 FROM runs", [], |row| {
                     row.get(0)
                 })?;
+        // upstream: UF1 -- bound parameters take no list, so the roots are
+        // placeholders inside a list literal.
+        let list = if roots.is_empty() {
+            "[]::VARCHAR[]".to_string()
+        } else {
+            format!("[{}]", vec!["?"; roots.len()].join(", "))
+        };
+        let mut args: Vec<duckdb::types::Value> = vec![
+            id.into(),
+            mode.as_str().to_string().into(),
+            env!("CARGO_PKG_VERSION").to_string().into(),
+            config_hash.to_string().into(),
+            baseline.map(|b| b.0).into(),
+        ];
+        args.extend(roots.iter().map(|r| r.clone().into()));
         self.conn.execute(
-            "INSERT INTO runs VALUES (?, now(), NULL, ?, ?, ?, ?)",
-            params![
-                id,
-                mode.as_str(),
-                env!("CARGO_PKG_VERSION"),
-                config_hash,
-                baseline.map(|b| b.0)
-            ],
+            &format!("INSERT INTO runs VALUES (?, now(), NULL, ?, ?, ?, ?, {list})"),
+            params_from_iter(args),
         )?;
         Ok(RunId(id))
     }

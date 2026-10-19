@@ -14,8 +14,8 @@
 //! (`frontier`), though a redirect's hops are asked again wherever they lead
 //! (D46); a page a redirect lands on is recorded by whichever of the
 //! redirecting target and the landing URL's own discovery claims it first.
-//! The run writes every target's HTTP-level outcome and leaves
-//! `links.outcome` NULL, the verdicts being SQL's after the crawl (D28).
+//! The run writes every target's HTTP-level outcome and no verdict on a
+//! link, which is SQL's after the crawl (D28).
 //!
 //! A sitemap is a target, and each of its entries in a root's scope a link
 //! from it, the rest only counted, of kind
@@ -506,10 +506,6 @@ where
             raw_href: raw.to_owned(),
             kind: kind.as_str(),
             xref_refspec: None,
-            outcome: None,
-            reason: None,
-            // KD3, as for a page's links.
-            redirected: false,
         }
     }
 
@@ -859,6 +855,10 @@ where
             source_path: source.map(|s| s.path.clone()),
             in_sitemap: item.in_sitemap,
             via_links: item.via_links,
+            root: match plan {
+                Plan::Page { root } => Some(self.frontier.config().roots[root].url.to_string()),
+                _ => None,
+            },
         }))?;
         for a in &e.anchors {
             self.rows.send(Row::Anchor(AnchorRow {
@@ -922,18 +922,6 @@ where
                 raw_href: link.raw.clone(),
                 kind: link.kind.as_str(),
                 xref_refspec: link.tag.clone(),
-                // deficiency: KD3 The three columns are never filled. A page's
-                // links are written when it is read, before the targets they
-                // name are asked about, and D2 lets only `runs.finished_at`
-                // change once written; a link's verdict (D28) and whether it
-                // goes through a redirect (`targets.redirect_chain` of its
-                // target) are joins. Holding a run's links back until their
-                // targets settle costs memory for the whole link graph. The
-                // columns are vestigial, and dropping them is a schema change
-                // (D43).
-                outcome: None,
-                reason: None,
-                redirected: false,
             }))?;
         }
         Ok(())
