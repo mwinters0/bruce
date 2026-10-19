@@ -67,7 +67,8 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
   [Notes](../wip/roadmap-P4.8-diff-notes.md).
 - [x] **4.9** `prune`.
   [Notes](../wip/roadmap-P4.9-prune-notes.md).
-- [ ] **4.10** The second en-US crawl, with the finished tool.
+- [x] **4.10** The second en-US crawl, with the finished tool.
+  [Notes](../wip/roadmap-P4.10-second-crawl-notes.md).
 
 ## Not started
 

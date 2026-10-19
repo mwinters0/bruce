@@ -94,8 +94,8 @@ from here.
 ## Negative results
 
 - None of KD4's or the stop's paths showed. No target ended `error`.
-- Nothing on the site redirected a docs.fp.o link, as in P3.8: every
-  redirected target is a forge URL, 1908 of them skipped hops, 61 `ok`.
+- Redirected targets: 1908 forge skipped hops and 61 `ok`, of which 55 are
+  docs.fp.o URLs and 6 the forge's (P4.10's notes).
 
 ## Reproducing
 
