@@ -45,8 +45,9 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
   [Notes](../wip/roadmap-P4.2.1-skipped-hop-notes.md).
 - [x] **4.3** The deployment guide's config section and `mise run sim`.
   [Notes](../wip/roadmap-P4.3-deploy-guide-notes.md).
-- [ ] **4.3.1** The guide's example: robots.txt and the skip glob; amends
+- [x] **4.3.1** The guide's example: robots.txt and the skip glob; amends
   D18.
+  [Notes](../wip/roadmap-P4.3.1-guide-example-notes.md).
 - [x] **4.4** The first en-US crawl, detached from `sim/`.
   [Notes](../wip/roadmap-P4.4-first-crawl-notes.md).
 - [ ] **4.5** `link_verdicts`, timed on 4.4's DB; amends D28.

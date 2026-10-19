@@ -50,6 +50,7 @@ too.
 ```toml file=bruce.toml
 skip = [
   "https://forge.fedoraproject.org/**/issues/new*",
+  "https://forge.fedoraproject.org/**/issues/new*/**",
   "https://forge.fedoraproject.org/user/login*",
 ]
 ```
@@ -60,7 +61,12 @@ reported as working, so it tells nothing, and every page carries one. A link
 matching a `skip` glob is recorded as not checked, with the reason `skipped`,
 and no request is sent.
 
-The second glob is the login page itself. A link that redirects to a skipped
+The page's edit link carries its path in the query, as
+`issues/new?title=Doc%20issue%20in%20file%20modules/ROOT/pages/index.adoc`,
+and `*` stops at a `/`. The first glob matches a link whose query holds none;
+the second matches one whose query does, and `issues/new/choose`.
+
+The last glob is the login page itself. A link that redirects to a skipped
 URL stops there, so any other link that the forge sends to the login page is
 also marked not checked, rather than followed. `*` stops at a `/`, `**` does
 not, and the query is part of what is matched ([`config.md`](config.md#skip)).
@@ -68,20 +74,38 @@ not, and the query is part of what is matched ([`config.md`](config.md#skip)).
 ### How fast each host is asked
 
 ```toml file=bruce.toml
+[host."docs.fedoraproject.org"]
+robots = false
+per_second = 1
+
 [host."forge.fedoraproject.org"]
 per_second = 1
 ```
 
-docs.fedoraproject.org asks crawlers for one second between requests
-(`Crawl-delay: 1`), and `bruce` obeys it with no setting at all. The forge asks
-the same. Writing the rate for the forge keeps the crawl that polite if its
-`robots.txt` ever drops the request: on a host that no root starts on, the
-slower of `per_second` and `Crawl-delay` applies.
+docs.fedoraproject.org's `robots.txt` asks crawlers for one second between
+requests (`Crawl-delay: 1`) and disallows some paths. Its disallows are
+written for search engines, and a crawl of the site's own links is
+better without them: they hid nine broken links from live pages, each a 404
+for anyone who follows it. So the example turns `robots.txt` off for this host
+and writes the same second as its own rate, which keeps the crawl as polite as
+the site asked.
 
-A rate written for docs.fedoraproject.org itself would beat its `Crawl-delay`.
-Write one only when you have the site's permission to crawl faster
-([`config.md`](config.md#hosts)). The example leaves it out, and a crawl of the
-English pages then takes one to two hours.
+That is a choice open to whoever may speak for the site, since only a host that
+a root starts on may skip its `robots.txt` ([`config.md`](config.md#hosts)). If
+you control the site, you can instead add a group to its `robots.txt` for your
+crawler's name (here `bruce-fedora-docs`), holding only `Crawl-delay: 1`. A
+crawler obeys the most specific group that names it, so the group replaces the
+disallows meant for others, and `robots` stays on. For a site you do not
+control, leave `robots` on and write no rate: `bruce` obeys its `Crawl-delay`
+with no setting at all.
+
+The forge keeps its `robots.txt`: a host that no root starts on is always
+obeyed. It asks for the same second between requests. Writing the rate keeps
+the crawl that polite if its `robots.txt` ever drops the request, since there
+the slower of `per_second` and `Crawl-delay` applies.
+
+A rate faster than the site asked for needs its permission. The example asks
+no faster, and a crawl of the English pages takes about two hours.
 
 ### What is crawled
 
@@ -108,7 +132,7 @@ With the file saved as `bruce.toml`, a crawl is one command:
 bruce crawl --config bruce.toml --db bruce.duckdb
 ```
 
-It runs for as long as the hosts' `Crawl-delay` makes it. Start a long crawl
+It runs for as long as the hosts' request rates make it. Start a long crawl
 detached from your terminal, with its output in a file:
 
 ```sh

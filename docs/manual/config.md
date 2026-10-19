@@ -11,7 +11,10 @@ error, so a misspelt key never passes silently as a default.
 
 ```toml
 allowlist = ["github.com", "gitlab.com"]
-skip = ["https://github.com/*/*/issues/new*"]
+skip = [
+  "https://github.com/*/*/issues/new*",
+  "https://github.com/*/*/issues/new*/**",
+]
 user_agent = "docs-example-bot/1.0 (+https://docs.example.org/bot)"
 
 [rate]
@@ -145,14 +148,15 @@ a login page.
 
 A glob matches the whole URL as `include` does ([Roots](#roots)), with its
 query: `*` and `?` stop at `/`, `**` crosses it, so `issues/new*` matches
-`issues/new?title=x`. A glob that matches a root's own `url` is an error. A
-redirect that leads to a skipped URL ends there, the link `unchecked` with the
-reason `skipped`, so skipping a login page marks every link that redirects to
-it.
+`issues/new?title=x` and not `issues/new?title=a/b`, a query holding a `/`,
+which `issues/new*/**` also matches. A glob that matches a root's own `url`
+is an error. A redirect that leads to a skipped URL ends there, the link
+`unchecked` with the reason `skipped`, so skipping a login page marks every
+link that redirects to it.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `skip` | `[]` | URL globs, such as `"https://github.com/*/*/issues/new*"`. |
+| `skip` | `[]` | URL globs, such as `"https://github.com/*/*/issues/new*"` and `"https://github.com/*/*/issues/new*/**"`. |
 
 ## Rate
 

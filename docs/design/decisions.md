@@ -279,12 +279,13 @@ slowest host's courtesy; `robots` on a root, where two roots on one host could d
 `include` reaches had no setting. Code: `fetch::http::host`. Evidence: `fetch::http::host::tests`.
 
 ### D18 A host's `Crawl-delay` is obeyed unless a root's host overrides it with `per_second`
-The default (D40). For docs.fp.o (I2), a nightly baseline does not need speed. A `per_second`
-written for a host a root starts on beats `Crawl-delay`: a faster crawl is an explicit override by
-whoever has permission. On any other host the slower wins, and the default rate never beats it.
-Rejected: a `crawl_delay` key, a per-host rate in other units; `robots = false` alone passing
-`Crawl-delay`, when docs.fp.o wants its disallows obeyed. Performance work targets the local-dir
-mode and the pipeline.
+The default (D40). A `per_second` written for a host a root starts on beats `Crawl-delay`: a faster
+crawl is an explicit override by whoever has permission. On any other host the slower wins, and the
+default rate never beats it. The guide's docs.fp.o example (I2) sets `robots = false` with `per_second = 1`,
+D8's switch for a root's host: its `Disallow`s, written for search engines, hid nine live 404s. A deployer
+controlling the site writes a `robots.txt` group for its agent instead. Rejected: a `crawl_delay` key;
+`robots = false` alone passing `Crawl-delay`, reading the file it switches off. Evidence:
+`config::tests::the_guide_turns_robots_off_for_the_root_host_alone`.
 
 ### D48 A stop drops each target's hops 30 s after it; "cut" is every target found and not written
 Every started target's hops end at the same instant, the stop plus `STOP_GRACE`, and one whose hops

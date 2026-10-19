@@ -436,3 +436,46 @@ fn every_toml_example_in_the_manual_parses() {
         }
     }
 }
+
+/// The deployment guide's `bruce.toml`, its tagged blocks joined as `mise run
+/// sim` joins them (`scripts/sim.py`).
+fn guide_config() -> Config {
+    let guide = include_str!("../../docs/manual/deploy.md");
+    let mut joined = String::new();
+    for block in guide.split("```toml file=bruce.toml\n").skip(1) {
+        joined.push_str(block.split("```").next().unwrap());
+        joined.push('\n');
+    }
+    Config::parse(&joined).unwrap_or_else(|e| panic!("{e}\nin the guide's config:\n{joined}"))
+}
+
+#[test]
+fn the_guides_skip_globs_match_every_shape_of_the_forges_issue_link() {
+    let c = guide_config();
+    let skipped = |s: &str| c.skip.is_match(canonical(&url(s), false).as_str());
+    for s in [
+        "https://forge.fedoraproject.org/fedora/docs/issues/new",
+        "https://forge.fedoraproject.org/a/b/issues/new?title=x",
+        "https://forge.fedoraproject.org/a/b/issues/new/choose",
+        "https://forge.fedoraproject.org/a/b/issues/new?title=Doc%20issue%20in%20file%20modules/ROOT/pages/index.adoc",
+        "https://forge.fedoraproject.org/a/b/issues/new?title=[main]%20Doc%20issue%20in%20file%20modules/ROOT/pages/index.adoc",
+        "https://forge.fedoraproject.org/user/login",
+        "https://forge.fedoraproject.org/user/login?redirect_to=%2Fa%2Fb",
+    ] {
+        assert!(skipped(s), "{s} is not skipped");
+    }
+    for s in [
+        "https://forge.fedoraproject.org/a/b/issues/12",
+        "https://forge.fedoraproject.org/a/b/src/branch/main/modules/ROOT/pages/index.adoc",
+        "https://docs.fedoraproject.org/en-US/fedora/latest/",
+    ] {
+        assert!(!skipped(s), "{s} is skipped");
+    }
+}
+
+#[test]
+fn the_guide_turns_robots_off_for_the_root_host_alone() {
+    let c = guide_config();
+    assert!(!c.hosts["docs.fedoraproject.org"].robots);
+    assert!(c.hosts["forge.fedoraproject.org"].robots);
+}
