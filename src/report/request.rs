@@ -14,11 +14,30 @@ pub enum Report {
     Errors,
     /// Each crawled page's counts, and the run's totals.
     Stats,
+    /// Crawled pages ranked by the distinct pages linking to them.
+    Inbound,
+    /// Every crawled page, and every sitemap entry that was not fetched.
+    Sitemap,
+    /// Sitemap pages no other page links to.
+    Orphans,
+    /// Crawled pages absent from the sitemap of a root that read one.
+    Unlisted,
+    /// The redirected links, grouped by where they landed.
+    Redirects,
 }
 
 impl Report {
     /// Every report built.
-    pub const ALL: [Report; 3] = [Report::Broken, Report::Errors, Report::Stats];
+    pub const ALL: [Report; 8] = [
+        Report::Broken,
+        Report::Errors,
+        Report::Stats,
+        Report::Inbound,
+        Report::Sitemap,
+        Report::Orphans,
+        Report::Unlisted,
+        Report::Redirects,
+    ];
 
     /// The name on the command line.
     pub fn name(self) -> &'static str {
@@ -26,6 +45,11 @@ impl Report {
             Report::Broken => "broken",
             Report::Errors => "errors",
             Report::Stats => "stats",
+            Report::Inbound => "inbound",
+            Report::Sitemap => "sitemap",
+            Report::Orphans => "orphans",
+            Report::Unlisted => "unlisted",
+            Report::Redirects => "redirects",
         }
     }
 }
@@ -36,14 +60,18 @@ pub struct Request {
     pub report: Report,
     /// The run; the latest finished one where `None`.
     pub run: Option<RunId>,
-    /// `pages.source_repo` of the linking page.
+    /// `pages.source_repo` of the page a row is about: the linking page for a
+    /// link report, else the page listed.
     pub repo: Option<String>,
-    /// `page_facts` pairs the linking page holds, all of them.
+    /// `page_facts` pairs that page holds, all of them.
     pub facts: Vec<(String, String)>,
-    /// The link kinds counted.
+    /// The link kinds counted. A sitemap report counts no link.
     pub kinds: Vec<Kind>,
     /// Keep this many rows, the worst first.
     pub top: Option<usize>,
+    /// Name the linking pages in a `redirects` group, a list too long for a
+    /// text table.
+    pub linking_pages: bool,
 }
 
 impl Request {
@@ -56,6 +84,7 @@ impl Request {
             facts: Vec::new(),
             kinds: vec![Kind::Anchor],
             top: None,
+            linking_pages: false,
         }
     }
 }

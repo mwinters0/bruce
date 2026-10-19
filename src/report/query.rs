@@ -1,122 +1,15 @@
-//! The query each report runs: its view, the run, the filters, the order and
-//! the limit. Every value is bound, never written into the text.
+//! The report to run, and the queries of the link reports and `stats`: a
+//! view, the run, the filters, the order and the limit. The page reports are
+//! in `reach` and `redirects`.
 
-use duckdb::types::Value;
-use duckdb::{Connection, params_from_iter};
+use duckdb::Connection;
 
 use super::error::Error;
 use super::request::{Report, Request};
+use super::sql::{Cols, PAGE, Sql};
 use super::table::{Cell, Table};
+use super::{reach, redirects};
 use crate::store::RunId;
-
-/// A statement and its arguments, kept in the order the text names them.
-struct Sql {
-    text: String,
-    args: Vec<Value>,
-}
-
-impl Sql {
-    fn new(text: &str) -> Sql {
-        Sql {
-            text: text.to_owned(),
-            args: Vec::new(),
-        }
-    }
-
-    fn push(&mut self, text: &str) -> &mut Sql {
-        self.text.push_str(text);
-        self
-    }
-
-    /// Appends a placeholder for `value`.
-    fn bind(&mut self, value: impl Into<Value>) -> &mut Sql {
-        self.args.push(value.into());
-        self.text.push('?');
-        self
-    }
-
-    /// Appends a placeholder for the text `s`.
-    fn bind_text(&mut self, s: &str) -> &mut Sql {
-        self.bind(Value::Text(s.to_owned()))
-    }
-
-    /// `kind IN (…)` over `column`. A bound list is not supported (UF1), so
-    /// the placeholders are written out.
-    fn kinds(&mut self, column: &str, request: &Request) -> &mut Sql {
-        self.push(column).push(" IN (");
-        for (i, kind) in request.kinds.iter().enumerate() {
-            if i > 0 {
-                self.push(", ");
-            }
-            self.bind_text(kind.as_str());
-        }
-        self.push(")")
-    }
-
-    /// The run, the repo and the facts. `run`, `repo` and `page` name the
-    /// columns of the relation being filtered; `page` is the linking page's
-    /// `url_id`.
-    fn scope(&mut self, run_id: RunId, request: &Request, cols: Cols) -> &mut Sql {
-        self.push(cols.run).push(" = ").bind(run_id.0);
-        if let Some(repo) = &request.repo {
-            self.push(" AND ")
-                .push(cols.repo)
-                .push(" = ")
-                .bind_text(repo);
-        }
-        for (key, value) in &request.facts {
-            self.push(" AND EXISTS (SELECT 1 FROM page_facts f WHERE f.run_id = ")
-                .push(cols.run)
-                .push(" AND f.url_id = ")
-                .push(cols.page)
-                .push(" AND f.key = ")
-                .bind_text(key)
-                .push(" AND f.value = ")
-                .bind_text(value)
-                .push(")");
-        }
-        self
-    }
-
-    fn limit(&mut self, request: &Request) -> &mut Sql {
-        if let Some(top) = request.top {
-            self.push(" LIMIT ").push(&top.to_string());
-        }
-        self
-    }
-
-    fn fetch(&self, conn: &Connection) -> Result<Table, Error> {
-        let mut stmt = conn.prepare(&self.text)?;
-        let mut rows = stmt.query(params_from_iter(self.args.iter()))?;
-        let width = rows.as_ref().map_or(0, |s| s.column_count());
-        let mut cells = Vec::new();
-        while let Some(row) = rows.next()? {
-            let mut cols = Vec::with_capacity(width);
-            for i in 0..width {
-                cols.push(Cell::from(row.get::<_, Value>(i)?));
-            }
-            cells.push(cols);
-        }
-        let columns = rows
-            .as_ref()
-            .map(|s| s.column_names())
-            .unwrap_or_default()
-            .into_iter()
-            .collect();
-        Ok(Table {
-            columns,
-            rows: cells,
-        })
-    }
-}
-
-/// The columns of the relation a filter applies to.
-#[derive(Clone, Copy)]
-struct Cols {
-    run: &'static str,
-    repo: &'static str,
-    page: &'static str,
-}
 
 /// Runs the report, returning its table and the notes a text rendering adds.
 pub(super) fn run(
@@ -128,6 +21,11 @@ pub(super) fn run(
         Report::Broken => Ok((links(conn, run, request, "report_broken")?, Vec::new())),
         Report::Errors => Ok((links(conn, run, request, "report_errors")?, Vec::new())),
         Report::Stats => stats(conn, run, request),
+        Report::Inbound => Ok((reach::inbound(conn, run, request)?, Vec::new())),
+        Report::Sitemap => Ok((reach::sitemap(conn, run, request)?, Vec::new())),
+        Report::Orphans => Ok((reach::orphans(conn, run, request)?, Vec::new())),
+        Report::Unlisted => reach::unlisted(conn, run, request),
+        Report::Redirects => Ok((redirects::redirects(conn, run, request)?, Vec::new())),
     }
 }
 
@@ -179,12 +77,6 @@ fn stats(conn: &Connection, run: RunId, request: &Request) -> Result<(Table, Vec
     }
     Ok((table, notes))
 }
-
-const PAGE: Cols = Cols {
-    run: "pg.run_id",
-    repo: "pg.source_repo",
-    page: "pg.url_id",
-};
 
 /// The run's totals over every page the filters keep, `unchecked` links and
 /// the distinct targets they name counted by reason, which no row carries.

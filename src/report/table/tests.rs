@@ -62,3 +62,12 @@ fn a_database_value_becomes_the_nearest_cell() {
         Cell::Text(u64::MAX.to_string())
     );
 }
+
+#[test]
+fn a_list_is_a_json_array_and_joined_in_text() {
+    let list = Cell::List(vec!["a".into(), "b\"".into()]);
+    assert_eq!(list.json(), "[\"a\",\"b\\\"\"]");
+    assert_eq!(list.shown(), "a, b\"");
+    let from = Cell::from(Value::List(vec![Value::Text("a".into())]));
+    assert_eq!(from, Cell::List(vec!["a".into()]));
+}

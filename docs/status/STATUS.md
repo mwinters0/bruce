@@ -26,7 +26,7 @@ the profile's facts and the content hash;
 `url`, the canonical form and `url_id`;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, and the body decoding; and
 `crawl`, the frontier, the hops of a redirect, D16's outcomes, sitemaps, the run that writes a target's rows and its stop; and
-`report`, the `report_*` views, the choice of run, and `broken`, `errors` and `stats` as a text table or JSON. The rest hold only their doc.
+`report`, the `report_*` views, the choice of run, and the eight single-run reports as a text table or JSON. The rest hold only their doc.
 `docs/manual/` holds the config reference, `bruce crawl`'s, `bruce report`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -58,7 +58,8 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
   [Notes](../wip/roadmap-P4.6-report-notes.md).
 - [x] **4.6.1** `stats` counts unchecked targets beside links.
   [Notes](../wip/roadmap-P4.6.1-stats-targets-notes.md).
-- [ ] **4.7** `inbound`, `sitemap`, `orphans`, `unlisted` and `redirects`.
+- [x] **4.7** `inbound`, `sitemap`, `orphans`, `unlisted` and `redirects`.
+  [Notes](../wip/roadmap-P4.7-page-reports-notes.md).
 - [ ] **4.8** `diff`.
 - [ ] **4.9** `prune`.
 - [ ] **4.10** The second en-US crawl, with the finished tool.
@@ -76,3 +77,11 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **`unlisted` names a root with no sitemap in the text notes, not in a row.**
+  The spec says such a root is "listed as having none"; a row would mix a
+  root and a page in one table, so the line follows the table as `stats`'
+  totals do and `--format json` omits it. Reconsidering moves it to a row of
+  its own, or a second JSON shape (D6). A root counts as having read one when
+  a `sitemap_file` link leaves the target whose URL is the root's string
+  (`report_roots`), so a root whose canonical form differs would read as none.

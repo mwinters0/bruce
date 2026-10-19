@@ -10,6 +10,8 @@ pub enum Cell {
     Text(String),
     Int(i64),
     Bool(bool),
+    /// A list of texts: a JSON array, and in a text table joined by commas.
+    List(Vec<String>),
 }
 
 impl From<Value> for Cell {
@@ -30,6 +32,15 @@ impl From<Value> for Cell {
             Value::UBigInt(n) => {
                 i64::try_from(n).map_or_else(|_| Cell::Text(n.to_string()), Cell::Int)
             }
+            Value::List(items) => Cell::List(
+                items
+                    .into_iter()
+                    .map(|item| match item {
+                        Value::Text(s) => s,
+                        other => format!("{other:?}"),
+                    })
+                    .collect(),
+            ),
             other => Cell::Text(format!("{other:?}")),
         }
     }
@@ -124,12 +135,21 @@ impl Table {
 }
 
 impl Cell {
+    /// The text of a text cell.
+    pub(super) fn text(&self) -> Option<&str> {
+        match self {
+            Cell::Text(s) => Some(s),
+            _ => None,
+        }
+    }
+
     fn shown(&self) -> String {
         match self {
             Cell::Null => "-".to_owned(),
             Cell::Text(s) => s.clone(),
             Cell::Int(n) => n.to_string(),
             Cell::Bool(b) => b.to_string(),
+            Cell::List(items) => items.join(", "),
         }
     }
 
@@ -139,6 +159,10 @@ impl Cell {
             Cell::Text(s) => quoted(s),
             Cell::Int(n) => n.to_string(),
             Cell::Bool(b) => b.to_string(),
+            Cell::List(items) => {
+                let items: Vec<String> = items.iter().map(|s| quoted(s)).collect();
+                format!("[{}]", items.join(","))
+            }
         }
     }
 }

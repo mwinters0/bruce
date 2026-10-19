@@ -41,6 +41,13 @@ fn every_option_reaches_the_request() {
 }
 
 #[test]
+fn json_asks_for_the_linking_pages_text_does_not() {
+    assert!(!parse(&["redirects"]).unwrap().request.linking_pages);
+    let json = parse(&["redirects", "--format", "json"]).unwrap();
+    assert!(json.request.linking_pages);
+}
+
+#[test]
 fn kind_all_counts_every_kind() {
     let a = parse(&["broken", "--kind", "all"]).unwrap();
     assert_eq!(a.request.kinds, Kind::ALL);
@@ -113,6 +120,10 @@ fn opening_installs_the_reports_views_in_a_database_made_without_them() {
         "report_broken",
         "report_errors",
         "report_stats",
+        "report_inbound",
+        "report_roots",
+        "report_sitemap",
+        "report_redirects",
     ] {
         store
             .connection()

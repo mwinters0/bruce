@@ -46,9 +46,12 @@ decisions each carries are cited in its module's doc.
 ## Reports and pruning
 
 - **bruce** — `report/`: running one report in the parent file, the request
-  and the output in the `request` child, choosing the run in `run`, each
-  report's query, filters and order in `query`, the views they read in
-  `views`, the table's text and JSON in `table` and the failures in `error`.
+  and the output in the `request` child, choosing the run in `run`, the
+  statement and the filters every report shares in `sql`, the link reports'
+  and `stats`' queries and the choice among all of them in `query`, how a
+  page is reached (`inbound`, `orphans`, `sitemap`, `unlisted`) in `reach`,
+  `redirects` in its own child, the views they read in `views`, the table's
+  text and JSON in `table` and the failures in `error`.
   It sits above `store`, whose `link_verdicts` its views join, and below
   `cli`, which installs its views at every open (D39). Pruning (D2) is not
   built.

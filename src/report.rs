@@ -6,13 +6,18 @@
 //! chooses the run (`run`), runs one report and renders it (`table`).
 //!
 //! The filters are the same for every report: the links of kinds `kinds`
-//! (`anchor` by default, D13), from pages in the repo `repo` (D17) and
-//! holding every `facts` pair (D32, D38).
+//! (`anchor` by default, D13), and the pages in the repo `repo` (D17) holding
+//! every `facts` pair (D32, D38). A link report filters on the page a link is
+//! on, a page report on the page a row lists; `query` has the link reports and
+//! `stats`, `reach` how a page is reached and `redirects` the moved links.
 
 mod error;
 mod query;
+mod reach;
+mod redirects;
 mod request;
 mod run;
+mod sql;
 mod table;
 mod views;
 

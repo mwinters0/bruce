@@ -16,12 +16,12 @@ the `#fragment` is not, and `error` where the target could not be asked
 
 | Argument | Default | Meaning |
 |---|---|---|
-| `REPORT` | required | `broken`, `errors` or `stats`. |
+| `REPORT` | required | `broken`, `errors`, `stats`, `inbound`, `sitemap`, `orphans`, `unlisted` or `redirects`. |
 | `--db FILE` | `bruce.duckdb` | The database to read. It must exist; a report never creates one. |
 | `--run N` | the latest finished run | The run to read. See [Which run](#which-run). |
-| `--repo REPO` | none | Only links on pages whose source file is in this repo, as the page records it (`https://forge.fedoraproject.org/fedora/docs`). |
-| `--fact KEY=VALUE` | none | Only links on pages with this fact, such as `antora.component=fedora-docs`. Repeat to require several. |
-| `--kind KIND` | `anchor` | Count links of this kind. Repeat to add kinds; `all` is every kind. |
+| `--repo REPO` | none | Only pages whose source file is in this repo, as the page records it (`https://forge.fedoraproject.org/fedora/docs`); for `broken`, `errors`, `stats` and `redirects`, the links on those pages. |
+| `--fact KEY=VALUE` | none | Only pages with this fact, such as `antora.component=fedora-docs`, or the links on them. Repeat to require several. |
+| `--kind KIND` | `anchor` | Count links of this kind. Repeat to add kinds; `all` is every kind. `sitemap` and `unlisted` ignore it. |
 | `--top N` | all rows | Print the first N rows, the worst first. |
 | `--format` | `text` | `text`, or `json`. |
 
@@ -71,6 +71,37 @@ chose not to ask about is shown and never counted as broken. The filters
 narrow both counts.
 Pages fetched only because a page linked to them (the allowlist) have no row.
 
+**`inbound`** ranks the pages a root's scope covers by how many other pages
+link to them, most first: columns `page`, `inbound` and `title`. A page counts
+once however many links it has to the target; its link to itself and a
+sitemap's listing do not count, and a link to a URL that redirected counts for
+the page it reached. A page nothing links to is a row of 0. `--kind` chooses
+the links counted.
+
+**`sitemap`** has a row for each page a root's scope covers, and for each
+sitemap entry that no page was fetched for: columns `page`, `title`,
+`in_sitemap`, `via_links` (whether a link led to it), `outcome` and `reason`
+(what its URL answered, as `errors` gives them), `status`, `source_repo` and
+`source_path`. The entries come first, with no title, `via_links` or source
+(a page robots.txt kept the crawl from shows here, never as broken), then the pages absent from the sitemap, then the rest. `--repo` and
+`--fact` leave only pages, an entry having none to match.
+
+**`orphans`** has the pages a sitemap lists that no other page links to, by
+the links `--kind` chooses: `page`, `title`, `root`, `source_repo` and
+`source_path`.
+
+**`unlisted`** has the pages a root's scope covers that its sitemap does not
+list, in the same columns. A root that read no sitemap has nothing to be
+absent from, so the text output names it below the table and JSON does not.
+
+**`redirects`** has a row for each URL that links landed on after a
+redirect, the one with the most links first: `landing`, `links` (how many
+links reached it), `urls` (how many distinct URLs they named) and `chain`,
+the hops the first of those URLs took, each a status (`refresh` for a page's
+own redirect) and the URL asked, joined by `>`. No link is left out for
+being on another host. With `--format json` each row also has `pages`, an
+array of the pages whose links they are.
+
 ## Output
 
 The text format is a table with one row a line. A missing value is `-`, and
@@ -84,14 +115,15 @@ or status a number:
 [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"status":200,"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc"}]
 ```
 
-`stats` prints its page rows alone as JSON; the totals are in text only.
+`stats` prints its page rows alone as JSON, and `unlisted` its pages alone; the totals and the roots without a sitemap are in text only.
 
 ## Querying the database directly
 
 Opening a database with `bruce` installs the views the reports read, so
 `duckdb bruce.duckdb` finds them after a crawl alone: `report_broken`,
 `report_errors`, `report_stats` (counts by page and kind) and
-`report_pages`, and beneath them `link_verdicts`, every link with its
+`report_pages`, `report_inbound`, `report_roots`, `report_sitemap` and
+`report_redirects`, and beneath them `link_verdicts`, every link with its
 outcome. Each holds every run, so filter on `run_id`.
 
 ## Exit status

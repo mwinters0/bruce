@@ -6,13 +6,20 @@ use crate::profile::Registry;
 use crate::profile::generic::Generic;
 use crate::store::RunId;
 
-const ROOT: &str = "https://e.test/";
+pub(super) const ROOT: &str = "https://e.test/";
 
-fn url(id: u64) -> String {
+pub(super) fn url(id: u64) -> String {
     format!("https://e.test/{id}")
 }
 
-fn target(store: &Store, run: u64, id: u64, status: u16, outcome: &str, reason: Option<&str>) {
+pub(super) fn target(
+    store: &Store,
+    run: u64,
+    id: u64,
+    status: u16,
+    outcome: &str,
+    reason: Option<&str>,
+) {
     store
         .connection()
         .execute(
@@ -23,7 +30,7 @@ fn target(store: &Store, run: u64, id: u64, status: u16, outcome: &str, reason: 
         .unwrap();
 }
 
-fn page(store: &Store, run: u64, id: u64, repo: Option<&str>, root: Option<&str>) {
+pub(super) fn page(store: &Store, run: u64, id: u64, repo: Option<&str>, root: Option<&str>) {
     let conn = store.connection();
     target(store, run, id, 200, "ok", None);
     conn.execute(
@@ -34,7 +41,7 @@ fn page(store: &Store, run: u64, id: u64, repo: Option<&str>, root: Option<&str>
     .unwrap();
 }
 
-fn link(store: &Store, run: u64, src: u64, to: u64, fragment: Option<&str>, kind: &str) {
+pub(super) fn link(store: &Store, run: u64, src: u64, to: u64, fragment: Option<&str>, kind: &str) {
     store
         .connection()
         .execute(
@@ -51,7 +58,7 @@ fn link(store: &Store, run: u64, src: u64, to: u64, fragment: Option<&str>, kind
         .unwrap();
 }
 
-fn fact(store: &Store, run: u64, id: u64, key: &str, value: &str) {
+pub(super) fn fact(store: &Store, run: u64, id: u64, key: &str, value: &str) {
     store
         .connection()
         .execute(
@@ -111,7 +118,7 @@ fn store() -> Store {
     store
 }
 
-fn column(table: &Table, name: &str) -> Vec<String> {
+pub(super) fn column(table: &Table, name: &str) -> Vec<String> {
     let at = table.columns.iter().position(|c| c == name).unwrap();
     table.rows.iter().map(|r| r[at].shown_for_test()).collect()
 }

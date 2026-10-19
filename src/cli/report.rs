@@ -63,13 +63,15 @@ impl From<&ArgMatches> for Args {
                 .collect();
         }
         request.top = m.get_one::<u64>("top").map(|&n| n as usize);
+        let format = match m.get_one::<String>("format").map(String::as_str) {
+            Some("json") => Format::Json,
+            _ => Format::Text,
+        };
+        request.linking_pages = format == Format::Json;
         Args {
             request,
             db: m.get_one::<String>("db").map(PathBuf::from),
-            format: match m.get_one::<String>("format").map(String::as_str) {
-                Some("json") => Format::Json,
-                _ => Format::Text,
-            },
+            format,
         }
     }
 }
@@ -104,7 +106,7 @@ pub fn command() -> Command {
             Arg::new("repo")
                 .long("repo")
                 .value_name("REPO")
-                .help("Only links on pages whose source file is in this repo"),
+                .help("Only pages whose source file is in this repo, or links on them"),
         )
         .arg(
             Arg::new("fact")
@@ -112,7 +114,7 @@ pub fn command() -> Command {
                 .value_name("KEY=VALUE")
                 .action(ArgAction::Append)
                 .value_parser(fact)
-                .help("Only links on pages with this fact; repeat to require several"),
+                .help("Only pages with this fact, or links on them; repeat to require several"),
         )
         .arg(
             Arg::new("kind")
