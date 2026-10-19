@@ -15,3 +15,15 @@ destination").
   links listed apart from the breakage that fails the gate, never failing it.
 - **Origin.** P3's grilling, 2026-10-17 (`roadmap-P3-crawler.md`,
   "Redirects").
+
+## D20's "did you mean" hint waits for Resolve
+
+- **Fact.** P4 places a link with `xref_refspec` set as `broken_url`,
+  reason `unresolved_xref` (D20), in its `link_verdicts` view, and builds
+  no hint: D20's fuzzy match over resource IDs is left for the Resolve hook
+  (D19, D38), which is empty in `antora` today.
+- **Why P5 cares.** Building Resolve, it decides whether the same lookup
+  gives the live report's hint, and where the hint lives: a column of the
+  view, or the report's rendering.
+- **Origin.** P4's grilling, 2026-10-19
+  (`../wip/roadmap-P4-reports.md`, "Where the fragment cannot be checked").

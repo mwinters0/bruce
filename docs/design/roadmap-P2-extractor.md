@@ -174,9 +174,9 @@ extracted record (title, anchors, links) was rejected for missing prose edits.
   every chrome id in `content` and blind D34's chrome report; the region stays
   the profile's, its per-root override being P7's content-region selector
   (D33).
-- **A scope change is P4's to read**: it changes every page's hash once, and
+- **A scope change is P8's to read**: it changes every page's hash once, and
   `runs.config_hash` cannot tell it from any other config edit. P2 records no
-  fingerprint of the scope (`../design/roadmap-P4-reports-inbox.md`).
+  fingerprint of the scope (`roadmap-P8-history-inbox.md`).
 - **The algorithm is xxh3-128** (`xxhash-rust`): change detection is not
   adversarial, and it is faster than BLAKE3 and wide enough. Recorded in D15
   by the slice building it.

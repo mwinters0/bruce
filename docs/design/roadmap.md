@@ -17,10 +17,11 @@ never reused.
 | P1 — scaffold and parser spike | Complete | [`roadmap-P1-scaffold.md`](roadmap-P1-scaffold.md), [notes](roadmap-P1-scaffold-notes.md) |
 | P2 — the extractor | Complete | [`roadmap-P2-extractor.md`](roadmap-P2-extractor.md), [notes](roadmap-P2-extractor-notes.md) |
 | P3 — the crawler | Complete | [`roadmap-P3-crawler.md`](roadmap-P3-crawler.md), [notes](roadmap-P3-crawler-notes.md) |
-| P4 — verdicts and reports; the first en-US crawl | Sketched; not grilled | this file, below |
+| P4 — verdicts and reports; the first en-US crawl | Current | [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md) |
 | P5 — CI mode: baseline and `check-dir` | Sketched; not grilled | this file, below |
 | P6 — release and the deployment guide | Sketched; not grilled | this file, below |
 | P7 — declarative per-root rules | Sketched; not grilled | this file, below |
+| P8 — run-history reports | Sketched; not grilled | this file, below |
 
 **A row's state is one of `Sketched`, `Specified`, `Current`, `Complete` or
 `Struck`.** The prose after it is a caption. Two states are set in the same
@@ -87,13 +88,11 @@ phases is [`roadmap-P3-crawler-notes.md`](roadmap-P3-crawler-notes.md).
 
 ## P4 — Verdicts, reports, and the first en-US crawl
 
-Post-crawl fragment verdicts in SQL (D28), outcome classification (D16),
-`bruce report` (D6, D27) and `bruce prune` (D2). Ends with a real en-US crawl,
-which delivers the sitemap, inbound ranking and both broken stats before any CI
-work, run from the simulated deployment (D41, D42). The deployment guide starts
-here, with the config section that crawl needs. A full crawl at docs.fp.o's
-`Crawl-delay` runs about 40 minutes, so it is
-a long job (`CLAUDE.md`, "Long-running processes").
+The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md):
+link verdicts as a view (D28), schema 3 recording each page's root, the
+single-run reports and `diff` (D6, D27), `prune` (D2), a config `skip`, the
+deployment guide's config section and `mise run sim` (D42), and two en-US
+crawls from it.
 
 ## P5 — CI mode: baseline and `check-dir`
 
@@ -115,3 +114,10 @@ and attribute giving a fact, a content-region selector, and a URL regex giving
 a source (D33). They write the same key/value facts a compiled profile does
 (D37). Resolution logic stays code. Scheduled when a site outside the compiled
 profiles needs one.
+
+## P8 — Run-history reports
+
+Reports over two runs beyond P4's `diff`: `changed`, the pages whose content
+hash moved (D15), and `anchors-removed`, the anchors a page lost while links
+still name them. Which hash scope a run used is its first question (its
+inbox).

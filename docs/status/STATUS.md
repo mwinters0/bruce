@@ -32,9 +32,26 @@ and the development process is in place: [`../process.md`](../process.md), the
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
 pages, chosen and saved by `scripts/fixtures.py`.
 
+## P4 progress
+
+The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
+
+- [ ] **4.1** Schema 3: `links`' verdict columns dropped, `pages.root` and
+  `runs.roots`; closes KD3.
+- [ ] **4.2** `skip`: the config key and the frontier's `skipped`.
+- [ ] **4.3** The deployment guide's config section and `mise run sim`.
+- [ ] **4.4** The first en-US crawl, detached from `sim/`.
+- [ ] **4.5** `link_verdicts`, timed on 4.4's DB; amends D28.
+- [ ] **4.6** `bruce report`: the run, filters, formats, and `broken`,
+  `errors` and `stats`.
+- [ ] **4.7** `inbound`, `sitemap`, `orphans`, `unlisted` and `redirects`.
+- [ ] **4.8** `diff`.
+- [ ] **4.9** `prune`.
+- [ ] **4.10** The second en-US crawl, with the finished tool.
+
 ## Not started
 
-P4 onward in [`../design/roadmap.md`](../design/roadmap.md)'s index. None has
+P5 onward in [`../design/roadmap.md`](../design/roadmap.md)'s index. None has
 been grilled.
 
 ## Decisions worth another look

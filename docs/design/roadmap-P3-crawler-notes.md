@@ -56,8 +56,8 @@ map.
   (D12) is the join's. `links.redirected` is false on every row (KD3).
 - **An allowlisted page's `pages` row has no `source_*`**, profile `auto`, its
   hash over the whole page. `LinkRow`'s `Outcome` is left NULL for the join
-  (D28). The `reason` values the join must place are the P4 inbox's "What a
-  crawl leaves for the join to place".
+  (D28). Where the join places each `reason` is P4's spec,
+  `../wip/roadmap-P4-reports.md`, "Where the fragment cannot be checked".
 - **`bruce crawl` exits** 0 for a finished run, broken links or not; 1 when
   the config, DB or crawl failed; 2 on a usage error; 130 when stopped. A run
   row exists only once the config, DB and fetcher are good. A stopped run's
@@ -81,9 +81,9 @@ map.
   report exists for. A root at `/en-US/` finds the index by its probe; a
   narrower root must set `sitemap`.
 - **`pages.via_links` is false for every listed page**, 23 of the 24 being
-  linked too: the claimant's flag. An orphan report joins `links` (P4 inbox).
+  linked too: the claimant's flag. An orphan report joins `links` (P4's spec, "What each report holds").
 - **The forge costs about four requests a docs.fp.o page** when allowlisted
-  (P4 inbox, "Allowlisting the forge sets a full crawl's length").
+  (P4's spec, "The forge, and links skipped by config").
 - None of KD3, KD4 or the stop's paths showed in the live crawl.
 
 ## What P5, CI mode, inherits
