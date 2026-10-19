@@ -274,7 +274,8 @@ Ad-hoc `duckdb` users see the same views as the CLI. Output is text, or `--forma
 takes no parameter, so each `report_*` view holds every run and `bruce report` binds the run and the
 filters in its query; `cli` installs them at every open, `store` being below `report` (D39).
 Rejected: a view per run; installing them only when `bruce report` runs, which hides them from
-`duckdb` after a crawl. Code: `report`, `cli::db`.
+`duckdb` after a crawl; a JSON shape carrying `stats`' totals, until a consumer needs one, a script
+reading `link_verdicts` meanwhile. Code: `report`, `cli::db`.
 
 ### D8 Rate limits, concurrency and robots.txt are per host; only a root's host may skip robots.txt
 Defaults in config (D40), with per-host settings in `[host]`. Back off on 429/503 and honour

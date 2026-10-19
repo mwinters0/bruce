@@ -56,6 +56,7 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
 - [x] **4.6** `bruce report`: the run, filters, formats, and `broken`,
   `errors` and `stats`.
   [Notes](../wip/roadmap-P4.6-report-notes.md).
+- [ ] **4.6.1** `stats` counts unchecked targets beside links.
 - [ ] **4.7** `inbound`, `sitemap`, `orphans`, `unlisted` and `redirects`.
 - [ ] **4.8** `diff`.
 - [ ] **4.9** `prune`.
@@ -74,10 +75,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **`stats` counts `unchecked` links by reason, not targets.** The spec says
-  targets ("What each report holds"). Links is what the totals line sits
-  beside, and it is the only count that holds `text_fragment`, `no_anchors`
-  and `cut`, reasons a link has and a target does not (P4.5's notes expect
-  them shown). A per-target count is `report_stats`' sibling query on
-  `targets`; the totals line would then miss those three.

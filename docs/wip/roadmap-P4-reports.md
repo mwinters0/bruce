@@ -82,7 +82,11 @@ report.
 - **`errors`**: the same shape, for `error`.
 - **`stats`**: a row per crawled page with its links, `broken_url`,
   `broken_anchor` and `error` counts, and a run totals line, which also
-  counts `unchecked` targets by reason.
+  counts `unchecked` links by reason and the distinct targets they name,
+  both under the report's filters: links say how much of the linking went
+  unverified, targets how many URLs (P4.4's 34 `robots` links name 10).
+  Rejected: targets alone, read off `targets`, which no filter reaches and
+  which holds no `text_fragment`, `no_anchors` or `cut`.
 - **`inbound`**: crawled pages ranked by the distinct other pages linking
   to them by an `anchor` link; self-links and the `sitemap` kinds do not
   count.
@@ -296,6 +300,13 @@ wiremock and timed on P4.4's DB.
 Choosing the run, `--repo`, `--fact`, `--top`, `--kind`, both formats, the
 `report/` views installed at every open, and `broken`, `errors` and
 `stats`; the manual's reference for it.
+
+### P4.6.1 `stats` counts unchecked targets beside links
+
+Earned by P4.6, which counted links where the spec said targets: the
+totals' reason lines carry both, each target counted once per reason by
+`target_url_id` over the same join, so the filters and the link-only
+reasons hold. The manual's `stats` section says so.
 
 ### P4.7 The other single-run reports
 
