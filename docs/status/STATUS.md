@@ -56,7 +56,8 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
 - [x] **4.6** `bruce report`: the run, filters, formats, and `broken`,
   `errors` and `stats`.
   [Notes](../wip/roadmap-P4.6-report-notes.md).
-- [ ] **4.6.1** `stats` counts unchecked targets beside links.
+- [x] **4.6.1** `stats` counts unchecked targets beside links.
+  [Notes](../wip/roadmap-P4.6.1-stats-targets-notes.md).
 - [ ] **4.7** `inbound`, `sitemap`, `orphans`, `unlisted` and `redirects`.
 - [ ] **4.8** `diff`.
 - [ ] **4.9** `prune`.

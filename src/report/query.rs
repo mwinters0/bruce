@@ -186,8 +186,8 @@ const PAGE: Cols = Cols {
     page: "pg.url_id",
 };
 
-/// The run's totals over every page the filters keep, `unchecked` links
-/// counted by reason, which no row carries.
+/// The run's totals over every page the filters keep, `unchecked` links and
+/// the distinct targets they name counted by reason, which no row carries.
 fn totals(
     conn: &Connection,
     run: RunId,
@@ -214,7 +214,8 @@ fn totals(
         sum(5)
     );
     let mut sql = Sql::new(
-        "SELECT coalesce(v.reason, '(none)') AS reason, count(*)::BIGINT AS links \
+        "SELECT coalesce(v.reason, '(none)') AS reason, count(*)::BIGINT AS links, \
+         count(DISTINCT v.target_url_id)::BIGINT AS targets \
          FROM link_verdicts v JOIN report_pages pg \
          ON pg.run_id = v.run_id AND pg.url_id = v.src_url_id \
          WHERE pg.crawled AND v.outcome = 'unchecked' AND ",
@@ -226,10 +227,10 @@ fn totals(
     if reasons.rows.is_empty() {
         return Ok(vec![line]);
     }
-    line.push_str("\nunchecked links by reason:");
+    line.push_str("\nunchecked by reason:");
     for row in &reasons.rows {
-        if let [Cell::Text(reason), Cell::Int(n)] = &row[..] {
-            line.push_str(&format!("\n  {reason}: {n}"));
+        if let [Cell::Text(reason), Cell::Int(links), Cell::Int(targets)] = &row[..] {
+            line.push_str(&format!("\n  {reason}: {links} links, {targets} targets"));
         }
     }
     Ok(vec![line])

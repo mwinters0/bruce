@@ -225,8 +225,27 @@ fn stats_counts_each_crawled_page_and_totals_the_run() {
     assert_eq!(
         out.notes[0],
         "total: 3 pages, 7 links, 2 broken_url, 1 broken_anchor, 1 error, 1 unchecked\n\
-         unchecked links by reason:\n  skipped: 1"
+         unchecked by reason:\n  skipped: 1 links, 1 targets"
     );
+}
+
+#[test]
+fn stats_counts_a_target_once_however_many_links_name_it() {
+    let store = store();
+    link(&store, 1, 2, 14, None, "anchor");
+    link(&store, 1, 3, 14, Some("x"), "anchor");
+    let out = report(&store, |r| r.report = Report::Stats);
+    assert!(
+        out.notes[0].ends_with("unchecked by reason:\n  skipped: 3 links, 1 targets"),
+        "{}",
+        out.notes[0]
+    );
+    // The filters reach the target count: only page 2's link is left.
+    let out = report(&store, |r| {
+        r.report = Report::Stats;
+        r.repo = Some("r/two".into());
+    });
+    assert!(out.notes[0].ends_with("skipped: 1 links, 1 targets"));
 }
 
 #[test]
@@ -239,7 +258,7 @@ fn stats_counts_the_kinds_it_is_given_and_top_leaves_the_total_whole() {
     assert_eq!(column(&out.table, "page"), [url(1)]);
     assert_eq!(out.table.rows[0][1..3], [Cell::Int(1), Cell::Int(1)]);
     assert!(out.notes[0].starts_with("total: 3 pages, 1 links, 1 broken_url"));
-    assert!(!out.notes[0].contains("unchecked links by reason"));
+    assert!(!out.notes[0].contains("unchecked by reason"));
 }
 
 #[test]

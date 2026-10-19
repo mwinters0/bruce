@@ -65,8 +65,10 @@ is kept apart from `broken`.
 `links` it holds and how many are `broken_url`, `broken_anchor`, `error` and
 `unchecked`, the most broken page first. Below the table are the run's
 totals and the `unchecked` links by reason (`out_of_scope`,
-`host_not_allowlisted`, `skipped`, `robots`, `scheme` and the others), so a
-link the crawl chose not to ask about is shown and never counted as broken.
+`host_not_allowlisted`, `skipped`, `robots`, `scheme` and the others), each
+with the number of links and of distinct URLs they name, so a link the crawl
+chose not to ask about is shown and never counted as broken. The filters
+narrow both counts.
 Pages fetched only because a page linked to them (the allowlist) have no row.
 
 ## Output
