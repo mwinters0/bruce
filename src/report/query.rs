@@ -1,22 +1,24 @@
 //! The report to run, and the queries of the link reports and `stats`: a
 //! view, the run, the filters, the order and the limit. The page reports are
-//! in `reach` and `redirects`.
+//! in `reach`, `redirects` and `diff`.
 
 use duckdb::Connection;
 
 use super::error::Error;
 use super::request::{Report, Request};
+use super::run::Chosen;
 use super::sql::{Cols, PAGE, Sql};
 use super::table::{Cell, Table};
-use super::{reach, redirects};
+use super::{diff, reach, redirects};
 use crate::store::RunId;
 
 /// Runs the report, returning its table and the notes a text rendering adds.
 pub(super) fn run(
     conn: &Connection,
-    run: RunId,
+    chosen: &Chosen,
     request: &Request,
 ) -> Result<(Table, Vec<String>), Error> {
+    let run = chosen.run;
     match request.report {
         Report::Broken => Ok((links(conn, run, request, "report_broken")?, Vec::new())),
         Report::Errors => Ok((links(conn, run, request, "report_errors")?, Vec::new())),
@@ -26,6 +28,10 @@ pub(super) fn run(
         Report::Orphans => Ok((reach::orphans(conn, run, request)?, Vec::new())),
         Report::Unlisted => reach::unlisted(conn, run, request),
         Report::Redirects => Ok((redirects::redirects(conn, run, request)?, Vec::new())),
+        Report::Diff => {
+            let (from, _) = chosen.from.expect("choose gives a diff its base run");
+            Ok(diff::diff(conn, from, run, request)?)
+        }
     }
 }
 

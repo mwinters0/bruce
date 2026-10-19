@@ -48,6 +48,27 @@ fn json_asks_for_the_linking_pages_text_does_not() {
 }
 
 #[test]
+fn diff_takes_from_and_to_and_the_others_take_run() {
+    let a = parse(&["diff", "--from", "2", "--to", "5"]).unwrap();
+    assert_eq!(
+        (a.request.from, a.request.to),
+        (Some(RunId(2)), Some(RunId(5)))
+    );
+    assert_eq!(a.request.run, None);
+    let check = |args: &[&str]| {
+        let m = command()
+            .try_get_matches_from(std::iter::once("report").chain(args.iter().copied()))
+            .unwrap();
+        check(&m)
+    };
+    assert!(check(&["diff", "--from", "1"]).is_ok());
+    assert!(check(&["broken", "--run", "1"]).is_ok());
+    assert!(check(&["diff", "--run", "1"]).is_err());
+    assert!(check(&["broken", "--from", "1"]).is_err());
+    assert!(check(&["stats", "--to", "1"]).is_err());
+}
+
+#[test]
 fn kind_all_counts_every_kind() {
     let a = parse(&["broken", "--kind", "all"]).unwrap();
     assert_eq!(a.request.kinds, Kind::ALL);

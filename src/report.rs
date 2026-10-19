@@ -9,8 +9,10 @@
 //! (`anchor` by default, D13), and the pages in the repo `repo` (D17) holding
 //! every `facts` pair (D32, D38). A link report filters on the page a link is
 //! on, a page report on the page a row lists; `query` has the link reports and
-//! `stats`, `reach` how a page is reached and `redirects` the moved links.
+//! `stats`, `reach` how a page is reached, `redirects` the moved links and
+//! `diff` what broke or was fixed between two runs.
 
+mod diff;
 mod error;
 mod query;
 mod reach;
@@ -31,11 +33,12 @@ pub use views::VIEWS;
 /// Runs one report against `store`, whose views are installed.
 pub fn run(store: &Store, request: &Request) -> Result<Output, Error> {
     let conn = store.connection();
-    let (run, unfinished) = run::choose(conn, request.run)?;
-    let (table, notes) = query::run(conn, run, request)?;
+    let chosen = run::choose(conn, request)?;
+    let (table, notes) = query::run(conn, &chosen, request)?;
     Ok(Output {
-        run,
-        unfinished,
+        run: chosen.run,
+        unfinished: chosen.unfinished,
+        from: chosen.from,
         table,
         notes,
     })

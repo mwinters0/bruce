@@ -26,7 +26,7 @@ the profile's facts and the content hash;
 `url`, the canonical form and `url_id`;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, and the body decoding; and
 `crawl`, the frontier, the hops of a redirect, D16's outcomes, sitemaps, the run that writes a target's rows and its stop; and
-`report`, the `report_*` views, the choice of run, and the eight single-run reports as a text table or JSON. The rest hold only their doc.
+`report`, the `report_*` views, the choice of run, and the eight single-run reports and `diff` as a text table or JSON. The rest hold only their doc.
 `docs/manual/` holds the config reference, `bruce crawl`'s, `bruce report`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -63,7 +63,8 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
 - [x] **4.7.1** `unlisted`'s roots: canonical, and read only when a file
   answered.
   [Notes](../wip/roadmap-P4.7.1-unlisted-roots-notes.md).
-- [ ] **4.8** `diff`.
+- [x] **4.8** `diff`.
+  [Notes](../wip/roadmap-P4.8-diff-notes.md).
 - [ ] **4.9** `prune`.
 - [ ] **4.10** The second en-US crawl, with the finished tool.
 

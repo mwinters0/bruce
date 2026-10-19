@@ -22,13 +22,15 @@ pub enum Report {
     Orphans,
     /// Crawled pages absent from the sitemap of a root that read one.
     Unlisted,
+    /// The links broken in one run and not in another, and the reverse.
+    Diff,
     /// The redirected links, grouped by where they landed.
     Redirects,
 }
 
 impl Report {
     /// Every report built.
-    pub const ALL: [Report; 8] = [
+    pub const ALL: [Report; 9] = [
         Report::Broken,
         Report::Errors,
         Report::Stats,
@@ -37,6 +39,7 @@ impl Report {
         Report::Orphans,
         Report::Unlisted,
         Report::Redirects,
+        Report::Diff,
     ];
 
     /// The name on the command line.
@@ -50,6 +53,7 @@ impl Report {
             Report::Orphans => "orphans",
             Report::Unlisted => "unlisted",
             Report::Redirects => "redirects",
+            Report::Diff => "diff",
         }
     }
 }
@@ -60,6 +64,11 @@ pub struct Request {
     pub report: Report,
     /// The run; the latest finished one where `None`.
     pub run: Option<RunId>,
+    /// `diff` only: the run compared against, by default the finished run
+    /// before `to`.
+    pub from: Option<RunId>,
+    /// `diff` only: the run compared, by default the latest finished one.
+    pub to: Option<RunId>,
     /// `pages.source_repo` of the page a row is about: the linking page for a
     /// link report, else the page listed.
     pub repo: Option<String>,
@@ -80,6 +89,8 @@ impl Request {
         Request {
             report,
             run: None,
+            from: None,
+            to: None,
             repo: None,
             facts: Vec::new(),
             kinds: vec![Kind::Anchor],
@@ -92,9 +103,12 @@ impl Request {
 /// A report's rows, and what to say beside them.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Output {
+    /// The run read, or for `diff` the one compared (`to`).
     pub run: RunId,
     /// The run never finished, so the report is incomplete.
     pub unfinished: bool,
+    /// `diff` only: the run compared against, and whether it never finished.
+    pub from: Option<(RunId, bool)>,
     pub table: Table,
     /// Lines for a text rendering to print under the table; JSON omits them.
     pub notes: Vec<String>,

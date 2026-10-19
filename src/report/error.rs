@@ -10,6 +10,8 @@ pub enum Error {
     /// No `--run`, and no run in the database has finished.
     NoFinishedRun,
     NoSuchRun(RunId),
+    /// A `diff` with no `--from`, and no finished run before the one compared.
+    NoEarlierRun(RunId),
 }
 
 impl fmt::Display for Error {
@@ -20,6 +22,11 @@ impl fmt::Display for Error {
                 f.write_str("the database holds no finished run; name one with --run")
             }
             Error::NoSuchRun(run) => write!(f, "the database holds no run {}", run.0),
+            Error::NoEarlierRun(run) => write!(
+                f,
+                "the database holds no finished run before run {}; name one with --from",
+                run.0
+            ),
         }
     }
 }

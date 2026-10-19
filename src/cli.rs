@@ -36,20 +36,26 @@ where
 {
     let matches = match command().try_get_matches_from(args) {
         Ok(matches) => matches,
-        Err(e) => {
-            // `--help` and `--version` are errors to clap that print to stdout.
-            let _ = e.print();
-            return if e.use_stderr() {
-                ExitCode::from(USAGE)
-            } else {
-                ExitCode::SUCCESS
-            };
-        }
+        Err(e) => return refuse(&e),
     };
     match matches.subcommand() {
         Some(("crawl", m)) => crawl::run(&crawl::Args::from(m), registry()),
-        Some(("report", m)) => report::run(&report::Args::from(m), registry()),
+        Some(("report", m)) => match report::check(m) {
+            Ok(()) => report::run(&report::Args::from(m), registry()),
+            Err(e) => refuse(&e),
+        },
         _ => unreachable!("clap requires a subcommand"),
+    }
+}
+
+/// Prints a command line `clap` refuses and gives its exit status.
+fn refuse(e: &clap::Error) -> ExitCode {
+    // `--help` and `--version` are errors to clap that print to stdout.
+    let _ = e.print();
+    if e.use_stderr() {
+        ExitCode::from(USAGE)
+    } else {
+        ExitCode::SUCCESS
     }
 }
 
