@@ -42,12 +42,11 @@ are P4.5's to count.
   `issues/new/choose` matches neither. P4.3's "matched by hand" note had the
   shape wrong. Offline, with the crate's `GlobBuilder` as `Patterns::new`
   builds it, over the 1921 `issues/new` URLs in `targets`: the guide's glob
-  matches 16; `https://forge.fedoraproject.org/**/issues/new?*/**` matches
-  1904; with the guide's glob beside it, 1920. **The guide's glob is fixed
-  before P4.10**, or the second crawl repeats this and its `diff` against
-  this run compares like with like only by accident. The guide's "and no
-  request is sent" (`docs/manual/deploy.md`) is false for those links until it
-  is.
+  matches 16; `https://forge.fedoraproject.org/**/issues/new*/**` matches
+  the other 1905, `/choose` included, and nothing among all 172239 targets
+  that is not an `issues/new` URL. P4.3.1 puts the pair in the guide before
+  P4.10, whose `diff` against this run otherwise compares like with like
+  only by accident.
 - **The other four `skipped` are what the second glob is for**:
   `/user/login` itself, and three `settings` URLs that redirect to it
   (`/org/%3Corganization_name%3E/settings`, `/user/settings/applications`,
@@ -55,11 +54,12 @@ are P4.5's to count.
 - **A sitemap lists a page its own `robots.txt` forbids.**
   `/en-US/fesco/Fedora_Council_Engineering_Rep/` is a sitemap entry and
   matches `Disallow: /*/Fedora*/` (I2); it is `unchecked` / `robots`, no page.
-  `curl` answers it 200. The crawl is right to leave it; "every sitemap page
-  fetched" can hold only up to such a page, and the second crawl's check
-  should count it as the one expected. The other nine `robots` targets are
-  linked paths under `Fedora*` (release notes, an installation guide) and
-  `Community_Services_Infrastructure/`.
+  `curl` answers it 200; 24 pages link to it. The other nine `robots`
+  targets are `anchor` links from live pages to paths under `Fedora*` (F1–F7
+  release notes from `releases/f<n>/`, an F23 installation-guide page) and
+  `Community_Services_Infrastructure/`, and **all nine answer 404** to
+  `curl`: obeying the site's robots.txt hid nine broken links. P4.3.1 is
+  what that earned.
 - **The hosts ran one after the other.** `targets.checked_at` is the instant
   a target's hops began (`src/crawl.rs`), so its distribution is the
   schedule. In 20-minute buckets from 16:20 UTC, docs.fp.o starts were 481,

@@ -81,12 +81,19 @@ report.
   `source_path`. `kind = anchor` by default (D13); `--kind` widens it.
 - **`errors`**: the same shape, for `error`.
 - **`stats`**: a row per crawled page with its links, `broken_url`,
-  `broken_anchor` and `error` counts, and a run totals line.
+  `broken_anchor` and `error` counts, and a run totals line, which also
+  counts `unchecked` targets by reason.
 - **`inbound`**: crawled pages ranked by the distinct other pages linking
   to them by an `anchor` link; self-links and the `sitemap` kinds do not
   count.
 - **`sitemap`**: every crawled page, with title, `in_sitemap`, `via_links`
-  and source.
+  and source, and every sitemap entry not fetched, with its outcome and
+  reason.
+
+**What a crawl chose not to check is shown, never counted as broken**:
+`robots` and `skipped` targets are in no other report, and P4.4's DB holds
+nine 404s and a sitemap page behind docs.fp.o's robots.txt. Rejected: an
+`unchecked` report of its own; leaving it to `duckdb`.
 - **`orphans`**: pages in their root's sitemap that no other page links to
   by an `anchor` link.
 - **`unlisted`**: crawled pages absent from the sitemap of a root that read
@@ -199,7 +206,8 @@ schema and `skip` in place, so every later slice builds against the real
 site's shapes, and **P4.10** with the finished tool, so the pair is `diff`'s
 real evidence and P4.10's reports are the phase's deliverable: the sitemap,
 the inbound ranking and both broken stats. **A crawl passes when it
-finishes** (`finished_at` set, exit 0) **with every sitemap page fetched**;
+finishes** (`finished_at` set, exit 0) **with every sitemap page fetched
+that robots.txt allows** (P4.4's one exception is in its notes);
 the rest is recorded, not judged: wall clock, peak RSS, DB size, the
 outcome and reason counts, and `link_verdicts`' timing, as in P3.8's table
 (`roadmap-P3-crawler-notes.md`). A wall clock or RSS well past the
@@ -256,6 +264,22 @@ sitemap's included, amending D50.
 `docs/manual/deploy.md` as far as its config, docs.fp.o's worked example
 allowlisting the forge and skipping `issues/new` and `/user/login*`, and the task extracting
 it into `sim/` (D42).
+
+### P4.3.1 The guide's example: robots.txt and the skip glob
+
+Earned by P4.4 (its notes), twice. docs.fp.o's `Disallow`s hid nine 404s
+linked from live pages and one sitemap page, caught by `/*/Fedora*/` by
+accident: the worked example sets `robots = false` with `per_second = 1` on
+docs.fp.o, a deployer's override D8 allows on a root's host, and names the
+alternative where the deployer controls the site, a `robots.txt` group for
+its own user agent (RFC 9309's most specific match) holding only
+`Crawl-delay: 1`. D18's premise that docs.fp.o wants its disallows obeyed
+is rewritten. And `issues/new*` matched 16 of 1921 forge links, the query
+holding a `/`: the example adds `…/**/issues/new*/**`, which with it
+matched all 1921 offline and nothing else among P4.4's targets; the guide's
+"no request is sent" is true again. `config.md`'s `skip` example takes the
+same pair, and its Skip section says a query holding a `/` needs `**`
+(D50).
 
 ### P4.4 The first en-US crawl
 
