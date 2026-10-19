@@ -7,8 +7,11 @@ Drive `/go` in a loop. Each round is a **fresh subagent** that lands one slice,
 or with no phase open one out-of-band item;
 this session orchestrates and never implements. `/gosub [max-rounds]`, cap **5**.
 
-Every round is a new `Agent` call, `subagent_type: "general-purpose"`, no `model`
-override — **never** a fork, **never** `SendMessage` to a previous round's agent.
+Every round is a new `Agent` call, `subagent_type: "general-purpose"`, `model:
+"sonnet"`, `effort: "high"` — **never** a fork, **never** `SendMessage` to a
+previous round's agent. That model and effort are the default for every subagent
+this skill dispatches; use another only when the maintainer directs it in the
+invocation.
 **The orchestrator does not do the work**: dispatch, verification, commit and
 the stop decision only. Do not read source files, fix the subagent's test
 failures, or finish a slice it left half-done — a round that comes back wrong
@@ -135,8 +138,8 @@ capture, stop the loop. *Done* — disarm (`CronDelete`), then step 5. *Over eig
 hours since `started`* — disarm and stop the loop, leaving the job running, per
 the cutoff below.
 
-**5. Dispatch a fresh subagent for the result** — `general-purpose`, no `model`,
-never a fork:
+**5. Dispatch a fresh subagent for the result** — `general-purpose`, the default
+model and effort, never a fork:
 
 > The long job described in `<handoff path>` has finished. Read that file in
 > full, including the body below the frontmatter. Confirm its `done` condition
@@ -150,8 +153,8 @@ never a fork:
 **6. Resume at step 3 of "One round"** — verify, commit, decide, every stop
 condition applying unchanged.
 
-**When the job fails or wedges**, one fresh `Agent` (`general-purpose`, no
-`model`, never a fork) captures the volatile evidence and *only* captures it:
+**When the job fails or wedges**, one fresh `Agent` (`general-purpose`, the
+default model and effort, never a fork) captures the volatile evidence and *only* captures it:
 read the handoff doc in full, leave a still-running job running, **change nothing
 else** — no retry, no fix, no cleanup, no source tree — and write
 `runs/<job>-<stamp>/FAILURE.md` beside it with what `check` and `exit` say now,
