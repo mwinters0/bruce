@@ -165,9 +165,12 @@ DB is ours and disposable, so migrations wait for the first release (P6). Reject
 mismatch, which silently destroys the history D2 keeps; migrations from day one, for no user.
 
 ### D28 Fragment verdicts are computed in SQL after the crawl, not during it
-The crawler holds no anchor state and need not order fetches around targets. The same join feeds
-the reports. One writer feeds DuckDB appenders through a bounded channel, DuckDB allowing one
-writing process per file. Rejected: checking fragments in memory as pages arrive.
+The crawler holds no anchor state and need not order fetches around targets. The verdict is a view,
+`link_verdicts`, computed at each read, so a stopped run needs no second path and no stored column
+can disagree with it; the reports and P5's gate read the same join. One writer feeds DuckDB appenders
+through a bounded channel, DuckDB allowing one writing process per file. Rejected: checking fragments
+in memory as pages arrive; a table written at a run's end. Reopens: a read slow enough to materialise
+(0.1 s over 587839 links, 172239 targets). Code: `store::views`. Evidence: `store::views::tests`.
 
 ## Classification
 

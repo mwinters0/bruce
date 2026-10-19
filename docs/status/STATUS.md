@@ -16,8 +16,8 @@ Red means a repoint is due ([`../process.md`](../process.md),
 
 The `bruce` crate is D39's top-level modules, a binary whose one subcommand
 is `bruce crawl`, and Rust 1.99.1 pinned in `mise.toml`. Nine modules hold
-code: `cli`, the command line, `crawl`'s subcommand and the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check and
-the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
+code: `cli`, the command line, `crawl`'s subcommand and the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check, the
+`link_verdicts` view and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views and Extract, with Resolve
 declared and empty; `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
@@ -50,7 +50,8 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
   [Notes](../wip/roadmap-P4.3.1-guide-example-notes.md).
 - [x] **4.4** The first en-US crawl, detached from `sim/`.
   [Notes](../wip/roadmap-P4.4-first-crawl-notes.md).
-- [ ] **4.5** `link_verdicts`, timed on 4.4's DB; amends D28.
+- [x] **4.5** `link_verdicts`, timed on 4.4's DB; amends D28.
+  [Notes](../wip/roadmap-P4.5-link-verdicts-notes.md).
 - [ ] **4.6** `bruce report`: the run, filters, formats, and `broken`,
   `errors` and `stats`.
 - [ ] **4.7** `inbound`, `sitemap`, `orphans`, `unlisted` and `redirects`.

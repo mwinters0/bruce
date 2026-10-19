@@ -1,10 +1,11 @@
 //! Storage: the DuckDB schema, its version and the single writer (D26, D28,
 //! D37, D43). A [`Store`] is one database, a file or in memory. Opening it
 //! creates the schema in a new database, refuses a file of another version,
-//! and creates every profile's views (D39).
+//! and creates its own views and every profile's (D39).
 
 mod rows;
 mod schema;
+mod views;
 mod writer;
 
 use std::fmt;
@@ -132,13 +133,12 @@ impl Store {
                 params![schema::VERSION_KEY, SCHEMA_VERSION.to_string()],
             )?;
         }
-        for profile in profiles.iter() {
-            for view in profile.views() {
-                conn.execute_batch(&format!(
-                    "CREATE OR REPLACE VIEW {} AS {}",
-                    view.name, view.select
-                ))?;
-            }
+        let own = views::ALL.iter();
+        for view in own.chain(profiles.iter().flat_map(|p| p.views())) {
+            conn.execute_batch(&format!(
+                "CREATE OR REPLACE VIEW {} AS {}",
+                view.name, view.select
+            ))?;
         }
         Ok(Store { conn })
     }

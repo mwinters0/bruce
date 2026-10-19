@@ -638,6 +638,69 @@ async fn a_redirect_is_a_chain_and_its_landing_page_is_recorded_once() {
 }
 
 #[tokio::test]
+async fn link_verdicts_read_a_crawl_through_its_redirects() {
+    let server = MockServer::start().await;
+    page(
+        &server,
+        "/docs/",
+        r##"<h1 id=top-of-page>t</h1>
+        <a href="/docs/old#a">1</a><a href="/docs/old#gone">2</a>
+        <a href="/docs/new#caf%C3%A9">3</a><a href="/docs/new#:~:text=x">4</a>
+        <a href="/docs/missing#a">5</a><a href="/docs/logo.svg#a">6</a>
+        <a href="#top-of-page">7</a><a href="#nope">8</a>"##,
+    )
+    .await;
+    redirect(&server, "/docs/old", 301, "/docs/new").await;
+    page(
+        &server,
+        "/docs/new",
+        "<title>New</title><h2 id=a>a</h2><h2 id=café>c</h2>",
+    )
+    .await;
+    status(&server, "/docs/missing", 404).await;
+    Mock::given(path("/docs/logo.svg"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw("<svg/>", "image/svg+xml"))
+        .mount(&server)
+        .await;
+
+    let done = crawl(&server, "", quick()).await;
+
+    let got: Vec<(String, String, Option<String>, bool)> = rows(
+        &done.store,
+        "SELECT raw_href, outcome, reason, redirected FROM link_verdicts \
+         WHERE src_url_id = (SELECT url_id FROM targets WHERE url LIKE '%/docs/') \
+         ORDER BY raw_href",
+        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+    );
+    let v = |href: &str, outcome: &str, reason: Option<&str>, redirected: bool| {
+        (
+            href.to_owned(),
+            outcome.to_owned(),
+            reason.map(str::to_owned),
+            redirected,
+        )
+    };
+    assert_eq!(
+        got,
+        [
+            v("#nope", "broken_anchor", None, false),
+            v("#top-of-page", "ok", None, false),
+            v("/docs/logo.svg#a", "unchecked", Some("no_anchors"), false),
+            v("/docs/missing#a", "broken_url", None, false),
+            v(
+                "/docs/new#:~:text=x",
+                "unchecked",
+                Some("text_fragment"),
+                false
+            ),
+            v("/docs/new#caf%C3%A9", "ok", None, false),
+            v("/docs/old#a", "ok", None, true),
+            v("/docs/old#gone", "broken_anchor", None, true),
+        ]
+    );
+}
+
+#[tokio::test]
 async fn a_refresh_of_delay_zero_is_a_hop_and_one_that_waits_is_a_page() {
     let server = MockServer::start().await;
     page(
