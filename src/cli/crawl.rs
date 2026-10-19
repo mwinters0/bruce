@@ -199,6 +199,7 @@ pub fn configure(args: &Args, registry: &Registry) -> Result<(Config, String), S
             .push(Root::new(url).map_err(|e| format!("{url}: {e}"))?);
         config
             .check_robots_hosts()
+            .and_then(|()| config.check_skipped_roots())
             .map_err(|e| format!("{}: {e}", path.display()))?;
     }
     if config.roots.is_empty() {

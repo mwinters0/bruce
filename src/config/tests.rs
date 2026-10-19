@@ -26,6 +26,7 @@ fn a_run_given_only_a_url_has_every_default() {
     assert_eq!(r.profile, ProfileChoice::Auto);
     assert_eq!(r.hash, HashScope::default());
     assert!(c.allowlist.is_empty());
+    assert!(c.skip.is_empty());
     assert_eq!(c.rate.per_second, DEFAULT_PER_SECOND);
     assert_eq!(c.rate.concurrency, 4);
     assert_eq!(c.user_agent, concat!("bruce/", env!("CARGO_PKG_VERSION")));
@@ -57,6 +58,7 @@ fn every_key_is_read() {
     let c = Config::parse(
         r#"
         allowlist = ["GitHub.com", "pagure.io"]
+        skip = ["https://pagure.io/**/issues/new*"]
         user_agent = "Acme-Docs/2 (+https://acme.example/bot)"
 
         [rate]
@@ -85,6 +87,7 @@ fn every_key_is_read() {
     )
     .unwrap();
     assert_eq!(c.allowlist, ["github.com", "pagure.io"]);
+    assert_eq!(c.skip.globs(), ["https://pagure.io/**/issues/new*"]);
     assert_eq!(c.rate.per_second, 5.0);
     assert_eq!(c.rate.concurrency, 8);
     assert_eq!(c.user_agent, "Acme-Docs/2 (+https://acme.example/bot)");
@@ -170,6 +173,7 @@ fn bad_values_name_their_key() {
             "root[0]: profile:",
         ),
         ("allowlist = [\"https://a.example/\"]", "allowlist:"),
+        ("skip = [\"a[\"]", "skip:"),
         ("[rate]\nper_second = 0", "rate.per_second:"),
         ("[rate]\nconcurrency = 0", "rate.concurrency:"),
         (
@@ -230,6 +234,24 @@ fn robots_can_be_turned_off_only_for_a_host_a_root_starts_on() {
         ..c
     };
     assert!(c.check_robots_hosts().is_ok());
+}
+
+#[test]
+fn a_roots_url_may_not_be_skipped() {
+    let root = "[[root]]\nurl = \"https://a.example/en-US/\"\n";
+    let msg = invalid_msg(&format!("skip = [\"https://a.example/**\"]\n{root}"));
+    assert!(
+        msg.starts_with("root[0]: url:") && msg.contains("skip"),
+        "{msg}"
+    );
+    // A file naming no root leaves the check to whoever adds one.
+    let c = Config::parse("skip = [\"https://a.example/**\"]").unwrap();
+    assert!(c.check_skipped_roots().is_ok());
+    let c = Config {
+        roots: vec![Root::new("https://a.example/").unwrap()],
+        ..c
+    };
+    assert!(c.check_skipped_roots().is_err());
 }
 
 #[test]

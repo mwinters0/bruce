@@ -79,12 +79,17 @@ impl Frontier {
 
     /// How `url` is treated when a link of `kind` names it, and its canonical
     /// form. The first root whose scope holds it is its root. Order is the
-    /// spec's: a root's scope, then an allowlisted host, then the rest, an
+    /// spec's: `skip` (D50), matched on the plain form whatever the host,
+    /// then a root's scope, then an allowlisted host, then the rest, an
     /// out-of-scope URL on a root's own host told apart from any other host
     /// by its reason.
     pub fn plan(&self, url: &Url, kind: Kind) -> (Plan, Canonical) {
         if !matches!(url.scheme(), "http" | "https") {
             return (Plan::Unchecked("scheme"), canonical(url, false));
+        }
+        let plain = canonical(url, false);
+        if self.config.skip.is_match(plain.as_str()) {
+            return (Plan::Unchecked("skipped"), plain);
         }
         for (root, r) in self.config.roots.iter().enumerate() {
             let form = r.canonical(url);
@@ -92,7 +97,7 @@ impl Frontier {
                 return (Plan::Page { root }, form);
             }
         }
-        let form = canonical(url, false);
+        let form = plain;
         let host = url.host().map(|h| h.to_string()).unwrap_or_default();
         let plan = if self.config.allowlist.contains(&host) {
             // deficiency: KD4 The first link to an allowlisted URL decides how

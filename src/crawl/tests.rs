@@ -330,6 +330,55 @@ async fn a_page_row_holds_what_was_read_and_which_way_it_was_found() {
 }
 
 #[tokio::test]
+async fn a_skipped_url_is_never_asked_and_its_link_is_kept() {
+    let server = MockServer::start().await;
+    let uri = server.uri();
+    page(
+        &server,
+        "/docs/",
+        r#"<a href="old/">old</a><a href="kept/">kept</a>
+        <a href="/elsewhere/issues/new?title=x">new issue</a>"#,
+    )
+    .await;
+    page(&server, "/docs/kept/", "<title>Kept</title>").await;
+    page(&server, "/docs/old/", "<title>Old</title>").await;
+    let skip = format!("skip = [\"{uri}/docs/old/**\", \"{uri}/elsewhere/**\"]");
+    let done = crawl(&server, &skip, quick()).await;
+
+    assert_eq!(
+        done.targets(),
+        [
+            t("/docs/", "ok", None, Some(200)),
+            t("/docs/kept/", "ok", None, Some(200)),
+            t("/docs/old/", "unchecked", Some("skipped"), None),
+            t(
+                "/elsewhere/issues/new?title=x",
+                "unchecked",
+                Some("skipped"),
+                None
+            ),
+        ],
+        "in a root's scope or outside it, a skipped URL is a target and no request"
+    );
+    let asked: Vec<_> = requests(&server)
+        .await
+        .into_iter()
+        .map(|(_, p)| p)
+        .collect();
+    assert!(
+        !asked
+            .iter()
+            .any(|p| p.starts_with("/docs/old") || p.starts_with("/elsewhere")),
+        "{asked:?}"
+    );
+    assert_eq!(
+        count(&done.store, "SELECT count(*) FROM links"),
+        3,
+        "the links to them are kept"
+    );
+}
+
+#[tokio::test]
 async fn an_allowlisted_host_is_one_hop_deep() {
     let server = MockServer::start().await;
     let outer = MockServer::start().await;

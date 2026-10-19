@@ -11,6 +11,7 @@ error, so a misspelt key never passes silently as a default.
 
 ```toml
 allowlist = ["github.com", "gitlab.com"]
+skip = ["https://github.com/*/*/issues/new*"]
 user_agent = "docs-example-bot/1.0 (+https://docs.example.org/bot)"
 
 [rate]
@@ -132,6 +133,24 @@ checked.
 | Key | Default | Meaning |
 |---|---|---|
 | `allowlist` | `[]` | Host names such as `"github.com"`. No scheme, port or path. |
+
+## Skip
+
+`skip` lists URL globs for links that are never asked about, on any host,
+inside a root's scope as well as outside it. A link whose URL matches is
+recorded with the outcome `unchecked` and the reason `skipped`, and no request
+is sent. Use it for a URL that answers the same whether or not the page it
+names exists, such as a forge's `issues/new` redirecting anonymous requests to
+a login page.
+
+A glob matches the whole URL as `include` does ([Roots](#roots)), with its
+query: `*` and `?` stop at `/`, `**` crosses it, so `issues/new*` matches
+`issues/new?title=x`. A glob that matches a root's own `url` is an error. A
+redirect that leads to a skipped URL is still followed.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `skip` | `[]` | URL globs, such as `"https://github.com/*/*/issues/new*"`. |
 
 ## Rate
 

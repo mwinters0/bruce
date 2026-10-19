@@ -72,6 +72,48 @@ fn everything_else_is_unchecked_and_says_which_case() {
 }
 
 #[test]
+fn a_skipped_url_is_skipped_before_scope_and_the_allowlist() {
+    let config = Config::parse(
+        r#"
+        allowlist = ["forge.example.org"]
+        skip = ["https://*/*/*/issues/new*", "https://docs.example.org/en-US/a/old/**"]
+
+        [[root]]
+        url = "https://docs.example.org/en-US/a/"
+        "#,
+    )
+    .unwrap();
+    let f = Frontier::new(config);
+    let skipped = |url: &str, kind| plan(&f, url, kind).0 == Plan::Unchecked("skipped");
+    assert!(skipped(
+        "https://forge.example.org/g/r/issues/new?title=x",
+        Kind::Anchor
+    ));
+    assert!(
+        skipped("https://other.example.net/g/r/issues/new", Kind::Image),
+        "any host, listed or not"
+    );
+    assert!(
+        skipped("https://docs.example.org/en-US/a/old/x/", Kind::Anchor),
+        "inside a root's scope on its own host"
+    );
+    assert!(!skipped(
+        "https://docs.example.org/en-US/a/new/",
+        Kind::Anchor
+    ));
+    assert!(!skipped("https://forge.example.org/g/r/src/", Kind::Anchor));
+    assert_eq!(
+        f.hop_plan(
+            &Url::parse("https://forge.example.org/g/r/issues/new").unwrap(),
+            Kind::Anchor
+        )
+        .0,
+        Plan::Status,
+        "a hop is followed wherever it goes (D50)"
+    );
+}
+
+#[test]
 fn a_hop_is_followed_wherever_it_goes() {
     let f = frontier();
     let hop = |url: &str| f.hop_plan(&Url::parse(url).unwrap(), Kind::Anchor).0;

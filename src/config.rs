@@ -44,6 +44,9 @@ pub struct Config {
     /// Hosts whose links are checked one hop deep and never crawled (D3),
     /// normalised as [`Host`] prints them. Empty by default.
     pub allowlist: Vec<String>,
+    /// URL globs, on any host, whose links are never asked about: the target
+    /// is `unchecked`, reason `skipped` (D50). Empty by default.
+    pub skip: Patterns,
     /// The rate no host setting or `Crawl-delay` overrides (D8).
     pub rate: Rate,
     /// Sent as `User-Agent`; its robots.txt token is [`Config::robots_token`].
@@ -145,7 +148,7 @@ impl Default for HostSettings {
 
 /// A list of URL globs, kept as written and compiled once. `*` and `?` stop
 /// at `/`, `**` crosses it, and a glob is matched against the whole URL (D44).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Patterns {
     globs: Vec<String>,
     set: GlobSet,
@@ -202,6 +205,7 @@ impl Config {
         Ok(Config {
             roots: vec![Root::new(url)?],
             allowlist: Vec::new(),
+            skip: Patterns::default(),
             rate: Rate::default(),
             user_agent: DEFAULT_USER_AGENT.to_owned(),
             hosts: BTreeMap::new(),
@@ -237,6 +241,7 @@ impl Config {
             .iter()
             .map(|h| host(h).map_err(|e| invalid(format!("allowlist: {e}"))))
             .collect::<Result<_, _>>()?;
+        let skip = Patterns::new(raw.skip).map_err(|e| invalid(format!("skip: {e}")))?;
         let user_agent = raw
             .user_agent
             .unwrap_or_else(|| DEFAULT_USER_AGENT.to_owned());
@@ -244,6 +249,7 @@ impl Config {
         let config = Config {
             roots,
             allowlist,
+            skip,
             rate: Rate::from_raw(raw.rate)?,
             user_agent,
             hosts: host_settings(raw.host)?,
@@ -253,6 +259,7 @@ impl Config {
         // start on the host, so the check waits for it.
         if !config.roots.is_empty() {
             config.check_robots_hosts()?;
+            config.check_skipped_roots()?;
         }
         Ok(config)
     }
@@ -268,6 +275,20 @@ impl Config {
         self.roots
             .iter()
             .any(|r| r.url.host().is_some_and(|h| h.to_string() == host))
+    }
+
+    /// Refuses a root whose `url` a `skip` glob matches, a crawl that could
+    /// not start. Run where [`Config::check_robots_hosts`] is.
+    pub fn check_skipped_roots(&self) -> Result<(), Error> {
+        for (i, r) in self.roots.iter().enumerate() {
+            if self.skip.is_match(canonical(&r.url, false).as_str()) {
+                return Err(invalid(format!(
+                    "root[{i}]: url: {} is matched by skip",
+                    r.url
+                )));
+            }
+        }
+        Ok(())
     }
 
     /// Refuses `robots = false` on a host no root starts on, since external
@@ -553,6 +574,8 @@ struct RawConfig {
     root: Vec<RawRoot>,
     #[serde(default)]
     allowlist: Vec<String>,
+    #[serde(default)]
+    skip: Vec<String>,
     #[serde(default)]
     rate: RawRate,
     user_agent: Option<String>,
