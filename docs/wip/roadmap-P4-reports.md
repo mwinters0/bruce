@@ -153,8 +153,12 @@ learning a pattern from the first few URLs to land on a login; allowlisting
 with neither, at over 2 hours; not allowlisting the forge.
 
 **The frontier asks `skip` before scope and the allowlist**, so a skipped
-URL is `skipped` even inside a root's scope on its own host: the deployer
-said not to ask, and the key means that everywhere.
+URL is `skipped` even inside a root's scope on its own host, **and a
+redirect hop onto a skipped URL ends the chain there**, `unchecked` /
+`skipped`, a sitemap's hop included, as a hop robots.txt forbids does: the
+deployer said not to ask, and the key means that everywhere. So the guide
+also skips the forge's `/user/login*`, marking any link that redirects to
+it whatever the page.
 
 ## The deployment guide and the sim
 
@@ -241,10 +245,16 @@ Drop `links.outcome`, `reason` and `redirected`; add `pages.root` and
 
 The config key, the frontier's `skipped`, and its `D<k>` entry.
 
+### P4.2.1 A skipped hop ends the chain
+
+Earned: P4.2 followed a redirect onto a skipped URL. The hop ends the
+chain `unchecked` / `skipped` (above), whatever the target's plan, a
+sitemap's included, amending D50.
+
 ### P4.3 The deployment guide's config section and `mise run sim`
 
 `docs/manual/deploy.md` as far as its config, docs.fp.o's worked example
-allowlisting the forge and skipping `issues/new`, and the task extracting
+allowlisting the forge and skipping `issues/new` and `/user/login*`, and the task extracting
 it into `sim/` (D42).
 
 ### P4.4 The first en-US crawl

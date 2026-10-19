@@ -41,6 +41,7 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
   [Notes](../wip/roadmap-P4.1-schema-3-notes.md).
 - [x] **4.2** `skip`: the config key and the frontier's `skipped`.
   [Notes](../wip/roadmap-P4.2-skip-notes.md).
+- [ ] **4.2.1** A skipped hop ends the chain; amends D50.
 - [ ] **4.3** The deployment guide's config section and `mise run sim`.
 - [ ] **4.4** The first en-US crawl, detached from `sim/`.
 - [ ] **4.5** `link_verdicts`, timed on 4.4's DB; amends D28.
@@ -64,9 +65,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **A redirect hop onto a skipped URL is still requested.** The spec says
-  `skip` means "don't ask" everywhere; D50 applies it to links and sitemap
-  entries only, because `Frontier::hop_plan` already turns every `Unchecked`
-  into a status request and a hop's target is not a link. Reconsidering means
-  the chain ending `unchecked` / `skipped` at the hop, a new `End` in `crawl`.
