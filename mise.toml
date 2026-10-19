@@ -20,6 +20,14 @@ description = "Run the per-round checks once and summarize them"
 dir = "{{config_root}}/scripts"
 run = "uv run check.py"
 
+# The simulated deployment: the deployment guide's tagged blocks extracted
+# into the gitignored `sim/`, and its config checked to load (D42). The crawl
+# is launched by hand from `sim/`; `scripts/sim.py` says why.
+[tasks.sim]
+description = "Extract the deployment guide into sim/ and check its config loads"
+dir = "{{config_root}}/scripts"
+run = "uv run sim.py"
+
 # The cargo commands one at a time; `check` runs fmt, clippy and test among
 # the rest, each with the flags it holds a round to.
 [tasks.build]

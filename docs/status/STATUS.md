@@ -26,7 +26,7 @@ the profile's facts and the content hash;
 `url`, the canonical form and `url_id`;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, and the body decoding; and
 `crawl`, the frontier, the hops of a redirect, D16's outcomes, sitemaps, the run that writes a target's rows and its stop. The rest hold only their doc.
-`docs/manual/` holds the config reference and `bruce crawl`'s. The design is settled ([`../design/decisions.md`](../design/decisions.md))
+`docs/manual/` holds the config reference, `bruce crawl`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
@@ -43,7 +43,8 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
   [Notes](../wip/roadmap-P4.2-skip-notes.md).
 - [x] **4.2.1** A skipped hop ends the chain; amends D50.
   [Notes](../wip/roadmap-P4.2.1-skipped-hop-notes.md).
-- [ ] **4.3** The deployment guide's config section and `mise run sim`.
+- [x] **4.3** The deployment guide's config section and `mise run sim`.
+  [Notes](../wip/roadmap-P4.3-deploy-guide-notes.md).
 - [ ] **4.4** The first en-US crawl, detached from `sim/`.
 - [ ] **4.5** `link_verdicts`, timed on 4.4's DB; amends D28.
 - [ ] **4.6** `bruce report`: the run, filters, formats, and `broken`,

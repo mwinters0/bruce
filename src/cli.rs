@@ -1,7 +1,8 @@
 //! Subcommands (D27), one child module each. The only module that names a
 //! concrete profile, to build the registry (D39).
 
-mod crawl;
+/// Public so `examples/sim_config.rs` loads a config exactly as `crawl` does.
+pub mod crawl;
 
 use std::ffi::OsString;
 use std::process::ExitCode;

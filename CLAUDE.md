@@ -24,6 +24,7 @@ cd scripts && uv run file_limits.py      # every .rs against the size limits (`d
 cd scripts && uv run module_graph.py     # every module edge one-way, read off rust-analyzer
 cd scripts && uv run concepts.py         # every production .rs claimed by one concept in docs/design/concepts.md
 cd scripts && uv run python -m unittest test_<script>   # one script's own tests
+mise run sim                             # the deployment guide's tagged blocks into sim/, config checked to load
 mise run build | test | clippy | fmt | bench   # one cargo command; Rust is pinned in mise.toml
 ```
 

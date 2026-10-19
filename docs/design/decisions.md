@@ -110,6 +110,7 @@ either of which puts a deployment into the tool's release.
 guide that drifts from the tool fails there, and any machine rebuilds it. docs.fp.o's config exists
 here only as that guide's worked example. Rejected: a committed template directory, which drifts
 from the guide describing it; a hand-built `sim/`, which no other machine can rebuild.
+Code: `scripts/sim.py`. Evidence: `scripts/test_sim.py`.
 
 ### D38 A profile has four hooks: detect, extract, resolve, views
 Detect claims a generator string (D35). Extract hands the core's one lol_html pass (D11) a declared
