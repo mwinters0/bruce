@@ -17,6 +17,9 @@ use crate::config::Config;
 use crate::extract::Kind;
 use crate::url::{Canonical, canonical};
 
+/// The reason of a URL `skip` matched (D50).
+pub const SKIPPED: &str = "skipped";
+
 /// What a run does about a URL.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Plan {
@@ -89,7 +92,7 @@ impl Frontier {
         }
         let plain = canonical(url, false);
         if self.config.skip.is_match(plain.as_str()) {
-            return (Plan::Unchecked("skipped"), plain);
+            return (Plan::Unchecked(SKIPPED), plain);
         }
         for (root, r) in self.config.roots.iter().enumerate() {
             let form = r.canonical(url);
@@ -123,9 +126,10 @@ impl Frontier {
 
     /// [`Frontier::plan`] for the URL a redirect leads to: a hop is followed
     /// wherever it goes, so what a link would leave unchecked is asked for its
-    /// status alone.
+    /// status alone. A skipped URL stays skipped, and ends the chain (D50).
     pub fn hop_plan(&self, url: &Url, kind: Kind) -> (Plan, Canonical) {
         match self.plan(url, kind) {
+            (Plan::Unchecked(SKIPPED), form) => (Plan::Unchecked(SKIPPED), form),
             (Plan::Unchecked(_), form) => (Plan::Status, form),
             planned => planned,
         }

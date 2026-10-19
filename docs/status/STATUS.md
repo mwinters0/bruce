@@ -41,7 +41,8 @@ The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
   [Notes](../wip/roadmap-P4.1-schema-3-notes.md).
 - [x] **4.2** `skip`: the config key and the frontier's `skipped`.
   [Notes](../wip/roadmap-P4.2-skip-notes.md).
-- [ ] **4.2.1** A skipped hop ends the chain; amends D50.
+- [x] **4.2.1** A skipped hop ends the chain; amends D50.
+  [Notes](../wip/roadmap-P4.2.1-skipped-hop-notes.md).
 - [ ] **4.3** The deployment guide's config section and `mise run sim`.
 - [ ] **4.4** The first en-US crawl, detached from `sim/`.
 - [ ] **4.5** `link_verdicts`, timed on 4.4's DB; amends D28.

@@ -59,7 +59,7 @@ use crate::store::{
     WriterGone,
 };
 use crate::url::Canonical;
-use frontier::{Frontier, Plan};
+use frontier::{Frontier, Plan, SKIPPED};
 use hops::{Chain, Stop};
 use sitemap::Sitemap;
 
@@ -232,7 +232,8 @@ struct Answer {
 enum End {
     Answered(Box<Answer>),
     Failed(Failure),
-    /// robots.txt forbids the URL, or could not be read: not requested.
+    /// robots.txt forbids the URL, could not be read, or `skip` names it: not
+    /// requested.
     Blocked(&'static str),
     Stopped(Stop),
     /// The page or sitemap answered and could not be read as one.
@@ -544,10 +545,14 @@ where
     }
 
     /// The plan and form of `next`, where a hop from a URL planned `plan`
-    /// leads: a sitemap stays one wherever it is moved to.
+    /// leads: a sitemap stays one wherever it is moved to, unless `skip`
+    /// names the URL it is moved to (D50).
     fn hop(&self, next: &Url, plan: Plan, kind: Kind) -> (Plan, Canonical) {
         match plan {
-            Plan::Sitemap { .. } => (plan, self.frontier.plan(next, kind).1),
+            Plan::Sitemap { .. } => match self.frontier.plan(next, kind) {
+                (skipped @ Plan::Unchecked(SKIPPED), form) => (skipped, form),
+                (_, form) => (plan, form),
+            },
             _ => self.frontier.hop_plan(next, kind),
         }
     }
@@ -572,6 +577,11 @@ where
             // robots.txt the stop kept from being read says nothing.
             if self.stopping() {
                 return Ok(None);
+            }
+            // A hop onto a skipped URL ends the chain there, as a forbidden
+            // one does, and asks nothing, robots.txt included (D50).
+            if plan == Plan::Unchecked(SKIPPED) {
+                break End::Blocked(SKIPPED);
             }
             let access = self.fetcher.access(&url).await;
             if self.stopping() {

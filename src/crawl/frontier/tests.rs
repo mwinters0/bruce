@@ -108,8 +108,8 @@ fn a_skipped_url_is_skipped_before_scope_and_the_allowlist() {
             Kind::Anchor
         )
         .0,
-        Plan::Status,
-        "a hop is followed wherever it goes (D50)"
+        Plan::Unchecked("skipped"),
+        "a hop onto a skipped URL ends the chain (D50)"
     );
 }
 

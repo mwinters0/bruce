@@ -379,6 +379,80 @@ async fn a_skipped_url_is_never_asked_and_its_link_is_kept() {
 }
 
 #[tokio::test]
+async fn a_redirect_onto_a_skipped_url_ends_the_chain() {
+    let server = MockServer::start().await;
+    let base = server.uri();
+    page(
+        &server,
+        "/docs/",
+        r#"<a href="/docs/go">go</a><a href="/docs/twice">twice</a><a href="/docs/ok">ok</a>"#,
+    )
+    .await;
+    redirect(&server, "/docs/go", 303, "/user/login?next=a").await;
+    redirect(&server, "/docs/twice", 301, "/docs/go").await;
+    page(&server, "/docs/ok", "<title>Ok</title>").await;
+    page(&server, "/user/login", "<title>Login</title>").await;
+    // A sitemap moved onto a skipped URL lists nothing, whatever is there.
+    redirect(&server, "/docs/set.xml", 301, "/user/login/map.xml").await;
+    xml(
+        &server,
+        "/user/login/map.xml",
+        &urlset(&base, &["/docs/in-map"]),
+    )
+    .await;
+    page(&server, "/docs/in-map", "<title>In map</title>").await;
+    let config = format!(
+        "skip = [\"{base}/user/login*\", \"{base}/user/login/**\"]\n\
+         [[root]]\nurl = \"{base}/docs/\"\nsitemap = \"{base}/docs/set.xml\"\n"
+    );
+
+    let done = crawl_config(&server, &config, quick()).await;
+
+    let login = format!("{base}/user/login?next=a");
+    let ended = |url: &str| t(url, "unchecked", Some("skipped"), None);
+    assert_eq!(done.target("/docs/go"), ended("/docs/go"));
+    assert_eq!(done.target("/docs/twice"), ended("/docs/twice"));
+    assert_eq!(done.target("/docs/set.xml"), ended("/docs/set.xml"));
+    assert_eq!(
+        done.target("/user/login/map.xml"),
+        ended("/user/login/map.xml")
+    );
+    assert_eq!(
+        done.target("/user/login?next=a"),
+        ended("/user/login?next=a")
+    );
+    assert_eq!(
+        done.target("/docs/ok"),
+        t("/docs/ok", "ok", None, Some(200))
+    );
+    assert_eq!(
+        done.chain(&format!("{base}/docs/twice")),
+        [
+            (format!("{base}/docs/twice"), 301, false),
+            (format!("{base}/docs/go"), 303, false)
+        ]
+    );
+    assert_eq!(
+        count(
+            &done.store,
+            &format!("SELECT count(*) FROM targets WHERE url = '{login}' OR final_url = '{login}'")
+        ),
+        3,
+        "the landing URL has a row of its own, once, and /docs/go and /docs/twice end there"
+    );
+    assert_eq!(done.pages(), ["/docs/", "/docs/ok"]);
+    let asked: Vec<_> = requests(&server)
+        .await
+        .into_iter()
+        .map(|(_, p)| p)
+        .collect();
+    assert!(
+        asked.iter().all(|p| !p.starts_with("/user/login")),
+        "{asked:?}"
+    );
+}
+
+#[tokio::test]
 async fn an_allowlisted_host_is_one_hop_deep() {
     let server = MockServer::start().await;
     let outer = MockServer::start().await;

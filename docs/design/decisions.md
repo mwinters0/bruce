@@ -257,12 +257,13 @@ its prefix and an include. A root's `url` must be in its own scope, refused at l
 Code: `config::Root::in_scope`. Evidence: `config::tests::scope_is_matched_on_the_canonical_form`.
 
 ### D50 A config `skip` list makes a matching link `unchecked`, reason `skipped`, before scope and the allowlist
-Top-level globs on the plain canonical form (D44's globs, the query kept), any host, a root's scope
-included: the deployer said not to ask. A hop is still followed (`Frontier::hop_plan`); a root's own
-`url` matching one is refused at load. Why: the forge answers `issues/new` with a 303 to
-`/user/login` whether or not the repo exists, a false `ok`. Rejected: detecting a login from a 401 or
-a redirect to a login-like path, which misfires elsewhere; learning the pattern from the first logins.
-Code: `crawl::frontier::Frontier::plan`. Evidence: `crawl::tests::a_skipped_url_is_never_asked_and_its_link_is_kept`.
+Top-level globs on the plain canonical form (D44's, the query kept), any host, a root's scope
+included: the deployer said not to ask. A redirect hop onto one ends the chain there, a sitemap's too,
+as a robots.txt-forbidden hop does; a root's own `url` matching one is refused at load. Why: the
+forge answers `issues/new` with a 303 to `/user/login` whether or not the repo exists, a false `ok`,
+and skipping `/user/login*` marks every link redirected there. Rejected: detecting a login from a
+401 or a redirect to a login-like path, which misfires elsewhere; learning it from the first logins.
+Code: `crawl::frontier::Frontier::hop_plan`. Evidence: `crawl::tests::a_redirect_onto_a_skipped_url_ends_the_chain`.
 
 ### D6 Reports are SQL views stored in the DB and run by `bruce report <kind>`
 Ad-hoc `duckdb` users see the same views as the CLI. Output is text, or `--format json`.

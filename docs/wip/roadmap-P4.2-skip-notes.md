@@ -24,7 +24,6 @@ with no request and the link row is kept (D50).
 
 ## Negative results
 
-- None measured. Two choices the spec left open are in D50: `skip` matches the
+- None measured. A choice the spec left open is in D50: `skip` matches the
   plain canonical form (the query kept, not a root's `strip_query` form, since
-  it runs ahead of scope), and a redirect hop landing on a skipped URL is still
-  followed (`hop_plan` turns every `Unchecked` into a status request).
+  it runs ahead of scope).
