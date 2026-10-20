@@ -81,11 +81,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **5.7 tells a resolved xref by its target, not by a mark.** The spec keeps
-  `xref_refspec` on a resolved link and has it judged as any link, which
-  `link_verdicts` rule 1 (any refspec is broken) forbids, so the rule now reads
-  a refspec as unresolved only while the link points at its own page. A column
-  or a cleared refspec was refused (D55). Reconsidering means a schema change
-  that invalidates P5.2's baseline, or a page with a `<base href>` (whose
-  unresolved xref would pass) mattering enough to mark rows explicitly.

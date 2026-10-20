@@ -31,10 +31,11 @@ grilling, spec amendment and a numbered slice.
 **Ledger lines stay one line each.** The detail lives in the dated history
 entry each line points at.
 
-Allocated so far: M1. <!-- out-of-band-watermark: M1 -->
+Allocated so far: M1–M2. <!-- out-of-band-watermark: M2 -->
 
 ## The ledger
 
 | Item | Date | What changed | Blocks | Why |
 |---|---|---|---|---|
 | M1 | 2026-10-17 | `--affected` runs a Rust test naming a docs file; the manual's `toml` examples are tested | | [`2026-10-17`](../status/history/2026-10-17.md), "M1: the manual's examples are tested" |
+| M2 | | `link_verdicts` rule 1 reads a refspec as unresolved where the link points at its own page or its fragment is the refspec | | [`2026-10-20`](../status/history/2026-10-20.md), "The review of how a resolved xref is told" |
