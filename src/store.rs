@@ -3,7 +3,9 @@
 //! creates the schema in a new database, refuses a file of another version,
 //! and creates its own views and every profile's (D39); a layer above hands it more with [`Store::install`].
 //! [`Store::prune`] deletes old runs (D2), and [`Store::export_baseline`]
-//! writes one run as a file of its own (D21).
+//! writes one run as a file of its own (D21), which [`Store::import_baseline`]
+//! reads back as a run, and [`Store::copy_target`] copies a target between
+//! runs (D52).
 
 mod baseline;
 mod prune;
@@ -20,7 +22,7 @@ use url::Url;
 
 use crate::profile::{BoxError, Lookup, Registry, View};
 
-pub use baseline::Exported;
+pub use baseline::{Exported, Imported};
 pub use prune::Rule;
 pub use rows::{AnchorRow, AnsweredBy, FactRow, Hop, LinkRow, Outcome, PageRow, Row, TargetRow};
 pub use schema::SCHEMA_VERSION;
@@ -68,6 +70,9 @@ pub enum Error {
     NoSuchRun(RunId),
     /// The run never finished, so a baseline of it is refused (D48).
     Unfinished(RunId),
+    /// A file given as a baseline is not one (D52): it holds more than one
+    /// run, or its run never finished.
+    NotBaseline(String),
     /// The writer thread panicked.
     WriterPanicked,
 }
@@ -90,6 +95,7 @@ impl fmt::Display for Error {
                 "run {} never finished, so its targets are incomplete; name a finished run",
                 run.0
             ),
+            Error::NotBaseline(why) => write!(f, "not a baseline file: {why}"),
             Error::WriterPanicked => f.write_str("the database writer panicked"),
         }
     }

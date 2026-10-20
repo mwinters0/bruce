@@ -17,7 +17,7 @@ Red means a repoint is due ([`../process.md`](../process.md),
 The `bruce` crate is D39's top-level modules, a binary whose subcommands
 are `bruce crawl`, `bruce report`, `bruce prune` and `bruce export-baseline`, and Rust 1.99.1 pinned in `mise.toml`. Ten modules hold
 code: `cli`, the command line, the four subcommands and the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check, the
-`link_verdicts` view, the deleting of old runs, the baseline export and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
+`link_verdicts` view, the deleting of old runs, the baseline export and import, the copy of a target's rows between runs and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views and Extract, with Resolve
 declared and empty; `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
@@ -46,8 +46,9 @@ The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
   crawl launched detached. [Notes](../wip/roadmap-P5.2-schema-4-notes.md).
 - [x] **5.3** `export-baseline`, its manual page and the gzip measurement.
   [Notes](../wip/roadmap-P5.3-export-baseline-notes.md).
-- [ ] **5.4** The baseline's import and reuse, and the store's copy of a
+- [x] **5.4** The baseline's import and reuse, and the store's copy of a
   target's rows between runs.
+  [Notes](../wip/roadmap-P5.4-baseline-import-notes.md).
 - [ ] **5.5** The local build: `ci`'s walk and prefix mapping, `fetch/local`,
   `crawl` taking seeds; `check-dir` with no baseline.
 - [ ] **5.6** The frontier's baseline class, held component-versions and

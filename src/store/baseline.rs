@@ -4,7 +4,9 @@
 //! The copy is `INSERT ... SELECT` across an `ATTACH`, table by table in one
 //! transaction. `bodies` stay behind, a baseline answering what a crawl found
 //! and not what it fetched (D15), and `runs.baseline_run` is cleared, naming a
-//! run the file does not hold.
+//! run the file does not hold. The `import` child copies the file's run into a
+//! CI database the same way, renumbered, and the `target` child copies one
+//! target's rows between two runs of a database (D52).
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -83,16 +85,10 @@ impl Store {
     }
 
     fn copy_into(&self, run: RunId, out: &Path) -> Result<Exported, Error> {
-        let path = out.to_string_lossy().replace('\'', "''");
-        self.conn
-            .execute_batch(&format!("ATTACH '{path}' AS baseline_out"))?;
-        let copied = self.copy_tables(run);
-        // Detaching checkpoints, so the file is whole on return; it is tried
-        // after a failed copy too, to release the file.
-        let detached = self.conn.execute_batch("DETACH baseline_out");
-        let counts = copied?;
-        detached?;
-        let [_, targets, pages, facts, anchors, links] = counts;
+        let [_, targets, pages, facts, anchors, links] =
+            self.with_attached(out, "baseline_out", false, |store| {
+                store.copy_run("main", "baseline_out.main", run, run)
+            })?;
         Ok(Exported {
             run,
             targets,
@@ -103,22 +99,57 @@ impl Store {
         })
     }
 
-    fn copy_tables(&self, run: RunId) -> Result<[u64; 6], Error> {
+    /// Attaches the database file at `path` as `alias`, runs `f` and detaches
+    /// it. Detaching checkpoints, so a file written is whole on return; it
+    /// is tried after a failed `f` too, to release the file. A read-only
+    /// attach refuses a file that does not exist rather than creating it.
+    fn with_attached<T>(
+        &self,
+        path: &Path,
+        alias: &str,
+        read_only: bool,
+        f: impl FnOnce(&Store) -> Result<T, Error>,
+    ) -> Result<T, Error> {
+        let path = path.to_string_lossy().replace('\'', "''");
+        let options = if read_only { " (READ_ONLY)" } else { "" };
+        self.conn
+            .execute_batch(&format!("ATTACH '{path}' AS {alias}{options}"))?;
+        let result = f(self);
+        let detached = self.conn.execute_batch(&format!("DETACH {alias}"));
+        let value = result?;
+        detached?;
+        Ok(value)
+    }
+
+    /// Copies `from_run`'s rows of [`TABLES`] from schema `from` into schema
+    /// `to` as `to_run`, in one transaction, and gives the rows copied per
+    /// table. `runs.baseline_run` is cleared: it names a run the other side
+    /// may not hold.
+    fn copy_run(
+        &self,
+        from: &str,
+        to: &str,
+        from_run: RunId,
+        to_run: RunId,
+    ) -> Result<[u64; 6], Error> {
         self.conn.execute_batch("BEGIN")?;
         let mut counts = [0; 6];
         let copied = TABLES.iter().enumerate().try_for_each(|(i, table)| {
             let select = if *table == "runs" {
-                "run_id, started_at, finished_at, mode, tool_version, config_hash, \
-                 NULL, roots"
+                format!(
+                    "{} AS run_id, started_at, finished_at, mode, tool_version, \
+                     config_hash, NULL, roots",
+                    to_run.0
+                )
             } else {
-                "*"
+                format!("* REPLACE ({} AS run_id)", to_run.0)
             };
             counts[i] = self.conn.execute(
                 &format!(
-                    "INSERT INTO baseline_out.main.{table} \
-                     SELECT {select} FROM main.{table} WHERE run_id = ?"
+                    "INSERT INTO {to}.{table} \
+                     SELECT {select} FROM {from}.{table} WHERE run_id = ?"
                 ),
-                [run.0],
+                [from_run.0],
             )? as u64;
             Ok::<(), duckdb::Error>(())
         });
@@ -141,6 +172,11 @@ fn remove(db: &Path) {
         let _ = fs::remove_file(file);
     }
 }
+
+mod import;
+mod target;
+
+pub use import::Imported;
 
 #[cfg(test)]
 mod tests;

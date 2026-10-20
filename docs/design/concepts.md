@@ -83,7 +83,7 @@ decisions each carries are cited in its module's doc.
   profile's views in the parent file, the tables in the `schema` child, the
   row types in the `rows` child, the views over them (`link_verdicts`) in the
   `views` child, deleting old runs (D2) in the `prune` child, writing one run as a baseline file
-  (D21) in the `baseline` child and the single
+  (D21), importing one as a run and copying a target's rows between runs (D52) in the `baseline` child and the single
   writer thread in the `writer` child. It sits above `profile`
   because it asks each profile for its views and answers its lookups (D39).
 

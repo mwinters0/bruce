@@ -11,7 +11,7 @@ in the bootstrap grilling (2026-10-17, frozen as `historical/initial.md`), D31 t
 an entry's **Code** is the module that will hold it once built. D25 and D29 are spent: D25 was superseded by D30, and D29
 became `roadmap.md`'s phase index.
 
-<!-- decision-watermark: D51 -->
+<!-- decision-watermark: D52 -->
 
 ## Scope and modes
 
@@ -324,6 +324,15 @@ verdict views ignore it, so the gate compares like with like (D28). Rejected: a 
 which labels a forgotten copy as a request; a table of copies, giving `link_verdicts` a second
 path. Reopens: a report wanting to split a run's answers by route. Code: `store::schema`,
 `store::AnsweredBy`. Evidence: `store::tests::a_target_records_where_its_answer_came_from`.
+
+### D52 A baseline file is imported as a run of its own, and a target is copied between runs row by row
+`import_baseline` copies the file's one run in under the next number, or finds the run whose `started_at`
+and `config_hash` match (the file keeps both): the gate is then a two-run query in one database, as `diff`
+is. `copy_target` copies a target, its landing target, and each one's `pages` row and `anchors`, as
+`baseline`; a target the run already holds is untouched, `page_facts` stay behind so a copied page is
+never one the build holds (D22). Rejected: attaching the file, the gate reading across two databases and
+`baseline_run` naming a run in a file gone after the job. Reopens: a reuse that misses on a hand-edited
+file. Code: `store::baseline`. Evidence: `store::baseline::tests::a_baseline_already_imported_is_reused_and_copies_nothing`.
 
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
 `check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status
