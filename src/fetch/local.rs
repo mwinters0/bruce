@@ -8,13 +8,15 @@
 //! URL under the prefix answers 404, the build being the truth for what it
 //! holds. A URL outside the prefix is a [`Failure`]: this fetcher has
 //! nothing to say about it, and the routes that do (the baseline, then live,
-//! D22) are the crawl's to open before it asks. The query and the
+//! D22) are the crawl's to open before it asks, and it asks this module's
+//! [`Site`] which URLs are built. The query and the
 //! fragment are not part of a file's name. Bodies are read as `fetch::http`
 //! reads them: decoded HTML up to [`MAX_BODY`] for a page, bytes for a
 //! sitemap, nothing for a status.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use url::Url;
 
@@ -22,12 +24,20 @@ use super::charset::decode;
 use super::{Body, Failure, FailureKind, Fetcher, MAX_BODY, MAX_SITEMAP, Mode, Response};
 use crate::url::canonical;
 
+/// The URLs a build answers, and the file that holds each: what the fetcher
+/// serves and the crawl's frontier asks about (D22).
+#[derive(Debug)]
+pub struct Site {
+    prefix: Url,
+    /// The canonical form of the prefix, which every URL answered starts with.
+    key: String,
+    files: HashMap<String, PathBuf>,
+}
+
 /// [`Fetcher`] over a build directory.
 #[derive(Debug, Clone)]
 pub struct LocalFetcher {
-    /// The canonical form of the prefix, which every URL answered starts with.
-    prefix: String,
-    files: HashMap<String, PathBuf>,
+    site: Arc<Site>,
 }
 
 /// What the map says of a URL.
@@ -39,14 +49,31 @@ enum Lookup {
     Elsewhere,
 }
 
-impl LocalFetcher {
-    /// A fetcher answering `served`, each URL with the file that holds it,
+impl Site {
+    /// The site answering `served`, each URL with the file that holds it,
     /// under `prefix`.
-    pub fn new(prefix: &Url, served: impl IntoIterator<Item = (Url, PathBuf)>) -> LocalFetcher {
-        LocalFetcher {
-            prefix: key(prefix),
+    pub fn new(prefix: &Url, served: impl IntoIterator<Item = (Url, PathBuf)>) -> Site {
+        Site {
+            prefix: prefix.clone(),
+            key: key(prefix),
             files: served.into_iter().map(|(u, f)| (key(&u), f)).collect(),
         }
+    }
+
+    /// The production URL of the build directory's root.
+    pub fn prefix(&self) -> &Url {
+        &self.prefix
+    }
+
+    /// Whether `url` is below the prefix, built or not.
+    pub fn under(&self, url: &Url) -> bool {
+        key(url).starts_with(&self.key)
+    }
+
+    /// Whether the build answers `url` with a page or file, or moves it to
+    /// one: what the build holds, as opposed to what it lacks.
+    pub fn holds(&self, url: &Url) -> bool {
+        matches!(self.lookup(url), Lookup::File(_) | Lookup::Moved(_))
     }
 
     fn lookup(&self, url: &Url) -> Lookup {
@@ -54,7 +81,7 @@ impl LocalFetcher {
         if let Some(file) = self.files.get(&key) {
             return Lookup::File(file.clone());
         }
-        if !key.starts_with(&self.prefix) {
+        if !key.starts_with(&self.key) {
             return Lookup::Elsewhere;
         }
         if !key.ends_with('/') && self.files.contains_key(&format!("{key}/")) {
@@ -65,13 +92,28 @@ impl LocalFetcher {
     }
 }
 
+impl LocalFetcher {
+    /// A fetcher answering `served`, each URL with the file that holds it,
+    /// under `prefix`.
+    pub fn new(prefix: &Url, served: impl IntoIterator<Item = (Url, PathBuf)>) -> LocalFetcher {
+        LocalFetcher {
+            site: Arc::new(Site::new(prefix, served)),
+        }
+    }
+
+    /// The URLs this fetcher answers, to share with the crawl.
+    pub fn site(&self) -> Arc<Site> {
+        Arc::clone(&self.site)
+    }
+}
+
 impl Fetcher for LocalFetcher {
     fn fetch(
         &self,
         url: &Url,
         mode: Mode,
     ) -> impl Future<Output = Result<Response, Failure>> + Send {
-        let found = self.lookup(url);
+        let found = self.site.lookup(url);
         let asked = url.to_string();
         async move {
             let answer = |status, location, content_type, body| {

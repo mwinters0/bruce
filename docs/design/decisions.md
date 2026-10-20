@@ -11,7 +11,7 @@ in the bootstrap grilling (2026-10-17, frozen as `historical/initial.md`), D31 t
 an entry's **Code** is the module that will hold it once built. D25 and D29 are spent: D25 was superseded by D30, and D29
 became `roadmap.md`'s phase index.
 
-<!-- decision-watermark: D52 -->
+<!-- decision-watermark: D54 -->
 
 ## Scope and modes
 
@@ -317,13 +317,12 @@ wedged DuckDB being a bug to fix. Code: `crawl::Writes`, `cli::crawl::crawl`.
 Evidence: `crawl::tests::an_abandoned_run_holds_the_page_it_was_writing_whole`.
 
 ### D51 A target records where its answer came from, in a column the writer fills and no view reads
-`targets.answered_by` is `local`, `baseline` or `live`, `NOT NULL` with no default, so a path that
-copies or writes a target must say which. Every row a crawl writes is `live`, a target it made no
-request for (`unchecked`) included: the run decided it, as a copy from a baseline does not. The
-verdict views ignore it, so the gate compares like with like (D28). Rejected: a default of `live`,
-which labels a forgotten copy as a request; a table of copies, giving `link_verdicts` a second
-path. Reopens: a report wanting to split a run's answers by route. Code: `store::schema`,
-`store::AnsweredBy`. Evidence: `store::tests::a_target_records_where_its_answer_came_from`.
+`targets.answered_by` is `local`, `baseline` or `live`, `NOT NULL` with no default, so a path that copies or
+writes a target must say which. A target the build holds, and the `not_built` verdict on one it lacks, is
+`local`; every other row a crawl writes is `live`, `unchecked` included: the run decided it, as a copy does not.
+The verdict views ignore it, so the gate compares like with like (D28). Rejected: a default of `live`, which
+labels a forgotten copy as a request; a table of copies, giving `link_verdicts` a second path. Reopens: a report
+wanting to split a run's answers by route. Code: `store::schema`, `store::AnsweredBy`. Evidence: `store::tests::a_target_records_where_its_answer_came_from`.
 
 ### D52 A baseline file is imported as a run of its own, and a target is copied between runs row by row
 `import_baseline` copies the file's one run in under the next number, or finds the run whose `started_at`
@@ -342,6 +341,15 @@ Why: a partial build has no `site.url`, so the UI's footer writes `/legal/privac
 Rejected: the production origin, with the guide telling deployers to `skip` those URLs. Reopens: a
 build whose root-relative hrefs are meant for the origin, not the prefix. Code: `extract::links::Links::resolve`.
 Evidence: `extract::tests::in_a_local_build_an_href_beginning_a_slash_resolves_against_the_site_root_d53`.
+
+### D54 A URL the build lacks waits for the held set, and a copy from the baseline waits for the end
+An in-scope URL under the prefix and not built is judged after every built page is read: in a component-version
+one carried (I16) it is `broken_url`, reason `not_built`; otherwise it goes where a URL outside the build goes, the
+baseline's rows if its index holds the target, else a request one hop deep. The index is loaded before the writer
+owns the connection and the copies are sent last, `targets` having no key to stop a copied landing page doubling the
+build's own. `--externals=skip` leaves allowlisted URLs `unchecked`, reason `externals_skipped`. Rejected: a pre-scan
+of the build for facts, a second pass beside the profile's (D38); judging at claim time on a held set still filling.
+Reopens: a prefix below the site root, a renamed version segment. Code: `crawl::baseline`. Evidence: `crawl::baseline::tests`.
 
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
 `check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status

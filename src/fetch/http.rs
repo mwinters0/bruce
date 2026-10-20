@@ -38,6 +38,8 @@ use super::{Body, Failure, FailureKind, Fetcher, MAX_BODY, MAX_SITEMAP, Mode, Re
 
 pub mod host;
 
+mod download;
+
 use host::{Access, Hosts, Listing};
 
 /// Redirects followed to reach a robots.txt (RFC 9309 asks for five).

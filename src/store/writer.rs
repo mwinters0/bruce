@@ -1,7 +1,8 @@
 //! The single writer (D28): one thread owns the [`Store`] and feeds DuckDB
 //! appenders from a bounded channel, so a slow disk pushes back on the
 //! crawl and DuckDB sees one writing process. It writes the rows of
-//! [`Row`], one table each but `bodies`, which waits for its option.
+//! [`Row`], one table each but `bodies`, which waits for its option, and
+//! copies a baseline's target into the run on request (D52).
 
 use std::fmt;
 use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
@@ -11,7 +12,7 @@ use duckdb::types::{Null, Value};
 use duckdb::{Appender, params, params_from_iter};
 
 use super::rows::{Hop, Row, TargetRow, timestamp};
-use super::{Error, Store};
+use super::{Error, RunId, Store};
 
 /// Rows the writer takes, counted across tables, before it flushes every
 /// appender.
@@ -19,6 +20,12 @@ const FLUSH_EVERY: usize = 10_000;
 
 enum Msg {
     Row(Box<Row>),
+    /// [`Store::copy_target`] of `url_id` from `from` into `to`.
+    Copy {
+        from: RunId,
+        to: RunId,
+        url_id: u64,
+    },
     Finish,
 }
 
@@ -75,6 +82,16 @@ impl Writer {
 }
 
 impl WriteHandle {
+    /// Asks for the rows of `url_id` in run `from` to be copied into `to`,
+    /// once everything sent before is written, so a target the run already
+    /// wrote is left as it is (D52). A `from` with no such target is the
+    /// caller's to have ruled out.
+    pub fn copy_target(&self, from: RunId, to: RunId, url_id: u64) -> Result<(), WriterGone> {
+        self.tx
+            .send(Msg::Copy { from, to, url_id })
+            .map_err(|_| WriterGone)
+    }
+
     /// Sends `row`, waiting while the channel is full.
     pub fn send(&self, row: Row) -> Result<(), WriterGone> {
         self.tx
@@ -88,8 +105,17 @@ fn write_all(store: Store, rx: Receiver<Msg>) -> Result<Store, Error> {
         let mut tables = Tables::new(&store)?;
         let mut pending = 0;
         for msg in rx {
-            let Msg::Row(row) = msg else { break };
-            tables.append(*row)?;
+            match msg {
+                Msg::Row(row) => tables.append(*row)?,
+                Msg::Copy { from, to, url_id } => {
+                    // The copy reads what the appenders still hold.
+                    tables.flush()?;
+                    pending = 0;
+                    store.copy_target(from, to, url_id)?;
+                    continue;
+                }
+                Msg::Finish => break,
+            }
             pending += 1;
             if pending == FLUSH_EVERY {
                 tables.flush()?;

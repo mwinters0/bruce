@@ -422,3 +422,52 @@ fn a_target_the_run_already_holds_is_left_alone_and_a_missing_one_copies_nothing
         0
     );
 }
+
+#[test]
+fn the_index_lists_the_targets_of_one_run() {
+    let (store, from, to) = two_runs();
+    let index = store.baseline_index(from).unwrap();
+    assert!([10, 11, 12].iter().all(|id| index.holds(*id)));
+    assert!(!index.holds(13));
+    let none = store.baseline_index(to).unwrap();
+    assert!(!none.holds(10));
+}
+
+/// A copy the writer is asked for lands after the rows sent before it, so a
+/// landing page the run wrote itself, still in an appender, is not doubled.
+#[test]
+fn a_copy_through_the_writer_follows_the_rows_sent_before_it() {
+    use crate::store::{AnsweredBy, Outcome, Row, TargetRow, Writer};
+
+    let (store, from, to) = two_runs();
+    let writer = Writer::start(store, 16);
+    let handle = writer.handle();
+    handle
+        .send(Row::Target(TargetRow {
+            run_id: to.0,
+            url_id: 11,
+            url: "https://a.test/new".into(),
+            status: Some(200),
+            final_url: None,
+            redirect_chain: Vec::new(),
+            outcome: Outcome::Ok,
+            reason: None,
+            checked_at: None,
+            duration_ms: None,
+            answered_by: AnsweredBy::Local,
+        }))
+        .unwrap();
+    handle.copy_target(from, to, 10).unwrap();
+    let store = writer.finish().unwrap();
+    assert_eq!(
+        count(&store, "SELECT count(*) FROM targets WHERE run_id = 2"),
+        2
+    );
+    assert_eq!(
+        count(
+            &store,
+            "SELECT count(*) FROM targets WHERE run_id = 2 AND url_id = 11 AND answered_by = 'local'"
+        ),
+        1
+    );
+}

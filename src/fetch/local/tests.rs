@@ -106,3 +106,20 @@ async fn a_file_over_the_cap_is_too_large_and_an_unreadable_one_is_a_failure() {
         .unwrap_err();
     assert_eq!(gone.kind, FailureKind::Other);
 }
+
+#[test]
+fn a_site_holds_what_is_built_and_knows_what_is_below_its_prefix() {
+    let dir = tempfile::tempdir().unwrap();
+    let f = serving(&dir, &[("https://x.org/en-US/a/b/", "b.html", b"x")]);
+    let site = f.site();
+    assert!(site.holds(&url("https://x.org/en-US/a/b/")));
+    assert!(
+        site.holds(&url("https://x.org/en-US/a/b?q=1#f")),
+        "the slashless form is moved to the slashed one"
+    );
+    assert!(!site.holds(&url("https://x.org/en-US/a/c/")));
+    assert!(site.under(&url("https://x.org/en-US/a/c/")));
+    assert!(!site.under(&url("https://x.org/en-GB/a/b/")));
+    assert!(!site.holds(&url("https://x.org/en-GB/a/b/")));
+    assert_eq!(site.prefix().as_str(), "https://x.org/en-US/");
+}

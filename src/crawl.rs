@@ -38,8 +38,11 @@
 //! A run over a local build begins from its seeds instead ([`Crawl::run_seeded`]):
 //! no sitemap is read and no root is asked about, since the build is the
 //! pages to check, and an href beginning `/` points at the build's site root
-//! ([`Crawl::local_site`], D53).
+//! ([`Crawl::against`], D53). It is checked against a baseline: a URL the
+//! build does not hold is answered by copying the baseline's rows or by a
+//! request, once the built pages are read (`baseline`, D22, D52).
 
+mod baseline;
 mod frontier;
 mod hops;
 mod outcome;
@@ -57,6 +60,7 @@ use xxhash_rust::xxh3::xxh3_64;
 
 use crate::config::{Config, HashScope, ProfileChoice};
 use crate::extract::{self, Extracted, Kind};
+use crate::fetch::local::Site;
 use crate::fetch::{Access, Body, Failure, FailureKind, Fetcher, MAX_SITEMAP, Mode};
 use crate::profile::Registry;
 use crate::store::{
@@ -69,6 +73,7 @@ use hops::{Chain, Stop};
 use sitemap::Sitemap;
 
 pub use crate::fetch::Stopper;
+pub use frontier::{Baseline, Externals};
 
 /// Targets in flight at once, across hosts. A host's own cap and pace are
 /// the fetcher's (D8); this only bounds the tasks a run holds.
@@ -203,6 +208,8 @@ struct Shared<F> {
     writes: Writes,
     /// Where an href beginning `/` points, for a local build (D53).
     site_root: Option<Url>,
+    /// What a run against a baseline has claimed and not yet answered.
+    pending: baseline::Pending,
 }
 
 /// A target claimed and waiting to be asked about.
@@ -291,6 +298,7 @@ where
                 cut: AtomicBool::new(false),
                 writes: Writes::default(),
                 site_root: None,
+                pending: baseline::Pending::default(),
             }),
         }
     }
@@ -306,11 +314,13 @@ where
         self.shared.writes.clone()
     }
 
-    /// This run, for a local build whose site root is `root` (D53).
-    pub fn local_site(mut self, root: Url) -> Crawl<F> {
-        Arc::get_mut(&mut self.shared)
-            .expect("not yet shared")
-            .site_root = Some(root);
+    /// This run, for the local build `site`, checked against `baseline`: its
+    /// prefix is the site root an href beginning `/` points at (D53), and a
+    /// URL it does not hold is answered by the baseline or live (D22).
+    pub fn against(mut self, site: Arc<Site>, baseline: Baseline) -> Crawl<F> {
+        let shared = Arc::get_mut(&mut self.shared).expect("not yet shared");
+        shared.site_root = Some(site.prefix().clone());
+        shared.frontier.against(site, baseline);
         self
     }
 
@@ -348,11 +358,15 @@ where
     }
 
     /// Crawls from `seeds` alone, until nothing is left to ask about: no
-    /// sitemap is discovered and no root is seeded.
+    /// sitemap is discovered and no root is seeded. Against a baseline, the
+    /// URLs the build lacks are answered after the built pages are read.
     pub async fn run_seeded(self, seeds: &[Url]) -> Result<Summary, Error> {
         let shared = self.shared;
         let items = shared.seed(seeds).await?;
         shared.drive(items, None).await?;
+        let beyond = shared.settle_unbuilt().await?;
+        shared.drive(beyond, None).await?;
+        shared.copy_from_baseline().await?;
         Ok(shared.summary())
     }
 }
@@ -388,25 +402,8 @@ where
             let mut items = Vec::new();
             for url in seeds {
                 let (plan, form) = shared.frontier.plan(&url, Kind::Anchor);
-                if !shared.frontier.claim(form.id()) {
-                    continue;
-                }
-                match plan {
-                    Plan::Unchecked(reason) => shared.send_target(unchecked(
-                        shared.run,
-                        form.id(),
-                        form.as_str(),
-                        Outcome::Unchecked,
-                        reason,
-                    ))?,
-                    plan => items.push(Item {
-                        url,
-                        kind: Kind::Anchor,
-                        via_links: false,
-                        in_sitemap: false,
-                        plan,
-                        form,
-                    }),
+                if shared.frontier.claim(form.id()) {
+                    items.extend(shared.dispatch(url, Kind::Anchor, false, plan, form)?);
                 }
             }
             Ok(items)
@@ -794,7 +791,7 @@ where
                 reason: reason.map(str::to_owned),
                 checked_at: asked.then_some(started),
                 duration_ms: asked.then(|| u32::try_from(elapsed.as_millis()).unwrap_or(u32::MAX)),
-                answered_by: AnsweredBy::Live,
+                answered_by: self.frontier.answered_by(form),
             };
 
         // Where a chain ends is a target of its own (D46).
@@ -954,6 +951,9 @@ where
         if !whole {
             return Ok(());
         }
+        if self.frontier.baseline().is_some() {
+            self.note_held(e.facts.pairs());
+        }
         for (key, value) in e.facts.pairs() {
             self.rows.send(Row::Fact(FactRow {
                 run_id: self.run.0,
@@ -969,23 +969,8 @@ where
                     bare.set_fragment(None);
                     let (plan, target_form) = self.frontier.plan(&bare, link.kind);
                     if self.frontier.claim(target_form.id()) {
-                        match plan {
-                            Plan::Unchecked(reason) => self.send_target(unchecked(
-                                self.run,
-                                target_form.id(),
-                                target_form.as_str(),
-                                Outcome::Unchecked,
-                                reason,
-                            ))?,
-                            plan => found.push(Item {
-                                url: bare,
-                                kind: link.kind,
-                                via_links: true,
-                                in_sitemap: false,
-                                plan,
-                                form: target_form.clone(),
-                            }),
-                        }
+                        let (kind, form) = (link.kind, target_form.clone());
+                        found.extend(self.dispatch(bare, kind, true, plan, form)?);
                     }
                     (target_form.id(), target.fragment().map(str::to_owned))
                 }
@@ -1013,6 +998,128 @@ where
         self.targets.fetch_add(1, Ordering::Relaxed);
         self.rows.send(Row::Target(row))?;
         Ok(())
+    }
+}
+
+impl<F> Shared<F>
+where
+    F: Fetcher + Send + Sync + 'static,
+{
+    /// What a claimed target's plan comes to: the item to ask about, or none
+    /// because its row is written here, deferred or to be copied.
+    pub(super) fn dispatch(
+        &self,
+        url: Url,
+        kind: Kind,
+        via_links: bool,
+        plan: Plan,
+        form: Canonical,
+    ) -> Result<Option<Item>, Error> {
+        match plan {
+            Plan::Unchecked(reason) => {
+                let row = unchecked(
+                    self.run,
+                    form.id(),
+                    form.as_str(),
+                    Outcome::Unchecked,
+                    reason,
+                );
+                self.send_target(row)?;
+            }
+            Plan::Baseline => self.pending.copy(form.id()),
+            Plan::Unbuilt => self.pending.defer(baseline::Unbuilt { url, kind, form }),
+            plan => {
+                return Ok(Some(Item {
+                    url,
+                    kind,
+                    via_links,
+                    in_sitemap: false,
+                    plan,
+                    form,
+                }));
+            }
+        }
+        Ok(None)
+    }
+
+    /// Records the component-version a built page carries, from its facts
+    /// (D19, D37).
+    pub(super) fn note_held(&self, facts: &[(String, String)]) {
+        let get = |key| {
+            facts
+                .iter()
+                .find(|(k, _)| k == key)
+                .map(|(_, v)| v.as_str())
+        };
+        // deficiency: KD6 Only an `antora` page carries a component, so a
+        // build of a site of any other generator holds nothing, and a link to
+        // a page the change deletes passes on the baseline's `ok`.
+        if let Some(component) = get("antora.component") {
+            self.pending.hold(component, get("antora.version"));
+        }
+    }
+
+    /// Judges the URLs under the prefix that the build lacks, now that every
+    /// built page is read: one in a held component-version is `broken_url`,
+    /// reason `not_built`, and any other goes where a URL outside the build
+    /// does. Returns the items to ask about.
+    pub(super) async fn settle_unbuilt(self: &Arc<Self>) -> Result<Vec<Item>, Error> {
+        let shared = Arc::clone(self);
+        tokio::task::spawn_blocking(move || {
+            let (Some(_writing), Some(prefix)) = (shared.writes.begin(), shared.frontier.prefix())
+            else {
+                return Ok(Vec::new());
+            };
+            if shared.stopping() {
+                return Ok(Vec::new());
+            }
+            let (held, rest) = shared.pending.judge(prefix);
+            for u in held {
+                let mut row = unchecked(
+                    shared.run,
+                    u.form.id(),
+                    u.form.as_str(),
+                    Outcome::BrokenUrl,
+                    baseline::NOT_BUILT,
+                );
+                row.answered_by = AnsweredBy::Local;
+                shared.send_target(row)?;
+            }
+            let mut items = Vec::new();
+            for u in rest {
+                let plan = shared.frontier.beyond(&u.form, u.kind);
+                items.extend(shared.dispatch(u.url, u.kind, true, plan, u.form)?);
+            }
+            Ok(items)
+        })
+        .await
+        .map_err(|_| Error::Panicked)?
+    }
+
+    /// Sends the copies of the baseline's rows, last: every target the build
+    /// and the requests wrote is in the writer's queue ahead of them, so a
+    /// copy finding its landing page written leaves it alone (D52).
+    pub(super) async fn copy_from_baseline(self: &Arc<Self>) -> Result<(), Error> {
+        let shared = Arc::clone(self);
+        tokio::task::spawn_blocking(move || {
+            let (Some(_writing), Some(baseline)) =
+                (shared.writes.begin(), shared.frontier.baseline())
+            else {
+                return Ok(());
+            };
+            for url_id in shared.pending.take_copies() {
+                if shared.stopping() {
+                    break;
+                }
+                shared.rows.copy_target(baseline.run, shared.run, url_id)?;
+                shared
+                    .targets
+                    .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            }
+            Ok(())
+        })
+        .await
+        .map_err(|_| Error::Panicked)?
     }
 }
 

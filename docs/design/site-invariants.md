@@ -6,7 +6,7 @@ discovery and never reused. Walk this file whenever Antora's version changes (I8
 names it), or when docs.fp.o's build or hosting moves: a change here surfaces as wrong verdicts,
 not as an error.
 
-<!-- invariant-watermark: I14 -->
+<!-- invariant-watermark: I16 -->
 
 ### I1 docs.fp.o's sitemap is an index at `/en-US/sitemap.xml`, and lists no translated page
 - **Claim.** `/sitemap.xml` is 404, and robots.txt names no `Sitemap:`. `/en-US/sitemap.xml` is
@@ -195,3 +195,17 @@ not as an error.
 - **Relied on by.** D24: `scripts/e2e.py` commits each component into a repository under
   `runs/e2e/repos/` and builds with `CI=true`.
 - **Re-verify.** `mise run e2e -- --save-pages && git diff --stat fixtures/antora/pages`
+
+### I16 An Antora page's URL is its component, its version unless bare, its module unless `ROOT`, and its page
+- **Claim.** Under the site root, indexified, a page is at `<component>/[<version>/][<module>/]<page>/`. The
+  version segment is omitted when the version is empty (`~`) or `master`, and the `ROOT` module's always is.
+  A `latest_version_segment` replaces the latest version's own segment (docs.fp.o serves it at `latest`, I5).
+- **Proof.** Upstream source: `@antora/content-classifier` 3.1.15, `lib/content-catalog.js`,
+  `computeVersionSegment` and `computePub`. Observed on the fixture site: `guide/1.0/…` against `tools/…` and
+  `ops/…`, whose versions render `data-version=""` and `master`.
+- **Scope limit.** Antora 3.1.15, indexify. A build setting `latest_version_segment` writes the latest
+  version under another name, which `crawl::baseline::Held` does not know: a deleted page there is the
+  baseline's answer, not `not_built`.
+- **Verified against.** Antora 3.1.15, 2026-10-20.
+- **Relied on by.** D54.
+- **Re-verify.** `grep -n -A12 'function computeVersionSegment' runs/e2e/antora/node_modules/@antora/content-classifier/lib/content-catalog.js; ls runs/e2e/whole/guide runs/e2e/whole/tools`

@@ -22,7 +22,7 @@ decisions each carries are cited in its module's doc.
 
 - **bruce** — `cli/` and the binary's `main.rs`, which only calls it: the
   command line and the registry in the parent file, a child module for
-  each subcommand, `check_dir` (its build, the run over it and the line it prints), `crawl` (its roots from the file or the URL, the run and
+  each subcommand, `check_dir` (its build, the run over it and the line it prints) with its `file` child (the baseline file a path or URL names, downloaded and decompressed), `crawl` (its roots from the file or the URL, the run and
   Ctrl-C), `export_baseline` (its files and the line it prints), `prune` (its rule and what it prints) and `report` (its options and
   printing the output), and the `db`
   child, which all five open the database through, installing the reports' views
@@ -38,7 +38,9 @@ decisions each carries are cited in its module's doc.
   `hops` child; D16's classification in the `outcome` child; and reading one
   sitemap file, gzip and index included, in the `sitemap` child, discovery
   staying in the parent. A run over a local build begins from its seeds in the
-  parent, and resolves an href beginning `/` against the build's site root (D53). It sits above
+  parent, and resolves an href beginning `/` against the build's site root (D53).
+  What a run over a build leaves to the baseline, the component-versions its
+  pages hold and the copies sent last is in the `baseline` child (D54). It sits above
   `fetch`, `extract` and `store`, driving each (D39).
 
 ## CI mode
@@ -71,7 +73,8 @@ decisions each carries are cited in its module's doc.
   host's pace, in-flight cap and robots.txt in `http`'s `host` child, and
   the body-to-text decoding in the `charset` child, and the build-directory
   fetcher in the `local` child, which holds a map from URL to file and no
-  directory logic, that being `ci`'s, and reuses `charset`. It sits above `config` (it reads the rate and `user_agent`) and
+  directory logic, that being `ci`'s, and reuses `charset`; the `routed` child
+  sends a URL the build holds to it and any other to the live fetcher. It sits above `config` (it reads the rate and `user_agent`) and
   `url`; the crawler above it follows the hops (D39).
 
 ## The extraction pass and its core heuristics
@@ -89,8 +92,8 @@ decisions each carries are cited in its module's doc.
   profile's views in the parent file, the tables in the `schema` child, the
   row types in the `rows` child, the views over them (`link_verdicts`) in the
   `views` child, deleting old runs (D2) in the `prune` child, writing one run as a baseline file
-  (D21), importing one as a run and copying a target's rows between runs (D52) in the `baseline` child and the single
-  writer thread in the `writer` child. It sits above `profile`
+  (D21), importing one as a run, listing the targets a run holds and copying a target's rows between runs (D52) in the `baseline` child and the single
+  writer thread, which also runs a requested copy, in the `writer` child. It sits above `profile`
   because it asks each profile for its views and answers its lookups (D39).
 
 ## Profiles

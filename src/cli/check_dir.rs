@@ -1,14 +1,17 @@
-//! `bruce check-dir DIR --prefix URL [--config f] [--db f]`: one run over a
-//! local build, written to the database (D1, D22, D27; `roadmap-P5-ci.md`,
-//! "A `check-dir` run is a crawl").
+//! `bruce check-dir DIR --prefix URL --baseline FILE|URL [--config f] [--db f]
+//! [--externals skip|baseline|live]`: one run over a local build, written to
+//! the database (D1, D22, D27; `roadmap-P5-ci.md`, "A `check-dir` run is a
+//! crawl").
 //!
 //! The configuration is the one `crawl` reads, so `skip`, the allowlist and
 //! the roots' scopes plan a URL as they did for the baseline; with no file
-//! the prefix is the only root, as a URL is for `crawl` (D40). The run
-//! begins from the `.html` files of `DIR` alone ([`Build::seeds`]) and
-//! answers a URL under the prefix from the directory. Nothing else is
-//! answered yet: a URL outside it is an `error`, and no baseline, gate or
-//! exit status other than 0 is in place.
+//! the prefix is the only root, as a URL is for `crawl` (D40). The baseline
+//! file is imported as a run of the database ([`file`], D52) and the CI run
+//! names it. The run begins from the `.html` files of `DIR` alone
+//! ([`Build::seeds`]) and answers a URL under the prefix from the directory;
+//! a URL the build lacks is answered from the baseline or asked live, as
+//! `crawl`'s `baseline` module has it. The gate, the exit status other than
+//! 0 or 1 and the output are not in place yet.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -17,10 +20,17 @@ use clap::{Arg, ArgMatches, Command};
 
 use super::{crawl, db};
 use crate::ci::Build;
-use crate::crawl::{Crawl, Summary};
+use crate::crawl::{Baseline, Crawl, Externals, Summary};
+use crate::fetch::http::host::Hosts;
+use crate::fetch::http::{HttpFetcher, Settings};
 use crate::fetch::local::LocalFetcher;
+use crate::fetch::routed::Routed;
 use crate::profile::Registry;
 use crate::store::{Mode, RunId, Writer};
+
+mod file;
+
+use file::BaselineFile;
 
 /// Rows the writer's channel holds before a sender waits (D28).
 const WRITER_CAPACITY: usize = 4096;
@@ -30,6 +40,9 @@ const WRITER_CAPACITY: usize = 4096;
 pub struct Args {
     pub dir: PathBuf,
     pub prefix: String,
+    /// A path or a URL.
+    pub baseline: String,
+    pub externals: Externals,
     pub config: Option<PathBuf>,
     pub db: Option<PathBuf>,
 }
@@ -40,6 +53,12 @@ impl From<&ArgMatches> for Args {
         Args {
             dir: PathBuf::from(one("dir").expect("clap requires DIR")),
             prefix: one("prefix").expect("clap requires --prefix"),
+            baseline: one("baseline").expect("clap requires --baseline"),
+            externals: match one("externals").as_deref() {
+                Some("skip") => Externals::Skip,
+                Some("live") => Externals::Live,
+                _ => Externals::Baseline,
+            },
             config: one("config").map(PathBuf::from),
             db: one("db").map(PathBuf::from),
         }
@@ -63,6 +82,24 @@ pub fn command() -> Command {
                 .help("The production URL of the build directory's root"),
         )
         .arg(
+            Arg::new("baseline")
+                .long("baseline")
+                .value_name("FILE|URL")
+                .required(true)
+                .help("The baseline file `bruce export-baseline` wrote, gzipped or not"),
+        )
+        .arg(
+            Arg::new("externals")
+                .long("externals")
+                .value_name("MODE")
+                .value_parser(["skip", "baseline", "live"])
+                .default_value("baseline")
+                .help(
+                    "Allowlisted URLs: leave unchecked, take the baseline's verdict where it \
+                     has one, or always ask",
+                ),
+        )
+        .arg(
             Arg::new("config")
                 .long("config")
                 .value_name("FILE")
@@ -79,10 +116,10 @@ pub fn command() -> Command {
 /// Runs `args` with the profiles `registry` holds.
 pub fn run(args: &Args, registry: Registry) -> ExitCode {
     match check(args, registry) {
-        Ok((run, summary)) => {
+        Ok((run, baseline, summary)) => {
             println!(
-                "run {}: {} targets, {} pages",
-                run.0, summary.targets, summary.pages
+                "run {}: {} targets, {} pages, against baseline run {}",
+                run.0, summary.targets, summary.pages, baseline.0
             );
             ExitCode::SUCCESS
         }
@@ -93,8 +130,9 @@ pub fn run(args: &Args, registry: Registry) -> ExitCode {
     }
 }
 
-/// Checks and writes one run of the build.
-fn check(args: &Args, registry: Registry) -> Result<(RunId, Summary), String> {
+/// Checks and writes one run of the build, and gives the baseline run it
+/// was checked against.
+fn check(args: &Args, registry: Registry) -> Result<(RunId, RunId, Summary), String> {
     // With no file the prefix is the root, and a file names its own.
     let given = crawl::Args {
         url: args.config.is_none().then(|| args.prefix.clone()),
@@ -103,26 +141,42 @@ fn check(args: &Args, registry: Registry) -> Result<(RunId, Summary), String> {
     };
     let (config, hash) = crawl::configure(&given, &registry)?;
     let build = Build::scan(&args.dir, &args.prefix, &config).map_err(|e| e.to_string())?;
-    let db = db::path(args.db.as_deref());
-    let in_db = |e: crate::store::Error| format!("{}: {e}", db.display());
-    let store = db::open(db, &registry).map_err(in_db)?;
-    let fetcher = LocalFetcher::new(build.prefix(), build.served());
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .map_err(|e| e.to_string())?;
+    let baseline_file = BaselineFile::open(&args.baseline, &config, &runtime)?;
+    let db = db::path(args.db.as_deref());
+    let in_db = |e: crate::store::Error| format!("{}: {e}", db.display());
+    let store = db::open(db, &registry).map_err(in_db)?;
+    let imported = store
+        .import_baseline(baseline_file.path())
+        .map_err(|e| format!("{}: {e}", args.baseline))?;
+    let index = store.baseline_index(imported.run).map_err(in_db)?;
+    let settings = Settings {
+        user_agent: config.user_agent.clone(),
+        ..Settings::default()
+    };
+    let live = HttpFetcher::new(settings, Hosts::new(&config)).map_err(|e| e.to_string())?;
+    let local = LocalFetcher::new(build.prefix(), build.served());
+    let site = local.site();
+    let fetcher = Routed::new(local, live);
     let run = store
-        .begin_run(Mode::Local, &hash, None, &config.root_urls())
+        .begin_run(Mode::Local, &hash, Some(imported.run), &config.root_urls())
         .map_err(in_db)?;
     let writer = Writer::start(store, WRITER_CAPACITY);
-    let crawl = Crawl::new(fetcher, config, registry, run, writer.handle())
-        .local_site(build.prefix().clone());
+    let baseline = Baseline {
+        run: imported.run,
+        index,
+        externals: args.externals,
+    };
+    let crawl = Crawl::new(fetcher, config, registry, run, writer.handle()).against(site, baseline);
     let crawled = runtime.block_on(crawl.run_seeded(build.seeds()));
     // The writer's own error says why a crawl lost it, so it goes first.
     let store = writer.finish().map_err(in_db)?;
     let summary = crawled.map_err(|e| e.to_string())?;
     store.finish_run(run).map_err(in_db)?;
-    Ok((run, summary))
+    Ok((run, imported.run, summary))
 }
 
 #[cfg(test)]

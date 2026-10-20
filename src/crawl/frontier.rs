@@ -9,16 +9,21 @@
 //! (D13), and a claim is never given back.
 
 use std::collections::HashSet;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use url::Url;
 
 use crate::config::Config;
 use crate::extract::Kind;
+use crate::fetch::local::Site;
+use crate::store::{AnsweredBy, BaselineIndex, RunId};
 use crate::url::{Canonical, canonical};
 
 /// The reason of a URL `skip` matched (D50).
 pub const SKIPPED: &str = "skipped";
+
+/// The reason of an allowlisted URL `--externals=skip` leaves alone (D22).
+pub const EXTERNALS_SKIPPED: &str = "externals_skipped";
 
 /// What a run does about a URL.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -35,6 +40,13 @@ pub enum Plan {
     Status,
     /// Not requested; the target row says why.
     Unchecked(&'static str),
+    /// Not requested: the baseline's rows for it are copied into the run
+    /// (D52). Only a run checked against a baseline plans one.
+    Baseline,
+    /// In a root's scope, under the build's prefix and not built: judged
+    /// once every built page is read, by the component-versions the build
+    /// holds (D22). Only a run checked against a baseline plans one.
+    Unbuilt,
     /// A sitemap, `depth` files below where discovery began (1 for the file
     /// discovered or set): GET, its body read for its entries (D14). Only
     /// the crawl plans one; [`Frontier::plan`] never does.
@@ -45,6 +57,33 @@ pub enum Plan {
 pub struct Frontier {
     config: Config,
     seen: Mutex<HashSet<u64>>,
+    ci: Option<Ci>,
+}
+
+/// What `--externals` asks of a URL on an allowlisted host (D22).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Externals {
+    /// Nothing is requested or copied: the URL is `unchecked`.
+    Skip,
+    /// The baseline's verdict where it holds one, else a request.
+    Baseline,
+    /// A request, whatever the baseline holds.
+    Live,
+}
+
+/// The baseline a run is checked against: its run in the database being
+/// written, and the targets it holds.
+#[derive(Debug, Clone)]
+pub struct Baseline {
+    pub run: RunId,
+    pub index: BaselineIndex,
+    pub externals: Externals,
+}
+
+/// What a run over a local build knows of the build and of its baseline.
+struct Ci {
+    site: Arc<Site>,
+    baseline: Baseline,
 }
 
 impl Frontier {
@@ -52,7 +91,38 @@ impl Frontier {
         Frontier {
             config,
             seen: Mutex::new(HashSet::new()),
+            ci: None,
         }
+    }
+
+    /// This frontier for a run over `site`, checked against `baseline`: a
+    /// URL the build does not hold is no longer a page to read from it.
+    pub fn against(&mut self, site: Arc<Site>, baseline: Baseline) {
+        self.ci = Some(Ci { site, baseline });
+    }
+
+    /// The baseline this run is checked against, if any.
+    pub fn baseline(&self) -> Option<&Baseline> {
+        self.ci.as_ref().map(|ci| &ci.baseline)
+    }
+
+    /// Where the answer for the URL `form` names comes from: the build, if it
+    /// holds the URL, else a request (D51).
+    pub fn answered_by(&self, form: &Canonical) -> AnsweredBy {
+        let built = self
+            .ci
+            .as_ref()
+            .is_some_and(|ci| Url::parse(form.as_str()).is_ok_and(|url| ci.site.holds(&url)));
+        if built {
+            AnsweredBy::Local
+        } else {
+            AnsweredBy::Live
+        }
+    }
+
+    /// The build's prefix, if the run is over a build.
+    pub fn prefix(&self) -> Option<&Url> {
+        self.ci.as_ref().map(|ci| ci.site.prefix())
     }
 
     pub fn config(&self) -> &Config {
@@ -97,25 +167,18 @@ impl Frontier {
         for (root, r) in self.config.roots.iter().enumerate() {
             let form = r.canonical(url);
             if r.in_scope(&form) {
-                return (Plan::Page { root }, form);
+                let plan = match &self.ci {
+                    Some(ci) if !ci.site.holds(url) && ci.site.under(url) => Plan::Unbuilt,
+                    Some(ci) if !ci.site.holds(url) => self.beyond(&form, kind),
+                    _ => Plan::Page { root },
+                };
+                return (plan, form);
             }
         }
         let form = plain;
         let host = url.host().map(|h| h.to_string()).unwrap_or_default();
         let plan = if self.config.allowlist.contains(&host) {
-            // deficiency: KD4 The first link to an allowlisted URL decides how
-            // it is asked: an anchor link gets a GET and its anchors are
-            // stored, any other kind gets a HEAD. A URL named first by an
-            // image and later by an anchor link with a fragment is never
-            // read, so that fragment has no anchors to be checked against.
-            // Reading it again would write the target twice (D2), and
-            // deciding after the whole crawl needs the frontier to hold every
-            // link's kind.
-            if kind == Kind::Anchor {
-                Plan::Anchors
-            } else {
-                Plan::Status
-            }
+            self.external(&form, kind)
         } else if self.config.is_root_host(&host) {
             Plan::Unchecked("out_of_scope")
         } else {
@@ -124,15 +187,52 @@ impl Frontier {
         (plan, form)
     }
 
+    /// How a URL the build does not hold is answered: by copying the
+    /// baseline's rows where it holds a target for it, else by asking, as an
+    /// allowlisted URL is asked (D22, D52).
+    pub fn beyond(&self, form: &Canonical, kind: Kind) -> Plan {
+        match self.baseline() {
+            Some(b) if b.index.holds(form.id()) => Plan::Baseline,
+            _ => live(kind),
+        }
+    }
+
+    /// How an allowlisted URL is answered: `--externals` decides in a run
+    /// against a baseline, and in any other it is asked.
+    fn external(&self, form: &Canonical, kind: Kind) -> Plan {
+        match self.baseline().map(|b| b.externals) {
+            Some(Externals::Skip) => Plan::Unchecked(EXTERNALS_SKIPPED),
+            Some(Externals::Baseline) => self.beyond(form, kind),
+            Some(Externals::Live) | None => live(kind),
+        }
+    }
+
     /// [`Frontier::plan`] for the URL a redirect leads to: a hop is followed
     /// wherever it goes, so what a link would leave unchecked is asked for its
     /// status alone. A skipped URL stays skipped, and ends the chain (D50).
     pub fn hop_plan(&self, url: &Url, kind: Kind) -> (Plan, Canonical) {
         match self.plan(url, kind) {
             (Plan::Unchecked(SKIPPED), form) => (Plan::Unchecked(SKIPPED), form),
-            (Plan::Unchecked(_), form) => (Plan::Status, form),
+            (Plan::Unchecked(_) | Plan::Baseline | Plan::Unbuilt, form) => (Plan::Status, form),
             planned => planned,
         }
+    }
+}
+
+/// How a URL is asked about, by the kind of link that names it.
+fn live(kind: Kind) -> Plan {
+    // deficiency: KD4 The first link to an allowlisted URL decides how
+    // it is asked: an anchor link gets a GET and its anchors are
+    // stored, any other kind gets a HEAD. A URL named first by an
+    // image and later by an anchor link with a fragment is never
+    // read, so that fragment has no anchors to be checked against.
+    // Reading it again would write the target twice (D2), and
+    // deciding after the whole crawl needs the frontier to hold every
+    // link's kind.
+    if kind == Kind::Anchor {
+        Plan::Anchors
+    } else {
+        Plan::Status
     }
 }
 

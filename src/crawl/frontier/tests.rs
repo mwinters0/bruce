@@ -1,4 +1,5 @@
 use super::*;
+use crate::fetch::local::Site;
 
 fn frontier() -> Frontier {
     let config = Config::parse(
@@ -132,4 +133,127 @@ fn a_url_id_is_claimed_once() {
     assert!(f.claim(7));
     assert!(!f.claim(7));
     assert!(f.claim(8));
+}
+
+/// A frontier over a build of `https://docs.example.org/en-US/a/` holding
+/// its index and `x/`, checked against a baseline that holds the targets
+/// with the ids of the URLs given.
+fn against(externals: Externals, held: &[&str]) -> Frontier {
+    let prefix = Url::parse("https://docs.example.org/en-US/a/").unwrap();
+    let built = ["x/", ""].map(|p| (prefix.join(p).unwrap(), std::path::PathBuf::new()));
+    let mut f = frontier();
+    let index = held
+        .iter()
+        .map(|u| f.plan(&Url::parse(u).unwrap(), Kind::Anchor).1.id());
+    f.against(
+        Arc::new(Site::new(&prefix, built)),
+        Baseline {
+            run: crate::store::RunId(1),
+            index: crate::store::BaselineIndex::new(index),
+            externals,
+        },
+    );
+    f
+}
+
+#[test]
+fn against_a_baseline_a_url_the_build_lacks_is_copied_deferred_or_asked() {
+    let f = against(
+        Externals::Baseline,
+        &[
+            "https://docs.example.org/en-US/b/known/",
+            "https://forge.example.org/p/",
+        ],
+    );
+    let class = |url: &str, kind| plan(&f, url, kind).0;
+    assert_eq!(
+        class("https://docs.example.org/en-US/a/x/", Kind::Anchor),
+        Plan::Page { root: 0 },
+        "a built page is read"
+    );
+    assert_eq!(
+        class("https://docs.example.org/en-US/a/x", Kind::Anchor),
+        Plan::Page { root: 0 },
+        "so is the slashless form the build moves to it"
+    );
+    assert_eq!(
+        class("https://docs.example.org/en-US/a/y/", Kind::Anchor),
+        Plan::Unbuilt,
+        "under the prefix and not built waits for the held set"
+    );
+    assert_eq!(
+        class("https://docs.example.org/en-US/b/known/", Kind::Anchor),
+        Plan::Baseline,
+        "in scope, outside the prefix and in the baseline"
+    );
+    assert_eq!(
+        class("https://docs.example.org/en-US/b/new/", Kind::Anchor),
+        Plan::Anchors,
+        "in scope, outside the prefix and not in the baseline: asked, never read for its links"
+    );
+    assert_eq!(
+        class("https://docs.example.org/en-US/b/new/", Kind::Image),
+        Plan::Status
+    );
+    assert_eq!(
+        class("https://forge.example.org/p/", Kind::Anchor),
+        Plan::Baseline
+    );
+    assert_eq!(
+        class("https://forge.example.org/q/", Kind::Anchor),
+        Plan::Anchors
+    );
+    assert_eq!(
+        class("https://other.example.net/", Kind::Anchor),
+        Plan::Unchecked("host_not_allowlisted")
+    );
+    let beyond = |url: &str| {
+        let (_, form) = f.plan(&Url::parse(url).unwrap(), Kind::Anchor);
+        f.beyond(&form, Kind::Anchor)
+    };
+    assert_eq!(
+        beyond("https://docs.example.org/en-US/b/known/"),
+        Plan::Baseline
+    );
+    assert_eq!(beyond("https://docs.example.org/en-US/a/y/"), Plan::Anchors);
+    assert_eq!(
+        f.hop_plan(
+            &Url::parse("https://docs.example.org/en-US/a/y/").unwrap(),
+            Kind::Anchor
+        )
+        .0,
+        Plan::Status,
+        "a hop is asked, not deferred"
+    );
+}
+
+#[test]
+fn externals_decides_an_allowlisted_url_and_no_other() {
+    let held = ["https://forge.example.org/p/"];
+    let external = |externals, url: &str| plan(&against(externals, &held), url, Kind::Anchor).0;
+    let known = "https://forge.example.org/p/";
+    assert_eq!(
+        external(Externals::Skip, known),
+        Plan::Unchecked(EXTERNALS_SKIPPED)
+    );
+    assert_eq!(external(Externals::Baseline, known), Plan::Baseline);
+    assert_eq!(external(Externals::Live, known), Plan::Anchors);
+    let new = "https://forge.example.org/new/";
+    assert_eq!(external(Externals::Baseline, new), Plan::Anchors);
+    assert_eq!(
+        external(Externals::Skip, "https://docs.example.org/en-US/b/new/"),
+        Plan::Anchors,
+        "a URL of a root is not an external"
+    );
+}
+
+#[test]
+fn a_run_with_no_build_plans_as_before() {
+    let f = frontier();
+    assert_eq!(
+        plan(&f, "https://docs.example.org/en-US/a/y/", Kind::Anchor).0,
+        Plan::Page { root: 0 }
+    );
+    assert!(f.baseline().is_none());
+    assert!(f.prefix().is_none());
 }

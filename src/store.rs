@@ -22,7 +22,7 @@ use url::Url;
 
 use crate::profile::{BoxError, Lookup, Registry, View};
 
-pub use baseline::{Exported, Imported};
+pub use baseline::{BaselineIndex, Exported, Imported};
 pub use prune::Rule;
 pub use rows::{AnchorRow, AnsweredBy, FactRow, Hop, LinkRow, Outcome, PageRow, Row, TargetRow};
 pub use schema::SCHEMA_VERSION;

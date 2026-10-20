@@ -5,8 +5,9 @@
 //! transaction. `bodies` stay behind, a baseline answering what a crawl found
 //! and not what it fetched (D15), and `runs.baseline_run` is cleared, naming a
 //! run the file does not hold. The `import` child copies the file's run into a
-//! CI database the same way, renumbered, and the `target` child copies one
-//! target's rows between two runs of a database (D52).
+//! CI database the same way, renumbered, the `index` child lists the targets a
+//! run holds, and the `target` child copies one target's rows between two runs
+//! of a database (D52).
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -174,9 +175,11 @@ fn remove(db: &Path) {
 }
 
 mod import;
+mod index;
 mod target;
 
 pub use import::Imported;
+pub use index::BaselineIndex;
 
 #[cfg(test)]
 mod tests;

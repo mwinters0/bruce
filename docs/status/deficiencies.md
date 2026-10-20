@@ -40,4 +40,14 @@ roadmap's phase index.
   link's fragment against. **(c) unowned**: a design holding every link's kind
   until the crawl ends would promote it. Detail: `src/crawl/frontier.rs`
 
-<!-- deficiency-watermark: KD4 -->
+- **KD5** — A component split across repos' start paths and only partly built reads
+  its unbuilt pages as `not_built`, a component-version being held whole.
+  **(a) deliberate tradeoff**: telling the pages a change owns from the rest takes a
+  flag naming their globs, which every repo's CI keeps current by hand. Detail:
+  `src/crawl/baseline.rs`
+
+- **KD6** — A build of a site whose pages carry no `antora` facts holds nothing, so a
+  link to a page the change deletes passes on the baseline's `ok`. **(c) unowned**: a
+  non-Antora site checked in CI would promote it. Detail: `src/crawl.rs`
+
+<!-- deficiency-watermark: KD6 -->

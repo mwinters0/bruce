@@ -27,6 +27,7 @@ use url::Url;
 pub mod charset;
 pub mod http;
 pub mod local;
+pub mod routed;
 
 pub use http::host::Access;
 

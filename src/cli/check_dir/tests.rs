@@ -1,6 +1,8 @@
 use std::path::Path;
 use std::process::ExitCode;
 
+use wiremock::MockServer;
+
 use super::*;
 use crate::cli::registry;
 use crate::store::Store;
@@ -13,18 +15,60 @@ fn parse(args: &[&str]) -> Result<Args, clap::Error> {
 
 #[test]
 fn a_directory_and_a_prefix_are_required() {
-    let args = parse(&["build", "--prefix", "https://x.test/", "--db", "d"]).unwrap();
+    let args = parse(&[
+        "build",
+        "--prefix",
+        "https://x.test/",
+        "--baseline",
+        "b.duckdb.gz",
+        "--db",
+        "d",
+    ])
+    .unwrap();
     assert_eq!(
         args,
         Args {
             dir: "build".into(),
             prefix: "https://x.test/".into(),
+            baseline: "b.duckdb.gz".into(),
+            externals: Externals::Baseline,
             config: None,
             db: Some("d".into()),
         }
     );
-    assert!(parse(&["build"]).is_err());
-    assert!(parse(&["--prefix", "https://x.test/"]).is_err());
+    let live = parse(&[
+        "build",
+        "--prefix",
+        "https://x.test/",
+        "--baseline",
+        "b",
+        "--externals",
+        "live",
+    ])
+    .unwrap();
+    assert_eq!(live.externals, Externals::Live);
+    assert!(parse(&["build", "--prefix", "https://x.test/"]).is_err());
+    assert!(parse(&["build", "--baseline", "b"]).is_err());
+    assert!(parse(&["--prefix", "https://x.test/", "--baseline", "b"]).is_err());
+    let bad = [
+        "build",
+        "--prefix",
+        "p",
+        "--baseline",
+        "b",
+        "--externals",
+        "x",
+    ];
+    assert!(parse(&bad).is_err());
+}
+
+/// A baseline file holding one finished run and nothing else.
+fn empty_baseline(path: &Path) {
+    let store = Store::open(path, &registry()).unwrap();
+    let run = store
+        .begin_run(crate::store::Mode::Crawl, "base", None, &[])
+        .unwrap();
+    store.finish_run(run).unwrap();
 }
 
 /// A build of three pages under `https://x.test/docs/sub/`, whose root in
@@ -49,19 +93,26 @@ fn build(dir: &Path) {
 }
 
 #[test]
-fn a_run_over_a_build_answers_from_the_directory_and_asks_the_network_nothing() {
+fn a_run_over_a_build_answers_from_the_directory_and_asks_production_for_the_rest() {
+    let server_runtime = tokio::runtime::Runtime::new().unwrap();
+    let server = server_runtime.block_on(MockServer::start());
+    let base = server.uri();
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().join("build");
     build(&dir);
     let config = tmp.path().join("bruce.toml");
-    std::fs::write(&config, "[[root]]\nurl = \"https://x.test/docs/\"\n").unwrap();
+    std::fs::write(&config, format!("[[root]]\nurl = \"{base}/docs/\"\n")).unwrap();
+    let baseline = tmp.path().join("baseline.duckdb");
+    empty_baseline(&baseline);
     let db = tmp.path().join("bruce.duckdb");
     let code = crate::cli::run_from([
         "bruce",
         "check-dir",
         dir.to_str().unwrap(),
         "--prefix",
-        "https://x.test/docs/sub",
+        &format!("{base}/docs/sub"),
+        "--baseline",
+        baseline.to_str().unwrap(),
         "--config",
         config.to_str().unwrap(),
         "--db",
@@ -72,44 +123,54 @@ fn a_run_over_a_build_answers_from_the_directory_and_asks_the_network_nothing() 
     let store = Store::open(&db, &registry()).unwrap();
     let mut stmt = store
         .connection()
-        .prepare("SELECT url, outcome, reason, answered_by FROM targets ORDER BY url")
+        .prepare(
+            "SELECT url, outcome, reason, answered_by FROM targets WHERE run_id = 2 ORDER BY url",
+        )
         .unwrap();
     let targets: Vec<(String, String, Option<String>, String)> = stmt
         .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))
         .unwrap()
         .collect::<Result<_, _>>()
         .unwrap();
-    let t = |url: &str, outcome: &str, reason: Option<&str>| {
+    let t = |url: &str, outcome: &str, answered_by: &str| {
         (
-            url.to_owned(),
+            url.replace("{base}", &base),
             outcome.to_owned(),
-            reason.map(str::to_owned),
-            "live".to_owned(),
+            None,
+            answered_by.to_owned(),
         )
     };
     assert_eq!(
         targets,
         [
-            t(
-                "https://elsewhere.test/",
-                "unchecked",
-                Some("host_not_allowlisted")
+            t("{base}/docs/sub/", "ok", "local"),
+            t("{base}/docs/sub/_/logo.png", "ok", "local"),
+            t("{base}/docs/sub/a/", "ok", "local"),
+            t("{base}/docs/sub/b.html", "ok", "local"),
+            t("{base}/docs/sub/gone/", "broken_url", "live"),
+            (
+                "https://elsewhere.test/".to_owned(),
+                "unchecked".to_owned(),
+                Some("host_not_allowlisted".to_owned()),
+                "live".to_owned()
             ),
-            t("https://x.test/docs/sub/", "ok", None),
-            t("https://x.test/docs/sub/_/logo.png", "ok", None),
-            t("https://x.test/docs/sub/a/", "ok", None),
-            t("https://x.test/docs/sub/b.html", "ok", None),
-            t("https://x.test/docs/sub/gone/", "broken_url", None),
         ],
-        "the root's own URL is not asked about, and a root-relative href lands under the prefix"
+        "a built page is read from the directory, and the root-relative href lands under the \
+         prefix, where the build lacks it and the baseline has no word of it, so production is asked"
     );
-    let (mode, finished): (String, bool) = store
+    let (mode, finished, baseline_run): (String, bool, Option<u64>) = store
         .connection()
-        .query_row("SELECT mode, finished_at IS NOT NULL FROM runs", [], |r| {
-            Ok((r.get(0)?, r.get(1)?))
-        })
+        .query_row(
+            "SELECT mode, finished_at IS NOT NULL, baseline_run FROM runs WHERE run_id = 2",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
         .unwrap();
-    assert_eq!((mode.as_str(), finished), ("local", true));
+    assert_eq!(
+        (mode.as_str(), finished, baseline_run),
+        ("local", true, Some(1))
+    );
+    drop(server_runtime);
 }
 
 #[test]
@@ -119,6 +180,8 @@ fn a_prefix_outside_every_roots_scope_is_refused_before_a_database_is_opened() {
     build(&dir);
     let config = tmp.path().join("bruce.toml");
     std::fs::write(&config, "[[root]]\nurl = \"https://x.test/docs/\"\n").unwrap();
+    let baseline = tmp.path().join("baseline.duckdb");
+    empty_baseline(&baseline);
     let db = tmp.path().join("bruce.duckdb");
     for prefix in ["https://y.test/docs/", "not a url"] {
         let code = crate::cli::run_from([
@@ -127,6 +190,8 @@ fn a_prefix_outside_every_roots_scope_is_refused_before_a_database_is_opened() {
             dir.to_str().unwrap(),
             "--prefix",
             prefix,
+            "--baseline",
+            baseline.to_str().unwrap(),
             "--config",
             config.to_str().unwrap(),
             "--db",
@@ -135,4 +200,38 @@ fn a_prefix_outside_every_roots_scope_is_refused_before_a_database_is_opened() {
         assert_eq!(code, ExitCode::FAILURE, "{prefix}");
     }
     assert!(!db.exists());
+}
+
+#[test]
+fn a_baseline_that_is_not_one_is_refused_and_the_run_is_not_begun() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path().join("build");
+    build(&dir);
+    let config = tmp.path().join("bruce.toml");
+    std::fs::write(&config, "[[root]]\nurl = \"https://x.test/docs/\"\n").unwrap();
+    let not_a_database = tmp.path().join("notes.txt");
+    std::fs::write(&not_a_database, "not a database").unwrap();
+    let db = tmp.path().join("bruce.duckdb");
+    for baseline in [not_a_database, tmp.path().join("missing.duckdb")] {
+        let code = crate::cli::run_from([
+            "bruce",
+            "check-dir",
+            dir.to_str().unwrap(),
+            "--prefix",
+            "https://x.test/docs/",
+            "--baseline",
+            baseline.to_str().unwrap(),
+            "--config",
+            config.to_str().unwrap(),
+            "--db",
+            db.to_str().unwrap(),
+        ]);
+        assert_eq!(code, ExitCode::FAILURE, "{}", baseline.display());
+    }
+    let store = Store::open(&db, &registry()).unwrap();
+    let runs: i64 = store
+        .connection()
+        .query_row("SELECT count(*) FROM runs", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(runs, 0);
 }
