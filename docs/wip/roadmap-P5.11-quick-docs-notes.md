@@ -82,15 +82,11 @@ on run 3 were not re-run; P5.10 asserts their agreement.
   redirected to a landing in no held prefix is the landing page's owner's);
   it earns **5.11.1**, a tested path reworked on D56's definition of
   removed, so it is not made unattended here.
-- **KD8 needs a design.** An alias is a redirect target the baseline holds
-  only if the crawl reached its URL (15 meta-refresh targets in en-US out
-  of 6435 pages); a page's HTML does not name its aliases. The two ways are
-  a lookup in the baseline's redirect targets for the URL a refspec names
-  (finds `objectives`, not the package-maintainers one) and a live request
-  for that URL, following the refresh (finds both, and makes a CI job ask the
-  live site for what the baseline lacks, as D22 already does for a URL
-  the baseline never saw). Until one lands the gate is red on a build
-  whose content links by alias.
+- **KD8 is 5.12**: the URL a refspec names, by I16, judged by D22's
+  chain (history `2026-10-20`, "The review of KD8"). An alias is a
+  redirect target the baseline holds only if the crawl reached its URL (15
+  meta-refresh targets in en-US out of 6435 pages), and a page's HTML does
+  not name its aliases, so the one 5.11 found uncrawled is live's to answer.
 - **P6** ([`../design/roadmap-P6-release-inbox.md`](../design/roadmap-P6-release-inbox.md)): a repo's CI job is Antora from npm
   with `CI=true` and the playbook's UI, then `check-dir` with the deployment's
   config; the second takes seconds.

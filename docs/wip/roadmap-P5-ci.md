@@ -427,3 +427,13 @@ status, `check-dir`'s output and its manual page.
 
 quick-docs as published and with the planted changes, against P5.2's
 crawl exported.
+
+### P5.12 Resolve through the URL a refspec names
+
+Admitted after 5.11 (history `2026-10-20`, "The review of KD8"): where
+Resolve's facts find no page, the URL the refspec names by I16, judged by
+D22's chain, so an xref Antora resolves through a page-alias or a shared
+output URL passes, and one to a page with no edit link (KD7, KD8). Where
+the chain finds nothing the link stays `unresolved_xref`. It closes on
+tests of each case, an e2e xref through the fixture's alias, and 5.11's
+as-published check re-run after 5.11.1, exiting 0.

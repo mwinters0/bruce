@@ -52,14 +52,13 @@ roadmap's phase index.
   non-Antora site checked in CI would promote it. Detail: `src/crawl.rs`
 
 - **KD7** — A baseline page with no forge edit link has no `module` or `rel_path` fact, so an
-  xref to it cannot resolve and stays `unresolved_xref` in CI. **(c) unowned**: a baseline
-  carrying the page's source path some other way would promote it. Detail:
+  xref to it cannot resolve and stays `unresolved_xref` in CI. **(b) owned by P5**: slice
+  5.12 resolves through the URL the refspec names. Detail:
   `src/profile/antora/resolve.rs`
 
 - **KD8** — An xref Antora resolves through a page-alias, or to the one source file of two sharing
   an output URL, stays `unresolved_xref` in CI and fails an unchanged build (quick-docs reads four).
-  **(c) unowned**: a design finding an alias, in the baseline's crawled redirect targets or by a
-  live request for the URL the refspec names, would promote it. Detail:
+  **(b) owned by P5**: slice 5.12 resolves through the URL the refspec names. Detail:
   `src/profile/antora/resolve.rs`
 
 - **KD9** — A page-alias in a held component-version that another component's page owns and lands
