@@ -356,10 +356,10 @@ below the site root, a renamed version segment. Code: `crawl::baseline`. Evidenc
 A built page's tagged link is written once every built page is read (D54's wait). A refspec whose component-version the
 build holds stays `unresolved_xref`; else the profile's Resolve maps it through the baseline's pages, loaded before the run
 as its targets are (D52), and the link points at that page with the refspec's fragment, `xref_refspec` kept, so
-`link_verdicts` reads a refspec as unresolved only while the link points at its own page (I6). No version: the latest the
-baseline holds, in Antora's order. Rejected: a column or a cleared refspec marking a resolved link (schema 5 refuses P5.2's
-baseline, D43). Reopens: a page with a `<base href>`. Code: `crawl::xref`, `profile::antora::resolve`. Evidence:
-`crawl::baseline::tests::an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline`.
+`link_verdicts` reads a refspec as unresolved where the link is to its own page or its fragment is the refspec (I6). No
+version: the latest the baseline holds, in Antora's order. Rejected: a column or a cleared refspec marking a resolved link
+(schema 5 refuses P5.2's baseline, D43). Reopens: Antora marking an unresolved xref other than as `#<refspec>` (I6). Code:
+`crawl::xref`, `profile::antora::resolve`. Evidence: `crawl::baseline::tests::an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline`.
 
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
 `check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status

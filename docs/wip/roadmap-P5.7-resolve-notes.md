@@ -11,8 +11,8 @@ becomes a link to the latest `guide` version's install page and is `ok` or
 
 ## What the next slices inherit
 
-- **`link_verdicts` rule 1 changed**: an `xref_refspec` is unresolved only
-  while the link's target is its own page. A resolved row keeps the refspec
+- **`link_verdicts` rule 1 changed**: an `xref_refspec` is unresolved where
+  the link's target is its own page or its fragment is the refspec. A resolved row keeps the refspec
   and points elsewhere; every report and the gate read the view, so P5.8's
   `introduced` needs nothing for it. A live crawl's rows are unchanged.
 - **The gate key moves for a resolved xref**: its target is the resolved URL

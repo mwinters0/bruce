@@ -7,10 +7,12 @@
 //! `anchors`. A column holds the link's own fields, so a report reads one
 //! relation. The first rule that applies decides:
 //!
-//! 1. A link with `xref_refspec` that points at its own page is `broken_url`,
-//!    reason `unresolved_xref`, whatever its target answered (D20). A CI run
-//!    that resolved the refspec points the link at the page it names and
-//!    keeps the refspec, and rules 2 to 7 judge it (D55).
+//! 1. A link with `xref_refspec` that points at its own page, or whose
+//!    fragment is the refspec, is `broken_url`, reason `unresolved_xref`,
+//!    whatever its target answered (D20). A CI run that resolved the refspec
+//!    points the link at the page it names with the refspec's own fragment,
+//!    which is neither, and keeps the refspec, and rules 2 to 7 judge it
+//!    (D55).
 //! 2. A link whose target has no row, which only a stopped run leaves, is
 //!    `unchecked`, reason `cut`.
 //! 3. A target that is not `ok` gives its link its own outcome and reason: the
@@ -50,7 +52,7 @@ WITH joined AS (
     LEFT JOIN pages p ON p.run_id = t.run_id AND p.url_id = coalesce(landing.url_id, t.url_id)
 ), judged AS (
     SELECT joined.*, CASE
-        WHEN xref_refspec IS NOT NULL AND target_url_id = src_url_id
+        WHEN xref_refspec IS NOT NULL AND (target_url_id = src_url_id OR fragment = xref_refspec)
             THEN ['broken_url', 'unresolved_xref']
         WHEN NOT found THEN ['unchecked', 'cut']
         WHEN target_outcome <> 'ok' THEN [target_outcome, target_reason]

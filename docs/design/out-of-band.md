@@ -38,4 +38,4 @@ Allocated so far: M1–M2. <!-- out-of-band-watermark: M2 -->
 | Item | Date | What changed | Blocks | Why |
 |---|---|---|---|---|
 | M1 | 2026-10-17 | `--affected` runs a Rust test naming a docs file; the manual's `toml` examples are tested | | [`2026-10-17`](../status/history/2026-10-17.md), "M1: the manual's examples are tested" |
-| M2 | | `link_verdicts` rule 1 reads a refspec as unresolved where the link points at its own page or its fragment is the refspec | P5 | [`2026-10-20`](../status/history/2026-10-20.md), "The review of how a resolved xref is told" |
+| M2 | 2026-10-20 | `link_verdicts` rule 1 reads a refspec as unresolved where the link points at its own page or its fragment is the refspec | | [`2026-10-20`](../status/history/2026-10-20.md), "The review of how a resolved xref is told" |

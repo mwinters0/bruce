@@ -209,6 +209,28 @@ fn an_unresolved_xref_is_broken_whatever_the_fragment_names() {
 }
 
 #[test]
+fn an_unresolved_xref_is_told_by_its_fragment_where_a_base_href_moved_its_target() {
+    let store = open();
+    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    target(&store, 1, 1, "ok", None, None);
+    page(&store, 1, 1, &[]);
+    // A `<base href>` made another page the target; the refspec is still the
+    // whole fragment.
+    target(&store, 1, 2, "ok", None, None);
+    page(&store, 1, 2, &["comp::page.adoc#frag"]);
+    link(
+        &store,
+        "xref",
+        2,
+        Some("comp::page.adoc#frag"),
+        Some("comp::page.adoc#frag"),
+    );
+
+    let got = verdicts(&store);
+    expect(&got, "xref", "broken_url", Some("unresolved_xref"));
+}
+
+#[test]
 fn a_resolved_xref_is_judged_as_any_link_to_its_target() {
     let store = open();
     store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
