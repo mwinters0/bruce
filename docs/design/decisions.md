@@ -236,9 +236,11 @@ shipping the full history DB to CI.
 
 ### D22 A local build's links resolve locally, then against the baseline, then by allowlist
 A relative href is resolved against the page's production URL. Under the prefix and built: check
-locally (`foo/` → `foo/index.html`). Under the prefix and not built: baseline, then live. An
-unresolved xref: D19, then the same steps. Externals default to the baseline's verdict
-(`--externals=skip|baseline|live`), so a slow host never blocks a PR.
+locally (`foo/` → `foo/index.html`). Under the prefix and not built: `broken_url` in a
+component-version the build holds, else baseline, then live. An unresolved xref: D19 outside what
+the build holds, then the same steps. Externals default to the baseline's verdict
+(`--externals=skip|baseline|live`), so a slow host never blocks a PR. Rejected: the baseline for a
+held page, which passes a link to a page the change deletes.
 
 ## Operation
 

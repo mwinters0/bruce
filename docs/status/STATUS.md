@@ -33,9 +33,32 @@ and the development process is in place: [`../process.md`](../process.md), the
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
 pages, chosen and saved by `scripts/fixtures.py`.
 
+## P5 progress
+
+The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
+
+- [ ] **5.1** The Antora fixture site: `fixtures/antora/`, the vendored UI
+  bundle, `mise run e2e` building the site whole and in part.
+- [ ] **5.2** Schema 4, the `targets` answer's provenance; the fresh en-US
+  crawl launched detached.
+- [ ] **5.3** `export-baseline`, its manual page and the gzip measurement.
+- [ ] **5.4** The baseline's import and reuse, and the store's copy of a
+  target's rows between runs.
+- [ ] **5.5** The local build: `ci`'s walk and prefix mapping, `fetch/local`,
+  `crawl` taking seeds; `check-dir` with no baseline.
+- [ ] **5.6** The frontier's baseline class, held component-versions and
+  `not_built`; amends D22.
+- [ ] **5.7** `antora`'s Resolve, called in a CI run.
+- [ ] **5.8** The gate: `report introduced`, the exit status, `check-dir`'s
+  output and manual page.
+- [ ] **5.9** The inverse check: `report inverse` and `--inverse`.
+- [ ] **5.10** The end-to-end test's planted changes and assertions.
+- [ ] **5.11** quick-docs as published and changed, against the en-US
+  baseline.
+
 ## Not started
 
-P5 onward in [`../design/roadmap.md`](../design/roadmap.md)'s index. None has
+P6 onward in [`../design/roadmap.md`](../design/roadmap.md)'s index. None has
 been grilled.
 
 ## Decisions worth another look

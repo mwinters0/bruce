@@ -18,7 +18,7 @@ never reused.
 | P2 — the extractor | Complete | [`roadmap-P2-extractor.md`](roadmap-P2-extractor.md), [notes](roadmap-P2-extractor-notes.md) |
 | P3 — the crawler | Complete | [`roadmap-P3-crawler.md`](roadmap-P3-crawler.md), [notes](roadmap-P3-crawler-notes.md) |
 | P4 — verdicts and reports; the first en-US crawl | Complete | [`roadmap-P4-reports.md`](roadmap-P4-reports.md), [notes](roadmap-P4-reports-notes.md) |
-| P5 — CI mode: baseline and `check-dir` | Sketched; not grilled | this file, below |
+| P5 — CI mode: baseline and `check-dir` | Current | [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md) |
 | P6 — release and the deployment guide | Sketched; not grilled | this file, below |
 | P7 — declarative per-root rules | Sketched; not grilled | this file, below |
 | P8 — run-history reports | Sketched; not grilled | this file, below |
@@ -97,9 +97,11 @@ crawls from it. What it left for later phases is
 
 ## P5 — CI mode: baseline and `check-dir`
 
-`bruce export-baseline` (D21), the local fetcher and its resolution order (D1,
-D22), resource-ID resolution as `antora`'s Resolve hook (D19, D38), the inverse check and exit status (D4, D9),
-and the end-to-end Antora test (D24).
+The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md):
+`export-baseline` and the baseline imported as a run (D21), `check-dir` as a
+crawl with a local fetcher (D1, D22), what a build holds, `antora`'s Resolve
+(D19, D38), the gate and its inverse check (D4, D9), the end-to-end Antora
+test (D24), and quick-docs checked against a fresh en-US crawl.
 
 ## P6 — Release and the deployment guide
 

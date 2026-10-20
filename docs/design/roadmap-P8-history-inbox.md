@@ -34,3 +34,17 @@ by destination").
 - **Origin.** P4.10, 2026-10-19 (`runs/p4.10-en-us-20261019-2125/`, runs 1
   and 2 of `combined.duckdb`). Contingent on the forge's markup carrying
   something volatile; unconfirmed.
+
+## D20's "did you mean" hint waits for Resolve
+
+- **Fact.** P4 places a link with `xref_refspec` set as `broken_url`,
+  reason `unresolved_xref` (D20), in its `link_verdicts` view, and builds
+  no hint: D20's fuzzy match over resource IDs is left for the Resolve hook
+  (D19, D38), which is empty in `antora` today.
+- **Why P8 cares.** P5's grilling left the hint out of CI mode, as it
+  changes no CI verdict, so it is the next reports phase's: whether
+  Resolve's lookup, which P5 builds, gives the live report's hint, and where
+  the hint lives, a column of the view or the report's rendering.
+- **Origin.** P4's grilling, 2026-10-19, moved from P5's inbox at P5's
+  grilling, 2026-10-20
+  (`roadmap-P4-reports.md`, "Where the fragment cannot be checked").
