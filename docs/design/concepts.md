@@ -23,9 +23,9 @@ decisions each carries are cited in its module's doc.
 - **bruce** — `cli/` and the binary's `main.rs`, which only calls it: the
   command line and the registry in the parent file, a child module for
   each subcommand, `crawl` (its roots from the file or the URL, the run and
-  Ctrl-C), `prune` (its rule and what it prints) and `report` (its options and
+  Ctrl-C), `export_baseline` (its files and the line it prints), `prune` (its rule and what it prints) and `report` (its options and
   printing the output), and the `db`
-  child, which all three open the database through, installing the reports' views
+  child, which all four open the database through, installing the reports' views
   that only this layer can hand `store` (D6, D39). It is the top of the
   layering, and the one module naming a concrete profile (D39).
 
@@ -82,7 +82,8 @@ decisions each carries are cited in its module's doc.
 - **bruce** — `store/`: the connection, the schema's version check and a
   profile's views in the parent file, the tables in the `schema` child, the
   row types in the `rows` child, the views over them (`link_verdicts`) in the
-  `views` child, deleting old runs (D2) in the `prune` child and the single
+  `views` child, deleting old runs (D2) in the `prune` child, writing one run as a baseline file
+  (D21) in the `baseline` child and the single
   writer thread in the `writer` child. It sits above `profile`
   because it asks each profile for its views and answers its lookups (D39).
 

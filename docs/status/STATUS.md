@@ -15,9 +15,9 @@ Red means a repoint is due ([`../process.md`](../process.md),
 ## What exists
 
 The `bruce` crate is D39's top-level modules, a binary whose subcommands
-are `bruce crawl`, `bruce report` and `bruce prune`, and Rust 1.99.1 pinned in `mise.toml`. Ten modules hold
-code: `cli`, the command line, the three subcommands and the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check, the
-`link_verdicts` view, the deleting of old runs and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
+are `bruce crawl`, `bruce report`, `bruce prune` and `bruce export-baseline`, and Rust 1.99.1 pinned in `mise.toml`. Ten modules hold
+code: `cli`, the command line, the four subcommands and the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check, the
+`link_verdicts` view, the deleting of old runs, the baseline export and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views and Extract, with Resolve
 declared and empty; `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
@@ -27,7 +27,7 @@ the profile's facts and the content hash;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, and the body decoding; and
 `crawl`, the frontier, the hops of a redirect, D16's outcomes, sitemaps, the run that writes a target's rows and its stop; and
 `report`, the `report_*` views, the choice of run, and the eight single-run reports and `diff` as a text table or JSON. The rest hold only their doc.
-`docs/manual/` holds the config reference, `bruce crawl`'s, `bruce report`'s, `bruce prune`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
+`docs/manual/` holds the config reference, `bruce crawl`'s, `bruce report`'s, `bruce prune`'s, `bruce export-baseline`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
@@ -44,7 +44,8 @@ The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
   [Notes](../wip/roadmap-P5.1-antora-fixture-notes.md).
 - [x] **5.2** Schema 4, the `targets` answer's provenance; the fresh en-US
   crawl launched detached. [Notes](../wip/roadmap-P5.2-schema-4-notes.md).
-- [ ] **5.3** `export-baseline`, its manual page and the gzip measurement.
+- [x] **5.3** `export-baseline`, its manual page and the gzip measurement.
+  [Notes](../wip/roadmap-P5.3-export-baseline-notes.md).
 - [ ] **5.4** The baseline's import and reuse, and the store's copy of a
   target's rows between runs.
 - [ ] **5.5** The local build: `ci`'s walk and prefix mapping, `fetch/local`,

@@ -1,9 +1,10 @@
-//! Subcommands (D27), one child module each: `crawl`, `prune` and `report`. The only module that names a
+//! Subcommands (D27), one child module each: `crawl`, `export_baseline`, `prune` and `report`. The only module that names a
 //! concrete profile, to build the registry (D39).
 
 /// Public so `examples/sim_config.rs` loads a config exactly as `crawl` does.
 pub mod crawl;
 mod db;
+mod export_baseline;
 mod prune;
 mod report;
 
@@ -41,6 +42,9 @@ where
     };
     match matches.subcommand() {
         Some(("crawl", m)) => crawl::run(&crawl::Args::from(m), registry()),
+        Some(("export-baseline", m)) => {
+            export_baseline::run(&export_baseline::Args::from(m), registry())
+        }
         Some(("prune", m)) => prune::run(&prune::Args::from(m), registry()),
         Some(("report", m)) => match report::check(m) {
             Ok(()) => report::run(&report::Args::from(m), registry()),
@@ -69,6 +73,7 @@ fn command() -> Command {
         .subcommand_required(true)
         .arg_required_else_help(true)
         .subcommand(crawl::command())
+        .subcommand(export_baseline::command())
         .subcommand(prune::command())
         .subcommand(report::command())
 }
