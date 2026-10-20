@@ -33,3 +33,20 @@ facts filed by destination").
   page) is not needed for size.
 - **Origin.** P5.3, 2026-10-20 (`runs/p5.3-baseline/baseline.duckdb`).
   Contingent on the site's size and the schema: each new column grows it.
+
+## A content repo's CI check of 236 pages takes nine seconds
+
+- **Fact.** quick-docs, built by Antora 3.1.15 with the vendored UI
+  (25 s with the fetches of three other repos) and checked by `check-dir`
+  against the 27 MB baseline with the guide's config, took 8.9 s for 236 pages
+  and 1455 targets, with no external request: only the forge is allowlisted, so
+  781 external links were recorded `unchecked`, and the one live request was
+  a 404 on a link the change planted.
+- **Why P6 cares.** The guide's CI section says what a repo's job costs and
+  that the allowlist, not the baseline, decides whether it reaches out; a
+  repo allowlisting more hosts pays their pace for each link the baseline
+  lacks. It also has to say the build must set `CI=true`, which drops the
+  `file://` edit link from the pages (`roadmap-P5-ci.md`, "Facts found while
+  grilling").
+- **Origin.** P5.11, 2026-10-20 (`runs/p5.11-quick-docs/`). Contingent on the
+  build holding few links the baseline lacks.

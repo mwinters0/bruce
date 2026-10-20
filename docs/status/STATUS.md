@@ -73,8 +73,11 @@ The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
   [Notes](../wip/roadmap-P5.9.1-every-file-notes.md).
 - [x] **5.10** The end-to-end test's planted changes and assertions.
   [Notes](../wip/roadmap-P5.10-e2e-notes.md).
-- [ ] **5.11** quick-docs as published and changed, against the en-US
-  baseline.
+- [x] **5.11** quick-docs as published and changed, against the en-US
+  baseline: every planted rule fires; the unchanged build is not silent
+  (KD8, KD9). [Notes](../wip/roadmap-P5.11-quick-docs-notes.md).
+- [ ] **5.11.1** The inverse check leaves an alias that lands outside the held
+  set to its owner (KD9).
 
 ## Not started
 
@@ -89,3 +92,12 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **P5 is not ready to wrap while KD8 is unowned.** 5.11 is ticked as evidence:
+  the gate exits 1 on an unchanged quick-docs build, on four xrefs Antora
+  resolves through a page-alias (or a URL two source files share) and Resolve
+  cannot (KD8), and on one alias (KD9). KD9 is 5.11.1. KD8 needs a design the
+  spec has not made, an alias found in the baseline's redirect targets or by a
+  live request for the URL a refspec names, so it is `(c)` and not a slice.
+  Reconsidering it means a grilled slice before the wrap, or accepting that a
+  repo linking by alias is red until P6 or later.

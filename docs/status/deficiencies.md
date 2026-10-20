@@ -56,4 +56,15 @@ roadmap's phase index.
   carrying the page's source path some other way would promote it. Detail:
   `src/profile/antora/resolve.rs`
 
-<!-- deficiency-watermark: KD7 -->
+- **KD8** — An xref Antora resolves through a page-alias, or to the one source file of two sharing
+  an output URL, stays `unresolved_xref` in CI and fails an unchanged build (quick-docs reads four).
+  **(c) unowned**: a design finding an alias, in the baseline's crawled redirect targets or by a
+  live request for the URL the refspec names, would promote it. Detail:
+  `src/profile/antora/resolve.rs`
+
+- **KD9** — A page-alias in a held component-version that another component's page owns and lands
+  on reads as a removed page, so an unchanged quick-docs build fails the inverse check on it.
+  **(b) owned by P5**: slice 5.11.1 skips an alias landing outside the held set. Detail:
+  `src/report/inverse.rs`
+
+<!-- deficiency-watermark: KD9 -->

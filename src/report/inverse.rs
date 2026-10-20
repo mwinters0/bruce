@@ -93,6 +93,9 @@ pub(super) fn inverse(
     base: RunId,
     request: &Request,
 ) -> Result<Table, Error> {
+    // deficiency: KD9 A page-alias in a held component-version that lands
+    // outside every held one is the landing page's owner's to emit, and reads
+    // as a removed page: `held_target` below judges the alias's URL alone.
     let held = held(conn, run)?;
     let (ci, base) = (run.0, base.0);
     let mut sql = Sql::new("WITH held(prefix) AS (VALUES ");

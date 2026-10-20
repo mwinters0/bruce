@@ -65,6 +65,10 @@ pub(super) fn resolve(reference: &str, lookup: &dyn Lookup) -> Result<Option<Url
     // deficiency: KD7 A baseline page with no forge edit link has no
     // `module` or `rel_path` fact, so it can be no refspec's target and an
     // xref to it stays unresolved. The pair cannot be read from the URL (D19).
+    // deficiency: KD8 Antora also resolves a refspec through a page-alias,
+    // and through the one source file of two that share an output URL; the
+    // baseline holds a page's facts once per URL and an alias only as a
+    // redirect target it crawled, so such an xref stays unresolved.
     let Some(spec) = parse(reference) else {
         return Ok(None);
     };
