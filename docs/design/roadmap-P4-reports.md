@@ -1,10 +1,9 @@
 # P4 — Verdicts, reports, and the first en-US crawl
 
 What P4 does and why, settled in its grilling on 2026-10-19, which drained
-its inbox. Progress is [`../status/STATUS.md`](../status/STATUS.md)'s
-checklist, never this file. The decisions are in
-[`../design/decisions.md`](../design/decisions.md) and are cited here, never
-restated.
+its inbox. It is complete; what it left for later phases is
+[`roadmap-P4-reports-notes.md`](roadmap-P4-reports-notes.md). The decisions
+are in [`decisions.md`](decisions.md) and are cited here, never restated.
 
 ## Intent
 
@@ -57,9 +56,9 @@ runs:
 - **Two runs:** `diff`, the links newly broken and newly fixed.
 
 **`anchors-removed` and `changed` (pages whose content hash moved) are
-P8's** (`../design/roadmap.md`). Nothing in P4 then needs a run's hash
+P8's** (`roadmap.md`). Nothing in P4 then needs a run's hash
 scope recorded, and the question of recording it is in P8's inbox,
-[`../design/roadmap-P8-history-inbox.md`](../design/roadmap-P8-history-inbox.md).
+[`roadmap-P8-history-inbox.md`](roadmap-P8-history-inbox.md).
 
 ### Filters and output
 
@@ -194,7 +193,7 @@ crawl and the baseline sections are P6's. Rejected: running the crawl in
 
 ## Where the code lives
 
-Settled 2026-10-19, on the concept map (`../design/concepts.md`):
+Settled 2026-10-19, on the concept map (`concepts.md`):
 
 - **`link_verdicts` is `store`'s**, in a new `store/views` child: P5's CI
   gate reads it as `report` does, so it sits below both (D39).

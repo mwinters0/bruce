@@ -26,4 +26,4 @@ destination").
   gives the live report's hint, and where the hint lives: a column of the
   view, or the report's rendering.
 - **Origin.** P4's grilling, 2026-10-19
-  (`../wip/roadmap-P4-reports.md`, "Where the fragment cannot be checked").
+  (`roadmap-P4-reports.md`, "Where the fragment cannot be checked").

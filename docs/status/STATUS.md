@@ -33,43 +33,6 @@ and the development process is in place: [`../process.md`](../process.md), the
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
 pages, chosen and saved by `scripts/fixtures.py`.
 
-## P4 progress
-
-The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md).
-
-- [x] **4.1** Schema 3: `links`' verdict columns dropped, `pages.root` and
-  `runs.roots`; closes KD3.
-  [Notes](../wip/roadmap-P4.1-schema-3-notes.md).
-- [x] **4.2** `skip`: the config key and the frontier's `skipped`.
-  [Notes](../wip/roadmap-P4.2-skip-notes.md).
-- [x] **4.2.1** A skipped hop ends the chain; amends D50.
-  [Notes](../wip/roadmap-P4.2.1-skipped-hop-notes.md).
-- [x] **4.3** The deployment guide's config section and `mise run sim`.
-  [Notes](../wip/roadmap-P4.3-deploy-guide-notes.md).
-- [x] **4.3.1** The guide's example: robots.txt and the skip glob; amends
-  D18.
-  [Notes](../wip/roadmap-P4.3.1-guide-example-notes.md).
-- [x] **4.4** The first en-US crawl, detached from `sim/`.
-  [Notes](../wip/roadmap-P4.4-first-crawl-notes.md).
-- [x] **4.5** `link_verdicts`, timed on 4.4's DB; amends D28.
-  [Notes](../wip/roadmap-P4.5-link-verdicts-notes.md).
-- [x] **4.6** `bruce report`: the run, filters, formats, and `broken`,
-  `errors` and `stats`.
-  [Notes](../wip/roadmap-P4.6-report-notes.md).
-- [x] **4.6.1** `stats` counts unchecked targets beside links.
-  [Notes](../wip/roadmap-P4.6.1-stats-targets-notes.md).
-- [x] **4.7** `inbound`, `sitemap`, `orphans`, `unlisted` and `redirects`.
-  [Notes](../wip/roadmap-P4.7-page-reports-notes.md).
-- [x] **4.7.1** `unlisted`'s roots: canonical, and read only when a file
-  answered.
-  [Notes](../wip/roadmap-P4.7.1-unlisted-roots-notes.md).
-- [x] **4.8** `diff`.
-  [Notes](../wip/roadmap-P4.8-diff-notes.md).
-- [x] **4.9** `prune`.
-  [Notes](../wip/roadmap-P4.9-prune-notes.md).
-- [x] **4.10** The second en-US crawl, with the finished tool.
-  [Notes](../wip/roadmap-P4.10-second-crawl-notes.md).
-
 ## Not started
 
 P5 onward in [`../design/roadmap.md`](../design/roadmap.md)'s index. None has

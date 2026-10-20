@@ -17,7 +17,7 @@ never reused.
 | P1 — scaffold and parser spike | Complete | [`roadmap-P1-scaffold.md`](roadmap-P1-scaffold.md), [notes](roadmap-P1-scaffold-notes.md) |
 | P2 — the extractor | Complete | [`roadmap-P2-extractor.md`](roadmap-P2-extractor.md), [notes](roadmap-P2-extractor-notes.md) |
 | P3 — the crawler | Complete | [`roadmap-P3-crawler.md`](roadmap-P3-crawler.md), [notes](roadmap-P3-crawler-notes.md) |
-| P4 — verdicts and reports; the first en-US crawl | Current | [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md) |
+| P4 — verdicts and reports; the first en-US crawl | Complete | [`roadmap-P4-reports.md`](roadmap-P4-reports.md), [notes](roadmap-P4-reports-notes.md) |
 | P5 — CI mode: baseline and `check-dir` | Sketched; not grilled | this file, below |
 | P6 — release and the deployment guide | Sketched; not grilled | this file, below |
 | P7 — declarative per-root rules | Sketched; not grilled | this file, below |
@@ -88,11 +88,12 @@ phases is [`roadmap-P3-crawler-notes.md`](roadmap-P3-crawler-notes.md).
 
 ## P4 — Verdicts, reports, and the first en-US crawl
 
-The spec is [`../wip/roadmap-P4-reports.md`](../wip/roadmap-P4-reports.md):
+The spec is [`roadmap-P4-reports.md`](roadmap-P4-reports.md):
 link verdicts as a view (D28), schema 3 recording each page's root, the
 single-run reports and `diff` (D6, D27), `prune` (D2), a config `skip`, the
 deployment guide's config section and `mise run sim` (D42), and two en-US
-crawls from it.
+crawls from it. What it left for later phases is
+[`roadmap-P4-reports-notes.md`](roadmap-P4-reports-notes.md).
 
 ## P5 — CI mode: baseline and `check-dir`
 

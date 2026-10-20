@@ -57,7 +57,7 @@ map.
   link has no verdict column.
 - **An allowlisted page's `pages` row has no `source_*`**, profile `auto`, its
   hash over the whole page. A link's verdict is the join's (D28). Where the join places each `reason` is P4's spec,
-  `../wip/roadmap-P4-reports.md`, "Where the fragment cannot be checked".
+  `roadmap-P4-reports.md`, "Where the fragment cannot be checked".
 - **`bruce crawl` exits** 0 for a finished run, broken links or not; 1 when
   the config, DB or crawl failed; 2 on a usage error; 130 when stopped. A run
   row exists only once the config, DB and fetcher are good. A stopped run's
