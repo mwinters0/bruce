@@ -284,6 +284,31 @@ fn a_page_built_in_the_run_is_the_gates_and_not_the_inverse_checks() {
 }
 
 #[test]
+fn an_alias_landing_outside_the_held_set_is_its_owners_and_one_landing_inside_is_not() {
+    let store = store();
+    // 30 and 31 are aliases in `handbook` the build lacks: 30 lands on page 6
+    // of `other`, which owns it, and 31 on page 3 of `handbook`, which the
+    // change deleted. Page 1 links to both.
+    for (id, path, landing) in [(30, "handbook/moved/", 6), (31, "handbook/old/", 3)] {
+        put(&store, 1, id, path, "ok", "live", false);
+        store
+            .connection()
+            .execute(
+                "UPDATE targets SET final_url = (SELECT url FROM targets WHERE run_id = 1 \
+                 AND url_id = ?) WHERE run_id = 1 AND url_id = ?",
+                params![landing, id],
+            )
+            .unwrap();
+        link(&store, 1, 1, id, None, "anchor");
+    }
+    let g = gate_of(&store, |_| {});
+    let raw = column(&g.inverse, "raw_href");
+    assert!(!raw.contains(&"1>30#".to_owned()), "{raw:?}");
+    assert!(raw.contains(&"1>31#".to_owned()), "{raw:?}");
+    assert_eq!(raw.len(), 8);
+}
+
+#[test]
 fn the_inverse_report_prints_the_rows_and_the_baseline_and_counts_in_notes() {
     let mut request = Request::new(Report::Inverse);
     request.run = Some(RunId(2));

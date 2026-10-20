@@ -12,7 +12,9 @@
 //! `ok`, and the run removed what it reached:
 //!
 //! - `page`: the target, or the page it redirected to, is in a held
-//!   component-version, is a page in the baseline and is not built;
+//!   component-version, is a page in the baseline and is not built; a
+//!   target that redirected to a landing in no held one (a page-alias another
+//!   component's page owns) is that owner's, and removed only with its landing;
 //! - `file`: the same of a target that was no page (an image, an attachment),
 //!   every file of the build being a target of the run (`ci`, D56);
 //! - `anchor`: the target is built and its page lacks the anchor the link's
@@ -93,9 +95,6 @@ pub(super) fn inverse(
     base: RunId,
     request: &Request,
 ) -> Result<Table, Error> {
-    // deficiency: KD9 A page-alias in a held component-version that lands
-    // outside every held one is the landing page's owner's to emit, and reads
-    // as a removed page: `held_target` below judges the alias's URL alone.
     let held = held(conn, run)?;
     let (ci, base) = (run.0, base.0);
     let mut sql = Sql::new("WITH held(prefix) AS (VALUES ");
@@ -136,6 +135,9 @@ pub(super) fn inverse(
                 AND bp.url_id = c.landed_id) AS is_page, \
              EXISTS (SELECT 1 FROM held h WHERE starts_with(c.target, h.prefix)) AS held_target, \
              c.landing_url IS NOT NULL \
+                AND NOT EXISTS (SELECT 1 FROM held h WHERE starts_with(c.landing_url, h.prefix)) \
+                AS lands_outside, \
+             c.landing_url IS NOT NULL \
                 AND EXISTS (SELECT 1 FROM held h WHERE starts_with(c.landing_url, h.prefix)) \
                 AND NOT EXISTS (SELECT 1 FROM targets x WHERE x.run_id = {ci} \
                     AND x.url_id = c.landed_id AND x.answered_by = 'local' \
@@ -147,7 +149,8 @@ pub(super) fn inverse(
                 WHERE ct.run_id = {ci} AND ct.url_id = c.target_url_id) AS ci_landed \
              FROM cand c), \
              typed AS (SELECT j.*, CASE \
-             WHEN NOT built AND is_page AND (held_target OR landing_gone) THEN 'page' \
+             WHEN NOT built AND is_page AND ((held_target AND NOT lands_outside) OR landing_gone) \
+                THEN 'page' \
              WHEN NOT built AND NOT is_page AND held_target THEN 'file' \
              WHEN built AND real_fragment \
                 AND EXISTS (SELECT 1 FROM pages cp WHERE cp.run_id = {ci} \

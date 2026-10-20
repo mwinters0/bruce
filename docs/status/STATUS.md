@@ -76,8 +76,9 @@ The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
 - [x] **5.11** quick-docs as published and changed, against the en-US
   baseline: every planted rule fires; the unchanged build is not silent
   (KD8, KD9). [Notes](../wip/roadmap-P5.11-quick-docs-notes.md).
-- [ ] **5.11.1** The inverse check leaves an alias that lands outside the held
+- [x] **5.11.1** The inverse check leaves an alias that lands outside the held
   set to its owner (KD9).
+  [Notes](../wip/roadmap-P5.11.1-alias-owner-notes.md).
 - [ ] **5.12** Resolve through the URL a refspec names, where the baseline's
   facts find no page (KD7, KD8).
 
