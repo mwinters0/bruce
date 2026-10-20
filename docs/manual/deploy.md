@@ -28,8 +28,9 @@ user_agent = "bruce-fedora-docs/1.0 (+https://docs.fedoraproject.org/)"
 ```
 
 Every request names the crawler. Replace the address in the parentheses with
-one where a site operator can reach whoever runs your crawl. The first word is
-what a site's `robots.txt` knows the crawler by, here `bruce-fedora-docs`
+one where a site operator can reach whoever runs your crawl. The value up to
+its first `/` or space is what a site's `robots.txt` knows the crawler by,
+here `bruce-fedora-docs`
 ([`config.md`](config.md#user-agent)).
 
 ### Which links are checked on other hosts

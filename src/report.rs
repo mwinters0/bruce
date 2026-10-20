@@ -1,16 +1,17 @@
 //! Reports: SQL views over a run, read by `bruce report <kind>` (D6).
 //!
 //! A view takes no parameter, so each `report_*` view carries every run and
-//! the query binds the run, the filters and the limit (`query`). The views
-//! (`views`) are the same rows an ad-hoc `duckdb` user reads; this module
-//! chooses the run (`run`), runs one report and renders it (`table`).
+//! the query binds the run and the filters (`query`). The views (`views`) are
+//! the same rows an ad-hoc `duckdb` user reads; this module chooses the run
+//! (`run`), runs one report and renders it (`table`).
 //!
 //! The filters are the same for every report: the links of kinds `kinds`
-//! (`anchor` by default, D13), and the pages in the repo `repo` (D17) holding
-//! every `facts` pair (D32, D38). A link report filters on the page a link is
-//! on, a page report on the page a row lists; `query` has the link reports and
-//! `stats`, `reach` how a page is reached, `redirects` the moved links and
-//! `diff` what broke or was fixed between two runs.
+//! (`anchor` by default, D13; `sitemap` and `unlisted` count no link), and the
+//! pages in the repo `repo` (D17) holding every `facts` pair (D32, D38). A link
+//! report filters on the page a link is on, a page report on the page a row
+//! lists; `query` has the link reports and `stats`, `reach` how a page is
+//! reached, `redirects` the moved links and `diff` what broke or was fixed
+//! between two runs.
 
 mod diff;
 mod error;

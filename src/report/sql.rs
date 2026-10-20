@@ -1,5 +1,6 @@
 //! The statement every report builds: its text, its bound arguments and the
-//! filters they share. Every value is bound, never written into the text.
+//! filters they share. Every value a user gives is bound, never written into
+//! the text, bar `--top`'s number.
 
 use duckdb::types::Value;
 use duckdb::{Connection, params_from_iter};
@@ -54,8 +55,8 @@ impl Sql {
     }
 
     /// The run, the repo and the facts. `run`, `repo` and `page` name the
-    /// columns of the relation being filtered; `page` is the linking page's
-    /// `url_id`.
+    /// columns of the relation being filtered; `page` is the `url_id` of the
+    /// page filtered on, the linking page's in a link report.
     pub(super) fn scope(&mut self, run_id: RunId, request: &Request, cols: Cols) -> &mut Sql {
         self.push(cols.run).push(" = ").bind(run_id.0);
         if let Some(repo) = &request.repo {

@@ -22,9 +22,10 @@ const TABLES: [&str; 7] = [
 /// Which runs [`Store::prune`] deletes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Rule {
-    /// Every run older than the `n` latest finished runs, finished or not.
-    /// With fewer than `n` finished runs it deletes only what precedes the
-    /// first of them, and with none it deletes nothing.
+    /// Every run older than the `n` latest finished runs, finished or not;
+    /// `Keep(0)` deletes nothing, the caller taking `n` of at least 1. With
+    /// fewer than `n` finished runs it deletes only what precedes the first
+    /// of them, and with none it deletes nothing.
     Keep(usize),
     /// Every run started longer ago than this.
     OlderThan(Duration),

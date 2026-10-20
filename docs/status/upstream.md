@@ -32,8 +32,8 @@ back. Numbers up to the watermark are allocated, and none is reused.
   target goes through the appender with a NULL chain. `runs.roots` is a list
   too, bound the same way inside a list literal (`Store::begin_run`). Rejected: `append_record_batch`
   (the `appender-arrow` feature), an Arrow dependency for one column; a `hops`
-  table, which departs from the spec's list and from every report reading
-  `len(redirect_chain)`; a chain rendered to text and cast, which needs
+  table, which departs from the spec's list and from `report_redirects`
+  rendering the chain whole; a chain rendered to text and cast, which needs
   escaping of a URL.
 - **Watch.** `store::tests::the_appender_still_takes_no_list` asserts the
   error and fails at the release that lifts it.

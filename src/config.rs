@@ -61,9 +61,9 @@ pub struct Config {
 /// One site crawled fully (D5).
 #[derive(Debug, Clone)]
 pub struct Root {
-    /// Where the crawl starts, and always in the root's own scope. Without
-    /// its query, up to the last `/` of its path, it is the scope's prefix
-    /// when `include` is empty (D40, D44).
+    /// Where the crawl starts, and always in the root's own scope. Its
+    /// canonical form without the query, up to the last `/` of its path, is
+    /// the scope's prefix when `include` is empty (D40, D44).
     pub url: Url,
     /// URL globs a page must match to be in scope; empty means the root's
     /// path prefix.
@@ -162,7 +162,8 @@ pub enum Error {
         path: PathBuf,
         source: std::io::Error,
     },
-    /// The file is not TOML, or holds a key or type the schema refuses.
+    /// The file is not TOML, holds a key or type the schema refuses, or
+    /// lacks a key it requires.
     Parse(toml::de::Error),
     /// A value parsed but is not usable; the message names the key, or the
     /// root.

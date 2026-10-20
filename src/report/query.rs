@@ -1,6 +1,6 @@
 //! The report to run, and the queries of the link reports and `stats`: a
 //! view, the run, the filters, the order and the limit. The page reports are
-//! in `reach`, `redirects` and `diff`.
+//! in `reach`; `redirects` and `diff` are link reports of their own.
 
 use duckdb::Connection;
 

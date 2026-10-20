@@ -5,7 +5,7 @@ bruce crawl [URL] [--config FILE] [--db FILE]
 ```
 
 Crawls a site and adds one **run** to a database: every URL the site's pages
-and sitemaps name, whether it answered, and each page's title, anchors and
+name and each sitemap entry in a root's scope, whether it answered, and each page's title, anchors and
 links. A run does not judge links; the reports read that from the database.
 
 ## Arguments
@@ -40,7 +40,9 @@ run 3: 2412 targets, 2305 pages, 69 sitemap files
 ```
 
 `no sitemap` there means no sitemap file was read, none being found or the
-one found unreadable, and every page was found by following links. Sitemap entries outside every root are counted and dropped.
+one found unreadable, and every page was found by following links. A
+sitemap's pages outside every root, or matching `skip`, are counted and
+dropped; an index's sitemaps are followed wherever they are.
 
 ## Stopping a crawl
 
@@ -51,8 +53,9 @@ bruce crawl: stopping: finishing requests in flight (30 s at most); Ctrl-C again
 ```
 
 No new request is sent, not even a retry or the next step of a redirect.
-A request already sent may finish, and what it answered is written; a URL
-still unanswered after 30 seconds is left out. The run is left marked
+A request already sent may finish, and its answer is written if it ends the
+URL's requests; a URL whose answer would take a further step, or still
+unanswered after 30 seconds, is left out. The run is left marked
 unfinished, and its line counts the URLs it found but did not write:
 
 ```text

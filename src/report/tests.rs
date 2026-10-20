@@ -69,7 +69,7 @@ pub(super) fn fact(store: &Store, run: u64, id: u64, key: &str, value: &str) {
 }
 
 /// Run 1, finished, and run 2, which is not. Page 1 (repo `r/one`, component
-/// `docs`) links to a 404, a missing fragment, a present one, a 503, a
+/// `handbook`) links to a 404, a missing fragment, a present one, a 503, a
 /// skipped URL and, by image, another 404; page 2 (`r/two`, `other`) to the
 /// 404 and to page 2 itself. Page 3 is crawled and links to nothing, page 4
 /// is allowlisted.

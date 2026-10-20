@@ -76,7 +76,7 @@ pub struct Request {
     pub facts: Vec<(String, String)>,
     /// The link kinds counted. A sitemap report counts no link.
     pub kinds: Vec<Kind>,
-    /// Keep this many rows, the worst first.
+    /// Keep this many rows, in the report's order.
     pub top: Option<usize>,
     /// Name the linking pages in a `redirects` group, a list too long for a
     /// text table.

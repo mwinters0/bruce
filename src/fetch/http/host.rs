@@ -29,9 +29,9 @@ const MAX_INTERVAL: Duration = Duration::from_secs(3600);
 pub enum Listing {
     /// A 2xx answer: the file, as the bytes were read.
     Found(Vec<u8>),
-    /// A 4xx answer: no file, so everything is allowed (RFC 9309).
+    /// A 4xx answer but 429: no file, so everything is allowed (RFC 9309).
     Absent,
-    /// A 5xx, no answer, or anything else: the host is disallowed for the
+    /// A 5xx, a 429, no answer, or anything else: the host is disallowed for the
     /// run (RFC 9309), its targets `unchecked` with `robots_unavailable`.
     Unreachable,
 }
@@ -176,8 +176,8 @@ impl Host {
 
     /// Whether `url` may be requested, loading the host's robots.txt with
     /// `load` the first time anyone asks. `load` is not polled for a host
-    /// with `robots = false`. Once the file is in, its `Crawl-delay` sets
-    /// the host's interval (D18).
+    /// with `robots = false`. Once the file is in, the host's interval is
+    /// set from it and the settings ([`interval`], D18).
     pub async fn access(&self, url: &Url, load: impl Future<Output = Listing>) -> Access {
         let robots = self
             .robots

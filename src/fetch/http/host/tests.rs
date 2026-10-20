@@ -248,7 +248,8 @@ async fn a_crawl_delay_sets_the_pace_once_robots_txt_is_in() {
         .mount(&server)
         .await;
     // The robots.txt fetch is paced at the default rate (the 1000 a second
-    // here); the page after it waits the Crawl-delay.
+    // here) and reserves the first page's slot at it; the second page waits
+    // the Crawl-delay.
     let f = fetcher(&config(&server, "[rate]\nper_second = 1000"));
     let url = url_of(&server, "/a");
     assert_eq!(f.access(&url).await, Access::Allowed);

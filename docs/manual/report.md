@@ -9,8 +9,8 @@ Prints one report over one **run** of a database that `bruce crawl` wrote
 ([`crawl.md`](crawl.md)). A crawl records what each link's target answered; a
 report is where a link is judged: a link is `broken_url` where its target
 answered 4xx or does not exist, `broken_anchor` where the page is there and
-the `#fragment` is not, and `error` where the target could not be asked
-(a timeout, a 5xx after retries).
+the `#fragment` is not, and `error` where the target could not be asked or
+refused access (a timeout, a 5xx after retries, a 401, 403 or 429).
 
 ## Arguments
 
@@ -24,7 +24,7 @@ the `#fragment` is not, and `error` where the target could not be asked
 | `--repo REPO` | none | Only pages whose source file is in this repo, as the page records it (`https://forge.fedoraproject.org/fedora/docs`); for `broken`, `errors`, `stats`, `redirects` and `diff`, the links on those pages. |
 | `--fact KEY=VALUE` | none | Only pages with this fact, such as `antora.component=fedora-docs`, or the links on them. Repeat to require several. |
 | `--kind KIND` | `anchor` | Count links of this kind. Repeat to add kinds; `all` is every kind. `sitemap` and `unlisted` ignore it. |
-| `--top N` | all rows | Print the first N rows, the worst first. |
+| `--top N` | all rows | Print the first N rows, in the report's order. |
 | `--format` | `text` | `text`, or `json`. |
 
 The kinds are `anchor` (`<a>` and `<area>`), `image`, `canonical`,
@@ -49,7 +49,8 @@ and `--from` or `--to` with any other report, are command-line errors.
 
 ## The reports
 
-Rows are sorted worst first, and `--top N` keeps the first N.
+Rows are sorted worst first, `orphans` and `unlisted` by root and page, and
+`--top N` keeps the first N.
 
 **`broken`** has a row for each link whose outcome is `broken_url` or
 `broken_anchor`, `broken_url` first, then by page:
@@ -100,13 +101,14 @@ the links `--kind` chooses: `page`, `title`, `root`, `source_repo` and
 `source_path`.
 
 **`unlisted`** has the pages a root's scope covers that its sitemap does not
-list, in the same columns. A root read a sitemap when a sitemap file reached
-from it (those it names or robots.txt does, and the files an index lists)
-answered with a page and no note: a file that failed, was refused by
-robots.txt or ran past the size cap listed nothing, and shows in `broken` or
-`errors`. A root that read none has nothing to be absent from, so the text
-output names it below the table and JSON does not. The `root` column is the
-root's URL in canonical form.
+list: `page`, `root`, `title`, `source_repo` and `source_path`. A root read a
+sitemap when a sitemap file reached from it (those it names or robots.txt
+does, and the files an index lists) answered with a page and no note: a file
+that failed, was refused by robots.txt or ran past the size cap listed
+nothing, and one that failed shows in `broken` or `errors` with `--kind
+sitemap_file`. A root that read none has nothing to be absent from, so the
+text output names it below the table and JSON does not. The `root` column is
+the root's URL in canonical form.
 
 **`redirects`** has a row for each URL that links landed on after a
 redirect, the one with the most links first: `landing`, `links` (how many

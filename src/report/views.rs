@@ -1,6 +1,7 @@
 //! The views reports read, installed at every open beside the store's and the
 //! profiles' (D6). Each carries every run, as a view takes no parameter, and
-//! the columns a filter needs: `run_id` and the page's `url_id`.
+//! the columns a filter needs: `run_id` and, but for `report_roots`, the
+//! page's `url_id`.
 
 use crate::profile::View;
 

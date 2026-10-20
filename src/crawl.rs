@@ -10,19 +10,19 @@
 //! robots.txt and its host's rate (D7), reads the answer, and then, on the
 //! blocking pool, extracts the page and sends its rows to the writer from
 //! there, so the writer's bounded channel pushes back on the pool and not on
-//! the runtime (D28). A URL is asked about by whoever claims its `url_id` first
-//! (`frontier`), though a redirect's hops are asked again wherever they lead
-//! (D46); a page a redirect lands on is recorded by whichever of the
+//! the runtime (D28). A URL is asked about by whoever claims its `url_id`
+//! first (`frontier`), a sitemap probe aside, though a redirect's hops are
+//! asked again wherever they lead (D46); a page a redirect lands on is recorded by whichever of the
 //! redirecting target and the landing URL's own discovery claims it first.
 //! The run writes every target's HTTP-level outcome and no verdict on a
 //! link, which is SQL's after the crawl (D28).
 //!
-//! A sitemap is a target, and each of its entries in a root's scope a link
-//! from it, the rest only counted, of kind
-//! `sitemap` for a page and `sitemap_file` for an index's sitemap (D13). A
-//! root's sitemap is the one it sets, or else those its host's robots.txt
-//! names, or else the first of `sitemap.xml` under the root and at the host
-//! that answers with one (D40), and the root links to each of them, kind
+//! A sitemap is a target, and each of its entries a link from it, of kind
+//! `sitemap` for a page and `sitemap_file` for an index's sitemap (D13), but
+//! a page outside every root's scope or matching `skip`, which is only
+//! counted. A root's sitemap is the one it sets, or else those its host's
+//! robots.txt names, or else the first of `sitemap.xml` under the root and at
+//! the host that answers with one (D40), and the root links to each of them, kind
 //! `sitemap_file`, once though two roots share the file; a file probed and not
 //! found writes nothing, since nothing named it (D47). A root with no sitemap
 //! goes on by links alone, and has no `sitemap_file` link to show for it.
@@ -83,7 +83,8 @@ pub struct Summary {
     pub pages: u64,
     /// Sitemap files read; 0 when the run had none to go on.
     pub sitemaps: u64,
-    /// Sitemap entries outside every root's scope, which are dropped.
+    /// Sitemap pages outside every root's scope or matching `skip`, which are
+    /// dropped.
     pub dropped: u64,
     /// A [`Stopper`] came while targets were still to be asked about, so the
     /// run is not whole.
@@ -200,7 +201,7 @@ struct Shared<F> {
 /// A target claimed and waiting to be asked about.
 struct Item {
     url: Url,
-    /// The kind of the link that found it; a seed counts as an anchor.
+    /// The kind of the link that found it; a root's URL counts as an anchor.
     kind: Kind,
     /// Found by a link, not seeded.
     via_links: bool,
@@ -749,9 +750,9 @@ where
 
     /// Writes a link from the sitemap `form` names to each entry it lists, of
     /// kind `sitemap` for a page and `sitemap_file` for an index's sitemap,
-    /// and claims what is new. A page outside every root's
-    /// scope is dropped, a sitemap being broader than its root (D10); an
-    /// index's sitemaps are followed wherever they are, down to
+    /// and claims what is new. A page outside every root's scope is dropped,
+    /// a sitemap being broader than its root (D10), and so is one `skip`
+    /// names; an index's sitemaps are followed wherever they are, down to
     /// [`MAX_SITEMAP_DEPTH`].
     fn write_sitemap(
         &self,

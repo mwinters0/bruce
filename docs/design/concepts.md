@@ -25,7 +25,7 @@ decisions each carries are cited in its module's doc.
   each subcommand, `crawl` (its roots from the file or the URL, the run and
   Ctrl-C), `prune` (its rule and what it prints) and `report` (its options and
   printing the output), and the `db`
-  child, which both open the database through, installing the reports' views
+  child, which all three open the database through, installing the reports' views
   that only this layer can hand `store` (D6, D39). It is the top of the
   layering, and the one module naming a concrete profile (D39).
 

@@ -2,9 +2,9 @@
 //!
 //! [`Frontier::plan`] sorts a URL into one of `roadmap-P3-crawler.md`'s
 //! "What gets requested" classes and returns its canonical form, the string
-//! its `url_id` hashes. A URL in a root's scope has that root's form; every
-//! other URL has the plain form, `canonical(url, false)`, since no root's
-//! `strip_query` governs it. [`Frontier::claim`] is the run's one
+//! its `url_id` hashes. A URL in a root's scope, unless skipped, has that
+//! root's form; every other URL has the plain form, `canonical(url, false)`,
+//! since no root's `strip_query` governs it. [`Frontier::claim`] is the run's one
 //! deduplication: a target is written by whoever claims its `url_id` first
 //! (D13), and a claim is never given back.
 
@@ -82,7 +82,7 @@ impl Frontier {
 
     /// How `url` is treated when a link of `kind` names it, and its canonical
     /// form. The first root whose scope holds it is its root. Order is the
-    /// spec's: `skip` (D50), matched on the plain form whatever the host,
+    /// spec's, after the scheme: `skip` (D50), matched on the plain form whatever the host,
     /// then a root's scope, then an allowlisted host, then the rest, an
     /// out-of-scope URL on a root's own host told apart from any other host
     /// by its reason.

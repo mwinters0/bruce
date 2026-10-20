@@ -33,8 +33,9 @@ command-line error.
   leave no run to report on. The next crawl numbers its run after the
   highest number left, or from 1 if none is.
 
-`prune` prints the numbers of the runs it deleted, or says there was none,
-and then checkpoints the database so the file gives back the space.
+When `prune` deletes a run it checkpoints the database, so the file gives
+back the space, and then prints the numbers of the runs it deleted; otherwise
+it says there was none.
 
 ## Not beside a crawl
 

@@ -51,8 +51,8 @@ and a file naming roots refuses one ([`crawl.md`](crawl.md)).
 | `hash_exclude` | `[]` | CSS selectors for parts of each page whose change never counts (below). |
 
 **The sitemap** may be an index of further sitemaps, followed three files
-deep, and any of them may be gzip-compressed (`.xml.gz`). Its entries outside
-every root's scope are dropped. When none is found, the crawl follows links
+deep, and any of them may be gzip-compressed (`.xml.gz`). The pages it lists
+outside every root's scope are dropped. When none is found, the crawl follows links
 alone.
 
 The `url` must be in the root's own scope: a root whose `include` or `exclude`
@@ -142,7 +142,9 @@ checked.
 `skip` lists URL globs for links that are never asked about, on any host,
 inside a root's scope as well as outside it. A link whose URL matches is
 recorded with the outcome `unchecked` and the reason `skipped`, and no request
-is sent. Use it for a URL that answers the same whether or not the page it
+is sent. A page a sitemap lists that matches is dropped, as one outside every
+root is; a sitemap file is read whatever `skip` says, unless a redirect leads
+to it. Use it for a URL that answers the same whether or not the page it
 names exists, such as a forge's `issues/new` redirecting anonymous requests to
 a login page.
 
