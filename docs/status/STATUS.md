@@ -86,18 +86,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **The inverse check counts the links of pages outside the held
-  component-versions, not every page outside the build** (D56). The spec says
-  "a baseline link from a page not in the build"; a deleted page of a held
-  component-version is not in the build either, but its links went with it, so
-  reading them as breakage fails a PR for the page it deleted. Reconsidering
-  it changes `cand` in `src/report/inverse.rs`: dropping the held-prefix test on
-  the linking page counts those links too.
-- **5.9 landed a removed file only where a built page still links to it**,
-  and earned 5.9.1. A file in the build no built page names is no target of
-  the run (the seeds are the `.html` files), so a missing target cannot tell
-  it from a file the change deleted; counting every absent one would fail a PR
-  for each image another component alone embeds. Reconsidering it means
-  seeding every file of the build (`Build::seeds`, `src/ci.rs`), which changes
-  every `check-dir` run's targets, and was kept apart from this review.

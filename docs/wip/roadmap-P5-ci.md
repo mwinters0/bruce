@@ -201,9 +201,11 @@ Settled 2026-10-20 (D4, D9).
   default kind"). A page-alias the build emits is built, a meta-refresh page
   at the old URL, so a rename with an alias removes no page; its anchors land
   on the new one.
-- **Inverse breakage** is a baseline link from a page not in the build to a
-  removed target or anchor, listed with its linking page and grouped by that
-  page's repo or component: D9's "N inbound pages across M components".
+- **Inverse breakage** is a baseline link from a page outside every held
+  component-version and not built to a removed target or anchor (amended
+  2026-10-20, `../status/history/2026-10-20.md`, "The review of the inverse
+  check"), listed with its linking page and grouped by that page's repo or
+  component: D9's "N inbound pages across M components".
 
 ## Exit status and output
 

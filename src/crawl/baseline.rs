@@ -73,7 +73,8 @@ impl Held {
         // `report::inverse::prefix` reads the same layout back from the stored run (D56).
         // deficiency: KD5 A component-version is held whole, so a component
         // split across repos' start paths and partly built reads the pages
-        // of the other start paths as `not_built`. Telling the pages a
+        // of the other start paths as `not_built`, and the inverse check
+        // skips their links, live though they are (D56). Telling the pages a
         // change owns from the rest takes a flag naming their globs, which
         // every repo's CI would keep current by hand.
         let Some(below) = url.path().strip_prefix(prefix.path()) else {

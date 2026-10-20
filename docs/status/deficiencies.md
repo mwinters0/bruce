@@ -41,7 +41,8 @@ roadmap's phase index.
   until the crawl ends would promote it. Detail: `src/crawl/frontier.rs`
 
 - **KD5** — A component split across repos' start paths and only partly built reads
-  its unbuilt pages as `not_built`, a component-version being held whole.
+  its unbuilt pages as `not_built`, and the inverse check skips their links, a
+  component-version being held whole.
   **(a) deliberate tradeoff**: telling the pages a change owns from the rest takes a
   flag naming their globs, which every repo's CI keeps current by hand. Detail:
   `src/crawl/baseline.rs`
