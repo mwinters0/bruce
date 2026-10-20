@@ -37,12 +37,13 @@ fn a_file_is_the_prefix_plus_its_path_and_an_index_is_its_directory_too_d22() {
     assert_eq!(
         urls(built.seeds()),
         [
+            "https://x.org/en-US/_/css/site.css",
             "https://x.org/en-US/",
             "https://x.org/en-US/ops/disks.html",
             "https://x.org/en-US/tools/",
             "https://x.org/en-US/tools/usage/",
         ],
-        "the .html files alone, in path order"
+        "every file, an index as its directory, in path order"
     );
     let served: Vec<(String, PathBuf)> = built.served().map(|(u, f)| (u.to_string(), f)).collect();
     let at = |url: &str| served.iter().filter(|(u, _)| u == url).count();

@@ -14,8 +14,7 @@
 //! - `page`: the target, or the page it redirected to, is in a held
 //!   component-version, is a page in the baseline and is not built;
 //! - `file`: the same of a target that was no page (an image, an attachment),
-//!   which the run proves missing only where a built page still links to it,
-//!   a file no built page names being no target of the run;
+//!   every file of the build being a target of the run (`ci`, D56);
 //! - `anchor`: the target is built and its page lacks the anchor the link's
 //!   fragment named.
 //!
@@ -130,8 +129,6 @@ pub(super) fn inverse(
              judged AS (SELECT c.*, \
              EXISTS (SELECT 1 FROM targets x WHERE x.run_id = {ci} AND x.url_id = c.target_url_id \
                 AND x.answered_by = 'local' AND x.outcome = 'ok') AS built, \
-             EXISTS (SELECT 1 FROM targets x WHERE x.run_id = {ci} AND x.url_id = c.target_url_id \
-                AND x.answered_by = 'local') AS asked, \
              EXISTS (SELECT 1 FROM pages bp WHERE bp.run_id = {base} \
                 AND bp.url_id = c.landed_id) AS is_page, \
              EXISTS (SELECT 1 FROM held h WHERE starts_with(c.target, h.prefix)) AS held_target, \
@@ -148,7 +145,7 @@ pub(super) fn inverse(
              FROM cand c), \
              typed AS (SELECT j.*, CASE \
              WHEN NOT built AND is_page AND (held_target OR landing_gone) THEN 'page' \
-             WHEN NOT built AND NOT is_page AND held_target AND asked THEN 'file' \
+             WHEN NOT built AND NOT is_page AND held_target THEN 'file' \
              WHEN built AND real_fragment \
                 AND EXISTS (SELECT 1 FROM pages cp WHERE cp.run_id = {ci} \
                     AND cp.url_id = j.ci_landed) \

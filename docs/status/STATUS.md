@@ -67,8 +67,9 @@ The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
 - [x] **5.9** The inverse check on removed pages, anchors and the files a
   built page still links to: `report inverse` and `check-dir --inverse`; D56.
   [Notes](../wip/roadmap-P5.9-inverse-notes.md).
-- [ ] **5.9.1** Every file of the build is a target of the run, so the inverse
+- [x] **5.9.1** Every file of the build is a target of the run, so the inverse
   check reads a removed file no built page links to.
+  [Notes](../wip/roadmap-P5.9.1-every-file-notes.md).
 - [ ] **5.10** The end-to-end test's planted changes and assertions.
 - [ ] **5.11** quick-docs as published and changed, against the en-US
   baseline.

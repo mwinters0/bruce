@@ -18,7 +18,7 @@ have broken. The run is added to a database like a crawl's ([`crawl.md`](crawl.m
 
 | Argument | Default | Meaning |
 |---|---|---|
-| `DIR` | required | The build directory. Every `.html` file under it is a page checked. |
+| `DIR` | required | The build directory. Every `.html` file under it is a page checked, and every other file a target of the run. |
 | `--prefix URL` | required | The production URL of the directory's root, such as `https://docs.example.org/en-US`. A file is the page at the prefix plus its path, and `foo/index.html` is `foo/` too. It must be inside a root's scope. |
 | `--baseline FILE\|URL` | required | The baseline file, or an `https` URL to download it from. A `.gz` file or URL is decompressed. Nothing is cached. |
 | `--config FILE` | none | The configuration the baseline was crawled under ([`config.md`](config.md)). With none, the prefix is the only root. |
@@ -74,12 +74,10 @@ A change can break a page it does not contain: removing a page, a file or an
 anchor that other components link to. The check reads the baseline's links on
 pages **outside the build**, in components the build does not hold, and fails
 where one was `ok` and what it reached is now gone from a component the build
-holds: the page is not built, an image or attachment a built page still links
-to is not built, or the page is built and has lost the anchor. The same page,
-file or anchor in a component the build lacks is the baseline's, unchanged. A
-file that no built page links to cannot be told from one the build keeps, and
-is not read. The output lists each link with the component it is on, and the
-count of inbound pages across components. `--inverse=warn` lists them and
+holds: the page is not built, an image or attachment is not built, or the page
+is built and has lost the anchor. The same page, file or anchor in a component
+the build lacks is the baseline's, unchanged. The output lists each link with
+the component it is on, and the count of inbound pages across components. `--inverse=warn` lists them and
 leaves the exit status alone, for a repo whose CI is not yet ready to be that
 strict; the same list is `bruce report inverse --run N` ([`report.md`](report.md)).
 

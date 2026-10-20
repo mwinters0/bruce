@@ -151,9 +151,8 @@ outside the build link to, the second failure of `check-dir`'s exit status:
 by the linking page's component (its repo where it has none). `removed` is
 `page` where the target, or the page it redirected to, is a page of a
 component the build holds and the build lacks; `file` where it is an image or
-an attachment of such a component that a built page still links to and the
-build lacks; and `anchor` where the page is built and has lost the anchor the
-link named. Only links the baseline had `ok` on a page the build does not
+an attachment of such a component that the build lacks; and `anchor` where
+the page is built and has lost the anchor the link named. Only links the baseline had `ok` on a page the build does not
 hold are read: a page of a component the build holds is the build's own, and
 its links are `introduced`'s or gone with it. Below the text table are the
 baseline run and its day, and the count of links, inbound pages and

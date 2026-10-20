@@ -49,7 +49,8 @@ fn anchor(store: &Store, run: u64, id: u64, name: &str) {
 /// - 2, a `handbook` page the build still has, at `#lost` (an anchor run 2
 ///   lacks) and at `#keep` (one it has);
 /// - 3, a `handbook` page the build lacks; 4, a `handbook` image a built page still
-///   names; 5, a `handbook` image no built page names (the run cannot tell);
+///   names; 5, a `handbook` image no built page names and the build lacks; 10, one
+///   the build keeps;
 /// - 6, a page of `other`; 7, a `named/1.0` page the build lacks; 8, a
 ///   `named/2.0` page it lacks.
 ///
@@ -96,6 +97,15 @@ fn store() -> Store {
         "live",
         false,
     );
+    put(
+        &store,
+        1,
+        10,
+        "handbook/_images/kept.png",
+        "ok",
+        "live",
+        false,
+    );
     fact(&store, 1, 1, "antora.component", "other");
     fact(&store, 1, 20, "antora.component", "named");
     fact(&store, 1, 20, "antora.version", "2.0");
@@ -107,6 +117,7 @@ fn store() -> Store {
         (1, 3, None, "anchor"),
         (1, 4, None, "image"),
         (1, 5, None, "image"),
+        (1, 10, None, "image"),
         (1, 6, None, "anchor"),
         (1, 7, None, "anchor"),
         (1, 8, None, "anchor"),
@@ -126,6 +137,15 @@ fn store() -> Store {
         4,
         "handbook/_images/gone.png",
         "broken_url",
+        "local",
+        false,
+    );
+    put(
+        &store,
+        2,
+        10,
+        "handbook/_images/kept.png",
+        "ok",
         "local",
         false,
     );
@@ -166,6 +186,7 @@ fn a_page_outside_the_build_linking_to_what_the_change_removed_is_inverse_breaka
             "anchor 1>2#lost",
             "page 1>3#",
             "file 1>4#",
+            "file 1>5#",
             "page 1>7#",
         ]
     );
@@ -191,10 +212,10 @@ fn a_page_outside_the_build_linking_to_what_the_change_removed_is_inverse_breaka
 fn what_the_build_keeps_or_does_not_hold_is_no_inverse_breakage() {
     let g = gate_of(&store(), |_| {});
     let raw = column(&g.inverse, "raw_href");
-    // 2 at `#keep`, 6 (another component's), 5 (no built page names it), 8 (a
+    // 2 at `#keep`, 6 (another component's), 10 (an image the build keeps), 8 (a
     // version the build lacks) and 9's link (a page in the build's own
     // component).
-    for kept in ["1>2#keep", "1>6#", "1>5#", "1>8#", "9>3#"] {
+    for kept in ["1>2#keep", "1>6#", "1>10#", "1>8#", "9>3#"] {
         assert!(!raw.contains(&kept.to_owned()), "{kept} in {raw:?}");
     }
 }
@@ -209,7 +230,7 @@ fn the_inverse_check_fails_the_gate_unless_it_is_asked_to_warn() {
     assert!(!g.fails());
     assert!(
         g.text(false)
-            .contains("inverse breakage (warning only): 6 links")
+            .contains("inverse breakage (warning only): 7 links")
     );
 }
 
@@ -221,9 +242,9 @@ fn the_text_counts_the_inbound_pages_across_the_components_between_the_sections(
     let at = |s: &str| text.find(s).unwrap_or_else(|| panic!("{s} in {text}"));
     assert!(
         at("introduced breakage: none")
-            < at("inverse breakage: 6 links, 2 inbound pages across 2 components")
+            < at("inverse breakage: 7 links, 2 inbound pages across 2 components")
     );
-    assert!(at("inverse breakage: 6 links") < at("introduced redirected links: none"));
+    assert!(at("inverse breakage: 7 links") < at("introduced redirected links: none"));
     assert!(g.json(false).contains("\"introduced\":[],\"inverse\":[{"));
 }
 
@@ -237,10 +258,10 @@ fn the_filters_apply_to_the_linking_page() {
     });
     assert_eq!(
         column(&g.inverse, "component"),
-        ["other", "other", "other", "other"]
+        ["other", "other", "other", "other", "other"]
     );
     let g = gate_of(&store, |r| r.kinds = vec![crate::extract::Kind::Image]);
-    assert_eq!(rows(&g.inverse), ["file 1>4#"]);
+    assert_eq!(rows(&g.inverse), ["file 1>4#", "file 1>5#"]);
 }
 
 #[test]
@@ -267,12 +288,12 @@ fn the_inverse_report_prints_the_rows_and_the_baseline_and_counts_in_notes() {
     let mut request = Request::new(Report::Inverse);
     request.run = Some(RunId(2));
     let out = run(&store(), &request).unwrap();
-    assert_eq!(out.table.rows.len(), 6);
+    assert_eq!(out.table.rows.len(), 7);
     assert_eq!(
         out.notes,
         [
             "against baseline run 1, crawled on 2026-10-19",
-            "6 links, 2 inbound pages across 2 components"
+            "7 links, 2 inbound pages across 2 components"
         ]
     );
 }

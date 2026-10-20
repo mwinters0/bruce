@@ -8,7 +8,7 @@
 //! the roots' scopes plan a URL as they did for the baseline; with no file
 //! the prefix is the only root, as a URL is for `crawl` (D40). The baseline
 //! file is imported as a run of the database ([`file`], D52) and the CI run
-//! names it. The run begins from the `.html` files of `DIR` alone
+//! names it. The run begins from every file of `DIR`
 //! ([`Build::seeds`]) and answers a URL under the prefix from the directory;
 //! a URL the build lacks is answered from the baseline or asked live, as
 //! `crawl`'s `baseline` module has it. The gate is `report`'s ([`Gate`]) over

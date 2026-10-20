@@ -10,13 +10,6 @@ inverse check" and `report.md`'s `inverse`.
 
 ## What the next slices inherit
 
-- **5.9.1 seeds every file of the build.** A removed file is read only where
-  a built page still links to it (a `local` `broken_url` target of the run).
-  A file in the build that no built page names is no target, since the seeds
-  are the `.html` files (`Build::seeds`, `src/ci.rs`), so the report cannot
-  tell it from a deleted one and says nothing. Once every file is a target,
-  `removed = file` becomes "a baseline file in a held prefix with no `local`
-  `ok` target in the run", and the `asked` condition in `inverse.rs` goes.
 - **Held is read back, not carried.** `held()` takes the CI run's built pages
   (the pages with an `antora.component` fact; a copied page has none, D52),
   and `prefix()` cuts each URL after the component's segment and a named
@@ -24,8 +17,7 @@ inverse check" and `report.md`'s `inverse`.
   I16 moves both.
 - **P5.10's planted changes** each map to one `removed` value: a deleted page
   (`page`), a removed anchor others link to (`anchor`), a deleted image
-  another component embeds (`file` only where a built page still names it,
-  else it waits for 5.9.1). The fixture's
+  another component embeds (`file`). The fixture's
   versioned component is the test of a named version's prefix.
 - **`--top` truncates the count line**, `report inverse`'s notes counting the
   rows kept, as `stats`' totals do not (they sum the page rows before the cut).
@@ -52,8 +44,6 @@ inverse check" and `report.md`'s `inverse`.
   links.** A page of a held component-version deleted by the change is not
   built, and its links to other removed pages read as breakage; the linking
   pages are those outside every held prefix.
-- **Every absent target as a removed file fails PRs.** An image only another
-  component embeds is not a target of the run, whether kept or deleted.
 - **The runs' ids are written into the statement's text**, as numbers, so the
   many positional placeholders `Sql` binds stay for the user's values (the
   held prefixes, `--repo`, `--fact`, `--kind`).

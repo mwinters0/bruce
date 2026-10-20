@@ -363,8 +363,8 @@ version: the latest the baseline holds, in Antora's order. Rejected: a column or
 
 ### D56 The inverse check reads the held component-versions back from the CI run, and counts the links of pages outside them
 A built page's `antora.*` facts and URL give the held prefixes (D54's layout, I16), so `report inverse --run` works from the DB
-alone. The linking pages are the baseline's crawled pages in no held prefix and not built. A removed file counts only where a
-built page still links to it (`not_built`), no other file being a target of the run. Rejected: every page not built, a page
+alone. The linking pages are the baseline's crawled pages in no held prefix and not built. A removed file is a baseline file in a
+held prefix with no `local` `ok` target, every file of the build being a seed (`ci`). Rejected: every page not built, a page
 the change deleted failing it on links gone with it, while those it misses are KD5's; `Held` moved under `crawl` and `report`,
 a `crawl`-to-`ci` edge against D39; a held set stored in the run, schema 5 refusing the baseline (D43).
 Reopens: I16 changing, the layout then living twice. Code: `report::inverse`. Evidence: `report::inverse::tests`.

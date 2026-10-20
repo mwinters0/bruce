@@ -460,6 +460,44 @@ async fn a_build_holding_no_component_version_trusts_the_baseline_and_asks_for_w
     );
 }
 
+#[tokio::test]
+async fn a_seeded_file_no_page_names_is_a_local_target_and_no_page() {
+    let production = MockServer::start().await;
+    let base = production.uri();
+    let config = format!("[[root]]\nurl = \"{base}/docs/\"\n");
+    let prefix = format!("{base}/docs/");
+    let tmp = tempfile::tempdir().unwrap();
+    let files = [
+        ("index.html", page("tools", "", "tools")),
+        ("tools/_images/lonely.png", "not a png".to_owned()),
+    ];
+    let (local, seeds) = build(tmp.path(), &prefix, &files);
+    let none = Baseline {
+        run: RunId(0),
+        index: BaselineIndex::default(),
+        externals: Externals::Baseline,
+    };
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let done = check(store, &config, local, &seeds, none).await;
+    assert_eq!(
+        done.targets(done.run, &base),
+        [
+            t("/docs/", "ok", None, "local"),
+            t("/docs/tools/_images/lonely.png", "ok", None, "local"),
+        ]
+    );
+    let pages: i64 = done
+        .store
+        .connection()
+        .query_row(
+            "SELECT count(*) FROM pages WHERE run_id = ?",
+            [done.run.0],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(pages, 1, "a file that is no page has no page row");
+}
+
 /// An Antora page of `component` at `version`, whose source file is
 /// `modules/<module>/pages/<file>` of a repository, holding `body`.
 fn sourced(component: &str, version: &str, source: (&str, &str), body: &str) -> String {

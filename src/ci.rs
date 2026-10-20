@@ -5,10 +5,12 @@
 //! production: `--prefix` is the URL of the directory's root, and a file is
 //! the prefix plus its path relative to the root. `foo/index.html` is also
 //! `foo/` (D22), and the top `index.html` is the prefix itself. Every file is
-//! a URL the build answers, an asset a page links to included; the **seeds**
-//! of a run are the `.html` files alone, a partial build's sitemap not being
-//! trusted (it has none). Which file is which URL is this module's concept
-//! and no fetcher's: it hands `fetch::local` a finished map.
+//! a URL the build answers, an asset a page links to included, and **a seed**
+//! of the run, a partial build's sitemap not being trusted (it has none): the
+//! run then holds a target for each file the build has, which is how the
+//! inverse check tells a file the change deleted from one it kept (D56).
+//! Which file is which URL is this module's concept and no fetcher's: it
+//! hands `fetch::local` a finished map.
 
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -80,13 +82,12 @@ impl Build {
         let (mut served, mut seeds) = (Vec::new(), Vec::new());
         for (segments, file) in files {
             let url = url_of(&prefix, &segments, false);
-            let page = segments.last().is_some_and(|s| s.ends_with(".html"));
             let index = segments.last().is_some_and(|s| s == "index.html");
             if index {
                 let dir = url_of(&prefix, &segments[..segments.len() - 1], true);
                 served.push((dir.clone(), file.clone()));
                 seeds.push(dir);
-            } else if page {
+            } else {
                 seeds.push(url.clone());
             }
             served.push((url, file));
@@ -103,7 +104,8 @@ impl Build {
         &self.prefix
     }
 
-    /// The URL of each `.html` file, in path order: where a run begins.
+    /// The URL of each file, an index as its directory, in path order: where
+    /// a run begins.
     pub fn seeds(&self) -> &[Url] {
         &self.seeds
     }
