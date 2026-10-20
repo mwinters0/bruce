@@ -195,11 +195,14 @@ Settled 2026-10-20 (D4, D9).
   whose `source_repo` a built page names, which matches nothing, a built
   page having no forge edit link (below, "Facts found while grilling").
 - **Removed** is an anchor such a page had in the baseline and lacks in the
-  build, or a page of such a repo the baseline holds and the build does not.
-  A page-alias the build emits is built, a meta-refresh page at the old URL,
-  so a rename with an alias removes no page; its anchors land on the new one.
+  build, or a target in such a component-version, page or file (an image, an
+  attachment), the baseline holds and the build does not (amended
+  2026-10-20, `../status/history/2026-10-20.md`, "The review of the gate's
+  default kind"). A page-alias the build emits is built, a meta-refresh page
+  at the old URL, so a rename with an alias removes no page; its anchors land
+  on the new one.
 - **Inverse breakage** is a baseline link from a page not in the build to a
-  removed page or anchor, listed with its linking page and grouped by that
+  removed target or anchor, listed with its linking page and grouped by that
   page's repo or component: D9's "N inbound pages across M components".
 
 ## Exit status and output
@@ -249,8 +252,8 @@ Settled 2026-10-20 (D24).
 
 - **The test site is hand-written, under `fixtures/antora/`**: three tiny
   components, one versioned, one `~`, one with two modules and a
-  page-alias, holding xrefs among all three, fragments, and an anchor other
-  components link to.
+  page-alias, holding xrefs among all three, fragments, an anchor other
+  components link to, and an image another component embeds.
 - **The Fedora UI bundle is vendored into `fixtures/` by
   `scripts/fixtures.py`**, its source commit and sha256 recorded: the
   playbook's URL is a moving job artifact, and the nav container, the edit
@@ -259,7 +262,8 @@ Settled 2026-10-20 (D24).
   it from a local static server, crawls it, exports the baseline, builds one
   component alone with planted changes (a deleted page, a removed anchor
   others link to, a new broken link, a new broken xref out of the build, a
-  valid one out of it), runs `check-dir`, and asserts the exit status and
+  valid one out of it, a new broken image, a deleted image another component
+  embeds), runs `check-dir`, and asserts the exit status and
   each section of the output. It is slow and needs node, so it is not in
   `mise run check`.
 - **The closing evidence is a fresh en-US crawl under schema 4**, launched
@@ -272,7 +276,8 @@ Settled 2026-10-20 (D24).
   published**, the noise floor, every introduced row in it either real
   breakage elsewhere (above, "What a build holds") or a bug, the notes
   saying which; and **with the planted changes**, each rule firing on real
-  content. A gate not silent on an unchanged build is red on every PR.
+  content, bar the deleted image, no other component embedding one of
+  quick-docs's. A gate not silent on an unchanged build is red on every PR.
 
 ## Where the code lives
 

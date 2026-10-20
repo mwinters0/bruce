@@ -82,11 +82,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **The gate judges `anchor` links alone by default** (5.8). The spec names
-  the gate's failures without a kind, and D13 has reports default to
-  `kind = anchor`, so `check-dir` and `report introduced` do, with `--kind`
-  (repeat, or `all`) to widen them. A PR that breaks an image, script or
-  stylesheet link passes unless the CI job says `--kind all`. Reconsidering
-  makes the default every kind, which P5.11's run on quick-docs would show
-  for noise first.
