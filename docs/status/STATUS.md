@@ -96,10 +96,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **An xref's URL answering `error` or `unchecked` is not an unresolved
-  xref.** `history/2026-10-20.md`, "The review of KD8", words the rule as "no live
-  `ok`", which fails the gate on a URL production refused to answer (a
-  timeout, robots), where D16 fails nothing on `error`; D57 and
-  `link_verdicts` rule 1 take `broken_url` alone. Reconsidering to "not `ok`"
-  fails more PRs for a reason their authors cannot fix.

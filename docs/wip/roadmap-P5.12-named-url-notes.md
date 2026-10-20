@@ -53,6 +53,6 @@ re-run, exits 0 with nothing introduced or inverse.
 
 - **"Not `ok`" as the rule for an unresolved xref** (the review's wording) fails
   the gate on an `error` or an `unchecked` URL; rule 1 takes `broken_url`
-  alone (STATUS, "Decisions worth another look").
+  alone, which the review affirmed (D57).
 - **Resolving before planning the URL** (asking the chain inside Resolve) is
   out: Resolve sees only the baseline (D38), and the crawl owns the request.
