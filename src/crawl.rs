@@ -34,6 +34,11 @@
 //! stopped run wrote is whole targets, and every target claimed and not
 //! written is counted as cut. A run abandoned without waiting for its grace
 //! [`Writes::close`]s first, so it too holds whole targets.
+//!
+//! A run over a local build begins from its seeds instead ([`Crawl::run_seeded`]):
+//! no sitemap is read and no root is asked about, since the build is the
+//! pages to check, and an href beginning `/` points at the build's site root
+//! ([`Crawl::local_site`], D53).
 
 mod frontier;
 mod hops;
@@ -196,6 +201,8 @@ struct Shared<F> {
     /// Work was left undone when the stop came.
     cut: AtomicBool,
     writes: Writes,
+    /// Where an href beginning `/` points, for a local build (D53).
+    site_root: Option<Url>,
 }
 
 /// A target claimed and waiting to be asked about.
@@ -283,6 +290,7 @@ where
                 grace: STOP_GRACE,
                 cut: AtomicBool::new(false),
                 writes: Writes::default(),
+                site_root: None,
             }),
         }
     }
@@ -296,6 +304,14 @@ where
     /// stopped.
     pub fn writes(&self) -> Writes {
         self.shared.writes.clone()
+    }
+
+    /// This run, for a local build whose site root is `root` (D53).
+    pub fn local_site(mut self, root: Url) -> Crawl<F> {
+        Arc::get_mut(&mut self.shared)
+            .expect("not yet shared")
+            .site_root = Some(root);
+        self
     }
 
     /// This run, with `grace` in place of [`STOP_GRACE`].
@@ -328,17 +344,16 @@ where
             }
         }
         shared.drive(listed, None).await?;
-        let load = |n: &AtomicU64| n.load(Ordering::Relaxed);
-        let targets = load(&shared.targets);
-        Ok(Summary {
-            targets,
-            pages: load(&shared.pages),
-            sitemaps: load(&shared.sitemaps),
-            dropped: load(&shared.dropped),
-            stopped: shared.cut.load(Ordering::Relaxed),
-            // Every claim writes one target row unless the stop cut it.
-            cut: shared.frontier.claimed().saturating_sub(targets),
-        })
+        Ok(shared.summary())
+    }
+
+    /// Crawls from `seeds` alone, until nothing is left to ask about: no
+    /// sitemap is discovered and no root is seeded.
+    pub async fn run_seeded(self, seeds: &[Url]) -> Result<Summary, Error> {
+        let shared = self.shared;
+        let items = shared.seed(seeds).await?;
+        shared.drive(items, None).await?;
+        Ok(shared.summary())
     }
 }
 
@@ -346,6 +361,60 @@ impl<F> Shared<F>
 where
     F: Fetcher + Send + Sync + 'static,
 {
+    /// What the run has written so far.
+    fn summary(&self) -> Summary {
+        let load = |n: &AtomicU64| n.load(Ordering::Relaxed);
+        let targets = load(&self.targets);
+        Summary {
+            targets,
+            pages: load(&self.pages),
+            sitemaps: load(&self.sitemaps),
+            dropped: load(&self.dropped),
+            stopped: self.cut.load(Ordering::Relaxed),
+            // Every claim writes one target row unless the stop cut it.
+            cut: self.frontier.claimed().saturating_sub(targets),
+        }
+    }
+
+    /// The items for `seeds`, each claimed as a link of kind `anchor` would
+    /// claim it; one the plan leaves unchecked is written as such here.
+    async fn seed(self: &Arc<Self>, seeds: &[Url]) -> Result<Vec<Item>, Error> {
+        let shared = Arc::clone(self);
+        let seeds = seeds.to_vec();
+        tokio::task::spawn_blocking(move || {
+            let Some(_writing) = shared.writes.begin() else {
+                return Ok(Vec::new());
+            };
+            let mut items = Vec::new();
+            for url in seeds {
+                let (plan, form) = shared.frontier.plan(&url, Kind::Anchor);
+                if !shared.frontier.claim(form.id()) {
+                    continue;
+                }
+                match plan {
+                    Plan::Unchecked(reason) => shared.send_target(unchecked(
+                        shared.run,
+                        form.id(),
+                        form.as_str(),
+                        Outcome::Unchecked,
+                        reason,
+                    ))?,
+                    plan => items.push(Item {
+                        url,
+                        kind: Kind::Anchor,
+                        via_links: false,
+                        in_sitemap: false,
+                        plan,
+                        form,
+                    }),
+                }
+            }
+            Ok(items)
+        })
+        .await
+        .map_err(|_| Error::Panicked)?
+    }
+
     /// Whether the run has been stopped, asked only where work is left, so
     /// a yes marks the run cut short.
     fn stopping(&self) -> bool {
@@ -682,7 +751,8 @@ where
                 }
                 _ => (&auto, &whole),
             };
-            extract::extract(&text, &url, choice, scope, &shared.registry)
+            let site_root = shared.site_root.as_ref();
+            extract::extract_under(&text, &url, site_root, choice, scope, &shared.registry)
                 .map_err(|e| e.to_string())
         })
         .await

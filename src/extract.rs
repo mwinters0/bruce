@@ -94,6 +94,19 @@ pub fn extract(
     scope: &HashScope,
     registry: &Registry,
 ) -> Result<Extracted, Error> {
+    extract_under(html, url, None, choice, scope, registry)
+}
+
+/// [`extract`] for a page of a local build, whose `site_root` is where an
+/// href beginning `/` points (D53).
+pub fn extract_under(
+    html: &str,
+    url: &Url,
+    site_root: Option<&Url>,
+    choice: &ProfileChoice,
+    scope: &HashScope,
+    registry: &Registry,
+) -> Result<Extracted, Error> {
     let generator = match choice {
         ProfileChoice::Auto => generator(html)?,
         ProfileChoice::Named(_) => None,
@@ -103,7 +116,7 @@ pub fn extract(
     let sink = RefCell::new(Sink::new(profile.name()));
     let anchors = RefCell::new(Anchors::default());
     let title = RefCell::new(Title::default());
-    let links = RefCell::new(Links::new(url));
+    let links = RefCell::new(Links::new(url, site_root));
     let edit_links = RefCell::new(EditLinks::default());
     let hash = RefCell::new(Hash::default());
     let Extract {

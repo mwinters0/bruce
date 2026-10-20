@@ -15,17 +15,17 @@ records, each part saying why its module holds it. **Not in one place** names wh
 does not explain.
 
 Every concept below is, so far, one top-level module, placed by P1's spec (`roadmap-P1-scaffold.md`, "Where the concepts
-live"). `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url`, `fetch`, `crawl` and `report` hold code; the rest hold only their doc. The
+live"). `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url`, `fetch`, `crawl`, `ci` and `report` hold code. The
 decisions each carries are cited in its module's doc.
 
 ## Subcommands
 
 - **bruce** — `cli/` and the binary's `main.rs`, which only calls it: the
   command line and the registry in the parent file, a child module for
-  each subcommand, `crawl` (its roots from the file or the URL, the run and
+  each subcommand, `check_dir` (its build, the run over it and the line it prints), `crawl` (its roots from the file or the URL, the run and
   Ctrl-C), `export_baseline` (its files and the line it prints), `prune` (its rule and what it prints) and `report` (its options and
   printing the output), and the `db`
-  child, which all four open the database through, installing the reports' views
+  child, which all five open the database through, installing the reports' views
   that only this layer can hand `store` (D6, D39). It is the top of the
   layering, and the one module naming a concrete profile (D39).
 
@@ -37,12 +37,17 @@ decisions each carries are cited in its module's doc.
   child; a target's redirect chain, its limit and where a hop leads in the
   `hops` child; D16's classification in the `outcome` child; and reading one
   sitemap file, gzip and index included, in the `sitemap` child, discovery
-  staying in the parent. It sits above
+  staying in the parent. A run over a local build begins from its seeds in the
+  parent, and resolves an href beginning `/` against the build's site root (D53). It sits above
   `fetch`, `extract` and `store`, driving each (D39).
 
 ## CI mode
 
-- **bruce** — `ci.rs`.
+- **bruce** — `ci.rs`: a build directory read as the URLs it will have in
+  production, the prefix mapping, which files are seeds and the refusal of a
+  prefix outside every root's scope, handing `fetch/local` a finished map. It
+  sits beside `crawl` and `report`, none calling another, and above `config`
+  (D39).
 
 ## Reports and pruning
 
@@ -64,8 +69,9 @@ decisions each carries are cited in its module's doc.
   be asked), one hop's response, the failure causes and the stop a crawl
   hands its fetcher in the parent file, the reqwest fetcher in the `http` child, each
   host's pace, in-flight cap and robots.txt in `http`'s `host` child, and
-  the body-to-text decoding in the `charset` child, which P5's local fetcher
-  reuses. It sits above `config` (it reads the rate and `user_agent`) and
+  the body-to-text decoding in the `charset` child, and the build-directory
+  fetcher in the `local` child, which holds a map from URL to file and no
+  directory logic, that being `ci`'s, and reuses `charset`. It sits above `config` (it reads the rate and `user_agent`) and
   `url`; the crawler above it follows the hops (D39).
 
 ## The extraction pass and its core heuristics

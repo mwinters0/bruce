@@ -2,7 +2,8 @@
 //!
 //! One handler reads each element that can name a URL, in document order, and
 //! resolves what it finds against the page's URL, or against the first
-//! `<base href>` once one has been read. A second handler on the same
+//! `<base href>` once one has been read, or, where a local build's site root is
+//! given, an href beginning `/` against that root (D53). A second handler on the same
 //! elements runs after the profile's, takes the tag the profile left in the
 //! sink and puts it on the links the element yielded (D38), which a profile's
 //! own handler could not do from before the link existed.
@@ -105,6 +106,8 @@ pub struct Link {
 /// What the link handlers collect over one pass.
 pub(super) struct Links {
     page: Url,
+    /// Where an href beginning `/` points, in a local build (D53).
+    site_root: Option<Url>,
     base: Option<Url>,
     base_seen: bool,
     found: Vec<Link>,
@@ -117,9 +120,10 @@ const READ: &str = "a[href], area[href], img, source, link, script[src], iframe[
                     video, audio, track, meta";
 
 impl Links {
-    pub(super) fn new(page: &Url) -> Links {
+    pub(super) fn new(page: &Url, site_root: Option<&Url>) -> Links {
         Links {
             page: page.clone(),
+            site_root: site_root.cloned(),
             base: None,
             base_seen: false,
             found: Vec::new(),
@@ -141,7 +145,7 @@ impl Links {
                 if !state.base_seen {
                     state.base_seen = true;
                     let href = attribute(el, "href").unwrap_or_default();
-                    state.base = state.page.join(&href).ok();
+                    state.base = state.resolve(&href);
                 }
                 Ok(())
             }),
@@ -197,6 +201,12 @@ impl Links {
 
     /// `raw` resolved as a link read now would be.
     pub(super) fn resolve(&self, raw: &str) -> Option<Url> {
+        // A protocol-relative `//host/` is not root-relative.
+        if let (Some(root), Some(rest)) = (&self.site_root, raw.strip_prefix('/'))
+            && !rest.starts_with('/')
+        {
+            return root.join(rest).ok();
+        }
         self.base.as_ref().unwrap_or(&self.page).join(raw).ok()
     }
 

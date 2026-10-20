@@ -34,7 +34,7 @@ use url::Url;
 use crate::config::DEFAULT_USER_AGENT;
 
 use super::charset::decode;
-use super::{Body, Failure, FailureKind, Fetcher, MAX_SITEMAP, Mode, Response, Stopper};
+use super::{Body, Failure, FailureKind, Fetcher, MAX_BODY, MAX_SITEMAP, Mode, Response, Stopper};
 
 pub mod host;
 
@@ -73,7 +73,7 @@ impl Default for Settings {
             user_agent: DEFAULT_USER_AGENT.to_owned(),
             connect_timeout: Duration::from_secs(10),
             timeout: Duration::from_secs(30),
-            max_body: 16 * 1024 * 1024,
+            max_body: MAX_BODY,
             max_sitemap: MAX_SITEMAP,
             backoff: [1, 2, 4].map(Duration::from_secs).to_vec(),
             max_retry_after: Duration::from_secs(60),

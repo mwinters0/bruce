@@ -491,3 +491,39 @@ fn a_profile_may_prefer_a_link_over_the_ranking_d36() {
         Some("https://example.org/ranked")
     );
 }
+
+#[test]
+fn in_a_local_build_an_href_beginning_a_slash_resolves_against_the_site_root_d53() {
+    let registry = Registry::new(Box::new(Plain)).with(Box::new(Stub));
+    let page = Url::parse("https://example.org/en-US/a/b/").unwrap();
+    let root = Url::parse("https://example.org/en-US/").unwrap();
+    let html = r#"<base href="/x/"><a href="/legal/?q=1#f">l</a><a href="/">h</a>
+        <a href="//cdn.example.net/s.js">p</a><a href="rel">r</a>"#;
+    let found = |site_root| -> Vec<String> {
+        let choice = ProfileChoice::Auto;
+        let x = extract_under(
+            html,
+            &page,
+            site_root,
+            &choice,
+            &HashScope::default(),
+            &registry,
+        );
+        x.unwrap()
+            .links
+            .iter()
+            .map(|l| l.url.as_ref().unwrap().to_string())
+            .collect()
+    };
+    assert_eq!(
+        found(Some(&root)),
+        [
+            "https://example.org/en-US/legal/?q=1#f",
+            "https://example.org/en-US/",
+            "https://cdn.example.net/s.js",
+            "https://example.org/en-US/x/rel",
+        ],
+        "the base itself is root-relative, so it lands under the root too"
+    );
+    assert_eq!(found(None)[0], "https://example.org/legal/?q=1#f");
+}

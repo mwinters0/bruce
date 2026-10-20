@@ -334,6 +334,15 @@ never one the build holds (D22). Rejected: attaching the file, the gate reading 
 `baseline_run` naming a run in a file gone after the job. Reopens: a reuse that misses on a hand-edited
 file. Code: `store::baseline`. Evidence: `store::baseline::tests::a_baseline_already_imported_is_reused_and_copies_nothing`.
 
+### D53 In a local build, an href beginning `/` resolves against the prefix
+The build directory's root is the site's root, what a static server serving it at `/` shows, so
+`extract` joins such an href (not `//`) onto `--prefix`, a `<base href>` that is root-relative too.
+Why: a partial build has no `site.url`, so the UI's footer writes `/legal/privacy/` with an empty
+`site.path`, which against the production origin is a 404 on every built page, a break the tool made.
+Rejected: the production origin, with the guide telling deployers to `skip` those URLs. Reopens: a
+build whose root-relative hrefs are meant for the origin, not the prefix. Code: `extract::links::Links::resolve`.
+Evidence: `extract::tests::in_a_local_build_an_href_beginning_a_slash_resolves_against_the_site_root_d53`.
+
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
 `check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status
 follows D9 and D16. The drafted flags are `historical/initial.md`, "D27".
