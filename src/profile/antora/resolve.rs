@@ -8,7 +8,13 @@
 //! while the build does not hold that component-version ([`Lookup::built`]):
 //! Antora had the held catalog whole, so an xref into it that stayed
 //! unresolved is broken (D20, D22).
+//!
+//! Where the pages' coordinates find no page, the URL the refspec names is the
+//! answer ([`named`], D57): Antora also resolves through a page-alias and to
+//! the one source file of two sharing an output URL, which the baseline's
+//! facts, held once per URL, cannot tell.
 
+use percent_encoding::percent_decode_str;
 use url::Url;
 
 use super::super::{BoxError, Lookup};
@@ -60,15 +66,9 @@ fn parse(reference: &str) -> Option<Refspec<'_>> {
 
 /// The URL `reference` resolves to in the pages `lookup` knows, fragment
 /// included. Without a version the latest of the component's pages with that
-/// module and path is taken, as Antora takes its catalog's.
+/// module and path is taken, as Antora takes its catalog's; where none has
+/// them, the URL the refspec names ([`named`]).
 pub(super) fn resolve(reference: &str, lookup: &dyn Lookup) -> Result<Option<Url>, BoxError> {
-    // deficiency: KD7 A baseline page with no forge edit link has no
-    // `module` or `rel_path` fact, so it can be no refspec's target and an
-    // xref to it stays unresolved. The pair cannot be read from the URL (D19).
-    // deficiency: KD8 Antora also resolves a refspec through a page-alias,
-    // and through the one source file of two that share an output URL; the
-    // baseline holds a page's facts once per URL and an alias only as a
-    // redirect target it crawled, so such an xref stays unresolved.
     let Some(spec) = parse(reference) else {
         return Ok(None);
     };
@@ -77,28 +77,102 @@ pub(super) fn resolve(reference: &str, lookup: &dyn Lookup) -> Result<Option<Url
     if lookup.built(&coordinates) {
         return Ok(None);
     }
+    let held = coordinates.clone();
     coordinates.extend([(MODULE, spec.module), (REL_PATH, spec.rel_path)]);
     let candidates = lookup.pages_with_facts(&coordinates)?;
-    let mut page = match (spec.version, candidates.as_slice()) {
-        (_, []) => return Ok(None),
-        (Some(_), [page, ..]) | (None, [page]) => page.clone(),
-        (None, _) => latest(candidates, lookup)?,
+    let page = match (spec.version, candidates.as_slice()) {
+        (_, []) => named(&spec, &held, lookup)?,
+        (Some(_), [page, ..]) | (None, [page]) => Some(page.clone()),
+        (None, _) => Some(latest(candidates, lookup)?),
     };
-    page.set_fragment(spec.fragment);
-    Ok(Some(page))
+    Ok(page.map(|mut page| {
+        page.set_fragment(spec.fragment);
+        page
+    }))
+}
+
+/// The URL `spec` names by the layout of I16, whether or not a page stands
+/// there: the component-version's prefix, read off a baseline page carrying
+/// its facts (`held` names them), then the module unless `ROOT` and the page
+/// without `.adoc`, an `index` dropped. `None` where the baseline holds no
+/// page of the component-version, or the one it holds is not under its
+/// version's own segment (the latest at a `latest_version_segment`, I16).
+fn named(
+    spec: &Refspec<'_>,
+    held: &[(&str, &str)],
+    lookup: &dyn Lookup,
+) -> Result<Option<Url>, BoxError> {
+    let candidates = lookup.pages_with_facts(held)?;
+    let Some((page, version)) = newest(candidates, lookup, true)? else {
+        return Ok(None);
+    };
+    let Some(mut url) = prefix(&page, spec.component, &version) else {
+        return Ok(None);
+    };
+    let (dir, file) = spec
+        .rel_path
+        .rsplit_once('/')
+        .unwrap_or(("", spec.rel_path));
+    let name = file.strip_suffix(".adoc").unwrap_or(file);
+    {
+        let mut segments = url.path_segments_mut().expect("an http URL has a path");
+        segments.pop_if_empty();
+        if spec.module != "ROOT" {
+            segments.push(spec.module);
+        }
+        segments.extend(dir.split('/').filter(|d| !d.is_empty()));
+        if name != "index" {
+            segments.push(name);
+        }
+        segments.push("");
+    }
+    Ok(Some(url))
+}
+
+/// The URL of `page`, a page of `component` at `version`, cut after the
+/// component's segment and a named version's (I16); the placeholders
+/// Antora writes for a version its URLs omit, `""` and `master`, name none.
+fn prefix(page: &Url, component: &str, version: &str) -> Option<Url> {
+    let named = !matches!(version, "" | "master");
+    let raw: Vec<&str> = page.path_segments()?.collect();
+    let decoded = |s: &str| percent_decode_str(s).decode_utf8_lossy().into_owned();
+    let at = (0..raw.len()).find(|&i| {
+        decoded(raw[i]) == component
+            && (!named || raw.get(i + 1).is_some_and(|s| decoded(s) == version))
+    })?;
+    let mut url = page.clone();
+    url.set_query(None);
+    url.set_fragment(None);
+    url.set_path(&format!("/{}/", raw[..=at + usize::from(named)].join("/")));
+    Some(url)
 }
 
 /// The page of `candidates` whose version Antora orders first (a version it
 /// would call the component's latest), the earliest URL where two tie.
 fn latest(candidates: Vec<Url>, lookup: &dyn Lookup) -> Result<Url, BoxError> {
+    Ok(newest(candidates, lookup, false)?
+        .expect("at least two candidates")
+        .0)
+}
+
+/// [`latest`] with its version, `None` for no candidate; a page with no
+/// version fact is passed over when `versioned`, else a bare one.
+fn newest(
+    candidates: Vec<Url>,
+    lookup: &dyn Lookup,
+    versioned: bool,
+) -> Result<Option<(Url, String)>, BoxError> {
     let mut best: Option<(String, Url)> = None;
     for page in candidates {
         let facts = lookup.facts(&page)?;
         let version = facts
             .iter()
             .find(|(k, _)| k == VERSION)
-            .map(|(_, v)| v.clone())
-            .unwrap_or_default();
+            .map(|(_, v)| v.clone());
+        if versioned && version.is_none() {
+            continue;
+        }
+        let version = version.unwrap_or_default();
         let newer = best
             .as_ref()
             .is_none_or(|(held, _)| compare(&version, held).is_gt());
@@ -106,7 +180,7 @@ fn latest(candidates: Vec<Url>, lookup: &dyn Lookup) -> Result<Url, BoxError> {
             best = Some((version, page));
         }
     }
-    Ok(best.expect("at least two candidates").1)
+    Ok(best.map(|(version, page)| (page, version)))
 }
 
 /// Antora's version order, `Greater` for the version it lists first: no

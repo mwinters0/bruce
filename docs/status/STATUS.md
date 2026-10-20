@@ -79,8 +79,9 @@ The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
 - [x] **5.11.1** The inverse check leaves an alias that lands outside the held
   set to its owner (KD9).
   [Notes](../wip/roadmap-P5.11.1-alias-owner-notes.md).
-- [ ] **5.12** Resolve through the URL a refspec names, where the baseline's
-  facts find no page (KD7, KD8).
+- [x] **5.12** Resolve through the URL a refspec names, where the baseline's
+  facts find no page (KD7, KD8); D57.
+  [Notes](../wip/roadmap-P5.12-named-url-notes.md).
 
 ## Not started
 
@@ -95,3 +96,10 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **An xref's URL answering `error` or `unchecked` is not an unresolved
+  xref.** `history/2026-10-20.md`, "The review of KD8", words the rule as "no live
+  `ok`", which fails the gate on a URL production refused to answer (a
+  timeout, robots), where D16 fails nothing on `error`; D57 and
+  `link_verdicts` rule 1 take `broken_url` alone. Reconsidering to "not `ok`"
+  fails more PRs for a reason their authors cannot fix.

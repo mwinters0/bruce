@@ -285,7 +285,8 @@ def replace(path: Path, old: str, new: str) -> None:
 def plant(tools: Path) -> None:
     """The changes a PR to `tools` makes, in its working tree: a deleted page
     (also linked by `link:`), a removed anchor, a deleted image, and new broken
-    links, xrefs and images, one valid xref out of the build."""
+    links, xrefs and images, two valid xrefs out of the build, one of them
+    through a page-alias (D57)."""
     pages = tools / "modules" / "ROOT" / "pages"
     (pages / "reference.adoc").unlink()
     (tools / "modules" / "ROOT" / "images" / "diagram.svg").unlink()
@@ -299,6 +300,7 @@ def plant(tools: Path) -> None:
             "\nA link to nowhere: link:../nowhere/[nowhere].\n"
             "\nAn xref out of the build to a page there is not: xref:guide::nonexistent.adoc[no page].\n"
             "\nOne to a page there is: xref:guide::upgrade.adoc#rollback[rolling back].\n"
+            "\nOne through a page-alias: xref:ops::disks.adoc[the disks].\n"
             "\nAn image that is not there:\n\nimage::missing.png[Missing]\n"
         )
 
@@ -330,9 +332,12 @@ def rows(doc: dict[str, Any], section: str, prefix: str, *keys: str) -> set[tupl
 UNCHANGED_REDIRECTED = {
     ("tools/", "..", "refresh"), ("tools/reference/", "../..", "refresh"), ("tools/usage/", "../..", "refresh"),
 }
-PLANTED_REDIRECTED = {("tools/", "..", "refresh"), ("tools/usage/", "../..", "refresh")}
+#: The xref through the page-alias is among them, its page a meta refresh (D57).
+PLANTED_REDIRECTED = {
+    ("tools/", "..", "refresh"), ("tools/usage/", "../..", "refresh"), ("tools/usage/", "#ops::disks.adoc", "refresh"),
+}
 #: What `plant` introduces, each rule once: (page, raw_href, kind, outcome,
-#: reason, baseline). The valid xref out of the build is absent, and so is the
+#: reason, baseline). The valid xrefs out of the build, the alias's too, are absent, and so is the
 #: deleted image no built page names, which only the inverse check finds.
 PLANTED_INTRODUCED = {
     # a deleted page, linked by `link:`

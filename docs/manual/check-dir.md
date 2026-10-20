@@ -46,7 +46,11 @@ live site, at the configuration's pace:
   a URL the baseline never saw is asked of the live site.
 - **An `xref:` into a component the build lacks**, which Antora leaves as
   `#component::page.adoc`, is resolved to the baseline's page for it, and
-  judged as any link. One into a component the build holds stays
+  judged as any link. Where the baseline has no page with that source file,
+  Antora may still have resolved it through a page-alias, so the URL the
+  reference names is answered as any other the build lacks: from the baseline,
+  else by a request to the live site, and a URL that answers broken is an
+  `unresolved_xref`. One into a component the build holds stays
   `unresolved_xref`.
 - **A link starting `/`** resolves against the prefix, the way a static server
   serving the directory at `/` shows it.

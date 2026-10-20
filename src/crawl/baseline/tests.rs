@@ -567,6 +567,7 @@ async fn an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline(
         [
             t("/docs/guide/1.0/install/", "ok", None, "baseline"),
             t("/docs/guide/2.0/install/", "ok", None, "baseline"),
+            t("/docs/ops/admin/missing/", "broken_url", None, "live"),
             t("/docs/ops/admin/partitions/", "ok", None, "baseline"),
             t("/docs/tools/", "ok", None, "local"),
         ]
@@ -581,7 +582,8 @@ async fn an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline(
     assert_eq!(of("guide::install.adoc#first-boot"), "ok", "the latest");
     assert_eq!(of("1.0@guide::install.adoc#nope"), "broken_anchor");
     assert_eq!(of("ops:admin:partitions.adoc"), "ok");
-    // Not a page of the baseline, or a component the build holds.
+    // Not a page of the baseline, or a component the build holds, or the URL
+    // of one (D57), which production does not serve either.
     for refspec in [
         "ops:admin:missing.adoc",
         "tools::missing.adoc",
@@ -589,5 +591,87 @@ async fn an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline(
     ] {
         assert_eq!(of(refspec), "broken_url", "{refspec}");
     }
-    assert_eq!(asked(&production).await, 0);
+    assert_eq!(
+        asked(&production).await,
+        1,
+        "the URL ops:admin:missing names"
+    );
+}
+
+/// The whole site as a baseline run, holding a crawled page-alias and a page
+/// whose source is `spins/index.adoc`, then `tools` alone xref-ing the alias,
+/// the shared URL, an alias the crawl did not reach and a page nobody serves.
+#[tokio::test]
+async fn an_xref_no_page_has_the_coordinates_of_resolves_by_the_url_it_names() {
+    let production = MockServer::start().await;
+    let base = production.uri();
+    let config = format!("[[root]]\nurl = \"{base}/docs/\"\n");
+    let prefix = format!("{base}/docs/");
+    let tmp = tempfile::tempdir().unwrap();
+    let alias = r#"<title>r</title><meta http-equiv="refresh" content="0; url=../initiatives/">"#;
+    let whole = [
+        ("tools/index.html", page("tools", "", "tools")),
+        (
+            "project/initiatives/index.html",
+            sourced("project", "", ("ROOT", "initiatives.adoc"), "p"),
+        ),
+        ("project/objectives/index.html", alias.to_owned()),
+        (
+            "releases/spins/index.html",
+            sourced(
+                "releases",
+                "master",
+                ("ROOT", "spins/index.adoc"),
+                r#"<h2 id="x">x</h2>"#,
+            ),
+        ),
+    ];
+    let (local, seeds) = build(tmp.path(), &prefix, &whole);
+    let none = Baseline {
+        run: RunId(0),
+        index: BaselineIndex::default(),
+        externals: Externals::Live,
+    };
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let first = check(store, &config, local, &seeds, none).await;
+
+    let xrefs = [
+        "project::objectives.adoc",
+        "releases::spins.adoc#x",
+        "project::uncrawled.adoc",
+        "project::nowhere.adoc",
+    ]
+    .map(|refspec| format!(r##"<a class="xref unresolved" href="#{refspec}">{refspec}</a> "##));
+    let partial = [("tools/index.html", page("tools", "", &xrefs.concat()))];
+    let dir = tmp.path().join("partial");
+    std::fs::create_dir(&dir).unwrap();
+    let (local, seeds) = build(&dir, &prefix, &partial);
+    let baseline = Baseline {
+        run: first.run,
+        index: first.store.baseline_index(first.run).unwrap(),
+        externals: Externals::Baseline,
+    };
+    ok(&production, "GET", "/docs/project/uncrawled/").await;
+    let second = check(first.store, &config, local, &seeds, baseline).await;
+
+    let verdicts = second.verdicts("/docs/tools/", &base);
+    let of = |refspec: &str| {
+        let raw = format!("#{refspec}");
+        let (_, outcome) = verdicts.iter().find(|(h, _)| *h == raw).unwrap();
+        outcome.as_str()
+    };
+    assert_eq!(of("project::objectives.adoc"), "ok", "a crawled alias");
+    assert_eq!(of("releases::spins.adoc#x"), "ok", "a shared URL");
+    assert_eq!(of("project::uncrawled.adoc"), "ok", "answered live");
+    assert_eq!(of("project::nowhere.adoc"), "broken_url");
+    let targets = second.targets(second.run, &base);
+    let by = |path: &str| targets.iter().find(|t| t.0.ends_with(path)).unwrap();
+    assert_eq!(by("/project/objectives/").3, "baseline");
+    assert_eq!(by("/releases/spins/").3, "baseline");
+    assert_eq!(by("/project/uncrawled/").3, "live");
+    assert_eq!(
+        asked(&production).await,
+        2,
+        "the two URLs the baseline lacks"
+    );
 }

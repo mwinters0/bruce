@@ -4,10 +4,11 @@
 //!
 //! A partial build lacks most components, so every xref into one reaches the
 //! page as `#<refspec>` (I6, I10). The profile that read the page maps the
-//! refspec to the baseline's page for it, unless the build holds the
-//! refspec's component-version: Antora had that component's whole catalog,
-//! and the xref stays unresolved. The held set is final only after the last
-//! built page, so the links wait in [`Pending`](super::baseline::Pending).
+//! refspec to the baseline's page for it, or to the URL it names (D57),
+//! unless the build holds the refspec's component-version: Antora had that
+//! component's whole catalog, and the xref stays unresolved. The held set is
+//! final only after the last built page, so the links wait in
+//! [`Pending`](super::baseline::Pending).
 
 use url::Url;
 

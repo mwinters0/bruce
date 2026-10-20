@@ -11,7 +11,7 @@ in the bootstrap grilling (2026-10-17, frozen as `historical/initial.md`), D31 t
 an entry's **Code** is the module that will hold it once built. D25 and D29 are spent: D25 was superseded by D30, and D29
 became `roadmap.md`'s phase index.
 
-<!-- decision-watermark: D56 -->
+<!-- decision-watermark: D57 -->
 
 ## Scope and modes
 
@@ -357,7 +357,7 @@ A built page's tagged link is written once every built page is read (D54's wait)
 build holds stays `unresolved_xref`; else the profile's Resolve maps it through the baseline's pages, loaded before the run
 as its targets are (D52), and the link points at that page with the refspec's fragment, `xref_refspec` kept, so
 `link_verdicts` reads a refspec as unresolved where the link is to its own page or its fragment is the refspec (I6). No
-version: the latest the baseline holds, in Antora's order. Rejected: a column or a cleared refspec marking a resolved link
+version: the latest the baseline holds, in Antora's order. Where no page has the coordinates: D57. Rejected: a column or a cleared refspec marking a resolved link
 (schema 5 refuses P5.2's baseline, D43). Reopens: Antora marking an unresolved xref other than as `#<refspec>` (I6). Code:
 `crawl::xref`, `profile::antora::resolve`. Evidence: `crawl::baseline::tests::an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline`.
 
@@ -367,7 +367,16 @@ alone. The linking pages are the baseline's crawled pages in no held prefix and 
 held prefix with no `local` `ok` target, every file of the build being a seed (`ci`). Rejected: every page not built, a page
 the change deleted failing it on links gone with it, while those it misses are KD5's; `Held` moved under `crawl` and `report`,
 a `crawl`-to-`ci` edge against D39; a held set stored in the run, schema 5 refusing the baseline (D43).
-Reopens: I16 changing, the layout then living twice. Code: `report::inverse`. Evidence: `report::inverse::tests`.
+Reopens: I16 changing, the layout then living twice (three times with D57). Code: `report::inverse`. Evidence: `report::inverse::tests`.
+
+### D57 An xref no page's facts find is the URL its refspec names, answered as any URL the build lacks
+Antora resolves a refspec through a page-alias, and to either of two source files sharing an output URL; the baseline holds
+facts once per URL and an alias only if the crawl reached it. So where Resolve's facts find no page it returns the URL I16
+names, under the prefix read off a baseline page of the component-version, and D22's chain answers it: the baseline's rows,
+else a request. A URL answering `broken_url` makes the link `unresolved_xref` (`link_verdicts` rule 1); `error` and `unchecked`
+stay as they are, D16 failing nothing on what was not learned. Rejected: the baseline's redirect targets alone (an uncrawled alias
+is missed); live alone; any outcome but `ok` as unresolved. Reopens: I16 changing (the layout in three places), a
+`latest_version_segment`. Code: `profile::antora::resolve`. Evidence: `crawl::baseline::tests::an_xref_no_page_has_the_coordinates_of_resolves_by_the_url_it_names`.
 
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
 `check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status

@@ -171,9 +171,79 @@ fn a_refspec_resolves_to_the_page_with_its_coordinates() {
         Some("https://x.org/ops/")
     );
     assert_eq!(resolved("3.0@guide::install.adoc", &pages), None);
-    assert_eq!(resolved("guide::missing.adoc", &pages), None);
-    assert_eq!(resolved("guide:admin:install.adoc", &pages), None);
     assert_eq!(resolved("nobody::install.adoc", &pages), None);
+}
+
+#[test]
+fn a_refspec_no_page_has_the_coordinates_of_names_its_url() {
+    let pages = site();
+    let named = |reference| resolved(reference, &pages);
+    // A page-alias, or a page the baseline lacks: the layout of I16 under the
+    // prefix of the component-version, the latest where no version is given.
+    assert_eq!(
+        named("guide::missing.adoc#x").as_deref(),
+        Some("https://x.org/guide/2.0/missing/#x")
+    );
+    assert_eq!(
+        named("1.0@guide:admin:a/b.adoc").as_deref(),
+        Some("https://x.org/guide/1.0/admin/a/b/")
+    );
+    // A bare version names no segment, and the module `ROOT` none.
+    assert_eq!(
+        named("ops::old.adoc").as_deref(),
+        Some("https://x.org/ops/old/")
+    );
+    assert_eq!(
+        named("ops:admin:old.adoc").as_deref(),
+        Some("https://x.org/ops/admin/old/")
+    );
+    // The one URL of `spins.adoc` and `spins/index.adoc`, and the root's.
+    assert_eq!(
+        named("ops:admin:spins/index.adoc").as_deref(),
+        Some("https://x.org/ops/admin/spins/")
+    );
+    assert_eq!(
+        named("1.0@guide:admin:index.adoc").as_deref(),
+        Some("https://x.org/guide/1.0/admin/")
+    );
+    assert_eq!(
+        named("1.0@guide::index.adoc").as_deref(),
+        Some("https://x.org/guide/1.0/")
+    );
+    // No page of the component-version, so no prefix to name a URL under.
+    assert_eq!(named("3.0@guide::missing.adoc"), None);
+    assert_eq!(named("nobody::missing.adoc"), None);
+}
+
+#[test]
+fn a_page_with_no_edit_link_is_named_by_its_component_version_alone() {
+    let mut pages = Pages::new(&[]);
+    // The page of a component's version carries no module or `rel_path`.
+    pages.pages.push((
+        url("https://x.org/a%20b/2.0/"),
+        vec![
+            (COMPONENT.to_owned(), "a b".to_owned()),
+            (VERSION.to_owned(), "2.0".to_owned()),
+        ],
+    ));
+    assert_eq!(
+        resolved("2.0@a b::the page.adoc", &pages).as_deref(),
+        Some("https://x.org/a%20b/2.0/the%20page/")
+    );
+}
+
+#[test]
+fn a_page_at_a_segment_that_is_not_its_version_names_no_prefix() {
+    let mut pages = Pages::new(&[]);
+    // The latest of a component whose latest version is served as `latest`.
+    pages.pages.push((
+        url("https://x.org/fedora/latest/"),
+        vec![
+            (COMPONENT.to_owned(), "fedora".to_owned()),
+            (VERSION.to_owned(), "f44".to_owned()),
+        ],
+    ));
+    assert_eq!(resolved("f44@fedora::new.adoc", &pages), None);
 }
 
 #[test]
