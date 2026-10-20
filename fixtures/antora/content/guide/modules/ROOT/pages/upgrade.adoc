@@ -4,3 +4,7 @@
 == Rolling back
 
 Reinstall the previous release, as in xref:install.adoc#first-boot[first boot].
+
+The flow of an upgrade is drawn by the tools component:
+
+image::tools:ROOT:diagram.svg[The upgrade flow]

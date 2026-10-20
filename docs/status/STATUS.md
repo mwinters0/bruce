@@ -33,7 +33,8 @@ and the development process is in place: [`../process.md`](../process.md), the
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
 pages, chosen and saved by `scripts/fixtures.py`, and `fixtures/antora/`, a
 three-component Antora site, the Fedora UI bundle and seven built pages, which
-`mise run e2e` rebuilds.
+`mise run e2e` rebuilds and then crawls, exports and runs `check-dir` over, asserting
+the gate's exit status and sections.
 
 ## P5 progress
 
@@ -70,7 +71,8 @@ The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
 - [x] **5.9.1** Every file of the build is a target of the run, so the inverse
   check reads a removed file no built page links to.
   [Notes](../wip/roadmap-P5.9.1-every-file-notes.md).
-- [ ] **5.10** The end-to-end test's planted changes and assertions.
+- [x] **5.10** The end-to-end test's planted changes and assertions.
+  [Notes](../wip/roadmap-P5.10-e2e-notes.md).
 - [ ] **5.11** quick-docs as published and changed, against the en-US
   baseline.
 

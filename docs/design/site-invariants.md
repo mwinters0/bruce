@@ -177,11 +177,13 @@ not as an error.
   a target whose `final_url` is the page and never a `pages` row.
 - **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/fedora-docs/ | grep -o '<meta http-equiv="refresh"[^>]*>'`
 
-### I15 Antora builds a local git repository's working tree, and a partial build renders no edit link
+### I15 Antora builds a local git repository's working tree, and renders an edit link only for a hosted remote
 - **Claim.** Antora 3.1.15 refuses a local content source that is not a git repository ("must be a
   git repository"), and builds the working tree of one named with `branches: HEAD` (an uncommitted
-  edit is built). With `CI` set the Fedora UI renders no edit link, and a source with no forge
-  remote gets none either way. A page's nav container carries `data-component` and `data-version`
+  edit is built). With `CI` set the Fedora UI renders no `file://` link, and a source with no
+  github.com, gitlab.com, bitbucket.org or pagure.io `origin` gets no edit link either; one with
+  such an `origin` gets `https://<host>/<owner>/<repo>/edit/<branch>/<path>`, as the e2e whole
+  build's pages do. A page's nav container carries `data-component` and `data-version`
   (empty for a `version: ~` component) regardless, and a page-alias is a meta-refresh page (I14).
   An xref out of the build logs an error, exits 0 and renders `class="xref unresolved"` (I6). A
   build with no `site.url` writes no sitemap or canonical link, and the UI's footer writes
@@ -193,7 +195,7 @@ not as an error.
   may render these differently.
 - **Verified against.** Antora 3.1.15, UI bundle `7f5fb3d`, 2026-10-20.
 - **Relied on by.** D24: `scripts/e2e.py` commits each component into a repository under
-  `runs/e2e/repos/` and builds with `CI=true`.
+  `runs/e2e/repos/`, gives each a github.com `origin`, and builds with `CI=true`.
 - **Re-verify.** `mise run e2e -- --save-pages && git diff --stat fixtures/antora/pages`
 
 ### I16 An Antora page's URL is its component, its version unless bare, its module unless `ROOT`, and its page

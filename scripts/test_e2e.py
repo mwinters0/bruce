@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 import e2e
@@ -61,6 +63,12 @@ class Materialise(unittest.TestCase):
                 self.assertTrue((path / "antora.yml").is_file())
                 self.assertEqual(e2e.run(["git", "status", "--porcelain"], path), "")
 
+    def test_each_has_the_hosted_origin_antora_makes_an_edit_link_from(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            repos = e2e.materialise(e2e.FIXTURES / "content", Path(d) / "repos")
+            for name, path in repos.items():
+                self.assertEqual(e2e.run(["git", "remote", "get-url", "origin"], path).strip(), e2e.ORIGIN.format(name))
+
 
 class Content(unittest.TestCase):
     """The hand-written site holds what the spec says it does."""
@@ -79,6 +87,144 @@ class Content(unittest.TestCase):
         self.assertIn(":page-aliases:", pages)
         for target in ("xref:tools:", "xref:guide:", "xref:ops:"):
             self.assertIn(target, pages)
+
+
+class Plant(unittest.TestCase):
+    def planted(self, d: str) -> Path:
+        tools = e2e.materialise(e2e.FIXTURES / "content", Path(d) / "repos")["tools"]
+        e2e.plant(tools)
+        return tools
+
+    def test_it_deletes_the_page_and_the_image_and_renames_the_anchor(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            tools = self.planted(d)
+            self.assertFalse((tools / "modules/ROOT/pages/reference.adoc").exists())
+            self.assertFalse((tools / "modules/ROOT/images/diagram.svg").exists())
+            usage = (tools / "modules/ROOT/pages/usage.adoc").read_text()
+            self.assertIn("[#run]", usage)
+            self.assertNotIn("[#running]", usage)
+
+    def test_it_edits_the_working_tree_without_committing(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            self.assertNotEqual(e2e.run(["git", "status", "--porcelain"], self.planted(d)), "")
+
+    def test_a_plant_over_text_the_fixture_lacks_is_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "a.adoc"
+            f.write_text("x")
+            with self.assertRaisesRegex(e2e.E2eError, "no 'y' to plant over"):
+                e2e.replace(f, "y", "z")
+
+    def test_the_fixture_embeds_the_image_the_plant_deletes_from_another_component(self) -> None:
+        guide = (e2e.FIXTURES / "content/guide/modules/ROOT/pages/upgrade.adoc").read_text()
+        self.assertIn("image::tools:ROOT:diagram.svg", guide)
+        ops = (e2e.FIXTURES / "content/ops/modules/ROOT/pages/index.adoc").read_text()
+        self.assertIn("xref:tools:ROOT:reference.adoc", ops)
+
+
+class Server(unittest.TestCase):
+    def test_it_serves_the_directory_under_the_site_path_only(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            site = Path(d)
+            (site / "a").mkdir()
+            (site / "a" / "index.html").write_text("<p>a</p>")
+            (site / "top.html").write_text("top")
+            server = e2e.serve(site, 0)
+            base = f"http://127.0.0.1:{server.server_address[1]}"
+            try:
+                get = lambda path: urllib.request.urlopen(base + path).read()
+                self.assertEqual(get(e2e.SITE_PATH + "/a/"), b"<p>a</p>")
+                self.assertEqual(get(e2e.SITE_PATH + "/top.html"), b"top")
+                for path in ("/top.html", "/robots.txt", e2e.SITE_PATH + "/missing/"):
+                    with self.assertRaises(urllib.error.HTTPError) as err:
+                        get(path)
+                    self.assertEqual(err.exception.code, 404, path)
+            finally:
+                server.shutdown()
+                server.server_close()
+
+    def test_the_configuration_names_the_site_as_its_one_root_and_allowlists_nothing(self) -> None:
+        cfg = e2e.bruce_config(8099)
+        self.assertIn('url = "http://127.0.0.1:8099/en-US/"', cfg)
+        self.assertNotIn("allowlist", cfg)
+
+
+class Verify(unittest.TestCase):
+    """`verify` accepts the documents the planted changes should give and
+    names each way a section differs."""
+
+    P = "http://127.0.0.1:8099/en-US/"
+
+    def doc(self, **sections: object) -> dict:
+        doc = {
+            "run": 2, "baseline_run": 1, "introduced": [], "inverse": [], "redirected": [], "errors": [],
+            "already_broken": {"count": 0, "links": None},
+        }
+        doc.update(sections)
+        return doc
+
+    def introduced(self, row: tuple) -> dict:
+        page, href, kind, outcome, reason, baseline = row
+        return {"page": self.P + page, "raw_href": href, "kind": kind, "outcome": outcome, "reason": reason, "baseline": baseline}
+
+    def inverse(self, row: tuple) -> dict:
+        page, href, kind, removed, component = row
+        return {"page": self.P + page, "raw_href": href, "kind": kind, "removed": removed, "component": component}
+
+    def redirect(self, row: tuple) -> dict:
+        page, href, hop = row
+        return {"page": self.P + page, "raw_href": href, "chain": f"{hop} {self.P}"}
+
+    def good(self) -> tuple:
+        unchanged = (
+            0,
+            self.doc(
+                redirected=[self.redirect(r) for r in e2e.UNCHANGED_REDIRECTED],
+                already_broken={"count": 9, "links": None},
+            ),
+            "",
+        )
+        changed = (
+            1,
+            self.doc(
+                run=3,
+                introduced=[self.introduced(r) for r in e2e.PLANTED_INTRODUCED],
+                inverse=[self.inverse(r) for r in e2e.PLANTED_INVERSE],
+                redirected=[self.redirect(r) for r in e2e.PLANTED_REDIRECTED],
+                already_broken={"count": 6, "links": None},
+            ),
+            "",
+        )
+        image = self.doc(inverse=[self.inverse(r) for r in e2e.IMAGE_ONLY_INVERSE])
+        return unchanged, changed, ((1, image, ""), (0, image, ""))
+
+    def test_the_documents_the_plant_should_give_are_accepted(self) -> None:
+        unchanged, changed, image = self.good()
+        reports = (changed[1]["introduced"], changed[1]["inverse"])
+        self.assertEqual(e2e.verify(unchanged, changed, 8099, image, reports), [])
+
+    def test_an_unchanged_build_that_introduces_something_is_named(self) -> None:
+        unchanged, changed, image = self.good()
+        unchanged[1]["introduced"] = [self.introduced(next(iter(e2e.PLANTED_INTRODUCED)))]
+        problems = e2e.verify(unchanged, changed, 8099, image)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("unchanged introduced", problems[0])
+
+    def test_a_missing_inverse_row_and_a_wrong_exit_status_are_named(self) -> None:
+        unchanged, changed, image = self.good()
+        changed[1]["inverse"].pop()
+        problems = e2e.verify(unchanged, (0, changed[1], ""), 8099, image)
+        self.assertEqual(sorted(p.split(":")[0] for p in problems), ["planted exit status", "planted inverse", "planted inverse count"])
+
+    def test_a_warned_inverse_that_still_fails_is_named(self) -> None:
+        unchanged, changed, image = self.good()
+        problems = e2e.verify(unchanged, changed, 8099, (image[0], (1, image[1][1], "")))
+        self.assertEqual([p.split(":")[0] for p in problems], ["image only, --inverse=warn, exit status"])
+
+    def test_a_run_that_printed_no_json_is_named_with_its_stderr(self) -> None:
+        unchanged, changed, _ = self.good()
+        problems = e2e.verify((2, None, "bad config\n"), changed, 8099)
+        self.assertTrue(any("bad config" in p for p in problems))
 
 
 class Committed(unittest.TestCase):

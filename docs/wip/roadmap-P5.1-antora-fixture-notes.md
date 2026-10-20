@@ -36,8 +36,10 @@ docstring; the external behaviour it relies on is `site-invariants.md`, I15.
   canonical link. The `ops` and `tools` pages have no version segment in
   their path; `tools` renders `data-version=""` and `ops`
   `data-version="master"`.
-- **No page has an edit link** under `CI=true`, so the fixture pages test
-  P5's "found by the component-versions the build holds", not a forge URL.
+- **A partial build's pages have no edit link** under `CI=true` and no hosted
+  `origin`, so the fixture pages test P5's "found by the component-versions the
+  build holds", not a forge URL; the whole build's, from repositories given a
+  github.com `origin`, have one (I15).
 - **The build is deterministic**: two runs write byte-identical pages, so
   `--save-pages` shows a diff only when Antora or the bundle changed. The
   sitemaps carry timestamps and are not saved.

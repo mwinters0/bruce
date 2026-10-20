@@ -30,8 +30,8 @@
   {
    "build": "whole",
    "path": "whole/guide/1.0/install/index.html",
-   "bytes": 12172,
-   "sha256": "c0107ae42d6edff6b15e37e10cf4d68430c1a3ec342fceff22b399295b15fff5"
+   "bytes": 12754,
+   "sha256": "90ea33683a9a4aacf8eee2611bf7fbc3c6f285622747f82eb2a174ecc9643c6c"
   },
   {
    "build": "whole",
@@ -42,8 +42,8 @@
   {
    "build": "whole",
    "path": "whole/ops/admin/partitions/index.html",
-   "bytes": 11946,
-   "sha256": "6a58ba5c1cd7f24da1ea164edd95b4da29a81e260817e55d56961d1635ff4563"
+   "bytes": 12534,
+   "sha256": "6a948be835bbafc9402db797937abe1cfc619cea26aae7b17c8b10479e4222e6"
   }
  ]
 }

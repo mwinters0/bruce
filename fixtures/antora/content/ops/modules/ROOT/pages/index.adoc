@@ -2,3 +2,5 @@
 
 Administration pages are in the xref:admin:partitions.adoc[admin module], and the
 install guide is xref:guide::index.adoc[here].
+
+The options each tool takes are in the xref:tools:ROOT:reference.adoc[tools reference].
