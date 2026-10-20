@@ -6,7 +6,7 @@ over an alternative, and obvious changes argued and refused. Nothing here says h
 entry as `docs/design/decisions.md`, "D12"; the rest of the rules, the line cap included, are
 `docs/process.md`, "The decision register".
 
-The modules are P1's scaffold, and `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url`, `fetch`, `crawl` and `report` hold code. D1–D30 were settled
+The modules are P1's scaffold, and `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url`, `fetch`, `crawl`, `ci` and `report` hold code. D1–D30 were settled
 in the bootstrap grilling (2026-10-17, frozen as `historical/initial.md`), D31 the same day, D32 onward in P1's grilling, and
 an entry's **Code** is the module that will hold it once built. D25 and D29 are spent: D25 was superseded by D30, and D29
 became `roadmap.md`'s phase index.
@@ -132,7 +132,7 @@ edge passing review.
 
 ## Storage and history
 
-### D2 Runs are append-only: every row carries a `run_id` and nothing is overwritten
+### D2 Runs are append-only: every row but `meta`'s carries a `run_id`, and only a run's `finished_at` is updated
 This answers when a link broke and which upstream change did it, and allows run diffs. Old runs are
 pruned explicitly (`bruce prune`). Rejected: latest-state upsert, which cannot date a breakage.
 
@@ -183,7 +183,7 @@ non-failing modifier (I4, I5). Rejected: normalising the trailing slash, which s
 Code: `url::canonical`. Evidence: `url::tests`.
 
 ### D12 A fragment is valid where a browser would scroll to it
-Valid: any non-empty `id`, `name` on `<a>` only, and always `#` and `#top`. Matching is exact,
+Valid: any non-empty `id`, `name` on `<a>` only, and always `#` and `#top` in any case. Matching is exact,
 after percent-decoding. Each anchor stores its tag and its placement (D34), so links to
 template chrome are reportable (I9). Text fragments are `unchecked`.
 Rejected: every `name` attribute, which makes `#viewport` and `#generator` pass on every page.
@@ -211,7 +211,7 @@ Code: `crawl::Shared::write`. Evidence: `crawl::tests::a_redirect_is_a_chain_and
 
 ### D4 CI resolves targets outside its build against a published baseline, then live
 A scheduled full crawl publishes a baseline holding each page's anchor set. CI also runs the
-inverse check: pages in other repos linking to anchors this change removes. Rejected: live-only
+inverse check: pages outside the build linking to pages, files or anchors this change removes (D56). Rejected: live-only
 (slow and non-deterministic), and skipping cross-component links (the breakage this tool exists for).
 
 ### D9 CI fails only on breakage the change introduced
@@ -248,7 +248,7 @@ the build lacks, a URL on the site new to the gate being the one most worth aski
 ### D5 Configuration is optional TOML, and no flag overrides a key; roots are separate from the allowlist
 `[[root]]` entries are crawled fully, each with include/exclude globs, its own sitemap URL and its
 profile (D35); `allowlist` lists hosts checked one hop deep, `[rate]` holds the default limit and
-`[host."<h>"]` a host's own `per_second` and `robots` (D8). Roots are configurable so the tool is not
+`[host."<h>"]` a host's own `per_second`, `concurrency` and `robots` (D8). Roots are configurable so the tool is not
 tied to Fedora, and every key but a root's `url` has a default (D40). `bruce crawl`'s URL stands in
 for a file's absent roots and nothing else; per-key flags wait for someone to ask (`cli::crawl`). Keys
 are snake_case and `[[root]]` singular, as Cargo's `[[bin]]`. Rejected: kebab-case, which lychee and

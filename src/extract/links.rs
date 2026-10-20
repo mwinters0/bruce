@@ -91,7 +91,8 @@ pub struct Link {
     /// The attribute's decoded value, as written: for `srcset` one
     /// candidate's URL, for a refresh the URL in `content`, unquoted.
     pub raw: String,
-    /// `raw` resolved against the page's URL or its `<base href>`; `None`
+    /// `raw` resolved against the page's URL or its `<base href>`, or in a
+    /// local build an href beginning `/` against the site root (D53); `None`
     /// where it does not parse as a URL.
     pub url: Option<Url>,
     pub kind: Kind,

@@ -70,7 +70,7 @@ pub enum Error {
     NoSuchRun(RunId),
     /// The run never finished, so a baseline of it is refused (D48).
     Unfinished(RunId),
-    /// A file given as a baseline is not one (D52): it holds more than one
+    /// A file given as a baseline is not one (D52): it holds other than one
     /// run, or its run never finished.
     NotBaseline(String),
     /// The writer thread panicked.

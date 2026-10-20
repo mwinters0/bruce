@@ -12,8 +12,8 @@ pub enum Error {
     NoSuchRun(RunId),
     /// A `diff` with no `--from`, and no finished run before the one compared.
     NoEarlierRun(RunId),
-    /// An `introduced` report over a run that names no baseline, which only a
-    /// `check-dir` run does.
+    /// An `introduced` or `inverse` report over a run that names no baseline,
+    /// which only a `check-dir` run does.
     NoBaseline(RunId),
 }
 

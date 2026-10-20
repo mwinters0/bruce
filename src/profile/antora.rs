@@ -27,8 +27,9 @@ pub struct Antora;
 /// A page's Antora coordinates as columns (D19, D37). `version` is the nav
 /// container's, verbatim, a placeholder (`""`, `master`) included, and NULL
 /// where it has no `data-version` or the page has no nav container, whose
-/// `component` then came from its URL. D19 reads a placeholder and a NULL
-/// alike, as the component's only or latest version.
+/// `component` then came from its URL. Resolve ranks a NULL and `""` as a
+/// bare version, which Antora lists first, and `master` as any other name
+/// (`resolve::compare`), and passes a NULL over where it needs a prefix.
 const PAGES: View = View {
     name: "antora_pages",
     select: "SELECT run_id, url_id, \

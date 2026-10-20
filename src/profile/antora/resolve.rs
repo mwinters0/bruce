@@ -37,6 +37,13 @@ struct Refspec<'a> {
 /// The parts of `reference`, or `None` when it names no component or is not a
 /// page reference.
 fn parse(reference: &str) -> Option<Refspec<'_>> {
+    // deficiency: KD10 Antora's resource ID is
+    // `version@component:module:family$relative` (`@antora/content-classifier`,
+    // `lib/util/parse-resource-id.js`), the family after the module; this
+    // takes `page$` only before the component, so `comp:mod:page$x.adoc` stays
+    // unresolved and `page$comp:mod:x.adoc`, which Antora refuses, resolves. A
+    // version with no component (`2.0@page.adoc`, the page's own component at
+    // another version, which the build need not hold) is refused too.
     let (id, fragment) = match reference.split_once('#') {
         Some((id, fragment)) => (id, Some(fragment)),
         None => (reference, None),
@@ -95,8 +102,9 @@ pub(super) fn resolve(reference: &str, lookup: &dyn Lookup) -> Result<Option<Url
 /// there: the component-version's prefix, read off a baseline page carrying
 /// its facts (`held` names them), then the module unless `ROOT` and the page
 /// without `.adoc`, an `index` dropped. `None` where the baseline holds no
-/// page of the component-version, or the one it holds is not under its
-/// version's own segment (the latest at a `latest_version_segment`, I16).
+/// page of the component-version carrying a version fact, or the newest it
+/// holds is not under its version's own segment (the latest at a
+/// `latest_version_segment`, I16).
 fn named(
     spec: &Refspec<'_>,
     held: &[(&str, &str)],
@@ -148,7 +156,7 @@ fn prefix(page: &Url, component: &str, version: &str) -> Option<Url> {
 }
 
 /// The page of `candidates` whose version Antora orders first (a version it
-/// would call the component's latest), the earliest URL where two tie.
+/// would call the component's latest), the lookup's first where two tie.
 fn latest(candidates: Vec<Url>, lookup: &dyn Lookup) -> Result<Url, BoxError> {
     Ok(newest(candidates, lookup, false)?
         .expect("at least two candidates")

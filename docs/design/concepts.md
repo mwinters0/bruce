@@ -40,7 +40,7 @@ decisions each carries are cited in its module's doc.
   staying in the parent. A run over a local build begins from its seeds in the
   parent, and resolves an href beginning `/` against the build's site root (D53).
   What a run over a build leaves to the baseline, the component-versions its
-  pages hold and the copies sent last is in the `baseline` child (D54); the
+  pages hold and the copies the parent sends last is in the `baseline` child (D54); the
   xrefs of a built page, resolved through the baseline's pages once the held
   set is final, in the `xref` child (D55). It sits above
   `fetch`, `extract` and `store`, driving each (D39).
@@ -106,6 +106,11 @@ decisions each carries are cited in its module's doc.
 - **bruce** — `profile/`: the trait, the registry and the fact and lookup
   types in the parent file, and a child module for each profile compiled in
   (D33), `generic` and `antora`, whose Resolve is its `resolve` child (D55). `cli` alone builds the registry (D39).
+
+**Not in one place.** I16's URL layout, a component-version's prefix in a
+page's URL, is read in `crawl/baseline.rs` (`Held::holds`), `report/inverse.rs`
+(`prefix`) and `profile/antora/resolve.rs` (`prefix`); a shared reader sits
+below `profile` (D39).
 
 ## Forge edit-URL shapes
 

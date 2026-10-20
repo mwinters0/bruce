@@ -19,12 +19,12 @@ use url::{Host, Url};
 
 use crate::url::{Canonical, canonical};
 
-/// Requests a second to one host that no `Crawl-delay` or `[host]` governs
-/// (D40).
+/// Requests a second to one host that no `Crawl-delay`, `[host]` or `[rate]`
+/// governs (D40).
 pub const DEFAULT_PER_SECOND: f64 = 2.0;
 
-/// Requests in flight to one host at once, when no `[host]` says otherwise
-/// (D8). It binds only on a slow host: at the default rate and a response of
+/// Requests in flight to one host at once, when neither `[host]` nor `[rate]`
+/// says otherwise (D8). It binds only on a slow host: at the default rate and a response of
 /// a third of a second, one request is in flight.
 pub const DEFAULT_CONCURRENCY: u32 = 4;
 

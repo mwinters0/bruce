@@ -4,10 +4,10 @@
 //! 1024 bytes for `<meta charset>` or `<meta http-equiv>`, then UTF-8. Bytes
 //! the encoding cannot decode become U+FFFD.
 //!
-//! The scan follows the WHATWG prescan's shape (comments and every tag's
-//! attributes are walked, so a `charset` in a comment or in text is not
-//! read) without its corners: a `<meta>` is taken at its first `charset`,
-//! and the pragma's `content` is searched for a `charset=` as the header is.
+//! The scan follows the WHATWG prescan's shape (comments and every start
+//! tag's attributes are walked, so a `charset` in a comment or in text is not
+//! read) without its corners: an end tag's attributes are not skipped, a
+//! `<meta>` is taken at its first `charset`, and the pragma's `content` is searched for a `charset=` as the header is.
 
 use encoding_rs::{Encoding, UTF_8, UTF_16BE, UTF_16LE, WINDOWS_1252, X_USER_DEFINED};
 

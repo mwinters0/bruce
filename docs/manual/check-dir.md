@@ -18,9 +18,9 @@ have broken. The run is added to a database like a crawl's ([`crawl.md`](crawl.m
 
 | Argument | Default | Meaning |
 |---|---|---|
-| `DIR` | required | The build directory. Every `.html` file under it is a page checked, and every other file a target of the run. |
+| `DIR` | required | The build directory. Every `.html` or `.htm` file under it is a page checked, and every other file a target of the run. |
 | `--prefix URL` | required | The production URL of the directory's root, such as `https://docs.example.org/en-US`. A file is the page at the prefix plus its path, and `foo/index.html` is `foo/` too. It must be inside a root's scope. |
-| `--baseline FILE\|URL` | required | The baseline file, or an `https` URL to download it from. A `.gz` file or URL is decompressed. Nothing is cached. |
+| `--baseline FILE\|URL` | required | The baseline file, or an `http` or `https` URL to download it from. A gzipped file is decompressed, whatever its name. Nothing is cached. |
 | `--config FILE` | none | The configuration the baseline was crawled under ([`config.md`](config.md)). With none, the prefix is the only root. |
 | `--db FILE` | `bruce.duckdb` | The database the run is added to, created if it does not exist. |
 | `--externals MODE` | `baseline` | How a link to an allowlisted host is answered; see below. |
@@ -34,9 +34,11 @@ difference between the two reads as breakage.
 
 ## How a link is answered
 
-A link to a page in the build is read from the directory. Any other is
-answered from the baseline where it holds the URL, else by a request to the
-live site, at the configuration's pace:
+A link to a page in the build is read from the directory. Any other the
+configuration would have a crawl ask about is answered from the baseline where
+it holds the URL, else by a request to the live site, at the configuration's
+pace; one it would leave `unchecked` (`skip`, out of every root's scope, a host
+not on the allowlist) stays `unchecked`:
 
 - **A page of a component the build holds, but not built**, is `broken_url`,
   reason `not_built`: the build is the truth for the components it holds,
@@ -54,7 +56,7 @@ live site, at the configuration's pace:
   `unresolved_xref`.
 - **A link starting `/`** resolves against the prefix, the way a static server
   serving the directory at `/` shows it.
-- **A link to another host** is answered by `--externals`: `baseline` takes
+- **A link to an allowlisted host** is answered by `--externals`: `baseline` takes
   the baseline's answer where it has one and asks otherwise, `live` always
   asks, and `skip` never asks: the baseline's answer where it has one, else
   `unchecked`. `--externals` does not reach a URL on the site itself.
@@ -76,11 +78,11 @@ a redirect never does.
 
 A change can break a page it does not contain: removing a page, a file or an
 anchor that other components link to. The check reads the baseline's links on
-pages **outside the build**, in components the build does not hold, and fails
-where one was `ok` and what it reached is now gone from a component the build
-holds: the page is not built, an image or attachment is not built, or the page
-is built and has lost the anchor. The same page, file or anchor in a component
-the build lacks is the baseline's, unchanged. The output lists each link with
+pages **outside the build**, in component-versions the build does not hold, and
+fails where one was `ok` and what it reached is now gone from a component-version
+the build holds: the page is not built, an image or attachment is not built, or
+the page is built and has lost the anchor. The same page, file or anchor in a
+component-version the build lacks is the baseline's, unchanged. The output lists each link with
 the component it is on, and the count of inbound pages across components. `--inverse=warn` lists them and
 leaves the exit status alone, for a repo whose CI is not yet ready to be that
 strict; the same list is `bruce report inverse --run N` ([`report.md`](report.md)).
@@ -127,7 +129,7 @@ baseline run and the day it was crawled, whose answers stand whatever their
 age.
 
 `--format json` prints one object on stdout, and the first line goes to
-stderr:
+stderr, prefixed `bruce check-dir: `:
 
 ```json
 {"run":7,"baseline_run":1,"baseline_date":"2026-10-19","introduced":[],"inverse":[],"redirected":[],"errors":[],"already_broken":{"count":4,"links":null}}

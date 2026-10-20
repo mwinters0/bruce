@@ -51,4 +51,10 @@ roadmap's phase index.
   link to a page the change deletes passes on the baseline's `ok`. **(c) unowned**: a
   non-Antora site checked in CI would promote it. Detail: `src/crawl.rs`
 
-<!-- deficiency-watermark: KD9 -->
+- **KD10** — Resolve's parse puts a refspec's family before the component where
+  Antora puts it after the module, and refuses a version with no component, so
+  such an xref out of the build stays `unresolved_xref` and fails the gate.
+  **(c) unowned**: a content repo writing either form would promote it.
+  Detail: `src/profile/antora/resolve.rs`
+
+<!-- deficiency-watermark: KD10 -->

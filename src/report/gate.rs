@@ -85,7 +85,8 @@ impl Gate {
         baseline_line(self.baseline, &self.baseline_date)
     }
 
-    /// The sections after the introduced breakage, which are never failing.
+    /// The sections after the introduced breakage: the inverse breakage, which
+    /// fails under `--inverse=fail`, and the rest, which never fail.
     pub(super) fn rest(&self, all: bool) -> String {
         [
             self.inverse_section(),

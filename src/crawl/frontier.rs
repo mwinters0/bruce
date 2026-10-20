@@ -32,12 +32,14 @@ pub enum Plan {
     /// In root `root`'s scope: GET, an HTML response extracted and its links
     /// followed.
     Page { root: usize },
-    /// On an allowlisted host and named by an `anchor` link: GET, extracted
-    /// for its anchors only (D3).
+    /// On an allowlisted host, or in scope where the build lacks it and the
+    /// baseline holds no target, and named by an `anchor` link: GET,
+    /// extracted for its anchors only (D3).
     Anchors,
-    /// On an allowlisted host and named by any other kind of link, or reached
-    /// by a redirect where a link would leave it unchecked: asked for its
-    /// status alone, HEAD with the GET fallback (D13).
+    /// As [`Plan::Anchors`] but named by any other kind of link, or reached
+    /// by a redirect where a link would leave it unchecked or to the
+    /// baseline: asked for its status alone, HEAD with the GET fallback
+    /// (D13).
     Status,
     /// Not requested; the target row says why.
     Unchecked(&'static str),

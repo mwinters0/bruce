@@ -2,11 +2,11 @@
 //! leaves to the baseline's answer (D22, D52; `roadmap-P5-ci.md`, "A baseline
 //! answer is copied into the run" and "What a build holds").
 //!
-//! The frontier sorts a URL the build does not hold into two classes. One
-//! outside the build's prefix, or on an allowlisted host, is answered by
-//! copying the baseline's rows for it when it holds a target, else asked
-//! live (`--externals=skip` leaves an allowlisted one `unchecked` instead,
-//! D54). One under the prefix and not built waits in [`Pending`] until every
+//! The frontier sorts a URL the build does not hold, and the config would
+//! have asked about, into two classes. One outside the build's prefix, or on
+//! an allowlisted host, is answered by copying the baseline's rows for it
+//! when it holds a target, else asked live (`--externals=live` asks an
+//! allowlisted one always, and `skip` leaves it `unchecked` instead, D54). One under the prefix and not built waits in [`Pending`] until every
 //! built page is read, because whether it is `not_built` depends on the
 //! component-versions those pages carry ([`Held`]): in a held one the build
 //! is the truth and the URL is `broken_url`, in any other the baseline is

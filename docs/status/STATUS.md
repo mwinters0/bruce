@@ -7,7 +7,7 @@ index table is the schedule. Where what is built falls short is
 [`deficiencies.md`](deficiencies.md). Dated pickup notes and plan-changing
 discoveries are in `history/`.
 
-<!-- repointed: 44c5db8 --> The marker names the commit `scripts/repoint.py`
+<!-- repointed: cee581d --> The marker names the commit `scripts/repoint.py`
 measures the record's growth from.
 Red means a repoint is due ([`../process.md`](../process.md),
 "Repointing").
@@ -24,7 +24,7 @@ the profile's facts and the content hash;
 `forge`, the edit-URL shape parse;
 `url`, the canonical form and `url_id`;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, the body decoding, the local fetcher over a map of URLs to files and the router that sends a URL the build holds to it and any other to HTTP;
-`crawl`, the frontier, the hops of a redirect, D16's outcomes, sitemaps, the run that writes a target's rows and its stop, and a run from seeds checked against a baseline: the component-versions the build holds, `not_built`, the baseline's rows copied for what it lacks, and the xrefs into a component the build lacks resolved to the baseline's pages;
+`crawl`, the frontier, the hops of a redirect, D16's outcomes, sitemaps, the run that writes a target's rows and its stop, and a run from seeds checked against a baseline: the component-versions the build holds, `not_built`, the baseline's rows copied for what it lacks, and the xrefs into a component the build lacks resolved to the baseline's pages or the URLs they name;
 `ci`, a build directory read as its production URLs; and
 `report`, the `report_*` views, the choice of run, the eight single-run reports, `diff`, and the gate (`introduced` with the inverse check, the redirected links, the errors and the breakage already in the baseline; `check-dir --inverse fail|warn`), as a text table or JSON.
 `docs/manual/` holds the config reference, `bruce crawl`'s, `bruce check-dir`'s, `bruce report`'s, `bruce prune`'s, `bruce export-baseline`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))

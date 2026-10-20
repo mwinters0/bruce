@@ -80,7 +80,7 @@ fn kind_arg() -> Arg {
         .value_parser(PossibleValuesParser::new(kinds))
         .help(
             "Count links of this kind; repeat to add, `all` for every kind \
-             [default: anchor, and every kind for `introduced`]",
+             [default: anchor, and every kind for `introduced` and `inverse`]",
         )
 }
 

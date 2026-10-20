@@ -11,8 +11,9 @@
 //! the crawler to settle `error` (D16). A fetcher that runs out of retries
 //! returns the last answer, a status, or the last [`Failure`].
 //!
-//! Every request first takes its host's permit and slot (`host`, D8), so the
-//! rate and the in-flight cap hold for retries and robots.txt alike. Whether
+//! Every request a [`Fetcher`] method sends first takes its host's permit and
+//! slot (`host`, D8), so the rate and the in-flight cap hold for retries and
+//! robots.txt alike; `download`, outside the crawl, takes neither and no stop. Whether
 //! a URL may be requested at all is [`Fetcher::access`], which the
 //! crawler asks before each hop; `fetch` does not.
 //!
@@ -49,8 +50,9 @@ const ROBOTS_REDIRECTS: usize = 5;
 /// for at least 500 KiB).
 const ROBOTS_MAX: usize = 512 * 1024;
 
-/// The limits a fetcher holds itself to. The defaults are the spec's; they
-/// are fields so a test can shrink them, not keys a deployment sets.
+/// The limits a fetcher holds itself to. The defaults are the spec's; but for
+/// `user_agent`, they are fields so a test can shrink them, not keys a
+/// deployment sets.
 #[derive(Debug, Clone)]
 pub struct Settings {
     /// Sent as `User-Agent`.

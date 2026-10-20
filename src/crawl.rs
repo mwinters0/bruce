@@ -33,16 +33,18 @@
 //! hops have not ended [`STOP_GRACE`] after the stop is dropped there. What a
 //! stopped run wrote is whole targets, and every target claimed and not
 //! written is counted as cut. A run abandoned without waiting for its grace
-//! [`Writes::close`]s first, so it too holds whole targets.
+//! [`Writes::close`]s first, so it too holds whole targets, though not a
+//! built page's xref links, which `settle_xrefs` writes late.
 //!
 //! A run over a local build begins from its seeds instead ([`Crawl::run_seeded`]):
 //! no sitemap is read and no root is asked about, since the build is the
 //! pages to check, and an href beginning `/` points at the build's site root
 //! ([`Crawl::against`], D53). It is checked against a baseline: a URL the
-//! build does not hold is answered by copying the baseline's rows or by a
-//! request, once the built pages are read (`baseline`, D22, D52), and an xref
-//! into a component the build lacks is resolved to the baseline's page for it
-//! (`xref`, D20, D38).
+//! build does not hold is answered by copying the baseline's rows, sent once
+//! the built pages are read, or by a request, which waits for them only under
+//! the build's prefix (`baseline`, D22, D52); and an xref into a component the
+//! build lacks is resolved to the baseline's page for it, else to the URL it
+//! names (`xref`, D20, D38, D57).
 
 mod baseline;
 mod frontier;
@@ -99,8 +101,9 @@ pub struct Summary {
     /// Sitemap pages outside every root's scope or matching `skip`, which are
     /// dropped.
     pub dropped: u64,
-    /// A [`Stopper`] came while targets were still to be asked about, so the
-    /// run is not whole.
+    /// A [`Stopper`] came while targets were still to be asked about, or
+    /// before a seeded run judged what it deferred, so the run may not be
+    /// whole.
     pub stopped: bool,
     /// Targets found and never written, the stop having come first: a lower
     /// bound on what the run lacks (D48).
@@ -250,8 +253,8 @@ struct Answer {
 enum End {
     Answered(Box<Answer>),
     Failed(Failure),
-    /// robots.txt forbids the URL, could not be read, or `skip` names it: not
-    /// requested.
+    /// robots.txt forbids the URL, could not be read, `skip` names it, or
+    /// `--externals=skip` leaves it: not requested.
     Blocked(&'static str),
     Stopped(Stop),
     /// The page or sitemap answered and could not be read as one.
@@ -362,7 +365,8 @@ where
 
     /// Crawls from `seeds` alone, until nothing is left to ask about: no
     /// sitemap is discovered and no root is seeded. Against a baseline, the
-    /// URLs the build lacks are answered after the built pages are read.
+    /// URLs under the prefix the build lacks are judged, and every copy sent,
+    /// after the built pages are read.
     pub async fn run_seeded(self, seeds: &[Url]) -> Result<Summary, Error> {
         let shared = self.shared;
         let items = shared.seed(seeds).await?;
@@ -417,8 +421,8 @@ where
         .map_err(|_| Error::Panicked)?
     }
 
-    /// Whether the run has been stopped, asked only where work is left, so
-    /// a yes marks the run cut short.
+    /// Whether the run has been stopped, asked where work may be left, so a
+    /// yes marks the run as possibly cut short.
     fn stopping(&self) -> bool {
         let stopped = self.stop.is_stopped();
         if stopped {

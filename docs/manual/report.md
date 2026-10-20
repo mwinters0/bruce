@@ -50,7 +50,8 @@ and `--from` or `--to` with any other report, are command-line errors.
 
 ## The reports
 
-Rows are sorted worst first, `orphans` and `unlisted` by root and page, and
+Rows are sorted worst first, `orphans` and `unlisted` by root and page,
+`inverse` by the linking page's group and page, and
 `--top N` keeps the first N.
 
 **`broken`** has a row for each link whose outcome is `broken_url` or
@@ -138,8 +139,8 @@ that the run's baseline does not have broken, the failures of `check-dir`'s
 exit status: `broken`'s columns with one more, `baseline`, after `status`. It
 is `new` where the baseline has no such link (the same page, target and
 fragment), else the outcome the baseline had (`ok`, `unchecked` or `error`).
-Below the text table are the baseline run and its day, the redirected links
-the baseline did not have redirected, the links whose outcome is `error` and
+Below the text table are the baseline run and its day, the inverse breakage
+(`inverse`'s rows), the redirected links the baseline did not have redirected, the links whose outcome is `error` and
 the count of breakage the baseline already had, as `check-dir` prints them.
 A run that names no baseline is an error. The report's exit status is 0
 whatever it finds.
@@ -147,13 +148,14 @@ whatever it finds.
 **`inverse`** reads the same run and lists what the change removed that pages
 outside the build link to, the second failure of `check-dir`'s exit status:
 `page`, `raw_href`, `target`, `fragment`, `kind`, `removed`, `component`,
-`source_repo` and `source_path`, a row for each link of the baseline, grouped
+`source_repo` and `source_path`, a row for each linking page, target and
+fragment of the baseline, grouped
 by the linking page's component (its repo where it has none). `removed` is
 `page` where the target, or the page it redirected to, is a page of a
-component the build holds and the build lacks; `file` where it is an image or
-an attachment of such a component that the build lacks; and `anchor` where
+component-version the build holds and the build lacks; `file` where it is an
+image or an attachment of such a component-version that the build lacks; and `anchor` where
 the page is built and has lost the anchor the link named. Only links the baseline had `ok` on a page the build does not
-hold are read: a page of a component the build holds is the build's own, and
+hold are read: a page of a component-version the build holds is the build's own, and
 its links are `introduced`'s or gone with it. Below the text table are the
 baseline run and its day, and the count of links, inbound pages and
 components. `--repo` and `--fact` filter the linking page in the baseline.
@@ -187,5 +189,5 @@ outcome. Each holds every run, so filter on `run_id`.
 | Status | Meaning |
 |---|---|
 | 0 | The report ran. Finding broken links does not change this. |
-| 1 | The database could not be read, or has no such run, `diff` has no finished run to compare, or an `introduced` run names no baseline; the message says which. |
+| 1 | The database could not be read, or has no such run, `diff` has no finished run to compare, or an `introduced` or `inverse` run names no baseline; the message says which. |
 | 2 | The command line was not understood. |

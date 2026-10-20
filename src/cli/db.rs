@@ -1,4 +1,4 @@
-//! The database a subcommand reads or writes, shared by `crawl`, `export-baseline`, `prune` and `report`.
+//! The database a subcommand reads or writes, shared by `crawl`, `check-dir`, `export-baseline`, `prune` and `report`.
 
 use std::path::Path;
 

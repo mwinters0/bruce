@@ -3,8 +3,9 @@
 //!
 //! It holds a map from URL to file and nothing about directories: which file
 //! is which URL is `ci`'s concept, and `ci` hands the map over. A URL in the
-//! map answers 200 with the file; one without a trailing `/` whose slashed
-//! form is in the map answers 301 to it, as a static server does; any other
+//! map answers 200 with the file; one under the prefix without a trailing
+//! `/` whose slashed form is in the map answers 301 to it, as a static server
+//! does (the prefix's own slashless form being outside it); any other
 //! URL under the prefix answers 404, the build being the truth for what it
 //! holds. A URL outside the prefix is a [`Failure`]: this fetcher has
 //! nothing to say about it, and the routes that do (the baseline, then live,

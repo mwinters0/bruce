@@ -15,7 +15,7 @@ use super::{Failure, FailureKind, HttpFetcher, classify};
 /// Redirects followed to reach the file.
 const REDIRECTS: usize = 5;
 
-/// The whole download's time: the file is some megabytes.
+/// Each request's time, body included: the file is some megabytes.
 const TIMEOUT: Duration = Duration::from_secs(600);
 
 impl HttpFetcher {

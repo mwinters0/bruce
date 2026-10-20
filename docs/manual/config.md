@@ -88,7 +88,8 @@ is never part of it.
 **`strip_query`** makes `https://docs.example.org/en-US/a/?v=1` and
 `https://docs.example.org/en-US/a/?v=2` one page, for a site that serves the
 same page whatever the query says. The query is then dropped from the URLs in
-this root's scope before they are compared or matched against globs; it
+this root's scope before they are compared or matched against its `include`
+and `exclude` globs (a [`skip`](#skip) glob still sees it); it
 is kept by default, since a query can pick a different page.
 
 **Profiles** know how a site generator lays out its pages.
@@ -175,6 +176,7 @@ precedence over it, and `[host]` (below) says when a host's own rate does.
 
 Every request names `bruce` and its version, `bruce/0.1.0`. `user_agent` names
 your deployment instead, so a site operator can tell whose crawler it is.
+`check-dir`'s download of a `--baseline` URL always names `bruce`.
 
 | Key | Default | Meaning |
 |---|---|---|
