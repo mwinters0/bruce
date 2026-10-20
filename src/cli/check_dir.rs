@@ -1,5 +1,5 @@
 //! `bruce check-dir DIR --prefix URL --baseline FILE|URL [--config f] [--db f]
-//! [--externals skip|baseline|live] [--format text|json] [--all]`:
+//! [--externals skip|baseline|live] [--inverse fail|warn] [--format text|json] [--all]`:
 //! one run over a local build, written to the database and judged against the
 //! baseline (D1, D9, D22, D27; `roadmap-P5-ci.md`, "A `check-dir` run is a
 //! crawl").
@@ -13,7 +13,8 @@
 //! a URL the build lacks is answered from the baseline or asked live, as
 //! `crawl`'s `baseline` module has it. The gate is `report`'s ([`Gate`]) over
 //! the finished run, and sets the exit status: 0 where nothing is introduced,
-//! 1 where a link is, 2 where the tool could not run (D16: an `error` moves
+//! 1 where a link is introduced or, under `--inverse=fail`, the change removed
+//! what a page outside the build links to, 2 where the tool could not run (D16: an `error` moves
 //! nothing).
 
 use std::path::PathBuf;
@@ -29,7 +30,7 @@ use crate::fetch::http::{HttpFetcher, Settings};
 use crate::fetch::local::LocalFetcher;
 use crate::fetch::routed::Routed;
 use crate::profile::Registry;
-use crate::report::{Format, Gate, Report, Request};
+use crate::report::{Format, Gate, InverseMode, Report, Request};
 use crate::store::{Mode, RunId, Writer};
 
 mod file;
@@ -51,6 +52,8 @@ pub struct Args {
     /// A path or a URL.
     pub baseline: String,
     pub externals: Externals,
+    /// Whether an inverse breakage fails the check (D9).
+    pub inverse: InverseMode,
     pub config: Option<PathBuf>,
     pub db: Option<PathBuf>,
     pub format: Format,
@@ -69,6 +72,10 @@ impl From<&ArgMatches> for Args {
                 Some("skip") => Externals::Skip,
                 Some("live") => Externals::Live,
                 _ => Externals::Baseline,
+            },
+            inverse: match one("inverse").as_deref() {
+                Some("warn") => InverseMode::Warn,
+                _ => InverseMode::Fail,
             },
             config: one("config").map(PathBuf::from),
             db: one("db").map(PathBuf::from),
@@ -114,6 +121,17 @@ pub fn command() -> Command {
                     "Allowlisted URLs: never ask (the baseline's verdict where it has one, else \
                      unchecked), take the baseline's verdict where it has one and ask \
                      otherwise, or always ask",
+                ),
+        )
+        .arg(
+            Arg::new("inverse")
+                .long("inverse")
+                .value_name("MODE")
+                .value_parser(["fail", "warn"])
+                .default_value("fail")
+                .help(
+                    "Whether a page outside the build linking to what the change removed fails \
+                     the check, or is only listed",
                 ),
         )
         .arg(
@@ -222,6 +240,7 @@ fn check(args: &Args, registry: Registry) -> Result<(RunId, Summary, Gate), Stri
     store.finish_run(run).map_err(in_db)?;
     let mut request = Request::new(Report::Introduced);
     request.run = Some(run);
+    request.inverse = args.inverse;
     let gate = crate::report::gate(&store, &request).map_err(|e| e.to_string())?;
     Ok((run, summary, gate))
 }

@@ -16,14 +16,14 @@ refused access (a timeout, a 5xx after retries, a 401, 403 or 429).
 
 | Argument | Default | Meaning |
 |---|---|---|
-| `REPORT` | required | `broken`, `errors`, `stats`, `inbound`, `sitemap`, `orphans`, `unlisted`, `redirects`, `diff` or `introduced`. |
+| `REPORT` | required | `broken`, `errors`, `stats`, `inbound`, `sitemap`, `orphans`, `unlisted`, `redirects`, `diff`, `introduced` or `inverse`. |
 | `--db FILE` | `bruce.duckdb` | The database to read. It must exist; a report never creates one. |
-| `--run N` | the latest finished run | The run to read. See [Which run](#which-run). Not for `diff`. For `introduced`, a [`check-dir`](check-dir.md) run. |
+| `--run N` | the latest finished run | The run to read. See [Which run](#which-run). Not for `diff`. For `introduced` and `inverse`, a [`check-dir`](check-dir.md) run. |
 | `--from N` | the finished run before `--to` | `diff` only: the run to compare against. |
 | `--to N` | the latest finished run | `diff` only: the run to compare. |
-| `--repo REPO` | none | Only pages whose source file is in this repo, as the page records it (`https://forge.fedoraproject.org/fedora/docs`); for `broken`, `errors`, `stats`, `redirects`, `diff` and `introduced`, the links on those pages. |
+| `--repo REPO` | none | Only pages whose source file is in this repo, as the page records it (`https://forge.fedoraproject.org/fedora/docs`); for `broken`, `errors`, `stats`, `redirects`, `diff`, `introduced` and `inverse`, the links on those pages (for `inverse`, the baseline's pages outside the build). |
 | `--fact KEY=VALUE` | none | Only pages with this fact, such as `antora.component=fedora-docs`, or the links on them. Repeat to require several. |
-| `--kind KIND` | `anchor`; every kind for `introduced` | Count links of this kind. Repeat to add kinds; `all` is every kind. `sitemap` and `unlisted` ignore it. |
+| `--kind KIND` | `anchor`; every kind for `introduced` and `inverse` | Count links of this kind. Repeat to add kinds; `all` is every kind. `sitemap` and `unlisted` ignore it. |
 | `--top N` | all rows | Print the first N rows, in the report's order. |
 | `--format` | `text` | `text`, or `json`. |
 
@@ -31,8 +31,8 @@ The kinds are `anchor` (`<a>` and `<area>`), `image`, `canonical`,
 `stylesheet`, `icon`, `link`, `script`, `frame`, `media`, `refresh`,
 `sitemap` and `sitemap_file`. A report counts `anchor` links alone unless
 `--kind` says more, since a broken image or script is a different job from a
-broken link. `introduced` is the gate's, which judges every kind unless
-`--kind` narrows it.
+broken link. `introduced` and `inverse` are the gate's, which judge every kind unless
+`--kind` narrows them.
 
 ## Which run
 
@@ -144,6 +144,21 @@ the count of breakage the baseline already had, as `check-dir` prints them.
 A run that names no baseline is an error. The report's exit status is 0
 whatever it finds.
 
+**`inverse`** reads the same run and lists what the change removed that pages
+outside the build link to, the second failure of `check-dir`'s exit status:
+`page`, `raw_href`, `target`, `fragment`, `kind`, `removed`, `component`,
+`source_repo` and `source_path`, a row for each link of the baseline, grouped
+by the linking page's component (its repo where it has none). `removed` is
+`page` where the target, or the page it redirected to, is a page of a
+component the build holds and the build lacks; `file` where it is an image or
+an attachment of such a component that a built page still links to and the
+build lacks; and `anchor` where the page is built and has lost the anchor the
+link named. Only links the baseline had `ok` on a page the build does not
+hold are read: a page of a component the build holds is the build's own, and
+its links are `introduced`'s or gone with it. Below the text table are the
+baseline run and its day, and the count of links, inbound pages and
+components. `--repo` and `--fact` filter the linking page in the baseline.
+
 ## Output
 
 The text format is a table with one row a line. A missing value is `-`, and
@@ -157,7 +172,7 @@ or status a number:
 [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"status":200,"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc"}]
 ```
 
-`stats` prints its page rows alone as JSON, `unlisted` its pages alone and `introduced` its links alone; the totals, the roots without a sitemap and `introduced`'s other sections are in text only (`check-dir --format json` has them all).
+`stats` prints its page rows alone as JSON, `unlisted` its pages alone and `introduced` and `inverse` their links alone; the totals, the roots without a sitemap and `introduced`'s other sections are in text only (`check-dir --format json` has them all).
 
 ## Querying the database directly
 

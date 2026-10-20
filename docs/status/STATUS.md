@@ -26,7 +26,7 @@ the profile's facts and the content hash;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, the body decoding, the local fetcher over a map of URLs to files and the router that sends a URL the build holds to it and any other to HTTP;
 `crawl`, the frontier, the hops of a redirect, D16's outcomes, sitemaps, the run that writes a target's rows and its stop, and a run from seeds checked against a baseline: the component-versions the build holds, `not_built`, the baseline's rows copied for what it lacks, and the xrefs into a component the build lacks resolved to the baseline's pages;
 `ci`, a build directory read as its production URLs; and
-`report`, the `report_*` views, the choice of run, the eight single-run reports, `diff`, and the gate (`introduced` with the redirected links, the errors and the breakage already in the baseline), as a text table or JSON.
+`report`, the `report_*` views, the choice of run, the eight single-run reports, `diff`, and the gate (`introduced` with the inverse check, the redirected links, the errors and the breakage already in the baseline; `check-dir --inverse fail|warn`), as a text table or JSON.
 `docs/manual/` holds the config reference, `bruce crawl`'s, `bruce check-dir`'s, `bruce report`'s, `bruce prune`'s, `bruce export-baseline`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -64,7 +64,11 @@ The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
 - [x] **5.8** The gate: `report introduced`, the exit status, `check-dir`'s
   output and manual page.
   [Notes](../wip/roadmap-P5.8-gate-notes.md).
-- [ ] **5.9** The inverse check: `report inverse` and `--inverse`.
+- [x] **5.9** The inverse check on removed pages, anchors and the files a
+  built page still links to: `report inverse` and `check-dir --inverse`; D56.
+  [Notes](../wip/roadmap-P5.9-inverse-notes.md).
+- [ ] **5.9.1** Every file of the build is a target of the run, so the inverse
+  check reads a removed file no built page links to.
 - [ ] **5.10** The end-to-end test's planted changes and assertions.
 - [ ] **5.11** quick-docs as published and changed, against the en-US
   baseline.
@@ -82,3 +86,18 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **The inverse check counts the links of pages outside the held
+  component-versions, not every page outside the build** (D56). The spec says
+  "a baseline link from a page not in the build"; a deleted page of a held
+  component-version is not in the build either, but its links went with it, so
+  reading them as breakage fails a PR for the page it deleted. Reconsidering
+  it changes `cand` in `src/report/inverse.rs`: dropping the held-prefix test on
+  the linking page counts those links too.
+- **5.9 landed a removed file only where a built page still links to it**,
+  and earned 5.9.1. A file in the build no built page names is no target of
+  the run (the seeds are the `.html` files), so a missing target cannot tell
+  it from a file the change deleted; counting every absent one would fail a PR
+  for each image another component alone embeds. Reconsidering it means
+  seeding every file of the build (`Build::seeds`, `src/ci.rs`), which changes
+  every `check-dir` run's targets, and was kept apart from this review.

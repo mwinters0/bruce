@@ -2,7 +2,8 @@
 
 ```sh
 bruce check-dir DIR --prefix URL --baseline FILE|URL [--config FILE] [--db FILE]
-                    [--externals skip|baseline|live] [--format text|json] [--all]
+                    [--externals skip|baseline|live] [--inverse fail|warn]
+                    [--format text|json] [--all]
 ```
 
 Checks a content repo's partial build against a **baseline**, and fails only
@@ -23,6 +24,7 @@ have broken. The run is added to a database like a crawl's ([`crawl.md`](crawl.m
 | `--config FILE` | none | The configuration the baseline was crawled under ([`config.md`](config.md)). With none, the prefix is the only root. |
 | `--db FILE` | `bruce.duckdb` | The database the run is added to, created if it does not exist. |
 | `--externals MODE` | `baseline` | How a link to an allowlisted host is answered; see below. |
+| `--inverse MODE` | `fail` | Whether the [inverse check](#the-inverse-check) fails the check (`fail`) or is only listed (`warn`). |
 | `--format` | `text` | `text`, or `json`. |
 | `--all` | off | Print the breakage already in the baseline in full. |
 
@@ -66,6 +68,21 @@ the baseline's links on a page not built are not this change's.
 An `error` (a timeout, a 5xx, a refusal to answer) never fails the check, and
 a redirect never does.
 
+### The inverse check
+
+A change can break a page it does not contain: removing a page, a file or an
+anchor that other components link to. The check reads the baseline's links on
+pages **outside the build**, in components the build does not hold, and fails
+where one was `ok` and what it reached is now gone from a component the build
+holds: the page is not built, an image or attachment a built page still links
+to is not built, or the page is built and has lost the anchor. The same page,
+file or anchor in a component the build lacks is the baseline's, unchanged. A
+file that no built page links to cannot be told from one the build keeps, and
+is not read. The output lists each link with the component it is on, and the
+count of inbound pages across components. `--inverse=warn` lists them and
+leaves the exit status alone, for a repo whose CI is not yet ready to be that
+strict; the same list is `bruce report inverse --run N` ([`report.md`](report.md)).
+
 ## Output
 
 Text lists, in order:
@@ -74,13 +91,16 @@ Text lists, in order:
    [`report.md`](report.md)'s `broken` has and one more, `baseline`, naming
    what the baseline had for it: `new` where it had no such link, else the
    outcome it had (`ok`, `unchecked`, `error`).
-2. **Introduced redirected links**: links through a redirect that the
+2. **Inverse breakage**: the baseline's links from pages outside the build to
+   what the change removed, with the columns [`report.md`](report.md)'s
+   `inverse` has. They fail the check unless `--inverse=warn`.
+3. **Introduced redirected links**: links through a redirect that the
    baseline did not have redirected: `page`, `raw_href`, `target`,
    `fragment`, `kind`, `landing`, `chain` and the source columns. They never
    fail the check.
-3. **Errors**: the links whose outcome is `error` in this run, with `broken`'s
+4. **Errors**: the links whose outcome is `error` in this run, with `broken`'s
    columns.
-4. **Breakage already in the baseline**: a count, and with `--all` the links,
+5. **Breakage already in the baseline**: a count, and with `--all` the links,
    which never fail the check.
 
 ```text
@@ -90,6 +110,8 @@ against baseline run 1, crawled on 2026-10-19
 introduced breakage: 1
 page                         raw_href  target                       fragment  kind    outcome        reason  status  baseline  source_repo  source_path
 https://docs.example.org/a/  b/#gone   https://docs.example.org/b/  gone      anchor  broken_anchor  -          200  ok        -            -
+
+inverse breakage: none
 
 introduced redirected links: none
 
@@ -106,10 +128,10 @@ age.
 stderr:
 
 ```json
-{"run":7,"baseline_run":1,"baseline_date":"2026-10-19","introduced":[],"redirected":[],"errors":[],"already_broken":{"count":4,"links":null}}
+{"run":7,"baseline_run":1,"baseline_date":"2026-10-19","introduced":[],"inverse":[],"redirected":[],"errors":[],"already_broken":{"count":4,"links":null}}
 ```
 
-`introduced`, `redirected` and `errors` are arrays of objects whose field
+`introduced`, `inverse`, `redirected` and `errors` are arrays of objects whose field
 names are the columns above; `already_broken.links` is `null` unless `--all`
 is given.
 
@@ -120,11 +142,11 @@ database ([`report.md`](report.md)).
 
 | Status | Meaning |
 |---|---|
-| 0 | No link is introduced. |
-| 1 | A link is introduced. |
+| 0 | No link is introduced, and no inverse breakage is found or `--inverse=warn`. |
+| 1 | A link is introduced, or the inverse check finds breakage and `--inverse=fail`. |
 | 2 | The check could not run: the command line was not understood, the configuration or the baseline could not be read, the baseline or the database is of another schema version, the prefix is outside every root's scope, or the build could not be read. |
 
-An `error` never moves the status.
+An `error` never moves the status, nor does a redirected link or a warned inverse breakage.
 
 ## Not beside a crawl
 

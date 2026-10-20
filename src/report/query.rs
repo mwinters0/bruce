@@ -11,7 +11,7 @@ use super::request::{Report, Request};
 use super::run::Chosen;
 use super::sql::{PAGE, Sql};
 use super::table::{Cell, Table};
-use super::{diff, gate, reach, redirects};
+use super::{diff, gate, inverse, reach, redirects};
 use crate::store::RunId;
 
 /// Runs the report, returning its table and the notes a text rendering adds.
@@ -34,6 +34,19 @@ pub(super) fn run(
             let gate = gate::gate(conn, run, request)?;
             let notes = vec![gate.baseline_line(), gate.rest(false)];
             Ok((gate.introduced, notes))
+        }
+        Report::Inverse => {
+            let (base, date) = gate::baseline(conn, run)?;
+            let table = inverse::inverse(conn, run, base, request)?;
+            let (pages, groups) = inverse::counts(&table);
+            let notes = vec![
+                gate::baseline_line(base, &date),
+                format!(
+                    "{} links, {pages} inbound pages across {groups} components",
+                    table.rows.len()
+                ),
+            ];
+            Ok((table, notes))
         }
         Report::Diff => {
             let (from, _) = chosen.from.expect("choose gives a diff its base run");

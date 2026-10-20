@@ -11,11 +11,13 @@
 //! report filters on the page a link is on, a page report on the page a row
 //! lists; `links` has `broken` and `errors`, `query` `stats`, `reach` how a page is
 //! reached, `redirects` the moved links, `diff` what broke or was fixed
-//! between two runs and `gate` what a CI run broke that its baseline had not.
+//! between two runs, `gate` what a CI run broke that its baseline had not and `inverse` what
+//! the change removed that pages outside the build link to.
 
 mod diff;
 mod error;
 mod gate;
+mod inverse;
 mod links;
 mod query;
 mod reach;
@@ -30,7 +32,7 @@ use crate::store::Store;
 
 pub use error::Error;
 pub use gate::Gate;
-pub use request::{Output, Report, Request};
+pub use request::{InverseMode, Output, Report, Request};
 pub use table::{Cell, Format, Table};
 pub use views::VIEWS;
 

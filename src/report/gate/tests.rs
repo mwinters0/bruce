@@ -152,6 +152,7 @@ fn a_filter_that_keeps_nothing_leaves_a_gate_that_does_not_fail() {
         g.text(false),
         "against baseline run 1, crawled on 2026-10-19\n\n\
          introduced breakage: none\n\n\
+         inverse breakage: none\n\n\
          introduced redirected links: none\n\n\
          errors: none\n\n\
          breakage already in the baseline: none"
@@ -205,7 +206,7 @@ fn the_introduced_report_prints_the_rows_and_the_rest_in_notes() {
         out.notes[0],
         "against baseline run 1, crawled on 2026-10-19"
     );
-    assert!(out.notes[1].starts_with("introduced redirected links: 1\n"));
+    assert!(out.notes[1].starts_with("inverse breakage: none\n\nintroduced redirected links: 1\n"));
 }
 
 #[test]

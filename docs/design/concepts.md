@@ -60,8 +60,9 @@ decisions each carries are cited in its module's doc.
   statement and the filters every report shares in `sql`, `broken`'s and
   `errors`' query in `links`, `stats`' and the choice among all the reports in
   `query`, how a page is reached (`inbound`, `orphans`, `sitemap`,
-  `unlisted`) in `reach`, `redirects`, `diff` (two runs) and the gate
-  (`introduced`: a CI run against its baseline, D9) each in their own child,
+  `unlisted`) in `reach`, `redirects`, `diff` (two runs), the gate
+  (`introduced`: a CI run against its baseline, D9) and the `inverse` check
+  (what the change removed that pages outside the build link to, D56) each in their own child,
   the views they read in `views`, the table's
   text and JSON in `table` and the failures in `error`.
   It sits above `store`, whose `link_verdicts` its views join, and below

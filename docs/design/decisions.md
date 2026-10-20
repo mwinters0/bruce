@@ -11,7 +11,7 @@ in the bootstrap grilling (2026-10-17, frozen as `historical/initial.md`), D31 t
 an entry's **Code** is the module that will hold it once built. D25 and D29 are spent: D25 was superseded by D30, and D29
 became `roadmap.md`'s phase index.
 
-<!-- decision-watermark: D54 -->
+<!-- decision-watermark: D56 -->
 
 ## Scope and modes
 
@@ -360,6 +360,14 @@ as its targets are (D52), and the link points at that page with the refspec's fr
 version: the latest the baseline holds, in Antora's order. Rejected: a column or a cleared refspec marking a resolved link
 (schema 5 refuses P5.2's baseline, D43). Reopens: Antora marking an unresolved xref other than as `#<refspec>` (I6). Code:
 `crawl::xref`, `profile::antora::resolve`. Evidence: `crawl::baseline::tests::an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline`.
+
+### D56 The inverse check reads the held component-versions back from the CI run, and counts the links of pages outside them
+A built page's `antora.*` facts and URL give the held prefixes (D54's layout, I16), so `report inverse --run` works from the DB
+alone. The linking pages are the baseline's crawled pages in no held prefix and not built: a deleted page of a held
+component-version links to nothing now, so spec wording "a page not in the build" is read that narrowly. A removed file counts
+only where a built page still links to it (`not_built`), no other file being a target of the run. Rejected: `Held` moved
+under `crawl` and `report`, a `crawl`-to-`ci` edge against D39; a held set stored in the run, schema 5 refusing the baseline (D43).
+Reopens: I16 changing, the layout then living twice. Code: `report::inverse`. Evidence: `report::inverse::tests`.
 
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
 `check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status

@@ -207,5 +207,5 @@ not as an error.
   version under another name, which `crawl::baseline::Held` does not know: a deleted page there is the
   baseline's answer, not `not_built`.
 - **Verified against.** Antora 3.1.15, 2026-10-20.
-- **Relied on by.** D54.
+- **Relied on by.** D54, D56.
 - **Re-verify.** `grep -n -A12 'function computeVersionSegment' runs/e2e/antora/node_modules/@antora/content-classifier/lib/content-catalog.js; ls runs/e2e/whole/guide runs/e2e/whole/tools`

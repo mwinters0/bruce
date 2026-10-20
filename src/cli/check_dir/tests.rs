@@ -5,7 +5,7 @@ use wiremock::MockServer;
 
 use super::*;
 use crate::cli::registry;
-use crate::report::Format;
+use crate::report::{Format, InverseMode};
 use crate::store::Store;
 
 fn parse(args: &[&str]) -> Result<Args, clap::Error> {
@@ -33,6 +33,7 @@ fn a_directory_and_a_prefix_are_required() {
             prefix: "https://x.test/".into(),
             baseline: "b.duckdb.gz".into(),
             externals: Externals::Baseline,
+            inverse: InverseMode::Fail,
             config: None,
             db: Some("d".into()),
             format: Format::Text,
@@ -62,6 +63,29 @@ fn a_directory_and_a_prefix_are_required() {
     ])
     .unwrap();
     assert_eq!(live.externals, Externals::Live);
+    let warn = parse(&[
+        "build",
+        "--prefix",
+        "p",
+        "--baseline",
+        "b",
+        "--inverse",
+        "warn",
+    ])
+    .unwrap();
+    assert_eq!(warn.inverse, InverseMode::Warn);
+    assert!(
+        parse(&[
+            "build",
+            "--prefix",
+            "p",
+            "--baseline",
+            "b",
+            "--inverse",
+            "x"
+        ])
+        .is_err()
+    );
     // The gate judges every kind, so there is no way to narrow it.
     assert!(
         parse(&[

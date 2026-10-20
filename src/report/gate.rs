@@ -10,13 +10,16 @@
 //! run whose key the baseline has as anything but broken, absent, `ok`,
 //! `unchecked` or `error`; the row names which. Several links sharing a key
 //! are one row. `error` never fails (D16) and is listed, and breakage the
-//! baseline had stays a count until asked for.
+//! baseline had stays a count until asked for. The **inverse** section is
+//! the baseline's links from pages outside the build to what the change
+//! removed (`inverse`); it fails the gate while the request's mode is `Fail`.
 
 use duckdb::Connection;
 
 use super::error::Error;
+use super::inverse::{counts, inverse};
 use super::links::links;
-use super::request::Request;
+use super::request::{InverseMode, Request};
 use super::sql::{Cols, Sql};
 use super::table::{Format, Table, quoted};
 use crate::store::RunId;
@@ -45,6 +48,11 @@ pub struct Gate {
     /// Broken here and not in the baseline, each with its `baseline` state:
     /// `new` where the baseline has no such link. These fail the gate.
     pub introduced: Table,
+    /// Baseline links from pages outside the build to what this run removed
+    /// from it. These fail the gate unless `mode` is `Warn`.
+    pub inverse: Table,
+    /// Whether `inverse` fails the gate (`--inverse`).
+    pub mode: InverseMode,
     /// Redirected here and not in the baseline. Never failing (D7).
     pub redirected: Table,
     /// Links whose outcome is `error`. Never failing (D16).
@@ -54,9 +62,11 @@ pub struct Gate {
 }
 
 impl Gate {
-    /// The gate fails: a link is introduced.
+    /// The gate fails: a link is introduced, or an inverse breakage is found
+    /// while the mode is `Fail`.
     pub fn fails(&self) -> bool {
         !self.introduced.rows.is_empty()
+            || (self.mode == InverseMode::Fail && !self.inverse.rows.is_empty())
     }
 
     /// The text `check-dir` prints: the baseline, every section, and with
@@ -72,15 +82,13 @@ impl Gate {
 
     /// The baseline a run was checked against.
     pub(super) fn baseline_line(&self) -> String {
-        format!(
-            "against baseline run {}, crawled on {}",
-            self.baseline.0, self.baseline_date
-        )
+        baseline_line(self.baseline, &self.baseline_date)
     }
 
     /// The sections after the introduced breakage, which are never failing.
     pub(super) fn rest(&self, all: bool) -> String {
         [
+            self.inverse_section(),
             section("introduced redirected links", &self.redirected, true),
             section("errors", &self.errors, true),
             section("breakage already in the baseline", &self.already, all)
@@ -93,6 +101,24 @@ impl Gate {
         .join("\n\n")
     }
 
+    /// The inverse breakage, and how many pages across how many components
+    /// link to what was removed (D9).
+    fn inverse_section(&self) -> String {
+        let title = match self.mode {
+            InverseMode::Fail => "inverse breakage",
+            InverseMode::Warn => "inverse breakage (warning only)",
+        };
+        let links = self.inverse.rows.len();
+        if links == 0 {
+            return format!("{title}: none");
+        }
+        let (pages, groups) = counts(&self.inverse);
+        format!(
+            "{title}: {links} links, {pages} inbound pages across {groups} components\n{}",
+            self.inverse.render(Format::Text)
+        )
+    }
+
     /// One JSON object holding every section; the breakage already in the
     /// baseline is a count, and its links only with `all`.
     pub fn json(&self, all: bool) -> String {
@@ -102,12 +128,13 @@ impl Gate {
             "null".to_owned()
         };
         format!(
-            "{{\"run\":{},\"baseline_run\":{},\"baseline_date\":{},\"introduced\":{},\
+            "{{\"run\":{},\"baseline_run\":{},\"baseline_date\":{},\"introduced\":{},\"inverse\":{},\
              \"redirected\":{},\"errors\":{},\"already_broken\":{{\"count\":{},\"links\":{}}}}}",
             self.run.0,
             self.baseline.0,
             quoted(&self.baseline_date),
             self.introduced.render(Format::Json),
+            self.inverse.render(Format::Json),
             self.redirected.render(Format::Json),
             self.errors.render(Format::Json),
             self.already.rows.len(),
@@ -133,14 +160,21 @@ pub(super) fn gate(conn: &Connection, run: RunId, request: &Request) -> Result<G
         baseline,
         baseline_date,
         introduced: broken(conn, run, baseline, request, true)?,
+        inverse: inverse(conn, run, baseline, request)?,
+        mode: request.inverse,
         redirected: redirected(conn, run, baseline, request)?,
         errors: links(conn, run, request, "report_errors")?,
         already: broken(conn, run, baseline, request, false)?,
     })
 }
 
+/// The line naming the baseline a run was checked against.
+pub(super) fn baseline_line(baseline: RunId, date: &str) -> String {
+    format!("against baseline run {}, crawled on {date}", baseline.0)
+}
+
 /// The run `run` was checked against and its date.
-fn baseline(conn: &Connection, run: RunId) -> Result<(RunId, String), Error> {
+pub(super) fn baseline(conn: &Connection, run: RunId) -> Result<(RunId, String), Error> {
     let named: Option<u64> = conn.query_row(
         "SELECT baseline_run FROM runs WHERE run_id = ?",
         [run.0],

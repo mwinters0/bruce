@@ -70,6 +70,7 @@ impl Held {
     /// version the build lacks is the baseline's, unless the component's held
     /// version is a bare one.
     pub(super) fn holds(&self, prefix: &Url, url: &Url) -> bool {
+        // `report::inverse::prefix` reads the same layout back from the stored run (D56).
         // deficiency: KD5 A component-version is held whole, so a component
         // split across repos' start paths and partly built reads the pages
         // of the other start paths as `not_built`. Telling the pages a

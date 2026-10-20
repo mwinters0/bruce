@@ -29,11 +29,14 @@ pub enum Report {
     /// A CI run's broken links that its baseline did not have broken, the
     /// gate's failures (D9), and the sections `check-dir` prints beside them.
     Introduced,
+    /// The baseline's links from pages outside the build to what the change
+    /// removed from it (D9).
+    Inverse,
 }
 
 impl Report {
     /// Every report built.
-    pub const ALL: [Report; 10] = [
+    pub const ALL: [Report; 11] = [
         Report::Broken,
         Report::Errors,
         Report::Stats,
@@ -44,6 +47,7 @@ impl Report {
         Report::Redirects,
         Report::Diff,
         Report::Introduced,
+        Report::Inverse,
     ];
 
     /// The name on the command line.
@@ -59,8 +63,18 @@ impl Report {
             Report::Redirects => "redirects",
             Report::Diff => "diff",
             Report::Introduced => "introduced",
+            Report::Inverse => "inverse",
         }
     }
+}
+
+/// Whether an inverse breakage fails the gate (D9): the flag `--inverse`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InverseMode {
+    /// The default: an inverse breakage sets the exit status.
+    Fail,
+    /// It is listed and moves nothing.
+    Warn,
 }
 
 /// What to report, and over which links.
@@ -86,6 +100,8 @@ pub struct Request {
     /// Name the linking pages in a `redirects` group, a list too long for a
     /// text table.
     pub linking_pages: bool,
+    /// The gate only: whether an inverse breakage fails it.
+    pub inverse: InverseMode,
 }
 
 impl Request {
@@ -100,11 +116,12 @@ impl Request {
             repo: None,
             facts: Vec::new(),
             kinds: match report {
-                Report::Introduced => Kind::ALL.to_vec(),
+                Report::Introduced | Report::Inverse => Kind::ALL.to_vec(),
                 _ => vec![Kind::Anchor],
             },
             top: None,
             linking_pages: false,
+            inverse: InverseMode::Fail,
         }
     }
 }
