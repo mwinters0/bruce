@@ -36,53 +36,6 @@ three-component Antora site, the Fedora UI bundle and seven built pages, which
 `mise run e2e` rebuilds and then crawls, exports and runs `check-dir` over, asserting
 the gate's exit status and sections.
 
-## P5 progress
-
-The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
-
-- [x] **5.1** The Antora fixture site: `fixtures/antora/`, the vendored UI
-  bundle, `mise run e2e` building the site whole and in part.
-  [Notes](../wip/roadmap-P5.1-antora-fixture-notes.md).
-- [x] **5.2** Schema 4, the `targets` answer's provenance; the fresh en-US
-  crawl launched detached. [Notes](../wip/roadmap-P5.2-schema-4-notes.md).
-- [x] **5.3** `export-baseline`, its manual page and the gzip measurement.
-  [Notes](../wip/roadmap-P5.3-export-baseline-notes.md).
-- [x] **5.4** The baseline's import and reuse, and the store's copy of a
-  target's rows between runs.
-  [Notes](../wip/roadmap-P5.4-baseline-import-notes.md).
-- [x] **5.5** The local build: `ci`'s walk and prefix mapping, `fetch/local`,
-  `crawl` taking seeds; `check-dir` with no baseline.
-  [Notes](../wip/roadmap-P5.5-local-build-notes.md).
-- [x] **5.6** The frontier's baseline class, held component-versions and
-  `not_built`; `check-dir --baseline` and `--externals`.
-  [Notes](../wip/roadmap-P5.6-baseline-class-notes.md).
-- [x] **5.6.1** `--externals=skip` copies the baseline's rows where it holds
-  the target, else `unchecked`, and a redirect hop onto an allowlisted host
-  ends the chain under it; D54 amended.
-  [Notes](../wip/roadmap-P5.6.1-externals-skip-notes.md).
-- [x] **5.7** `antora`'s Resolve, called in a CI run; D55.
-  [Notes](../wip/roadmap-P5.7-resolve-notes.md).
-- [x] **5.8** The gate: `report introduced`, the exit status, `check-dir`'s
-  output and manual page.
-  [Notes](../wip/roadmap-P5.8-gate-notes.md).
-- [x] **5.9** The inverse check on removed pages, anchors and the files a
-  built page still links to: `report inverse` and `check-dir --inverse`; D56.
-  [Notes](../wip/roadmap-P5.9-inverse-notes.md).
-- [x] **5.9.1** Every file of the build is a target of the run, so the inverse
-  check reads a removed file no built page links to.
-  [Notes](../wip/roadmap-P5.9.1-every-file-notes.md).
-- [x] **5.10** The end-to-end test's planted changes and assertions.
-  [Notes](../wip/roadmap-P5.10-e2e-notes.md).
-- [x] **5.11** quick-docs as published and changed, against the en-US
-  baseline: every planted rule fires; the unchanged build is not silent
-  (KD8, KD9). [Notes](../wip/roadmap-P5.11-quick-docs-notes.md).
-- [x] **5.11.1** The inverse check leaves an alias that lands outside the held
-  set to its owner (KD9).
-  [Notes](../wip/roadmap-P5.11.1-alias-owner-notes.md).
-- [x] **5.12** Resolve through the URL a refspec names, where the baseline's
-  facts find no page (KD7, KD8); D57.
-  [Notes](../wip/roadmap-P5.12-named-url-notes.md).
-
 ## Not started
 
 P6 onward in [`../design/roadmap.md`](../design/roadmap.md)'s index. None has
