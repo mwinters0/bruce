@@ -167,7 +167,7 @@ fn a_run_is_numbered_in_order_and_finished() {
 fn the_schema_refuses_an_outcome_outside_d16() {
     let store = Store::open_in_memory(&registry()).unwrap();
     let bad = store.connection().execute(
-        "INSERT INTO targets (run_id, url_id, url, outcome) VALUES (1, 1, 'https://a.test/', 'fine')",
+        "INSERT INTO targets (answered_by, run_id, url_id, url, outcome) VALUES ('live', 1, 1, 'https://a.test/', 'fine')",
         [],
     );
     assert!(bad.is_err());
@@ -228,7 +228,7 @@ fn a_lookup_finds_the_pages_carrying_every_fact() {
     let conn = store.connection();
     for (id, url) in [(1, "https://a.test/one"), (2, "https://a.test/two")] {
         conn.execute(
-            "INSERT INTO targets (run_id, url_id, url, outcome) VALUES (1, ?, ?, 'ok')",
+            "INSERT INTO targets (answered_by, run_id, url_id, url, outcome) VALUES ('live', 1, ?, ?, 'ok')",
             params![id, url],
         )
         .unwrap();
@@ -279,6 +279,7 @@ fn target(run: RunId, url_id: u64, chain: Vec<Hop>) -> TargetRow {
         reason: None,
         checked_at: None,
         duration_ms: Some(30),
+        answered_by: AnsweredBy::Live,
     }
 }
 
@@ -288,6 +289,39 @@ fn hop(url: &str, status: u16, refresh: bool) -> Hop {
         status,
         refresh,
     }
+}
+
+#[test]
+fn a_target_records_where_its_answer_came_from() {
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+    let writer = Writer::start(store, 4);
+    let h = writer.handle();
+    let by = |id, chain, answered_by| {
+        let mut t = target(run, id, chain);
+        t.answered_by = answered_by;
+        Row::Target(t)
+    };
+    // Both write paths: the appender, and the statement a redirect chain needs.
+    h.send(by(1, Vec::new(), AnsweredBy::Local)).unwrap();
+    h.send(by(2, vec![hop("a", 301, false)], AnsweredBy::Baseline))
+        .unwrap();
+    h.send(by(3, Vec::new(), AnsweredBy::Live)).unwrap();
+    let store = writer.finish().unwrap();
+    let got: Vec<String> = store
+        .connection()
+        .prepare("SELECT answered_by FROM targets ORDER BY url_id")
+        .unwrap()
+        .query_map([], |r| r.get(0))
+        .unwrap()
+        .map(Result::unwrap)
+        .collect();
+    assert_eq!(got, ["local", "baseline", "live"]);
+    let bad = store.connection().execute(
+        "INSERT INTO targets (answered_by, run_id, url_id, url, outcome) VALUES ('cache', 1, 9, 'u', 'ok')",
+        [],
+    );
+    assert!(bad.is_err());
 }
 
 #[test]
@@ -503,7 +537,9 @@ fn a_database_of_schema_version_1_is_refused() {
         )
         .unwrap();
     let err = Store::open(&path, &registry()).err().unwrap();
-    assert!(matches!(err, Error::SchemaVersion { ref found, expected: 3 } if found == "1"));
+    assert!(
+        matches!(err, Error::SchemaVersion { ref found, expected: SCHEMA_VERSION } if found == "1")
+    );
 }
 
 /// The watch for UF1: this fails on purpose at the duckdb release whose

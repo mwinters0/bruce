@@ -42,8 +42,8 @@ The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
 - [x] **5.1** The Antora fixture site: `fixtures/antora/`, the vendored UI
   bundle, `mise run e2e` building the site whole and in part.
   [Notes](../wip/roadmap-P5.1-antora-fixture-notes.md).
-- [ ] **5.2** Schema 4, the `targets` answer's provenance; the fresh en-US
-  crawl launched detached.
+- [x] **5.2** Schema 4, the `targets` answer's provenance; the fresh en-US
+  crawl launched detached. [Notes](../wip/roadmap-P5.2-schema-4-notes.md).
 - [ ] **5.3** `export-baseline`, its manual page and the gzip measurement.
 - [ ] **5.4** The baseline's import and reuse, and the store's copy of a
   target's rows between runs.

@@ -20,8 +20,8 @@ fn target(
     store
         .connection()
         .execute(
-            "INSERT INTO targets (run_id, url_id, url, outcome, reason, final_url) \
-             VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO targets (answered_by, run_id, url_id, url, outcome, reason, final_url) \
+             VALUES ('live', ?, ?, ?, ?, ?, ?)",
             params![
                 run,
                 id,

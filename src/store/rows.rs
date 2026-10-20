@@ -1,5 +1,5 @@
 //! The rows the writer appends, one type per table, in the table's column
-//! order (D26 as D34–D37, D43 amend it). A row holds what the table holds and
+//! order (D26 as D34–D37, D43 and D51 amend it). A row holds what the table holds and
 //! nothing derived: the crawler builds them, and the store knows no
 //! extraction type, so a link's kind and an anchor's placement arrive as the
 //! strings the table stores.
@@ -76,6 +76,27 @@ pub struct Hop {
     pub refresh: bool,
 }
 
+/// Where a target's answer came from (D51), as `targets.answered_by` stores
+/// it: a file read from a local build, a row copied from a baseline run, or a
+/// request the run made (a target it did not request, `unchecked`, included).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AnsweredBy {
+    Local,
+    Baseline,
+    Live,
+}
+
+impl AnsweredBy {
+    /// The value the table holds.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            AnsweredBy::Local => "local",
+            AnsweredBy::Baseline => "baseline",
+            AnsweredBy::Live => "live",
+        }
+    }
+}
+
 /// A row of `targets` (D26): one URL's HTTP-level outcome in one run.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TargetRow {
@@ -92,6 +113,7 @@ pub struct TargetRow {
     /// `None` where no request was made.
     pub checked_at: Option<SystemTime>,
     pub duration_ms: Option<u32>,
+    pub answered_by: AnsweredBy,
 }
 
 /// A row of `anchors` (D12, D34).

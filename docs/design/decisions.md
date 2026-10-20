@@ -11,7 +11,7 @@ in the bootstrap grilling (2026-10-17, frozen as `historical/initial.md`), D31 t
 an entry's **Code** is the module that will hold it once built. D25 and D29 are spent: D25 was superseded by D30, and D29
 became `roadmap.md`'s phase index.
 
-<!-- decision-watermark: D50 -->
+<!-- decision-watermark: D51 -->
 
 ## Scope and modes
 
@@ -315,6 +315,15 @@ dependency adds (a resolver off hickory runs `getaddrinfo` there), and whose ski
 tokio does not guarantee; a bound on the wait, which can only end it mid-target; a third press, a
 wedged DuckDB being a bug to fix. Code: `crawl::Writes`, `cli::crawl::crawl`.
 Evidence: `crawl::tests::an_abandoned_run_holds_the_page_it_was_writing_whole`.
+
+### D51 A target records where its answer came from, in a column the writer fills and no view reads
+`targets.answered_by` is `local`, `baseline` or `live`, `NOT NULL` with no default, so a path that
+copies or writes a target must say which. Every row a crawl writes is `live`, a target it made no
+request for (`unchecked`) included: the run decided it, as a copy from a baseline does not. The
+verdict views ignore it, so the gate compares like with like (D28). Rejected: a default of `live`,
+which labels a forgotten copy as a request; a table of copies, giving `link_verdicts` a second
+path. Reopens: a report wanting to split a run's answers by route. Code: `store::schema`,
+`store::AnsweredBy`. Evidence: `store::tests::a_target_records_where_its_answer_came_from`.
 
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
 `check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status

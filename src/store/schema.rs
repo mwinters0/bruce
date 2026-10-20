@@ -1,17 +1,20 @@
-//! The DuckDB schema (D26 as amended by D28, D34, D35, D36, D37 and D43) and its
+//! The DuckDB schema (D26 as amended by D28, D34, D35, D36, D37, D43 and D51) and its
 //! version. Rows are append-only (D2), so only `runs.finished_at` is ever
 //! updated and only `Store::prune` deletes; there are no primary keys on the
 //! bulk tables, which an appender would pay to check for nothing.
 
 /// The version this build writes and reads (D43). A schema change bumps it;
 /// before a release no migration exists (D43).
-pub const SCHEMA_VERSION: u32 = 3;
+pub const SCHEMA_VERSION: u32 = 4;
 
 /// The `meta` key holding [`SCHEMA_VERSION`].
 pub const VERSION_KEY: &str = "schema_version";
 
 /// The five outcomes of D16.
 const OUTCOME: &str = "('ok', 'broken_url', 'broken_anchor', 'error', 'unchecked')";
+
+/// Where a target's answer came from (D51).
+const ANSWERED_BY: &str = "('local', 'baseline', 'live')";
 
 /// Every table, created together in one transaction on a new file. A URL's
 /// `url_id` is the u64 hash of its canonical form (D26), so it joins across
@@ -41,7 +44,8 @@ CREATE TABLE targets (
     outcome VARCHAR NOT NULL CHECK (outcome IN {OUTCOME}),
     reason VARCHAR,
     checked_at TIMESTAMPTZ,
-    duration_ms UINTEGER
+    duration_ms UINTEGER,
+    answered_by VARCHAR NOT NULL CHECK (answered_by IN {ANSWERED_BY})
 );
 CREATE TABLE pages (
     run_id UBIGINT NOT NULL,

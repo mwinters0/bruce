@@ -155,7 +155,8 @@ impl<'a> Tables<'a> {
                     t.outcome.as_str(),
                     t.reason,
                     t.checked_at.map(timestamp),
-                    t.duration_ms
+                    t.duration_ms,
+                    t.answered_by.as_str()
                 ])?;
             }
             Row::Target(t) => self.insert_redirected(&t)?,
@@ -189,7 +190,7 @@ impl<'a> Tables<'a> {
             t.redirect_chain.len()
         ];
         let sql = format!(
-            "INSERT INTO targets VALUES (?, ?, ?, ?, ?, [{}], ?, ?, ?, ?)",
+            "INSERT INTO targets VALUES (?, ?, ?, ?, ?, [{}], ?, ?, ?, ?, ?)",
             hops.join(", ")
         );
         let mut args: Vec<Value> = vec![
@@ -212,6 +213,7 @@ impl<'a> Tables<'a> {
             t.reason.clone().into(),
             t.checked_at.map_or(Value::Null, timestamp),
             t.duration_ms.into(),
+            t.answered_by.as_str().to_string().into(),
         ]);
         self.store
             .conn

@@ -49,8 +49,8 @@ fn store() -> Store {
     target(&store, 1, 30, 0, "unchecked", Some("robots"));
     for (id, target_url) in [(100, ROOT), (101, "https://e.test/sitemap.xml")] {
         conn.execute(
-            "INSERT INTO targets (run_id, url_id, url, status, outcome) \
-             VALUES (1, ?, ?, 200, 'ok')",
+            "INSERT INTO targets (answered_by, run_id, url_id, url, status, outcome) \
+             VALUES ('live', 1, ?, ?, 200, 'ok')",
             params![id, target_url],
         )
         .unwrap();
@@ -165,8 +165,8 @@ fn an_index_children_count_for_the_root_that_reached_the_index() {
     let store = store();
     let conn = store.connection();
     conn.execute(
-        "INSERT INTO targets (run_id, url_id, url, status, outcome, reason) \
-         VALUES (1, 102, 'https://e.test/index.xml', 200, 'ok', 'too_large')",
+        "INSERT INTO targets (answered_by, run_id, url_id, url, status, outcome, reason) \
+         VALUES ('live', 1, 102, 'https://e.test/index.xml', 200, 'ok', 'too_large')",
         [],
     )
     .unwrap();

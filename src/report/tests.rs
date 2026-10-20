@@ -23,8 +23,8 @@ pub(super) fn target(
     store
         .connection()
         .execute(
-            "INSERT INTO targets (run_id, url_id, url, status, outcome, reason) \
-             VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO targets (answered_by, run_id, url_id, url, status, outcome, reason) \
+             VALUES ('live', ?, ?, ?, ?, ?, ?)",
             params![run, id, url(id), status, outcome, reason],
         )
         .unwrap();

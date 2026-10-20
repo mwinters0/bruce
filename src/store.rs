@@ -19,7 +19,7 @@ use url::Url;
 use crate::profile::{BoxError, Lookup, Registry, View};
 
 pub use prune::Rule;
-pub use rows::{AnchorRow, FactRow, Hop, LinkRow, Outcome, PageRow, Row, TargetRow};
+pub use rows::{AnchorRow, AnsweredBy, FactRow, Hop, LinkRow, Outcome, PageRow, Row, TargetRow};
 pub use schema::SCHEMA_VERSION;
 pub use writer::{WriteHandle, Writer, WriterGone};
 

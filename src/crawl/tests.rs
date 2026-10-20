@@ -376,6 +376,14 @@ async fn a_skipped_url_is_never_asked_and_its_link_is_kept() {
         3,
         "the links to them are kept"
     );
+    assert_eq!(
+        count(
+            &done.store,
+            "SELECT count(*) FROM targets WHERE answered_by = 'live'"
+        ),
+        4,
+        "every row a crawl writes is live, the unchecked included (D51)"
+    );
 }
 
 #[tokio::test]

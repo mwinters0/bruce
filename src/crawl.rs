@@ -55,8 +55,8 @@ use crate::extract::{self, Extracted, Kind};
 use crate::fetch::{Access, Body, Failure, FailureKind, Fetcher, MAX_SITEMAP, Mode};
 use crate::profile::Registry;
 use crate::store::{
-    AnchorRow, FactRow, Hop, LinkRow, Outcome, PageRow, Row, RunId, TargetRow, WriteHandle,
-    WriterGone,
+    AnchorRow, AnsweredBy, FactRow, Hop, LinkRow, Outcome, PageRow, Row, RunId, TargetRow,
+    WriteHandle, WriterGone,
 };
 use crate::url::Canonical;
 use frontier::{Frontier, Plan, SKIPPED};
@@ -724,6 +724,7 @@ where
                 reason: reason.map(str::to_owned),
                 checked_at: asked.then_some(started),
                 duration_ms: asked.then(|| u32::try_from(elapsed.as_millis()).unwrap_or(u32::MAX)),
+                answered_by: AnsweredBy::Live,
             };
 
         // Where a chain ends is a target of its own (D46).
@@ -958,6 +959,7 @@ fn unchecked(run: RunId, url_id: u64, url: &str, outcome: Outcome, reason: &str)
         reason: Some(reason.to_owned()),
         checked_at: None,
         duration_ms: None,
+        answered_by: AnsweredBy::Live,
     }
 }
 
