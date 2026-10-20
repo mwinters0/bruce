@@ -52,19 +52,8 @@ impl From<&ArgMatches> for Args {
             .filter_map(|f| f.split_once('='))
             .map(|(k, v)| (k.to_owned(), v.to_owned()))
             .collect();
-        let named: Vec<&str> = m
-            .get_many::<String>("kind")
-            .into_iter()
-            .flatten()
-            .map(String::as_str)
-            .collect();
-        if named.contains(&ALL_KINDS) {
-            request.kinds = Kind::ALL.to_vec();
-        } else if !named.is_empty() {
-            request.kinds = Kind::ALL
-                .into_iter()
-                .filter(|k| named.contains(&k.as_str()))
-                .collect();
+        if let Some(kinds) = kinds(m) {
+            request.kinds = kinds;
         }
         request.top = m.get_one::<u64>("top").map(|&n| n as usize);
         let format = match m.get_one::<String>("format").map(String::as_str) {
@@ -80,10 +69,42 @@ impl From<&ArgMatches> for Args {
     }
 }
 
-pub fn command() -> Command {
-    let reports: Vec<&str> = Report::ALL.iter().map(|r| r.name()).collect();
+/// The `--kind` option, which `check-dir`'s gate takes as `report` does.
+pub(super) fn kind_arg() -> Arg {
     let mut kinds: Vec<&str> = Kind::ALL.iter().map(|k| k.as_str()).collect();
     kinds.push(ALL_KINDS);
+    Arg::new("kind")
+        .long("kind")
+        .value_name("KIND")
+        .action(ArgAction::Append)
+        .value_parser(PossibleValuesParser::new(kinds))
+        .help("Count links of this kind; repeat to add, `all` for every kind [default: anchor]")
+}
+
+/// The kinds `--kind` names, or none where it was not given.
+pub(super) fn kinds(m: &ArgMatches) -> Option<Vec<Kind>> {
+    let named: Vec<&str> = m
+        .get_many::<String>("kind")
+        .into_iter()
+        .flatten()
+        .map(String::as_str)
+        .collect();
+    if named.contains(&ALL_KINDS) {
+        Some(Kind::ALL.to_vec())
+    } else if named.is_empty() {
+        None
+    } else {
+        Some(
+            Kind::ALL
+                .into_iter()
+                .filter(|k| named.contains(&k.as_str()))
+                .collect(),
+        )
+    }
+}
+
+pub fn command() -> Command {
+    let reports: Vec<&str> = Report::ALL.iter().map(|r| r.name()).collect();
     Command::new("report")
         .about("Print a report over one run of a database")
         .arg(
@@ -134,14 +155,7 @@ pub fn command() -> Command {
                 .value_parser(fact)
                 .help("Only pages with this fact, or links on them; repeat to require several"),
         )
-        .arg(
-            Arg::new("kind")
-                .long("kind")
-                .value_name("KIND")
-                .action(ArgAction::Append)
-                .value_parser(PossibleValuesParser::new(kinds))
-                .help("Count links of this kind; repeat to add, `all` for every kind [default: anchor]"),
-        )
+        .arg(kind_arg())
         .arg(
             Arg::new("top")
                 .long("top")

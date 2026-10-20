@@ -1,6 +1,7 @@
 //! `bruce check-dir DIR --prefix URL --baseline FILE|URL [--config f] [--db f]
-//! [--externals skip|baseline|live]`: one run over a local build, written to
-//! the database (D1, D22, D27; `roadmap-P5-ci.md`, "A `check-dir` run is a
+//! [--externals skip|baseline|live] [--kind k] [--format text|json] [--all]`:
+//! one run over a local build, written to the database and judged against the
+//! baseline (D1, D9, D22, D27; `roadmap-P5-ci.md`, "A `check-dir` run is a
 //! crawl").
 //!
 //! The configuration is the one `crawl` reads, so `skip`, the allowlist and
@@ -10,27 +11,35 @@
 //! names it. The run begins from the `.html` files of `DIR` alone
 //! ([`Build::seeds`]) and answers a URL under the prefix from the directory;
 //! a URL the build lacks is answered from the baseline or asked live, as
-//! `crawl`'s `baseline` module has it. The gate, the exit status other than
-//! 0 or 1 and the output are not in place yet.
+//! `crawl`'s `baseline` module has it. The gate is `report`'s ([`Gate`]) over
+//! the finished run, and sets the exit status: 0 where nothing is introduced,
+//! 1 where a link is, 2 where the tool could not run (D16: an `error` moves
+//! nothing).
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use clap::{Arg, ArgMatches, Command};
+use clap::{Arg, ArgAction, ArgMatches, Command};
 
-use super::{crawl, db};
+use super::{crawl, db, report};
 use crate::ci::Build;
 use crate::crawl::{Baseline, Crawl, Externals, Summary};
+use crate::extract::Kind;
 use crate::fetch::http::host::Hosts;
 use crate::fetch::http::{HttpFetcher, Settings};
 use crate::fetch::local::LocalFetcher;
 use crate::fetch::routed::Routed;
 use crate::profile::Registry;
+use crate::report::{Format, Gate, Report, Request};
 use crate::store::{Mode, RunId, Writer};
 
 mod file;
 
 use file::BaselineFile;
+
+/// The exit status of a run the tool could not make, as a command line `clap`
+/// refuses has it.
+const COULD_NOT_RUN: u8 = 2;
 
 /// Rows the writer's channel holds before a sender waits (D28).
 const WRITER_CAPACITY: usize = 4096;
@@ -45,6 +54,11 @@ pub struct Args {
     pub externals: Externals,
     pub config: Option<PathBuf>,
     pub db: Option<PathBuf>,
+    /// The link kinds the gate reads.
+    pub kinds: Vec<Kind>,
+    pub format: Format,
+    /// Print the breakage already in the baseline in full.
+    pub all: bool,
 }
 
 impl From<&ArgMatches> for Args {
@@ -61,6 +75,12 @@ impl From<&ArgMatches> for Args {
             },
             config: one("config").map(PathBuf::from),
             db: one("db").map(PathBuf::from),
+            kinds: report::kinds(m).unwrap_or_else(|| vec![Kind::Anchor]),
+            format: match one("format").as_deref() {
+                Some("json") => Format::Json,
+                _ => Format::Text,
+            },
+            all: m.get_flag("all"),
         }
     }
 }
@@ -112,28 +132,58 @@ pub fn command() -> Command {
                 .value_name("FILE")
                 .help("The database to add the run to [default: bruce.duckdb]"),
         )
+        .arg(report::kind_arg().help(
+            "Judge links of this kind; repeat to add, `all` for every kind [default: anchor]",
+        ))
+        .arg(
+            Arg::new("format")
+                .long("format")
+                .value_name("FORMAT")
+                .value_parser(["text", "json"])
+                .default_value("text")
+                .help("A text report, or one JSON object"),
+        )
+        .arg(
+            Arg::new("all")
+                .long("all")
+                .action(ArgAction::SetTrue)
+                .help("Print the breakage already in the baseline in full"),
+        )
 }
 
 /// Runs `args` with the profiles `registry` holds.
 pub fn run(args: &Args, registry: Registry) -> ExitCode {
     match check(args, registry) {
-        Ok((run, baseline, summary)) => {
-            println!(
-                "run {}: {} targets, {} pages, against baseline run {}",
-                run.0, summary.targets, summary.pages, baseline.0
+        Ok((run, summary, gate)) => {
+            let line = format!(
+                "run {}: {} targets, {} pages",
+                run.0, summary.targets, summary.pages
             );
-            ExitCode::SUCCESS
+            // JSON is one object on stdout, so the line goes beside it.
+            let all = args.all;
+            match args.format {
+                Format::Text => println!("{line}\n{}", gate.text(all)),
+                Format::Json => {
+                    eprintln!("bruce check-dir: {line}");
+                    println!("{}", gate.json(all));
+                }
+            }
+            if gate.fails() {
+                ExitCode::FAILURE
+            } else {
+                ExitCode::SUCCESS
+            }
         }
         Err(e) => {
             eprintln!("bruce check-dir: {e}");
-            ExitCode::FAILURE
+            ExitCode::from(COULD_NOT_RUN)
         }
     }
 }
 
-/// Checks and writes one run of the build, and gives the baseline run it
-/// was checked against.
-fn check(args: &Args, registry: Registry) -> Result<(RunId, RunId, Summary), String> {
+/// Checks and writes one run of the build, and judges it against its
+/// baseline.
+fn check(args: &Args, registry: Registry) -> Result<(RunId, Summary, Gate), String> {
     // With no file the prefix is the root, and a file names its own.
     let given = crawl::Args {
         url: args.config.is_none().then(|| args.prefix.clone()),
@@ -177,7 +227,11 @@ fn check(args: &Args, registry: Registry) -> Result<(RunId, RunId, Summary), Str
     let store = writer.finish().map_err(in_db)?;
     let summary = crawled.map_err(|e| e.to_string())?;
     store.finish_run(run).map_err(in_db)?;
-    Ok((run, imported.run, summary))
+    let mut request = Request::new(Report::Introduced);
+    request.run = Some(run);
+    request.kinds = args.kinds.clone();
+    let gate = crate::report::gate(&store, &request).map_err(|e| e.to_string())?;
+    Ok((run, summary, gate))
 }
 
 #[cfg(test)]

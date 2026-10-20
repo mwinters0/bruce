@@ -169,7 +169,7 @@ impl Cell {
 
 /// A JSON string: the quote, the backslash and every character below U+0020
 /// escaped, as JSON requires, everything else as it is.
-fn quoted(s: &str) -> String {
+pub(super) fn quoted(s: &str) -> String {
     let mut out = String::with_capacity(s.len() + 2);
     out.push('"');
     for c in s.chars() {

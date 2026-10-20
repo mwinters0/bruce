@@ -24,11 +24,8 @@ the 23 targets and 3 pages P5.5 did, with nothing new broken: the three
   `Held`, which is gone with the process. A copied page carries no facts
   (D52), so a query for the run's `antora.component` and `antora.version`
   never counts a baseline page.
-- **P5.8's exit status needs typed errors.** `check_dir::check` returns
-  strings, so every failure is exit 1; a bad config, an unreadable baseline,
-  a schema mismatch and a prefix out of scope are exit 2 in the spec. The
-  baseline's own errors are `store::Error` (`NotBruce`, `SchemaVersion`,
-  `NotBaseline`) and `file.rs`'s strings.
+- **`check_dir::check` returns strings**; every failure is exit 2 (P5.8's
+  note), the gate alone giving 1.
 - **The output names the baseline.** The line says `against baseline run N`;
   the spec's date of the baseline's run is a query of `runs.started_at`, not
   printed yet. `report` with no `--run` picks the latest finished run, the CI

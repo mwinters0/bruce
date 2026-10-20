@@ -135,7 +135,7 @@ WHERE e.kind = 'sitemap' AND NOT EXISTS (SELECT 1 FROM pages p
 const REDIRECTS: View = View {
     name: "report_redirects",
     select: "\
-SELECT v.run_id, v.src_url_id, s.url AS page, v.raw_href, t.url AS target, v.kind,
+SELECT v.run_id, v.src_url_id, s.url AS page, v.raw_href, t.url AS target, v.fragment, v.kind,
     t.final_url AS landing,
     array_to_string(list_transform(t.redirect_chain,
         h -> CASE WHEN h.refresh THEN 'refresh' ELSE h.status::VARCHAR END || ' ' || h.url),

@@ -16,12 +16,12 @@ refused access (a timeout, a 5xx after retries, a 401, 403 or 429).
 
 | Argument | Default | Meaning |
 |---|---|---|
-| `REPORT` | required | `broken`, `errors`, `stats`, `inbound`, `sitemap`, `orphans`, `unlisted`, `redirects` or `diff`. |
+| `REPORT` | required | `broken`, `errors`, `stats`, `inbound`, `sitemap`, `orphans`, `unlisted`, `redirects`, `diff` or `introduced`. |
 | `--db FILE` | `bruce.duckdb` | The database to read. It must exist; a report never creates one. |
-| `--run N` | the latest finished run | The run to read. See [Which run](#which-run). Not for `diff`. |
+| `--run N` | the latest finished run | The run to read. See [Which run](#which-run). Not for `diff`. For `introduced`, a [`check-dir`](check-dir.md) run. |
 | `--from N` | the finished run before `--to` | `diff` only: the run to compare against. |
 | `--to N` | the latest finished run | `diff` only: the run to compare. |
-| `--repo REPO` | none | Only pages whose source file is in this repo, as the page records it (`https://forge.fedoraproject.org/fedora/docs`); for `broken`, `errors`, `stats`, `redirects` and `diff`, the links on those pages. |
+| `--repo REPO` | none | Only pages whose source file is in this repo, as the page records it (`https://forge.fedoraproject.org/fedora/docs`); for `broken`, `errors`, `stats`, `redirects`, `diff` and `introduced`, the links on those pages. |
 | `--fact KEY=VALUE` | none | Only pages with this fact, such as `antora.component=fedora-docs`, or the links on them. Repeat to require several. |
 | `--kind KIND` | `anchor` | Count links of this kind. Repeat to add kinds; `all` is every kind. `sitemap` and `unlisted` ignore it. |
 | `--top N` | all rows | Print the first N rows, in the report's order. |
@@ -131,6 +131,18 @@ not reach as `new`. `new` comes first, then `broken_url` before
 the run the row is read from, and `--kind` chooses the links compared in
 both. Below the text table a line names the two runs.
 
+**`introduced`** reads a run that [`bruce check-dir`](check-dir.md) wrote,
+and has a row for each link that is `broken_url` or `broken_anchor` in it and
+that the run's baseline does not have broken, the failures of `check-dir`'s
+exit status: `broken`'s columns with one more, `baseline`, after `status`. It
+is `new` where the baseline has no such link (the same page, target and
+fragment), else the outcome the baseline had (`ok`, `unchecked` or `error`).
+Below the text table are the baseline run and its day, the redirected links
+the baseline did not have redirected, the links whose outcome is `error` and
+the count of breakage the baseline already had, as `check-dir` prints them.
+A run that names no baseline is an error. The report's exit status is 0
+whatever it finds.
+
 ## Output
 
 The text format is a table with one row a line. A missing value is `-`, and
@@ -144,7 +156,7 @@ or status a number:
 [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"status":200,"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc"}]
 ```
 
-`stats` prints its page rows alone as JSON, and `unlisted` its pages alone; the totals and the roots without a sitemap are in text only.
+`stats` prints its page rows alone as JSON, `unlisted` its pages alone and `introduced` its links alone; the totals, the roots without a sitemap and `introduced`'s other sections are in text only (`check-dir --format json` has them all).
 
 ## Querying the database directly
 
@@ -160,5 +172,5 @@ outcome. Each holds every run, so filter on `run_id`.
 | Status | Meaning |
 |---|---|
 | 0 | The report ran. Finding broken links does not change this. |
-| 1 | The database could not be read, or has no such run, or `diff` has no finished run to compare; the message says which. |
+| 1 | The database could not be read, or has no such run, `diff` has no finished run to compare, or an `introduced` run names no baseline; the message says which. |
 | 2 | The command line was not understood. |

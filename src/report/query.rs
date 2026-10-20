@@ -1,15 +1,17 @@
-//! The report to run, and the queries of the link reports and `stats`: a
-//! view, the run, the filters, the order and the limit. The page reports are
-//! in `reach`; `redirects` and `diff` are link reports of their own.
+//! The report to run, and `stats`' query: a view, the run, the filters, the
+//! order and the limit. The page reports are in `reach`; `broken` and
+//! `errors` are `links`', and `redirects`, `diff` and `introduced` are link
+//! reports of their own.
 
 use duckdb::Connection;
 
 use super::error::Error;
+use super::links::links;
 use super::request::{Report, Request};
 use super::run::Chosen;
-use super::sql::{Cols, PAGE, Sql};
+use super::sql::{PAGE, Sql};
 use super::table::{Cell, Table};
-use super::{diff, reach, redirects};
+use super::{diff, gate, reach, redirects};
 use crate::store::RunId;
 
 /// Runs the report, returning its table and the notes a text rendering adds.
@@ -28,35 +30,16 @@ pub(super) fn run(
         Report::Orphans => Ok((reach::orphans(conn, run, request)?, Vec::new())),
         Report::Unlisted => reach::unlisted(conn, run, request),
         Report::Redirects => Ok((redirects::redirects(conn, run, request)?, Vec::new())),
+        Report::Introduced => {
+            let gate = gate::gate(conn, run, request)?;
+            let notes = vec![gate.baseline_line(), gate.rest(false)];
+            Ok((gate.introduced, notes))
+        }
         Report::Diff => {
             let (from, _) = chosen.from.expect("choose gives a diff its base run");
             Ok(diff::diff(conn, from, run, request)?)
         }
     }
-}
-
-/// A row per link of a `report_*` link view, the worst outcome first.
-fn links(conn: &Connection, run: RunId, request: &Request, view: &str) -> Result<Table, Error> {
-    let mut sql = Sql::new(
-        "SELECT page, raw_href, target, fragment, kind, outcome, reason, status::INTEGER AS status, \
-         source_repo, source_path FROM ",
-    );
-    sql.push(view)
-        .push(" WHERE ")
-        .kinds("kind", request)
-        .push(" AND ");
-    sql.scope(
-        run,
-        request,
-        Cols {
-            run: "run_id",
-            repo: "source_repo",
-            page: "src_url_id",
-        },
-    );
-    sql.push(" ORDER BY outcome DESC, page, raw_href, fragment")
-        .limit(request);
-    sql.fetch(conn)
 }
 
 /// A row per crawled page with its counts, the most broken first, and the run's

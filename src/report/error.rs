@@ -12,6 +12,9 @@ pub enum Error {
     NoSuchRun(RunId),
     /// A `diff` with no `--from`, and no finished run before the one compared.
     NoEarlierRun(RunId),
+    /// An `introduced` report over a run that names no baseline, which only a
+    /// `check-dir` run does.
+    NoBaseline(RunId),
 }
 
 impl fmt::Display for Error {
@@ -25,6 +28,11 @@ impl fmt::Display for Error {
             Error::NoEarlierRun(run) => write!(
                 f,
                 "the database holds no finished run before run {}; name one with --from",
+                run.0
+            ),
+            Error::NoBaseline(run) => write!(
+                f,
+                "run {} was not checked against a baseline; name a `check-dir` run with --run",
                 run.0
             ),
         }

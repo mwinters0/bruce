@@ -22,7 +22,7 @@ decisions each carries are cited in its module's doc.
 
 - **bruce** — `cli/` and the binary's `main.rs`, which only calls it: the
   command line and the registry in the parent file, a child module for
-  each subcommand, `check_dir` (its build, the run over it and the line it prints) with its `file` child (the baseline file a path or URL names, downloaded and decompressed), `crawl` (its roots from the file or the URL, the run and
+  each subcommand, `check_dir` (its build, the run over it and the line it prints) with its `file` child (the baseline file a path or URL names, downloaded and decompressed), and the gate's exit status, `crawl` (its roots from the file or the URL, the run and
   Ctrl-C), `export_baseline` (its files and the line it prints), `prune` (its rule and what it prints) and `report` (its options and
   printing the output), and the `db`
   child, which all five open the database through, installing the reports' views
@@ -57,10 +57,12 @@ decisions each carries are cited in its module's doc.
 
 - **bruce** — `report/`: running one report in the parent file, the request
   and the output in the `request` child, choosing the run in `run`, the
-  statement and the filters every report shares in `sql`, the link reports'
-  and `stats`' queries and the choice among all of them in `query`, how a
-  page is reached (`inbound`, `orphans`, `sitemap`, `unlisted`) in `reach`,
-  `redirects` and `diff` (two runs) each in their own child, the views they read in `views`, the table's
+  statement and the filters every report shares in `sql`, `broken`'s and
+  `errors`' query in `links`, `stats`' and the choice among all the reports in
+  `query`, how a page is reached (`inbound`, `orphans`, `sitemap`,
+  `unlisted`) in `reach`, `redirects`, `diff` (two runs) and the gate
+  (`introduced`: a CI run against its baseline, D9) each in their own child,
+  the views they read in `views`, the table's
   text and JSON in `table` and the failures in `error`.
   It sits above `store`, whose `link_verdicts` its views join, and below
   `cli`, which installs its views at every open (D39). Pruning (D2) is not

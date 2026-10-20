@@ -5,6 +5,8 @@ use wiremock::MockServer;
 
 use super::*;
 use crate::cli::registry;
+use crate::extract::Kind;
+use crate::report::Format;
 use crate::store::Store;
 
 fn parse(args: &[&str]) -> Result<Args, clap::Error> {
@@ -34,8 +36,28 @@ fn a_directory_and_a_prefix_are_required() {
             externals: Externals::Baseline,
             config: None,
             db: Some("d".into()),
+            kinds: vec![Kind::Anchor],
+            format: Format::Text,
+            all: false,
         }
     );
+    let wide = parse(&[
+        "build",
+        "--prefix",
+        "p",
+        "--baseline",
+        "b",
+        "--kind",
+        "image",
+        "--kind",
+        "script",
+        "--format",
+        "json",
+        "--all",
+    ])
+    .unwrap();
+    assert_eq!(wide.kinds, [Kind::Image, Kind::Script]);
+    assert_eq!((wide.format, wide.all), (Format::Json, true));
     let live = parse(&[
         "build",
         "--prefix",
@@ -118,7 +140,9 @@ fn a_run_over_a_build_answers_from_the_directory_and_asks_production_for_the_res
         "--db",
         db.to_str().unwrap(),
     ]);
-    assert_eq!(code, ExitCode::SUCCESS);
+    // The links to `gone/` and `#nope` are broken and the empty baseline has
+    // no word of either, so the gate fails.
+    assert_eq!(code, ExitCode::FAILURE);
 
     let store = Store::open(&db, &registry()).unwrap();
     let mut stmt = store
@@ -197,7 +221,7 @@ fn a_prefix_outside_every_roots_scope_is_refused_before_a_database_is_opened() {
             "--db",
             db.to_str().unwrap(),
         ]);
-        assert_eq!(code, ExitCode::FAILURE, "{prefix}");
+        assert_eq!(code, ExitCode::from(2), "{prefix}");
     }
     assert!(!db.exists());
 }
@@ -226,7 +250,7 @@ fn a_baseline_that_is_not_one_is_refused_and_the_run_is_not_begun() {
             "--db",
             db.to_str().unwrap(),
         ]);
-        assert_eq!(code, ExitCode::FAILURE, "{}", baseline.display());
+        assert_eq!(code, ExitCode::from(2), "{}", baseline.display());
     }
     let store = Store::open(&db, &registry()).unwrap();
     let runs: i64 = store
@@ -234,4 +258,59 @@ fn a_baseline_that_is_not_one_is_refused_and_the_run_is_not_begun() {
         .query_row("SELECT count(*) FROM runs", [], |r| r.get(0))
         .unwrap();
     assert_eq!(runs, 0);
+}
+
+#[test]
+fn a_run_checked_against_its_own_export_introduces_nothing_and_a_clean_build_passes() {
+    let server_runtime = tokio::runtime::Runtime::new().unwrap();
+    let server = server_runtime.block_on(MockServer::start());
+    let base = server.uri();
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path().join("build");
+    build(&dir);
+    let config = tmp.path().join("bruce.toml");
+    std::fs::write(&config, format!("[[root]]\nurl = \"{base}/docs/\"\n")).unwrap();
+    let first = tmp.path().join("first.duckdb");
+    empty_baseline(&first);
+    let db = tmp.path().join("bruce.duckdb");
+    let check = |baseline: &Path, dir: &Path, format: &str| {
+        crate::cli::run_from([
+            "bruce",
+            "check-dir",
+            dir.to_str().unwrap(),
+            "--prefix",
+            &format!("{base}/docs/sub"),
+            "--baseline",
+            baseline.to_str().unwrap(),
+            "--config",
+            config.to_str().unwrap(),
+            "--db",
+            db.to_str().unwrap(),
+            "--format",
+            format,
+        ])
+    };
+    assert_eq!(check(&first, &dir, "text"), ExitCode::FAILURE);
+    // The breakage is now the baseline's, whichever way it is printed.
+    let exported = tmp.path().join("second.duckdb");
+    let code = crate::cli::run_from([
+        "bruce",
+        "export-baseline",
+        "--db",
+        db.to_str().unwrap(),
+        "--out",
+        exported.to_str().unwrap(),
+    ]);
+    assert_eq!(code, ExitCode::SUCCESS);
+    assert_eq!(check(&exported, &dir, "json"), ExitCode::SUCCESS);
+
+    let clean = tmp.path().join("clean");
+    std::fs::create_dir_all(&clean).unwrap();
+    std::fs::write(
+        clean.join("index.html"),
+        r##"<h2 id="x">x</h2><a href="#x">x</a>"##,
+    )
+    .unwrap();
+    assert_eq!(check(&first, &clean, "text"), ExitCode::SUCCESS);
+    drop(server_runtime);
 }

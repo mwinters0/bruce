@@ -26,11 +26,14 @@ pub enum Report {
     Diff,
     /// The redirected links, grouped by where they landed.
     Redirects,
+    /// A CI run's broken links that its baseline did not have broken, the
+    /// gate's failures (D9), and the sections `check-dir` prints beside them.
+    Introduced,
 }
 
 impl Report {
     /// Every report built.
-    pub const ALL: [Report; 9] = [
+    pub const ALL: [Report; 10] = [
         Report::Broken,
         Report::Errors,
         Report::Stats,
@@ -40,6 +43,7 @@ impl Report {
         Report::Unlisted,
         Report::Redirects,
         Report::Diff,
+        Report::Introduced,
     ];
 
     /// The name on the command line.
@@ -54,6 +58,7 @@ impl Report {
             Report::Unlisted => "unlisted",
             Report::Redirects => "redirects",
             Report::Diff => "diff",
+            Report::Introduced => "introduced",
         }
     }
 }

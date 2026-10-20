@@ -26,8 +26,8 @@ the profile's facts and the content hash;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, the body decoding, the local fetcher over a map of URLs to files and the router that sends a URL the build holds to it and any other to HTTP;
 `crawl`, the frontier, the hops of a redirect, D16's outcomes, sitemaps, the run that writes a target's rows and its stop, and a run from seeds checked against a baseline: the component-versions the build holds, `not_built`, the baseline's rows copied for what it lacks, and the xrefs into a component the build lacks resolved to the baseline's pages;
 `ci`, a build directory read as its production URLs; and
-`report`, the `report_*` views, the choice of run, and the eight single-run reports and `diff` as a text table or JSON.
-`docs/manual/` holds the config reference, `bruce crawl`'s, `bruce report`'s, `bruce prune`'s, `bruce export-baseline`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
+`report`, the `report_*` views, the choice of run, the eight single-run reports, `diff`, and the gate (`introduced` with the redirected links, the errors and the breakage already in the baseline), as a text table or JSON.
+`docs/manual/` holds the config reference, `bruce crawl`'s, `bruce check-dir`'s, `bruce report`'s, `bruce prune`'s, `bruce export-baseline`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
@@ -61,8 +61,9 @@ The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
   [Notes](../wip/roadmap-P5.6.1-externals-skip-notes.md).
 - [x] **5.7** `antora`'s Resolve, called in a CI run; D55.
   [Notes](../wip/roadmap-P5.7-resolve-notes.md).
-- [ ] **5.8** The gate: `report introduced`, the exit status, `check-dir`'s
+- [x] **5.8** The gate: `report introduced`, the exit status, `check-dir`'s
   output and manual page.
+  [Notes](../wip/roadmap-P5.8-gate-notes.md).
 - [ ] **5.9** The inverse check: `report inverse` and `--inverse`.
 - [ ] **5.10** The end-to-end test's planted changes and assertions.
 - [ ] **5.11** quick-docs as published and changed, against the en-US
@@ -81,3 +82,11 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **The gate judges `anchor` links alone by default** (5.8). The spec names
+  the gate's failures without a kind, and D13 has reports default to
+  `kind = anchor`, so `check-dir` and `report introduced` do, with `--kind`
+  (repeat, or `all`) to widen them. A PR that breaks an image, script or
+  stylesheet link passes unless the CI job says `--kind all`. Reconsidering
+  makes the default every kind, which P5.11's run on quick-docs would show
+  for noise first.
