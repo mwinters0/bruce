@@ -191,20 +191,40 @@ fn a_target_that_is_not_ok_gives_its_link_its_own_outcome_and_reason() {
 fn an_unresolved_xref_is_broken_whatever_the_fragment_names() {
     let store = open();
     store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
-    target(&store, 1, 2, "ok", None, None);
-    page(&store, 1, 2, &["comp::page.adoc"]);
+    target(&store, 1, 1, "ok", None, None);
+    page(&store, 1, 1, &["comp::page.adoc"]);
+    // Antora leaves the page itself as the target, the refspec its fragment.
     link(
         &store,
         "xref",
-        2,
+        1,
         Some("comp::page.adoc"),
         Some("comp::page.adoc"),
     );
-    link(&store, "plain", 2, Some("comp::page.adoc"), None);
+    link(&store, "plain", 1, Some("comp::page.adoc"), None);
 
     let got = verdicts(&store);
     expect(&got, "xref", "broken_url", Some("unresolved_xref"));
     expect(&got, "plain", "ok", None);
+}
+
+#[test]
+fn a_resolved_xref_is_judged_as_any_link_to_its_target() {
+    let store = open();
+    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    target(&store, 1, 1, "ok", None, None);
+    page(&store, 1, 1, &[]);
+    target(&store, 1, 2, "ok", None, None);
+    page(&store, 1, 2, &["there"]);
+    target(&store, 1, 3, "broken_url", Some("not_built"), None);
+    link(&store, "found", 2, Some("there"), Some("c::p.adoc#there"));
+    link(&store, "no anchor", 2, Some("nope"), Some("c::p.adoc#nope"));
+    link(&store, "no page", 3, None, Some("c::q.adoc"));
+
+    let got = verdicts(&store);
+    expect(&got, "found", "ok", None);
+    expect(&got, "no anchor", "broken_anchor", None);
+    expect(&got, "no page", "broken_url", Some("not_built"));
 }
 
 #[test]

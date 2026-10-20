@@ -258,6 +258,33 @@ fn a_lookup_finds_the_pages_carrying_every_fact() {
         ["https://a.test/two"]
     );
     assert!(urls(&[("viewing.colour", "blue")]).is_empty());
+    let two = Url::parse("https://a.test/two").unwrap();
+    let mut facts = lookup.facts(&two).unwrap();
+    facts.sort();
+    assert_eq!(
+        facts,
+        [
+            ("viewing.colour".to_owned(), "red".to_owned()),
+            ("viewing.size".to_owned(), "big".to_owned())
+        ]
+    );
+    let gone = Url::parse("https://a.test/gone").unwrap();
+    assert!(lookup.facts(&gone).unwrap().is_empty());
+    // The baseline's index answers as a lookup of its run does.
+    let index = store.baseline_index(run).unwrap();
+    assert_eq!(
+        index
+            .pages_with_facts(&[("viewing.colour", "red")])
+            .unwrap()
+            .len(),
+        2
+    );
+    assert_eq!(
+        index.pages_with_facts(&[("viewing.size", "big")]).unwrap(),
+        std::slice::from_ref(&two)
+    );
+    assert_eq!(index.facts(&two).unwrap().len(), 2);
+    assert!(!index.built(&[("viewing.colour", "red")]));
     assert!(
         store
             .lookup(RunId(2))

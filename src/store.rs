@@ -278,6 +278,20 @@ impl Lookup for RunLookup<'_> {
             .map(|u| Url::parse(u).map_err(BoxError::from))
             .collect()
     }
+
+    fn facts(&self, page: &Url) -> Result<Vec<(String, String)>, BoxError> {
+        let mut stmt = self.store.conn.prepare(
+            "SELECT f.key, f.value FROM page_facts f \
+             JOIN targets t ON t.run_id = f.run_id AND t.url_id = f.url_id \
+             WHERE f.run_id = ? AND t.url = ?",
+        )?;
+        let facts = stmt
+            .query_map(params![self.run.0, page.as_str()], |row| {
+                Ok((row.get(0)?, row.get(1)?))
+            })?
+            .collect::<Result<_, _>>()?;
+        Ok(facts)
+    }
 }
 
 #[cfg(test)]

@@ -50,4 +50,9 @@ roadmap's phase index.
   link to a page the change deletes passes on the baseline's `ok`. **(c) unowned**: a
   non-Antora site checked in CI would promote it. Detail: `src/crawl.rs`
 
-<!-- deficiency-watermark: KD6 -->
+- **KD7** — A baseline page with no forge edit link has no `module` or `rel_path` fact, so an
+  xref to it cannot resolve and stays `unresolved_xref` in CI. **(c) unowned**: a baseline
+  carrying the page's source path some other way would promote it. Detail:
+  `src/profile/antora/resolve.rs`
+
+<!-- deficiency-watermark: KD7 -->

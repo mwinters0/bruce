@@ -40,7 +40,7 @@ by destination").
 - **Fact.** P4 places a link with `xref_refspec` set as `broken_url`,
   reason `unresolved_xref` (D20), in its `link_verdicts` view, and builds
   no hint: D20's fuzzy match over resource IDs is left for the Resolve hook
-  (D19, D38), which is empty in `antora` today.
+  (D19, D38), which `antora` builds for CI as an exact match (D55).
 - **Why P8 cares.** P5's grilling left the hint out of CI mode, as it
   changes no CI verdict, so it is the next reports phase's: whether
   Resolve's lookup, which P5 builds, gives the live report's hint, and where

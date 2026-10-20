@@ -24,9 +24,8 @@ pub type BoxError = Box<dyn std::error::Error + Send + Sync>;
 /// handlers keyed by selector, in registration order (D38).
 pub type ElementHandlers<'h> = Vec<(Cow<'static, Selector>, ElementContentHandlers<'h>)>;
 
-/// A profile's extension of the core (D38). Detect, Extract and Views are
-/// built; Resolve is declared here and given a body by the Antora resolver
-/// (P5).
+/// A profile's extension of the core (D38). Resolve is `antora`'s alone;
+/// `generic` has no reference to resolve.
 pub trait Profile: Send + Sync {
     /// The name a root's `profile` key gives, and the namespace of the
     /// profile's facts and views (D37).
@@ -47,8 +46,9 @@ pub trait Profile: Send + Sync {
 
     /// Resolve: the URL a reference tagged by [`Profile::extract`] names, as
     /// found on the page at `from`, through the pages `lookup` knows. `None`
-    /// for a reference this profile cannot resolve; `generic` has no
-    /// reference that is not a URL (D38).
+    /// for a reference this profile cannot resolve, or that names a page the
+    /// build holds ([`Lookup::built`]); `generic` has no reference that is
+    /// not a URL (D38).
     fn resolve(
         &self,
         reference: &str,
@@ -208,6 +208,18 @@ pub trait Lookup {
     /// The URLs of the run's pages carrying every `(full key, value)` pair
     /// given (D37), in no particular order.
     fn pages_with_facts(&self, facts: &[(&str, &str)]) -> Result<Vec<Url>, BoxError>;
+
+    /// Every fact the run recorded for the page at `page`, as full keys (D37);
+    /// none for a page it does not hold.
+    fn facts(&self, page: &Url) -> Result<Vec<(String, String)>, BoxError>;
+
+    /// Whether the build being checked holds the component-version the
+    /// `(full key, value)` pairs name: the pages of a held one are the
+    /// build's to answer for, and the run's lookup is not asked (D22, D54).
+    /// A lookup of a crawl's run checks no build and holds nothing.
+    fn built(&self, _facts: &[(&str, &str)]) -> bool {
+        false
+    }
 }
 
 /// The profiles compiled in, built by `cli` (D39). One is the fallback.

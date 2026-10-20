@@ -40,13 +40,16 @@
 //! pages to check, and an href beginning `/` points at the build's site root
 //! ([`Crawl::against`], D53). It is checked against a baseline: a URL the
 //! build does not hold is answered by copying the baseline's rows or by a
-//! request, once the built pages are read (`baseline`, D22, D52).
+//! request, once the built pages are read (`baseline`, D22, D52), and an xref
+//! into a component the build lacks is resolved to the baseline's page for it
+//! (`xref`, D20, D38).
 
 mod baseline;
 mod frontier;
 mod hops;
 mod outcome;
 mod sitemap;
+mod xref;
 
 use std::collections::VecDeque;
 use std::fmt;
@@ -364,6 +367,8 @@ where
         let shared = self.shared;
         let items = shared.seed(seeds).await?;
         shared.drive(items, None).await?;
+        let resolved = shared.settle_xrefs().await?;
+        shared.drive(resolved, None).await?;
         let beyond = shared.settle_unbuilt().await?;
         shared.drive(beyond, None).await?;
         shared.copy_from_baseline().await?;
@@ -986,7 +991,7 @@ where
                     (self.invalid(&link.raw)?, None)
                 }
             };
-            self.rows.send(Row::Link(LinkRow {
+            let row = LinkRow {
                 run_id: self.run.0,
                 src_url_id: url_id,
                 target_url_id,
@@ -994,7 +999,20 @@ where
                 raw_href: link.raw.clone(),
                 kind: link.kind.as_str(),
                 xref_refspec: link.tag.clone(),
-            }))?;
+            };
+            match Url::parse(form.as_str()) {
+                // Whether the refspec names a held component-version is known
+                // only when every built page is read (D22).
+                Ok(from) if row.xref_refspec.is_some() && self.frontier.baseline().is_some() => {
+                    let profile = e.profile;
+                    self.pending.defer_xref(baseline::Xref {
+                        from,
+                        profile,
+                        link: row,
+                    });
+                }
+                _ => self.rows.send(Row::Link(row))?,
+            }
         }
         Ok(())
     }
@@ -1062,6 +1080,45 @@ where
         if let Some(component) = get("antora.component") {
             self.pending.hold(component, get("antora.version"));
         }
+    }
+
+    /// Writes the links of the xrefs waiting for the held set, now that every
+    /// built page is read: one the profile resolves points at the page it
+    /// resolves to, claimed as a link's target is, and any other stays the
+    /// unresolved xref it was (D20). Returns the items to ask about.
+    pub(super) async fn settle_xrefs(self: &Arc<Self>) -> Result<Vec<Item>, Error> {
+        let shared = Arc::clone(self);
+        tokio::task::spawn_blocking(move || {
+            let (Some(_writing), Some(baseline)) =
+                (shared.writes.begin(), shared.frontier.baseline())
+            else {
+                return Ok(Vec::new());
+            };
+            let xrefs = shared.pending.take_xrefs();
+            let resolved = {
+                let held = shared.pending.held();
+                xref::resolve(xrefs, &held, &baseline.index, &shared.registry)
+            };
+            let mut items = Vec::new();
+            for (mut link, target) in resolved {
+                if let Some(target) = target
+                    && !shared.stopping()
+                {
+                    link.fragment = target.fragment().map(str::to_owned);
+                    let mut bare = target;
+                    bare.set_fragment(None);
+                    let (plan, form) = shared.frontier.plan(&bare, Kind::Anchor);
+                    link.target_url_id = form.id();
+                    if shared.frontier.claim(form.id()) {
+                        items.extend(shared.dispatch(bare, Kind::Anchor, true, plan, form)?);
+                    }
+                }
+                shared.rows.send(Row::Link(link))?;
+            }
+            Ok(items)
+        })
+        .await
+        .map_err(|_| Error::Panicked)?
     }
 
     /// Judges the URLs under the prefix that the build lacks, now that every

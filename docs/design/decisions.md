@@ -352,6 +352,15 @@ one broken there is introduced), else `unchecked`, reason `externals_skipped`, a
 URLs are not reached. Rejected: a pre-scan of the build (D38); `skip` as no verdict, passing that link. Reopens: a prefix
 below the site root, a renamed version segment. Code: `crawl::baseline`. Evidence: `crawl::baseline::tests`.
 
+### D55 An xref waits for the held set, resolves through the baseline's pages, and keeps its refspec
+A built page's tagged link is written once every built page is read (D54's wait). A refspec whose component-version the
+build holds stays `unresolved_xref`; else the profile's Resolve maps it through the baseline's pages, loaded before the run
+as its targets are (D52), and the link points at that page with the refspec's fragment, `xref_refspec` kept, so
+`link_verdicts` reads a refspec as unresolved only while the link points at its own page (I6). No version: the latest the
+baseline holds, in Antora's order. Rejected: a column or a cleared refspec marking a resolved link (schema 5 refuses P5.2's
+baseline, D43). Reopens: a page with a `<base href>`. Code: `crawl::xref`, `profile::antora::resolve`. Evidence:
+`crawl::baseline::tests::an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline`.
+
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
 `check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status
 follows D9 and D16. The drafted flags are `historical/initial.md`, "D27".

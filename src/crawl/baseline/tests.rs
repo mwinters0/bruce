@@ -459,3 +459,97 @@ async fn a_build_holding_no_component_version_trusts_the_baseline_and_asks_for_w
         ]
     );
 }
+
+/// An Antora page of `component` at `version`, whose source file is
+/// `modules/<module>/pages/<file>` of a repository, holding `body`.
+fn sourced(component: &str, version: &str, source: (&str, &str), body: &str) -> String {
+    let (module, file) = source;
+    let edit = format!(
+        r#"<a rel="edit" href="https://github.com/o/r/edit/main/modules/{module}/pages/{file}">e</a>"#
+    );
+    page(component, version, &format!("{edit}{body}"))
+}
+
+/// The whole site as a baseline run, then `tools` alone, whose xrefs into
+/// the components it lacks Antora left as `#<refspec>`.
+#[tokio::test]
+async fn an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline() {
+    let production = MockServer::start().await;
+    let base = production.uri();
+    let config = format!("[[root]]\nurl = \"{base}/docs/\"\n");
+    let prefix = format!("{base}/docs/");
+    let tmp = tempfile::tempdir().unwrap();
+    let anchors = r#"<h2 id="first-boot">f</h2>"#;
+    let whole = [
+        ("tools/index.html", page("tools", "", "tools")),
+        (
+            "guide/1.0/install/index.html",
+            sourced("guide", "1.0", ("ROOT", "install.adoc"), anchors),
+        ),
+        (
+            "guide/2.0/install/index.html",
+            sourced("guide", "2.0", ("ROOT", "install.adoc"), anchors),
+        ),
+        (
+            "ops/admin/partitions/index.html",
+            sourced("ops", "master", ("admin", "partitions.adoc"), "ops"),
+        ),
+    ];
+    let (local, seeds) = build(tmp.path(), &prefix, &whole);
+    let none = Baseline {
+        run: RunId(0),
+        index: BaselineIndex::default(),
+        externals: Externals::Live,
+    };
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let first = check(store, &config, local, &seeds, none).await;
+
+    let xrefs = [
+        "guide::install.adoc#first-boot",
+        "1.0@guide::install.adoc#nope",
+        "ops:admin:partitions.adoc",
+        "ops:admin:missing.adoc",
+        "tools::missing.adoc",
+        "nobody::install.adoc",
+    ]
+    .map(|refspec| format!(r##"<a class="xref unresolved" href="#{refspec}">{refspec}</a> "##));
+    let partial = [("tools/index.html", page("tools", "", &xrefs.concat()))];
+    let dir = tmp.path().join("partial");
+    std::fs::create_dir(&dir).unwrap();
+    let (local, seeds) = build(&dir, &prefix, &partial);
+    let baseline = Baseline {
+        run: first.run,
+        index: first.store.baseline_index(first.run).unwrap(),
+        externals: Externals::Baseline,
+    };
+    let second = check(first.store, &config, local, &seeds, baseline).await;
+
+    assert_eq!(
+        second.targets(second.run, &base),
+        [
+            t("/docs/guide/1.0/install/", "ok", None, "baseline"),
+            t("/docs/guide/2.0/install/", "ok", None, "baseline"),
+            t("/docs/ops/admin/partitions/", "ok", None, "baseline"),
+            t("/docs/tools/", "ok", None, "local"),
+        ]
+        .map(|(u, o, r, b)| (u.replace(&base, ""), o, r, b)),
+    );
+    let verdicts = second.verdicts("/docs/tools/", &base);
+    let of = |refspec: &str| {
+        let raw = format!("#{refspec}");
+        let (_, outcome) = verdicts.iter().find(|(h, _)| *h == raw).unwrap();
+        outcome.as_str()
+    };
+    assert_eq!(of("guide::install.adoc#first-boot"), "ok", "the latest");
+    assert_eq!(of("1.0@guide::install.adoc#nope"), "broken_anchor");
+    assert_eq!(of("ops:admin:partitions.adoc"), "ok");
+    // Not a page of the baseline, or a component the build holds.
+    for refspec in [
+        "ops:admin:missing.adoc",
+        "tools::missing.adoc",
+        "nobody::install.adoc",
+    ] {
+        assert_eq!(of(refspec), "broken_url", "{refspec}");
+    }
+    assert_eq!(asked(&production).await, 0);
+}

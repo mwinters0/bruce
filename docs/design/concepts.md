@@ -40,7 +40,9 @@ decisions each carries are cited in its module's doc.
   staying in the parent. A run over a local build begins from its seeds in the
   parent, and resolves an href beginning `/` against the build's site root (D53).
   What a run over a build leaves to the baseline, the component-versions its
-  pages hold and the copies sent last is in the `baseline` child (D54). It sits above
+  pages hold and the copies sent last is in the `baseline` child (D54); the
+  xrefs of a built page, resolved through the baseline's pages once the held
+  set is final, in the `xref` child (D55). It sits above
   `fetch`, `extract` and `store`, driving each (D39).
 
 ## CI mode
@@ -92,7 +94,7 @@ decisions each carries are cited in its module's doc.
   profile's views in the parent file, the tables in the `schema` child, the
   row types in the `rows` child, the views over them (`link_verdicts`) in the
   `views` child, deleting old runs (D2) in the `prune` child, writing one run as a baseline file
-  (D21), importing one as a run, listing the targets a run holds and copying a target's rows between runs (D52) in the `baseline` child and the single
+  (D21), importing one as a run, listing the targets a run holds with its pages' facts, which a profile resolves through (D55), and copying a target's rows between runs (D52) in the `baseline` child and the single
   writer thread, which also runs a requested copy, in the `writer` child. It sits above `profile`
   because it asks each profile for its views and answers its lookups (D39).
 
@@ -100,7 +102,7 @@ decisions each carries are cited in its module's doc.
 
 - **bruce** — `profile/`: the trait, the registry and the fact and lookup
   types in the parent file, and a child module for each profile compiled in
-  (D33), `generic` and `antora`. `cli` alone builds the registry (D39).
+  (D33), `generic` and `antora`, whose Resolve is its `resolve` child (D55). `cli` alone builds the registry (D39).
 
 ## Forge edit-URL shapes
 

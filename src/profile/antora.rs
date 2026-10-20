@@ -1,6 +1,5 @@
 //! The `antora` profile: Antora's generator meta, nav container, content
-//! region and xrefs (D19, D20). Detect, Views and Extract are built; Resolve
-//! is the resolver's (P5) and until then does nothing.
+//! region and xrefs (D19, D20). Resolve is the `resolve` child's.
 //!
 //! Extract records a page's coordinates as facts (D19, I8): `component` and
 //! `version` from the nav container, verbatim; `module` and `rel_path` from
@@ -19,6 +18,8 @@ use percent_encoding::percent_decode_str;
 use url::Url;
 
 use super::{BoxError, Extract, Lookup, Profile, Settled, Sink, View};
+
+mod resolve;
 
 /// The profile for sites built by Antora.
 pub struct Antora;
@@ -156,13 +157,14 @@ impl Profile for Antora {
         extract
     }
 
+    /// A refspec names its page whole, so the page it is on is not read.
     fn resolve(
         &self,
-        _reference: &str,
+        reference: &str,
         _from: &Url,
-        _lookup: &dyn Lookup,
+        lookup: &dyn Lookup,
     ) -> Result<Option<Url>, BoxError> {
-        Ok(None)
+        resolve::resolve(reference, lookup)
     }
 
     fn views(&self) -> &'static [View] {

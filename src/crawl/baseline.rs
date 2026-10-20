@@ -14,6 +14,10 @@
 //! the build wrote, so a copied landing page never doubles a built one. The
 //! run itself (`Shared::dispatch`, `settle_unbuilt` and `copy_from_baseline`)
 //! is the parent's; this holds what it waits on.
+//!
+//! A tagged link of a built page, an xref Antora could not resolve (I6), waits
+//! too: whether its refspec names a component-version the build holds is
+//! known only then (`xref`, D20, D22).
 
 use std::collections::{HashMap, HashSet};
 use std::sync::{Mutex, MutexGuard};
@@ -22,6 +26,7 @@ use percent_encoding::percent_decode_str;
 use url::Url;
 
 use crate::extract::Kind;
+use crate::store::LinkRow;
 use crate::url::Canonical;
 
 /// The reason of a URL the build lacks in a component-version it holds
@@ -81,6 +86,24 @@ impl Held {
     }
 }
 
+impl Held {
+    /// Whether the build holds the component `component` at `version`, as a
+    /// refspec names them: a refspec with no version asks for the component's
+    /// latest, which the build holds whenever it holds the component, and one
+    /// with a version is held as a URL under that version segment is
+    /// ([`Held::holds`]).
+    pub(super) fn holds_coordinates(&self, component: &str, version: Option<&str>) -> bool {
+        let Some(versions) = self.components.get(component) else {
+            return false;
+        };
+        match version {
+            None => true,
+            Some("" | "master") => versions.bare,
+            Some(version) => versions.bare || versions.named.contains(version),
+        }
+    }
+}
+
 fn decode(segment: &str) -> String {
     percent_decode_str(segment).decode_utf8_lossy().into_owned()
 }
@@ -93,12 +116,24 @@ pub(super) struct Unbuilt {
     pub(super) form: Canonical,
 }
 
+/// A link a built page's profile tagged as a reference it could not resolve,
+/// its row not yet written: pointing at the page itself, with the raw refspec
+/// as its fragment, as a live crawl writes it (D20).
+pub(super) struct Xref {
+    /// The page the link is on.
+    pub(super) from: Url,
+    /// The profile that read the page.
+    pub(super) profile: &'static str,
+    pub(super) link: LinkRow,
+}
+
 /// What a run against a baseline has claimed and not yet answered.
 #[derive(Default)]
 pub(super) struct Pending {
     held: Mutex<Held>,
     unbuilt: Mutex<Vec<Unbuilt>>,
     copies: Mutex<Vec<u64>>,
+    xrefs: Mutex<Vec<Xref>>,
 }
 
 fn locked<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
@@ -108,6 +143,19 @@ fn locked<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
 impl Pending {
     pub(super) fn hold(&self, component: &str, version: Option<&str>) {
         locked(&self.held).record(component, version);
+    }
+
+    /// The component-versions held so far.
+    pub(super) fn held(&self) -> MutexGuard<'_, Held> {
+        locked(&self.held)
+    }
+
+    pub(super) fn defer_xref(&self, xref: Xref) {
+        locked(&self.xrefs).push(xref);
+    }
+
+    pub(super) fn take_xrefs(&self) -> Vec<Xref> {
+        std::mem::take(&mut *locked(&self.xrefs))
     }
 
     pub(super) fn defer(&self, unbuilt: Unbuilt) {
