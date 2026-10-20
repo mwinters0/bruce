@@ -344,13 +344,13 @@ build whose root-relative hrefs are meant for the origin, not the prefix. Code: 
 Evidence: `extract::tests::in_a_local_build_an_href_beginning_a_slash_resolves_against_the_site_root_d53`.
 
 ### D54 A URL the build lacks waits for the held set, and a copy from the baseline waits for the end
-An in-scope URL under the prefix and not built is judged after every built page is read: in a component-version
-one carried (I16) it is `broken_url`, reason `not_built`; otherwise it goes where a URL outside the build goes, the
-baseline's rows if its index holds the target, else a request one hop deep. The index is loaded before the writer
-owns the connection and the copies are sent last, `targets` having no key to stop a copied landing page doubling the
-build's own. `--externals=skip` leaves allowlisted URLs `unchecked`, reason `externals_skipped`. Rejected: a pre-scan
-of the build for facts, a second pass beside the profile's (D38); judging at claim time on a held set still filling.
-Reopens: a prefix below the site root, a renamed version segment. Code: `crawl::baseline`. Evidence: `crawl::baseline::tests`.
+An in-scope URL under the prefix and not built is judged after every built page is read: in a component-version one carried
+(I16) it is `broken_url`, reason `not_built`; otherwise it goes where a URL outside the build goes: the baseline's rows if
+held, else a request one hop deep. The copies are sent last, `targets` having no key to stop a copied landing page doubling
+the build's own. `--externals=skip` means never ask: an allowlisted URL gets the baseline's rows where held (a new link to
+one broken there is introduced), else `unchecked`, reason `externals_skipped`, as does a hop onto one (D50's way); in-scope
+URLs are not reached. Rejected: a pre-scan of the build (D38); `skip` as no verdict, passing that link. Reopens: a prefix
+below the site root, a renamed version segment. Code: `crawl::baseline`. Evidence: `crawl::baseline::tests`.
 
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
 `check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status

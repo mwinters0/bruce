@@ -22,7 +22,8 @@ use crate::url::{Canonical, canonical};
 /// The reason of a URL `skip` matched (D50).
 pub const SKIPPED: &str = "skipped";
 
-/// The reason of an allowlisted URL `--externals=skip` leaves alone (D22).
+/// The reason of an allowlisted URL `--externals=skip` neither copies nor asks
+/// (D22, D54).
 pub const EXTERNALS_SKIPPED: &str = "externals_skipped";
 
 /// What a run does about a URL.
@@ -63,7 +64,8 @@ pub struct Frontier {
 /// What `--externals` asks of a URL on an allowlisted host (D22).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Externals {
-    /// Nothing is requested or copied: the URL is `unchecked`.
+    /// Nothing is requested: the baseline's rows are copied where it holds
+    /// the target, else the URL is `unchecked` (D54).
     Skip,
     /// The baseline's verdict where it holds one, else a request.
     Baseline,
@@ -191,9 +193,15 @@ impl Frontier {
     /// baseline's rows where it holds a target for it, else by asking, as an
     /// allowlisted URL is asked (D22, D52).
     pub fn beyond(&self, form: &Canonical, kind: Kind) -> Plan {
+        self.copy_or(form, live(kind))
+    }
+
+    /// [`Plan::Baseline`] where the baseline holds a target for `form`, else
+    /// `otherwise`.
+    fn copy_or(&self, form: &Canonical, otherwise: Plan) -> Plan {
         match self.baseline() {
             Some(b) if b.index.holds(form.id()) => Plan::Baseline,
-            _ => live(kind),
+            _ => otherwise,
         }
     }
 
@@ -201,7 +209,7 @@ impl Frontier {
     /// against a baseline, and in any other it is asked.
     fn external(&self, form: &Canonical, kind: Kind) -> Plan {
         match self.baseline().map(|b| b.externals) {
-            Some(Externals::Skip) => Plan::Unchecked(EXTERNALS_SKIPPED),
+            Some(Externals::Skip) => self.copy_or(form, Plan::Unchecked(EXTERNALS_SKIPPED)),
             Some(Externals::Baseline) => self.beyond(form, kind),
             Some(Externals::Live) | None => live(kind),
         }
@@ -209,13 +217,33 @@ impl Frontier {
 
     /// [`Frontier::plan`] for the URL a redirect leads to: a hop is followed
     /// wherever it goes, so what a link would leave unchecked is asked for its
-    /// status alone. A skipped URL stays skipped, and ends the chain (D50).
+    /// status alone. A skipped URL stays skipped, and ends the chain (D50);
+    /// so does an allowlisted one under `--externals=skip` (D54).
     pub fn hop_plan(&self, url: &Url, kind: Kind) -> (Plan, Canonical) {
         match self.plan(url, kind) {
             (Plan::Unchecked(SKIPPED), form) => (Plan::Unchecked(SKIPPED), form),
+            (Plan::Baseline | Plan::Unchecked(EXTERNALS_SKIPPED), form)
+                if self.is_skipped_external(url) =>
+            {
+                (Plan::Unchecked(EXTERNALS_SKIPPED), form)
+            }
             (Plan::Unchecked(_) | Plan::Baseline | Plan::Unbuilt, form) => (Plan::Status, form),
             planned => planned,
         }
+    }
+
+    /// Whether `url` is on an allowlisted host, in no root's scope, in a run
+    /// whose `--externals` is `skip`.
+    fn is_skipped_external(&self, url: &Url) -> bool {
+        let host = url.host().map(|h| h.to_string()).unwrap_or_default();
+        self.baseline()
+            .is_some_and(|b| b.externals == Externals::Skip)
+            && self.config.allowlist.contains(&host)
+            && !self
+                .config
+                .roots
+                .iter()
+                .any(|r| r.in_scope(&r.canonical(url)))
     }
 }
 

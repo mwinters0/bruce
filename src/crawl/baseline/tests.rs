@@ -344,24 +344,41 @@ async fn a_partial_build_is_answered_by_the_build_the_baseline_and_production() 
 }
 
 #[tokio::test]
-async fn externals_skip_leaves_an_allowlisted_url_unchecked_and_live_asks_whatever_the_baseline_holds()
- {
+async fn externals_skip_copies_what_the_baseline_holds_and_asks_nothing_else() {
     let production = MockServer::start().await;
     let outer = MockServer::start().await;
     let (base, port) = (production.uri(), outer.address().port());
     let config = format!("allowlist = [\"localhost\"]\n[[root]]\nurl = \"{base}/docs/\"\n");
     let prefix = format!("{base}/docs/");
+    let outside = format!("http://localhost:{port}");
     ok(&outer, "GET", "/page").await;
+    ok(&outer, "GET", "/new").await;
+    // A page of a component the build lacks, which production moves onto
+    // the baseline's `/page`.
+    Mock::given(method("GET"))
+        .and(path("/docs/legal/moved/"))
+        .respond_with(
+            ResponseTemplate::new(301).insert_header("location", format!("{outside}/page")),
+        )
+        .mount(&production)
+        .await;
     let tmp = tempfile::tempdir().unwrap();
+    let first_files = [(
+        "tools/index.html",
+        page("tools", "", &format!(r#"<a href="{outside}/page">p</a>"#)),
+    )];
     let files = [(
         "tools/index.html",
         page(
             "tools",
             "",
-            &format!(r#"<a href="http://localhost:{port}/page">p</a>"#),
+            &format!(
+                r#"<a href="{outside}/page">p</a> <a href="{outside}/new">n</a>
+                <a href="../legal/moved/">m</a>"#
+            ),
         ),
     )];
-    let (local, seeds) = build(tmp.path(), &prefix, &files);
+    let (local, seeds) = build(tmp.path(), &prefix, &first_files);
     let live = Baseline {
         run: RunId(0),
         index: BaselineIndex::default(),
@@ -371,15 +388,19 @@ async fn externals_skip_leaves_an_allowlisted_url_unchecked_and_live_asks_whatev
     let first = check(store, &config, local, &seeds, live).await;
     let index = first.store.baseline_index(first.run).unwrap();
 
-    let ext = format!("http://localhost:{port}/page");
     let mut store = first.store;
-    for (externals, expect) in [
+    for (externals, page_, new) in [
         (
             Externals::Skip,
+            ("ok", None, "baseline"),
             ("unchecked", Some("externals_skipped"), "live"),
         ),
-        (Externals::Baseline, ("ok", None, "baseline")),
-        (Externals::Live, ("ok", None, "live")),
+        (
+            Externals::Baseline,
+            ("ok", None, "baseline"),
+            ("ok", None, "live"),
+        ),
+        (Externals::Live, ("ok", None, "live"), ("ok", None, "live")),
     ] {
         let dir = tempfile::tempdir().unwrap();
         let (local, seeds) = build(dir.path(), &prefix, &files);
@@ -388,21 +409,23 @@ async fn externals_skip_leaves_an_allowlisted_url_unchecked_and_live_asks_whatev
             index: index.clone(),
             externals,
         };
+        let before = asked(&outer).await;
         let done = check(store, &config, local, &seeds, baseline).await;
-        let target = done
-            .targets(done.run, &base)
-            .into_iter()
-            .find(|t| t.0 == ext)
-            .unwrap();
-        assert_eq!(
-            (target.1, target.2, target.3),
-            (
-                expect.0.to_owned(),
-                expect.1.map(str::to_owned),
-                expect.2.to_owned()
-            ),
-            "{externals:?}"
-        );
+        let targets = done.targets(done.run, &base);
+        let of = |url: String| {
+            let t = targets.iter().find(|t| t.0 == url).unwrap();
+            (t.1.as_str(), t.2.as_deref(), t.3.as_str())
+        };
+        assert_eq!(of(format!("{outside}/page")), page_, "{externals:?}");
+        assert_eq!(of(format!("{outside}/new")), new, "{externals:?}");
+        if externals == Externals::Skip {
+            assert_eq!(
+                of("/docs/legal/moved/".to_owned()),
+                ("unchecked", Some("externals_skipped"), "live"),
+                "a redirect onto an allowlisted host ends the chain under skip"
+            );
+            assert_eq!(asked(&outer).await, before, "skip asked the outside host");
+        }
         store = done.store;
     }
 }

@@ -68,7 +68,7 @@ use crate::store::{
     WriteHandle, WriterGone,
 };
 use crate::url::Canonical;
-use frontier::{Frontier, Plan, SKIPPED};
+use frontier::{EXTERNALS_SKIPPED, Frontier, Plan, SKIPPED};
 use hops::{Chain, Stop};
 use sitemap::Sitemap;
 
@@ -649,6 +649,11 @@ where
             // one does, and asks nothing, robots.txt included (D50).
             if plan == Plan::Unchecked(SKIPPED) {
                 break End::Blocked(SKIPPED);
+            }
+            // So does one onto an allowlisted host under `--externals=skip`
+            // (D54).
+            if plan == Plan::Unchecked(EXTERNALS_SKIPPED) {
+                break End::Blocked(EXTERNALS_SKIPPED);
             }
             let access = self.fetcher.access(&url).await;
             if self.stopping() {

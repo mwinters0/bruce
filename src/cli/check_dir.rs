@@ -95,8 +95,9 @@ pub fn command() -> Command {
                 .value_parser(["skip", "baseline", "live"])
                 .default_value("baseline")
                 .help(
-                    "Allowlisted URLs: leave unchecked, take the baseline's verdict where it \
-                     has one, or always ask",
+                    "Allowlisted URLs: never ask (the baseline's verdict where it has one, else \
+                     unchecked), take the baseline's verdict where it has one and ask \
+                     otherwise, or always ask",
                 ),
         )
         .arg(

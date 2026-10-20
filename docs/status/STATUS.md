@@ -56,10 +56,10 @@ The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
 - [x] **5.6** The frontier's baseline class, held component-versions and
   `not_built`; `check-dir --baseline` and `--externals`.
   [Notes](../wip/roadmap-P5.6-baseline-class-notes.md).
-- [ ] **5.6.1** `--externals=skip` copies the baseline's rows where it holds
+- [x] **5.6.1** `--externals=skip` copies the baseline's rows where it holds
   the target, else `unchecked`, and a redirect hop onto an allowlisted host
   ends the chain under it; D54 amended.
-  [Why](history/2026-10-20.md#the---externalsskip-review).
+  [Notes](../wip/roadmap-P5.6.1-externals-skip-notes.md).
 - [ ] **5.7** `antora`'s Resolve, called in a CI run.
 - [ ] **5.8** The gate: `report introduced`, the exit status, `check-dir`'s
   output and manual page.

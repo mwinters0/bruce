@@ -5,7 +5,8 @@
 //! The frontier sorts a URL the build does not hold into two classes. One
 //! outside the build's prefix, or on an allowlisted host, is answered by
 //! copying the baseline's rows for it when it holds a target, else asked
-//! live. One under the prefix and not built waits in [`Pending`] until every
+//! live (`--externals=skip` leaves an allowlisted one `unchecked` instead,
+//! D54). One under the prefix and not built waits in [`Pending`] until every
 //! built page is read, because whether it is `not_built` depends on the
 //! component-versions those pages carry ([`Held`]): in a held one the build
 //! is the truth and the URL is `broken_url`, in any other the baseline is

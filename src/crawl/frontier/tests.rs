@@ -234,16 +234,55 @@ fn externals_decides_an_allowlisted_url_and_no_other() {
     let known = "https://forge.example.org/p/";
     assert_eq!(
         external(Externals::Skip, known),
-        Plan::Unchecked(EXTERNALS_SKIPPED)
+        Plan::Baseline,
+        "skip copies what the baseline holds"
     );
     assert_eq!(external(Externals::Baseline, known), Plan::Baseline);
     assert_eq!(external(Externals::Live, known), Plan::Anchors);
     let new = "https://forge.example.org/new/";
+    assert_eq!(
+        external(Externals::Skip, new),
+        Plan::Unchecked(EXTERNALS_SKIPPED),
+        "and asks nothing else"
+    );
     assert_eq!(external(Externals::Baseline, new), Plan::Anchors);
     assert_eq!(
         external(Externals::Skip, "https://docs.example.org/en-US/b/new/"),
         Plan::Anchors,
         "a URL of a root is not an external"
+    );
+}
+
+#[test]
+fn a_hop_onto_an_allowlisted_host_ends_the_chain_under_externals_skip() {
+    let held = ["https://forge.example.org/p/"];
+    let hop = |externals, url: &str| {
+        let f = against(externals, &held);
+        f.hop_plan(&Url::parse(url).unwrap(), Kind::Anchor).0
+    };
+    for url in [
+        "https://forge.example.org/p/",
+        "https://forge.example.org/new/",
+    ] {
+        assert_eq!(
+            hop(Externals::Skip, url),
+            Plan::Unchecked(EXTERNALS_SKIPPED),
+            "{url}"
+        );
+    }
+    assert_eq!(
+        hop(Externals::Baseline, "https://forge.example.org/p/"),
+        Plan::Status
+    );
+    assert_eq!(
+        hop(Externals::Skip, "https://other.example.net/"),
+        Plan::Status,
+        "a host off the allowlist is followed as ever"
+    );
+    assert_eq!(
+        hop(Externals::Skip, "https://docs.example.org/en-US/b/new/"),
+        Plan::Anchors,
+        "and so is a root's URL the build lacks"
     );
 }
 
