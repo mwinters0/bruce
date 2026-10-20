@@ -1,0 +1,9 @@
+{
+ "url": "https://gitlab.com/fedora/docs/docs-website/ui-bundle/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable",
+ "job_url": "https://gitlab.com/fedora/docs/docs-website/ui-bundle/-/jobs/16899963620/artifacts/raw/build/ui-bundle.zip",
+ "commit": "7f5fb3d9f397eb816f28ef4f1e52c8fe095f6750",
+ "commit_note": "newest successful main pipeline at fetch time",
+ "sha256": "adb1be55a1d3e565c5ec7b35ee97286f4ee4d72ace93fab49bb2fb90849861d1",
+ "bytes": 688501,
+ "fetched": "2026-10-20"
+}

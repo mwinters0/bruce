@@ -1,0 +1,12 @@
+= Partitions
+:page-aliases: ROOT:disks.adoc
+
+[#layout]
+== Layout
+
+One partition for the system, one for the data.
+
+== Resizing
+
+Do not.
+See xref:tools:ROOT:usage.adoc#running[running a tool].

@@ -15,6 +15,12 @@ network is touched only by the first and the last:
   under `fixtures/docs-fp-o/`, recording each page's size, hash and fetch
   date back in the manifest.
 
+A fourth, `antora-ui`, vendors the Fedora docs UI bundle that `mise run e2e`
+builds its Antora site with (D24), into `fixtures/antora/`: the playbook's
+URL is a moving job artifact, so the bundle, its source commit and its
+sha256 are recorded in `ui-bundle.json` and a build refuses a bundle that
+does not match. It touches gitlab.com, not docs.fp.o.
+
 The pages are stored as served (`Accept-Encoding: identity`), so a tokenizer
 reads what a crawl would. Stdlib only, like every script here.
 """
@@ -48,6 +54,17 @@ PARTIAL = ROOT / "runs" / "fixtures" / "survey.jsonl"
 DISALLOWED = re.compile(r"^/[^/]+/(Fedora[^/]*|Community_Services_Infrastructure)/")
 FROZEN = re.compile(r"/en-US/fedora/f3\d/")
 TARGET = 30
+UI_DIR = ROOT / "fixtures" / "antora"
+# The URL Fedora's own playbooks name (docs-template's `site.yml`): the
+# newest successful `bundle-stable` job on the default branch.
+UI_URL = (
+    "https://gitlab.com/fedora/docs/docs-website/ui-bundle/-/jobs/artifacts/"
+    "HEAD/raw/build/ui-bundle.zip?job=bundle-stable"
+)
+UI_PIPELINES = (
+    "https://gitlab.com/api/v4/projects/fedora%2Fdocs%2Fdocs-website%2Fui-bundle"
+    "/pipelines?ref=main&status=success&per_page=1"
+)
 # The pages the invariants' re-verify commands name (I6, I8, I9), measured
 # whether or not the sample reaches them.
 WITNESSES = {
@@ -292,6 +309,39 @@ def save(manifest: Path) -> None:
     manifest.write_text(json.dumps(doc, indent=1) + "\n")
 
 
+def ui_record(url: str, final_url: str, commit: str, body: bytes) -> dict:
+    """What `ui-bundle.json` says of a vendored bundle."""
+    return {
+        "url": url,
+        "job_url": final_url,
+        "commit": commit,
+        # The pipeline newest on `main` when the bundle was fetched, which is
+        # the one whose job `HEAD` named unless a push landed in between.
+        "commit_note": "newest successful main pipeline at fetch time",
+        "sha256": hashlib.sha256(body).hexdigest(),
+        "bytes": len(body),
+        "fetched": str(date.today()),
+    }
+
+
+def vendor_ui(out: Path = UI_DIR) -> None:
+    """Fetch the UI bundle and write it with its record under `out`."""
+    status, body = fetch(UI_PIPELINES)
+    if status != 200:
+        sys.exit(f"{UI_PIPELINES}: HTTP {status}")
+    commit = json.loads(body)[0]["sha"]
+    req = urllib.request.Request(UI_URL, headers={"User-Agent": AGENT})
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        final, bundle = resp.geturl(), resp.read()
+    if not bundle.startswith(b"PK"):
+        sys.exit(f"{UI_URL}: not a zip file")
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "ui-bundle.zip").write_bytes(bundle)
+    record = ui_record(UI_URL, final, commit, bundle)
+    (out / "ui-bundle.json").write_text(json.dumps(record, indent=1) + "\n")
+    print(f"{len(bundle)} bytes, commit {commit[:7]} -> {out}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -315,8 +365,11 @@ def main() -> None:
     c.add_argument("--manifest", type=Path, default=MANIFEST)
     v = sub.add_parser("save", help="fetch every page the manifest names")
     v.add_argument("--manifest", type=Path, default=MANIFEST)
+    sub.add_parser("antora-ui", help="vendor the Fedora docs UI bundle for `mise run e2e`")
     args = ap.parse_args()
-    if args.cmd == "survey":
+    if args.cmd == "antora-ui":
+        vendor_ui()
+    elif args.cmd == "survey":
         deep = {k: int(v) for k, v in (d.split("=") for d in args.deep)}
         survey(args.per_component, deep, args.out, args.partial, args.urls_from)
     elif args.cmd == "select":

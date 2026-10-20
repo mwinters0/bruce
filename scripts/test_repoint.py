@@ -203,6 +203,14 @@ class Meter(unittest.TestCase):
             g = repoint.growth_since(repo, repoint.read_stamp(repo))
         self.assertEqual(g.comments, 0)
 
+    def test_an_untracked_binary_is_not_read(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = make_repo(tmp)
+            (repo / "fixtures").mkdir()
+            (repo / "fixtures" / "bundle.zip").write_bytes(b"PK\x03\x04\xa2\xff")
+            g = repoint.growth_since(repo, repoint.read_stamp(repo))
+        self.assertEqual((g.docs, g.comments), (0, 0))
+
     def test_past_the_budget_is_red(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = make_repo(tmp)

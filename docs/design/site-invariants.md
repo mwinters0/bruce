@@ -176,3 +176,22 @@ not as an error.
 - **Relied on by.** D7, a zero-delay refresh being one of its hops, so an alias read as a page is
   a target whose `final_url` is the page and never a `pages` row.
 - **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/fedora-docs/ | grep -o '<meta http-equiv="refresh"[^>]*>'`
+
+### I15 Antora builds a local git repository's working tree, and a partial build renders no edit link
+- **Claim.** Antora 3.1.15 refuses a local content source that is not a git repository ("must be a
+  git repository"), and builds the working tree of one named with `branches: HEAD` (an uncommitted
+  edit is built). With `CI` set the Fedora UI renders no edit link, and a source with no forge
+  remote gets none either way. A page's nav container carries `data-component` and `data-version`
+  (empty for a `version: ~` component) regardless, and a page-alias is a meta-refresh page (I14).
+  An xref out of the build logs an error, exits 0 and renders `class="xref unresolved"` (I6). A
+  build with no `site.url` writes no sitemap or canonical link, and the UI's footer writes
+  root-relative hrefs (`/legal/`) and one `../../../en-US/<component>/<page>/` language link;
+  with `site.url` ending `/en-US`, as production's does, the footer writes `/en-US/legal/`.
+- **Proof.** Observed behaviour: `mise run e2e` on `fixtures/antora/`, the saved pages
+  `fixtures/antora/pages/`; upstream source for the git rule, `content-aggregator` v3.1.15.
+- **Scope limit.** Antora 3.1.15 and the UI bundle of `fixtures/antora/ui-bundle.json`. A later UI
+  may render these differently.
+- **Verified against.** Antora 3.1.15, UI bundle `7f5fb3d`, 2026-10-20.
+- **Relied on by.** D24: `scripts/e2e.py` commits each component into a repository under
+  `runs/e2e/repos/` and builds with `CI=true`.
+- **Re-verify.** `mise run e2e -- --save-pages && git diff --stat fixtures/antora/pages`

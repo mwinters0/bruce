@@ -12,6 +12,9 @@ uv = "0.12.17"
 # The toolchain `bruce` builds with; `rust-version` in `Cargo.toml` is its
 # minor. rust-analyzer is the one `scripts/module_graph.py` indexes with.
 rust = { version = "1.99.1", components = "clippy,rustfmt,rust-analyzer" }
+# Runs the Antora that `mise run e2e` builds its test site with (D24); the
+# Antora version is pinned in `scripts/e2e.py`.
+node = "24.21.0"
 
 # Every per-round check once, logged under `runs/check/`; `--verify` reuses a
 # passing run of the same tree. `scripts/check.py` says what it runs and why.
@@ -27,6 +30,13 @@ run = "uv run check.py"
 description = "Extract the deployment guide into sim/ and check its config loads"
 dir = "{{config_root}}/scripts"
 run = "uv run sim.py"
+
+# The end-to-end Antora site, built whole and in part (D24). It needs node and
+# the network on the first run and is slow, so `check` does not run it.
+[tasks.e2e]
+description = "Build the fixture Antora site whole and in part"
+dir = "{{config_root}}/scripts"
+run = "uv run e2e.py"
 
 # The cargo commands one at a time; `check` runs fmt, clippy and test among
 # the rest, each with the flags it holds a round to.

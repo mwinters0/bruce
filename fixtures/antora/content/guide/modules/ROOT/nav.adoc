@@ -1,0 +1,3 @@
+* xref:index.adoc[Install Guide]
+** xref:install.adoc[Installing]
+** xref:upgrade.adoc[Upgrading]

@@ -1,0 +1,12 @@
+= Using the tools
+
+[#running]
+== Running a tool
+
+Before running anything, check xref:guide::install.adoc#supported-hardware[the supported hardware]
+in the install guide, at version xref:1.0@guide::install.adoc[1.0].
+
+See also the xref:reference.adoc#options[options] and the
+xref:ops:admin:partitions.adoc#layout[partition layout].
+
+The latest release notes are on https://example.org/releases/[example.org].

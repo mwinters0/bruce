@@ -1,5 +1,6 @@
 //! The saved pages under `fixtures/` (D24), shared by the fixture tests and
-//! the bench.
+//! the bench. `fixtures/antora/`, the end-to-end site and the build's pages, is
+//! not among them: its tests read it themselves.
 
 use std::path::Path;
 
@@ -15,11 +16,14 @@ pub struct Fixture {
     pub html: String,
 }
 
-fn walk(dir: &Path, out: &mut Vec<std::path::PathBuf>) {
+fn walk(dir: &Path, skip: &Path, out: &mut Vec<std::path::PathBuf>) {
     for entry in std::fs::read_dir(dir).unwrap() {
         let path = entry.unwrap().path();
+        if path == skip {
+            continue;
+        }
         if path.is_dir() {
-            walk(&path, out);
+            walk(&path, skip, out);
         } else if path.extension().is_some_and(|e| e == "html") {
             out.push(path);
         }
@@ -30,7 +34,7 @@ fn walk(dir: &Path, out: &mut Vec<std::path::PathBuf>) {
 pub fn fixtures() -> Vec<Fixture> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures");
     let mut files = Vec::new();
-    walk(&root, &mut files);
+    walk(&root, &root.join("antora"), &mut files);
     files.sort();
     files
         .into_iter()

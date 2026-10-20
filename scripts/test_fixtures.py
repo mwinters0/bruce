@@ -137,5 +137,25 @@ class Committed(unittest.TestCase):
             self.assertEqual(len(body), e["bytes"], e["path"])
 
 
+class VendoredUi(unittest.TestCase):
+    def test_the_record_states_the_bundle_it_describes(self) -> None:
+        r = fixtures.ui_record("u", "j", "c0ffee", b"PKbundle")
+        import hashlib
+
+        self.assertEqual(r["sha256"], hashlib.sha256(b"PKbundle").hexdigest())
+        self.assertEqual((r["bytes"], r["url"], r["job_url"], r["commit"]), (8, "u", "j", "c0ffee"))
+
+    def test_the_committed_bundle_hashes_to_its_record(self) -> None:
+        record = fixtures.UI_DIR / "ui-bundle.json"
+        if not record.exists():
+            self.skipTest("no vendored bundle yet")
+        import hashlib
+
+        body = (fixtures.UI_DIR / "ui-bundle.zip").read_bytes()
+        doc = json.loads(record.read_text())
+        self.assertEqual(hashlib.sha256(body).hexdigest(), doc["sha256"])
+        self.assertEqual(len(body), doc["bytes"])
+
+
 if __name__ == "__main__":
     unittest.main()

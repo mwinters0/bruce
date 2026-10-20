@@ -31,14 +31,17 @@ the profile's facts and the content hash;
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
 over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
-pages, chosen and saved by `scripts/fixtures.py`.
+pages, chosen and saved by `scripts/fixtures.py`, and `fixtures/antora/`, a
+three-component Antora site, the Fedora UI bundle and seven built pages, which
+`mise run e2e` rebuilds.
 
 ## P5 progress
 
 The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
 
-- [ ] **5.1** The Antora fixture site: `fixtures/antora/`, the vendored UI
+- [x] **5.1** The Antora fixture site: `fixtures/antora/`, the vendored UI
   bundle, `mise run e2e` building the site whole and in part.
+  [Notes](../wip/roadmap-P5.1-antora-fixture-notes.md).
 - [ ] **5.2** Schema 4, the `targets` answer's provenance; the fresh en-US
   crawl launched detached.
 - [ ] **5.3** `export-baseline`, its manual page and the gzip measurement.

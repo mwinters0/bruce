@@ -1,0 +1,6 @@
+name: ops
+title: Operations
+version: master
+nav:
+- modules/ROOT/nav.adoc
+- modules/admin/nav.adoc

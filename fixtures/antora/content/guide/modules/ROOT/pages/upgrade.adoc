@@ -1,0 +1,6 @@
+= Upgrading
+
+[#rollback]
+== Rolling back
+
+Reinstall the previous release, as in xref:install.adoc#first-boot[first boot].

@@ -21,3 +21,12 @@ generators/
     https://docs.readthedocs.io/en/stable/intro/getting-started-with-sphinx.html
   generators/generic/ holds pages with and without landmarks, and with
   competing edit links, for the generic heuristics (D34, D36).
+
+antora/
+  content/ is written by hand for this project, under this repository's
+  licence: three invented Antora components for `mise run e2e`. ui-bundle.zip
+  is Fedora Docs' UI bundle, unmodified, from
+  https://gitlab.com/fedora/docs/docs-website/ui-bundle (MPL-2.0), its commit
+  and sha256 in ui-bundle.json; scripts/fixtures.py antora-ui vendors it.
+  pages/ holds a few pages Antora 3.1.15 built from content/ with that
+  bundle, recorded in pages/manifest.json.

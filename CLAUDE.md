@@ -25,6 +25,7 @@ cd scripts && uv run module_graph.py     # every module edge one-way, read off r
 cd scripts && uv run concepts.py         # every production .rs claimed by one concept in docs/design/concepts.md
 cd scripts && uv run python -m unittest test_<script>   # one script's own tests
 mise run sim                             # the deployment guide's tagged blocks into sim/, config checked to load
+mise run e2e                             # the fixture Antora site built whole and in part under runs/e2e/ (slow, needs node)
 mise run build | test | clippy | fmt | bench   # one cargo command; Rust is pinned in mise.toml
 ```
 

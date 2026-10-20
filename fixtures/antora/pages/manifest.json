@@ -1,0 +1,49 @@
+{
+ "antora": "3.1.15",
+ "port": 8099,
+ "ui_sha256": "adb1be55a1d3e565c5ec7b35ee97286f4ee4d72ace93fab49bb2fb90849861d1",
+ "pages": [
+  {
+   "build": "partial",
+   "path": "partial/index.html",
+   "bytes": 302,
+   "sha256": "0b707a0cad23a3befbc774ab57c09ca50c13958cf71689ba85e0fd4f15538592"
+  },
+  {
+   "build": "partial",
+   "path": "partial/tools/index.html",
+   "bytes": 10981,
+   "sha256": "1192eb3d0ed853395cf2e9887d30990c258f284a256a22c3bd0a5de2fcceddbd"
+  },
+  {
+   "build": "partial",
+   "path": "partial/tools/usage/index.html",
+   "bytes": 11726,
+   "sha256": "0736ff262c355f0eedac98681a6a1a80e8cd3bc4ab9d46fd43d0b6bf09c36bbe"
+  },
+  {
+   "build": "partial",
+   "path": "partial/tools/reference/index.html",
+   "bytes": 11254,
+   "sha256": "356faaf0eb931f3f2e0493de9d00ca65c510025a4ca48298dbf6eb06dec9e14d"
+  },
+  {
+   "build": "whole",
+   "path": "whole/guide/1.0/install/index.html",
+   "bytes": 12172,
+   "sha256": "c0107ae42d6edff6b15e37e10cf4d68430c1a3ec342fceff22b399295b15fff5"
+  },
+  {
+   "build": "whole",
+   "path": "whole/ops/disks/index.html",
+   "bytes": 467,
+   "sha256": "15b97df08c00bf7396ca8ddfd19bd309f83697e0b872f3aff2ebae0f48f04be7"
+  },
+  {
+   "build": "whole",
+   "path": "whole/ops/admin/partitions/index.html",
+   "bytes": 11946,
+   "sha256": "6a58ba5c1cd7f24da1ea164edd95b4da29a81e260817e55d56961d1635ff4563"
+  }
+ ]
+}

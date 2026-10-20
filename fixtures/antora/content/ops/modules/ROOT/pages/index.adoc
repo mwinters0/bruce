@@ -1,0 +1,4 @@
+= Operations
+
+Administration pages are in the xref:admin:partitions.adoc[admin module], and the
+install guide is xref:guide::index.adoc[here].

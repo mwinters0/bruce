@@ -1,0 +1,5 @@
+= Install Guide
+
+The guide has two pages: xref:install.adoc[installing] and
+xref:upgrade.adoc[upgrading].
+Day-to-day use is in xref:tools:ROOT:usage.adoc[the tools component].

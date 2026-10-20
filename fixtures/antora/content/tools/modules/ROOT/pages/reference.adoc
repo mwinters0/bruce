@@ -1,0 +1,6 @@
+= Reference
+
+[#options]
+== Options
+
+Pass `--help` to list them; the flow is described in xref:usage.adoc#running[running a tool].

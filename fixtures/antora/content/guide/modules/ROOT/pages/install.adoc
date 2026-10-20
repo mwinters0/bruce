@@ -1,0 +1,16 @@
+= Installing
+
+[#supported-hardware]
+== Supported hardware
+
+Anything with a CPU.
+
+[#first-boot]
+== First boot
+
+Press the power button.
+After booting, see xref:upgrade.adoc#rollback[how to roll back].
+
+== Disk layout
+
+Other components link to xref:ops:admin:partitions.adoc[the partition table].
