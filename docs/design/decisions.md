@@ -240,7 +240,8 @@ locally (`foo/` → `foo/index.html`). Under the prefix and not built: `broken_u
 component-version the build holds, else baseline, then live. An unresolved xref: D19 outside what
 the build holds, then the same steps. Externals default to the baseline's verdict
 (`--externals=skip|baseline|live`), so a slow host never blocks a PR. Rejected: the baseline for a
-held page, which passes a link to a page the change deletes.
+held page, which passes a link to a page the change deletes; `--externals` reaching an in-scope URL
+the build lacks, a URL on the site new to the gate being the one most worth asking.
 
 ## Operation
 

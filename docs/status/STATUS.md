@@ -56,6 +56,10 @@ The spec is [`../wip/roadmap-P5-ci.md`](../wip/roadmap-P5-ci.md).
 - [x] **5.6** The frontier's baseline class, held component-versions and
   `not_built`; `check-dir --baseline` and `--externals`.
   [Notes](../wip/roadmap-P5.6-baseline-class-notes.md).
+- [ ] **5.6.1** `--externals=skip` copies the baseline's rows where it holds
+  the target, else `unchecked`, and a redirect hop onto an allowlisted host
+  ends the chain under it; D54 amended.
+  [Why](history/2026-10-20.md#the---externalsskip-review).
 - [ ] **5.7** `antora`'s Resolve, called in a CI run.
 - [ ] **5.8** The gate: `report introduced`, the exit status, `check-dir`'s
   output and manual page.
@@ -77,11 +81,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **`--externals=skip` leaves every allowlisted URL `unchecked`.** The reason is
-  `externals_skipped`, and the baseline's verdict is not used, though a copy would
-  have asked nothing either. The spec says only that `skip` is for "a deployer wanting
-  no external request"; reading it as "no verdict" keeps the mode one sentence long.
-  Reconsidering it as "copy where the baseline holds the URL, `unchecked` otherwise"
-  changes `Frontier::external` (D54) and puts external breakage already in the
-  baseline in the gate's already-broken count.
