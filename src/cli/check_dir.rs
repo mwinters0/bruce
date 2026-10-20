@@ -1,5 +1,5 @@
 //! `bruce check-dir DIR --prefix URL --baseline FILE|URL [--config f] [--db f]
-//! [--externals skip|baseline|live] [--kind k] [--format text|json] [--all]`:
+//! [--externals skip|baseline|live] [--format text|json] [--all]`:
 //! one run over a local build, written to the database and judged against the
 //! baseline (D1, D9, D22, D27; `roadmap-P5-ci.md`, "A `check-dir` run is a
 //! crawl").
@@ -21,10 +21,9 @@ use std::process::ExitCode;
 
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
-use super::{crawl, db, report};
+use super::{crawl, db};
 use crate::ci::Build;
 use crate::crawl::{Baseline, Crawl, Externals, Summary};
-use crate::extract::Kind;
 use crate::fetch::http::host::Hosts;
 use crate::fetch::http::{HttpFetcher, Settings};
 use crate::fetch::local::LocalFetcher;
@@ -54,8 +53,6 @@ pub struct Args {
     pub externals: Externals,
     pub config: Option<PathBuf>,
     pub db: Option<PathBuf>,
-    /// The link kinds the gate reads.
-    pub kinds: Vec<Kind>,
     pub format: Format,
     /// Print the breakage already in the baseline in full.
     pub all: bool,
@@ -75,7 +72,6 @@ impl From<&ArgMatches> for Args {
             },
             config: one("config").map(PathBuf::from),
             db: one("db").map(PathBuf::from),
-            kinds: report::kinds(m).unwrap_or_else(|| vec![Kind::Anchor]),
             format: match one("format").as_deref() {
                 Some("json") => Format::Json,
                 _ => Format::Text,
@@ -132,9 +128,6 @@ pub fn command() -> Command {
                 .value_name("FILE")
                 .help("The database to add the run to [default: bruce.duckdb]"),
         )
-        .arg(report::kind_arg().help(
-            "Judge links of this kind; repeat to add, `all` for every kind [default: anchor]",
-        ))
         .arg(
             Arg::new("format")
                 .long("format")
@@ -229,7 +222,6 @@ fn check(args: &Args, registry: Registry) -> Result<(RunId, Summary, Gate), Stri
     store.finish_run(run).map_err(in_db)?;
     let mut request = Request::new(Report::Introduced);
     request.run = Some(run);
-    request.kinds = args.kinds.clone();
     let gate = crate::report::gate(&store, &request).map_err(|e| e.to_string())?;
     Ok((run, summary, gate))
 }

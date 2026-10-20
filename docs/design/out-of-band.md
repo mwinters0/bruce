@@ -39,4 +39,4 @@ Allocated so far: M1–M3. <!-- out-of-band-watermark: M3 -->
 |---|---|---|---|---|
 | M1 | 2026-10-17 | `--affected` runs a Rust test naming a docs file; the manual's `toml` examples are tested | | [`2026-10-17`](../status/history/2026-10-17.md), "M1: the manual's examples are tested" |
 | M2 | 2026-10-20 | `link_verdicts` rule 1 reads a refspec as unresolved where the link points at its own page or its fragment is the refspec | | [`2026-10-20`](../status/history/2026-10-20.md), "The review of how a resolved xref is told" |
-| M3 | | The gate (`check-dir`, `report introduced`) judges every link kind by default, and `check-dir` drops `--kind`; other reports keep `anchor` | P5 | [`2026-10-20`](../status/history/2026-10-20.md), "The review of the gate's default kind" |
+| M3 | 2026-10-20 | The gate (`check-dir`, `report introduced`) judges every link kind by default, and `check-dir` drops `--kind`; other reports keep `anchor` | | [`2026-10-20`](../status/history/2026-10-20.md), "The review of the gate's default kind" |

@@ -69,8 +69,8 @@ impl From<&ArgMatches> for Args {
     }
 }
 
-/// The `--kind` option, which `check-dir`'s gate takes as `report` does.
-pub(super) fn kind_arg() -> Arg {
+/// The `--kind` option.
+fn kind_arg() -> Arg {
     let mut kinds: Vec<&str> = Kind::ALL.iter().map(|k| k.as_str()).collect();
     kinds.push(ALL_KINDS);
     Arg::new("kind")
@@ -78,11 +78,14 @@ pub(super) fn kind_arg() -> Arg {
         .value_name("KIND")
         .action(ArgAction::Append)
         .value_parser(PossibleValuesParser::new(kinds))
-        .help("Count links of this kind; repeat to add, `all` for every kind [default: anchor]")
+        .help(
+            "Count links of this kind; repeat to add, `all` for every kind \
+             [default: anchor, and every kind for `introduced`]",
+        )
 }
 
 /// The kinds `--kind` names, or none where it was not given.
-pub(super) fn kinds(m: &ArgMatches) -> Option<Vec<Kind>> {
+fn kinds(m: &ArgMatches) -> Option<Vec<Kind>> {
     let named: Vec<&str> = m
         .get_many::<String>("kind")
         .into_iter()

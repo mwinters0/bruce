@@ -23,7 +23,7 @@ refused access (a timeout, a 5xx after retries, a 401, 403 or 429).
 | `--to N` | the latest finished run | `diff` only: the run to compare. |
 | `--repo REPO` | none | Only pages whose source file is in this repo, as the page records it (`https://forge.fedoraproject.org/fedora/docs`); for `broken`, `errors`, `stats`, `redirects`, `diff` and `introduced`, the links on those pages. |
 | `--fact KEY=VALUE` | none | Only pages with this fact, such as `antora.component=fedora-docs`, or the links on them. Repeat to require several. |
-| `--kind KIND` | `anchor` | Count links of this kind. Repeat to add kinds; `all` is every kind. `sitemap` and `unlisted` ignore it. |
+| `--kind KIND` | `anchor`; every kind for `introduced` | Count links of this kind. Repeat to add kinds; `all` is every kind. `sitemap` and `unlisted` ignore it. |
 | `--top N` | all rows | Print the first N rows, in the report's order. |
 | `--format` | `text` | `text`, or `json`. |
 
@@ -31,7 +31,8 @@ The kinds are `anchor` (`<a>` and `<area>`), `image`, `canonical`,
 `stylesheet`, `icon`, `link`, `script`, `frame`, `media`, `refresh`,
 `sitemap` and `sitemap_file`. A report counts `anchor` links alone unless
 `--kind` says more, since a broken image or script is a different job from a
-broken link.
+broken link. `introduced` is the gate's, which judges every kind unless
+`--kind` narrows it.
 
 ## Which run
 

@@ -89,7 +89,8 @@ pub struct Request {
 }
 
 impl Request {
-    /// `report` over anchor links, in the latest finished run, unfiltered.
+    /// `report` in the latest finished run, unfiltered, over anchor links;
+    /// the gate judges every kind (D13).
     pub fn new(report: Report) -> Request {
         Request {
             report,
@@ -98,7 +99,10 @@ impl Request {
             to: None,
             repo: None,
             facts: Vec::new(),
-            kinds: vec![Kind::Anchor],
+            kinds: match report {
+                Report::Introduced => Kind::ALL.to_vec(),
+                _ => vec![Kind::Anchor],
+            },
             top: None,
             linking_pages: false,
         }

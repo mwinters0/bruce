@@ -75,6 +75,16 @@ fn kind_all_counts_every_kind() {
 }
 
 #[test]
+fn introduced_judges_every_kind_and_the_rest_anchors() {
+    let a = parse(&["introduced", "--run", "2"]).unwrap();
+    assert_eq!(a.request.kinds, Kind::ALL);
+    let a = parse(&["introduced", "--kind", "image"]).unwrap();
+    assert_eq!(a.request.kinds, [Kind::Image]);
+    let a = parse(&["broken"]).unwrap();
+    assert_eq!(a.request.kinds, [Kind::Anchor]);
+}
+
+#[test]
 fn a_bad_fact_kind_top_or_format_is_a_usage_error() {
     for bad in [
         ["--fact", "nokey"],

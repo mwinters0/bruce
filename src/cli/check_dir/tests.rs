@@ -5,7 +5,6 @@ use wiremock::MockServer;
 
 use super::*;
 use crate::cli::registry;
-use crate::extract::Kind;
 use crate::report::Format;
 use crate::store::Store;
 
@@ -36,7 +35,6 @@ fn a_directory_and_a_prefix_are_required() {
             externals: Externals::Baseline,
             config: None,
             db: Some("d".into()),
-            kinds: vec![Kind::Anchor],
             format: Format::Text,
             all: false,
         }
@@ -47,16 +45,11 @@ fn a_directory_and_a_prefix_are_required() {
         "p",
         "--baseline",
         "b",
-        "--kind",
-        "image",
-        "--kind",
-        "script",
         "--format",
         "json",
         "--all",
     ])
     .unwrap();
-    assert_eq!(wide.kinds, [Kind::Image, Kind::Script]);
     assert_eq!((wide.format, wide.all), (Format::Json, true));
     let live = parse(&[
         "build",
@@ -69,6 +62,19 @@ fn a_directory_and_a_prefix_are_required() {
     ])
     .unwrap();
     assert_eq!(live.externals, Externals::Live);
+    // The gate judges every kind, so there is no way to narrow it.
+    assert!(
+        parse(&[
+            "build",
+            "--prefix",
+            "p",
+            "--baseline",
+            "b",
+            "--kind",
+            "image"
+        ])
+        .is_err()
+    );
     assert!(parse(&["build", "--prefix", "https://x.test/"]).is_err());
     assert!(parse(&["build", "--baseline", "b"]).is_err());
     assert!(parse(&["--prefix", "https://x.test/", "--baseline", "b"]).is_err());

@@ -6,7 +6,7 @@
 //! (`run`), runs one report and renders it (`table`).
 //!
 //! The filters are the same for every report: the links of kinds `kinds`
-//! (`anchor` by default, D13; `sitemap` and `unlisted` count no link), and the
+//! (`anchor` by default, every kind for the gate, D13; `sitemap` and `unlisted` count no link), and the
 //! pages in the repo `repo` (D17) holding every `facts` pair (D32, D38). A link
 //! report filters on the page a link is on, a page report on the page a row
 //! lists; `links` has `broken` and `errors`, `query` `stats`, `reach` how a page is

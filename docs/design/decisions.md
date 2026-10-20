@@ -34,10 +34,10 @@ latest-only, which leaves inbound links to frozen versions unverifiable.
 `<a>`, `<area>`, `<img>`/`srcset`, `<link>` (canonical included), `<script>`, `<iframe>`, media
 (`src` on `<video>`, `<audio>`, `<source>`, `<track>`; `poster`) and the `url=` of a meta refresh,
 each link carrying its `kind`; no page yields `sitemap` (an entry) or `sitemap_file` (a file, D47).
-Assets get a HEAD request with GET fallback; reports default to `kind = anchor`. `mailto:`, `tel:`,
-`javascript:` and `data:` are `unchecked`. A `<link>` whose `rel` is only `preconnect` or
-`dns-prefetch` is skipped; the first `<base href>` resolves every href after it. Rejected: `<a href>`
-only, which misses broken images and canonicals; ignoring `<base>`, which resolves a site wrongly.
+Assets get a HEAD request with GET fallback; reports default to `kind = anchor`, the gate (D9) to every
+kind. `mailto:`, `tel:`, `javascript:` and `data:` are `unchecked`. A `<link>` whose `rel` is only
+`preconnect` or `dns-prefetch` is skipped; the first `<base href>` resolves every href after it. Rejected:
+`<a href>` only (misses broken images, canonicals); ignoring `<base>` (resolves a site wrongly).
 
 ### D14 Discovery is sitemap and link-following both, and each page records which
 Each root's sitemap is discovered (D40) or set (docs.fp.o's is under its en-US root, I1). Recording both

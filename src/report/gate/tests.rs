@@ -29,7 +29,7 @@ fn moved(store: &Store, run: u64, id: u64) {
 /// - 2 at `#nope` is a link the baseline never had: introduced, `new`.
 /// - 14 answers a 503: an error, listed.
 /// - 20 redirects in run 2 only, 21 in both.
-/// - 15 is a broken image: not counted unless the kind is asked for.
+/// - 15 is a broken image: introduced, state `new`; the gate judges every kind.
 ///
 /// Page 2 links to 13, `unchecked` in the baseline and broken now: introduced,
 /// state `unchecked`.
@@ -114,11 +114,11 @@ fn introduced_is_broken_here_and_not_broken_in_the_baseline_and_names_its_state(
     // `broken_url` before `broken_anchor`, then by page.
     assert_eq!(
         column(&g.introduced, "raw_href"),
-        ["1>11#", "1>12#", "2>13#", "1>2#nope"]
+        ["1>11#", "1>12#", "1>15#", "2>13#", "1>2#nope"]
     );
     assert_eq!(
         column(&g.introduced, "baseline"),
-        ["ok", "new", "unchecked", "new"]
+        ["ok", "new", "new", "unchecked", "new"]
     );
     assert_eq!(g.introduced.rows[0][7], Cell::Int(404));
 }
@@ -159,9 +159,11 @@ fn a_filter_that_keeps_nothing_leaves_a_gate_that_does_not_fail() {
 }
 
 #[test]
-fn a_kind_widens_the_links_the_gate_reads() {
-    let g = gate_of(&store(), |r| r.kinds = Kind::ALL.to_vec());
+fn the_gate_reads_every_kind_unless_a_report_narrows_it() {
+    let g = gate_of(&store(), |_| {});
     assert!(column(&g.introduced, "raw_href").contains(&"1>15#".to_owned()));
+    let g = gate_of(&store(), |r| r.kinds = vec![Kind::Anchor]);
+    assert!(!column(&g.introduced, "raw_href").contains(&"1>15#".to_owned()));
 }
 
 #[test]
@@ -169,7 +171,7 @@ fn the_text_names_the_sections_and_prints_the_old_breakage_on_request() {
     let g = gate_of(&store(), |_| {});
     let text = g.text(false);
     let at = |s: &str| text.find(s).unwrap_or_else(|| panic!("{s} in {text}"));
-    assert!(at("introduced breakage: 4") < at("introduced redirected links: 1"));
+    assert!(at("introduced breakage: 5") < at("introduced redirected links: 1"));
     assert!(at("introduced redirected links: 1") < at("errors: 1"));
     assert!(at("errors: 1") < at("breakage already in the baseline: 1 (--all lists them)"));
     assert!(!text.contains("1>10#"));
@@ -198,7 +200,7 @@ fn the_introduced_report_prints_the_rows_and_the_rest_in_notes() {
     let mut request = Request::new(Report::Introduced);
     request.run = Some(RunId(2));
     let out = run(&store(), &request).unwrap();
-    assert_eq!(out.table.rows.len(), 4);
+    assert_eq!(out.table.rows.len(), 5);
     assert_eq!(
         out.notes[0],
         "against baseline run 1, crawled on 2026-10-19"

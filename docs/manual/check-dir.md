@@ -2,8 +2,7 @@
 
 ```sh
 bruce check-dir DIR --prefix URL --baseline FILE|URL [--config FILE] [--db FILE]
-                    [--externals skip|baseline|live] [--kind KIND]
-                    [--format text|json] [--all]
+                    [--externals skip|baseline|live] [--format text|json] [--all]
 ```
 
 Checks a content repo's partial build against a **baseline**, and fails only
@@ -24,7 +23,6 @@ have broken. The run is added to a database like a crawl's ([`crawl.md`](crawl.m
 | `--config FILE` | none | The configuration the baseline was crawled under ([`config.md`](config.md)). With none, the prefix is the only root. |
 | `--db FILE` | `bruce.duckdb` | The database the run is added to, created if it does not exist. |
 | `--externals MODE` | `baseline` | How a link to an allowlisted host is answered; see below. |
-| `--kind KIND` | `anchor` | Judge links of this kind. Repeat to add kinds; `all` is every kind. See [`report.md`](report.md). |
 | `--format` | `text` | `text`, or `json`. |
 | `--all` | off | Print the breakage already in the baseline in full. |
 
@@ -57,7 +55,8 @@ live site, at the configuration's pace:
 
 ## What fails
 
-A link is the page it is on, the URL it points at and its fragment. It is
+A link is the page it is on, the URL it points at and its fragment, of every
+kind: a broken image or script fails the check as a broken link does. It is
 **introduced** when it is `broken_url` or `broken_anchor` in this run and the
 baseline has the same link as anything else: absent, `ok`, `unchecked` or
 `error`. A link the baseline never asked about can then fail CI, since it is
