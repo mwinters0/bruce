@@ -36,10 +36,24 @@ three-component Antora site, the Fedora UI bundle and seven built pages, which
 `mise run e2e` rebuilds and then crawls, exports and runs `check-dir` over, asserting
 the gate's exit status and sections.
 
+## P6 progress
+
+The spec is [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md).
+
+- [ ] **6.1** License and notices: `MIT OR Apache-2.0`, both texts and
+  `Cargo.toml`'s `license`, and the third-party notices file generated from
+  `Cargo.lock`.
+- [ ] **6.2** The release workflow: a `debian:trixie` build on a `v*` tag, the
+  archive of binary, notices and licenses with its sha256, `gh release` draft,
+  upload and publish; the no-third-party-actions standing rule and its check;
+  D23 and D43 amended. Closes on `v0.1.0-rc.1` built and run on Trixie and F44.
+- [ ] **6.3** `v0.1.0`, and the README's quickstart: where the binary is, its
+  glibc floor, and that a 0.x release migrates no DB.
+
 ## Not started
 
-Every phase in [`../design/roadmap.md`](../design/roadmap.md)'s index. P6 is
-specified, P9 specified and waiting for P8; P7 and P8 have not been grilled.
+Every other phase in [`../design/roadmap.md`](../design/roadmap.md)'s index.
+P9 is specified and waits for P8; P7 and P8 have not been grilled.
 
 ## Decisions worth another look
 

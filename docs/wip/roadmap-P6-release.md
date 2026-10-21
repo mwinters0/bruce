@@ -94,7 +94,7 @@ immutable `v0.1.x`.
 
 ## The slice order the split proposed
 
-Proposed 2026-10-21; not yet a checklist.
+Proposed 2026-10-21; `../status/STATUS.md`'s checklist is the schedule.
 
 1. **6.1 License and notices** (above, "`bruce` is MIT OR Apache-2.0").
 2. **6.2 The release workflow**: a Trixie build on a `v*` tag, the archive of

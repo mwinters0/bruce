@@ -15,7 +15,7 @@ never reused.
 | Phase | State | Where it is |
 |---|---|---|
 | P1–P5 | **Struck** at the first keystone, 2026-10-21 | their decisions are [`decisions.md`](decisions.md)'s |
-| P6 — release | Specified | [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md) |
+| P6 — release | Current | [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md) |
 | P8 — run-history reports | Sketched; not grilled | this file, below |
 | P9 — the deployment guide | Specified; waits for P8 | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
 | P7 — declarative per-root rules | Sketched; not grilled | this file, below |
