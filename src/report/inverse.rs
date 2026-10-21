@@ -1,5 +1,5 @@
 //! The inverse check: what a change removed that pages outside the build link
-//! to (D4, D9; `roadmap-P5-ci.md`, "The inverse check").
+//! to (D4, D9, D56).
 //!
 //! A **touched** page is a baseline page in a component-version the build
 //! holds, which Antora built whole (D22). What the CI run holds of the build

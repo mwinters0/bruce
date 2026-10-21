@@ -1,6 +1,5 @@
 //! The gate: what a CI run broke that its baseline had not (D9), and the
-//! sections `check-dir` prints beside it (`roadmap-P5-ci.md`, "What the gate
-//! fails on").
+//! sections `check-dir` prints beside it.
 //!
 //! A link is keyed by its page, its target URL and its fragment, the same in
 //! every run (D26), and a run's `baseline_run` names the run it was checked
@@ -183,6 +182,7 @@ pub(super) fn baseline(conn: &Connection, run: RunId) -> Result<(RunId, String),
     )?;
     let base = RunId(named.ok_or(Error::NoBaseline(run))?);
     let mut stmt =
+        // `::DATE` does not cast a `TIMESTAMPTZ`; through `::TIMESTAMP` it does.
         conn.prepare("SELECT started_at::TIMESTAMP::DATE::VARCHAR FROM runs WHERE run_id = ?")?;
     let mut rows = stmt.query([base.0])?;
     match rows.next()? {

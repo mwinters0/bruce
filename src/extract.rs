@@ -126,6 +126,8 @@ pub fn extract_under(
     } = profile.extract(&sink);
 
     let (read, tag) = Links::handlers(&links, &sink);
+    // Not strict: strict mode refuses a page lol_html cannot place without a
+    // tree (`<select><xmp>…`), and a checker reads every page it is given.
     let mut settings = Settings::new().with_strict(false);
     for handler in Title::handlers(&title)
         .into_iter()

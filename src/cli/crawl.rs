@@ -1,6 +1,5 @@
 //! `bruce crawl [URL] [--config f] [--db f]`: one run over HTTP, written to
-//! the database (D2, D27; `roadmap-P3-crawler.md`, "The command line" and
-//! "An interrupted run").
+//! the database (D2, D27, D48, D49).
 //!
 //! The roots are the file's or the URL, never both: a URL beside a file
 //! naming roots is refused rather than replacing them, which would drop their

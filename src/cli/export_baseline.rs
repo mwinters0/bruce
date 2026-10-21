@@ -1,6 +1,6 @@
 //! `bruce export-baseline --out f [--run n] [--db f] [--force]`: one finished
 //! run as a database file of its own, for CI to check a build against (D21,
-//! D27; `roadmap-P5-ci.md`, "`export-baseline` and `--baseline`").
+//! D27).
 //!
 //! The database must exist. `--out` must not, unless `--force` replaces it;
 //! it is never the database itself. The line printed gives the file's size

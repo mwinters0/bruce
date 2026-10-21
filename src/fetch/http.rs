@@ -1,6 +1,6 @@
-//! The HTTP fetcher: one hop over reqwest (D1, D11), with `roadmap-P3-crawler.md`'s
-//! "Retries, timeouts and limits", "Which responses are read" and "Assets
-//! and allowlisted pages" for its rules.
+//! The HTTP fetcher: one hop over reqwest (D1, D11), with its retries,
+//! `Retry-After`, timeouts and body cap (D16) and an asset's HEAD falling back
+//! to GET (D13).
 //!
 //! reqwest's own redirect-following is off, so a 3xx is returned as an
 //! answer with its `Location` (D7). TLS is rustls on ring and DNS is

@@ -14,8 +14,7 @@ spans others only along the layering [`decisions.md`](decisions.md), "D39"
 records, each part saying why its module holds it. **Not in one place** names what today's tree scatters and the layering
 does not explain.
 
-Every concept below is, so far, one top-level module, placed by P1's spec (`roadmap-P1-scaffold.md`, "Where the concepts
-live"). `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url`, `fetch`, `crawl`, `ci` and `report` hold code. The
+Every concept below is, so far, one top-level module, laid out by the layering D39 records. `cli`, `config`, `store`, `profile`, `extract`, `forge`, `url`, `fetch`, `crawl`, `ci` and `report` hold code. The
 decisions each carries are cited in its module's doc.
 
 ## Subcommands

@@ -169,7 +169,8 @@ not as an error.
   500 bytes carrying `<meta http-equiv="refresh" content="0; url=…">` and a `rel=canonical` to
   the target.
 - **Proof.** Observed behaviour: the grilling's probe (`runs/p3-grill/probe-20261017/alias.html`)
-  and P3.8's crawl (`runs/p3.8-live-20261018/live.duckdb`, the root's `redirect_chain`).
+  and a crawl of `/en-US/fedora-docs/` on 2026-10-18 (`runs/p3.8-live-20261018/live.duckdb`, the root's
+  `redirect_chain`).
 - **Scope limit.** Two aliases observed. Were the site to switch Antora's `redirect_facility` from
   `static` to `httpd`, `nginx` or `netlify`, an alias would be a 3xx, already a hop.
 - **Verified against.** docs.fp.o, 2026-10-18.

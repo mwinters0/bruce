@@ -1,5 +1,5 @@
-//! A response body to a `String` (`roadmap-P3-crawler.md`, "Which responses
-//! are read"), which a fetcher other than HTTP can reuse: a byte-order mark,
+//! A response body to a `String`, decoded here so `extract` takes a `&str` and
+//! a fetcher other than HTTP can reuse it: a byte-order mark,
 //! then the `charset` of the `Content-Type` header, then a scan of the first
 //! 1024 bytes for `<meta charset>` or `<meta http-equiv>`, then UTF-8. Bytes
 //! the encoding cannot decode become U+FFFD.

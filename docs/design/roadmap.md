@@ -14,11 +14,7 @@ never reused.
 
 | Phase | State | Where it is |
 |---|---|---|
-| P1 — scaffold and parser spike | Complete | [`roadmap-P1-scaffold.md`](roadmap-P1-scaffold.md), [notes](roadmap-P1-scaffold-notes.md) |
-| P2 — the extractor | Complete | [`roadmap-P2-extractor.md`](roadmap-P2-extractor.md), [notes](roadmap-P2-extractor-notes.md) |
-| P3 — the crawler | Complete | [`roadmap-P3-crawler.md`](roadmap-P3-crawler.md), [notes](roadmap-P3-crawler-notes.md) |
-| P4 — verdicts and reports; the first en-US crawl | Complete | [`roadmap-P4-reports.md`](roadmap-P4-reports.md), [notes](roadmap-P4-reports-notes.md) |
-| P5 — CI mode: baseline and `check-dir` | Complete | [`roadmap-P5-ci.md`](roadmap-P5-ci.md), [notes](roadmap-P5-ci-notes.md) |
+| P1–P5 | **Struck** at the first keystone, 2026-10-21 | their decisions are [`decisions.md`](decisions.md)'s |
 | P6 — release and the deployment guide | Sketched; not grilled | this file, below |
 | P7 — declarative per-root rules | Sketched; not grilled | this file, below |
 | P8 — run-history reports | Sketched; not grilled | this file, below |
@@ -61,49 +57,6 @@ plan is frozen as [`historical/initial.md`](historical/initial.md).
 None yet. A standing rule is added by a grilling, and only with the
 maintainer.
 
-## P1 — Scaffold and parser spike
-
-The spec is
-[`roadmap-P1-scaffold.md`](roadmap-P1-scaffold.md): the split
-between the generic core and its profiles (D32–D38), the layering (D39),
-fixtures, the tokenizer spike, the scaffold, the config and the store. What it
-left for later phases is [`roadmap-P1-scaffold-notes.md`](roadmap-P1-scaffold-notes.md).
-
-## P2 — The extractor
-
-The spec is [`roadmap-P2-extractor.md`](roadmap-P2-extractor.md):
-the streaming pass over one page, the Extract hook's new shape (D38), link
-kinds (D13), the edit link and its forge parse (D36), Antora's coordinates
-(D19) and a content hash scoped by config (D15). What it left for later
-phases is [`roadmap-P2-extractor-notes.md`](roadmap-P2-extractor-notes.md).
-
-## P3 — The crawler
-
-The spec is [`roadmap-P3-crawler.md`](roadmap-P3-crawler.md):
-the canonical form and `url_id` (D7, D26), what each URL class costs a
-request, redirects and meta-refresh aliases as hops, per-host politeness (D8,
-D18), sitemaps (D14), the store's remaining rows (D28) and `bruce crawl`,
-closing with a live crawl of one docs.fp.o component. What it left for later
-phases is [`roadmap-P3-crawler-notes.md`](roadmap-P3-crawler-notes.md).
-
-## P4 — Verdicts, reports, and the first en-US crawl
-
-The spec is [`roadmap-P4-reports.md`](roadmap-P4-reports.md):
-link verdicts as a view (D28), schema 3 recording each page's root, the
-single-run reports and `diff` (D6, D27), `prune` (D2), a config `skip`, the
-deployment guide's config section and `mise run sim` (D42), and two en-US
-crawls from it. What it left for later phases is
-[`roadmap-P4-reports-notes.md`](roadmap-P4-reports-notes.md).
-
-## P5 — CI mode: baseline and `check-dir`
-
-The spec is [`roadmap-P5-ci.md`](roadmap-P5-ci.md):
-`export-baseline` and the baseline imported as a run (D21), `check-dir` as a
-crawl with a local fetcher (D1, D22), what a build holds, `antora`'s Resolve
-(D19, D38), the gate and its inverse check (D4, D9), the end-to-end Antora
-test (D24), and quick-docs checked against a fresh en-US crawl. What it left
-for later phases is [`roadmap-P5-ci-notes.md`](roadmap-P5-ci-notes.md).
-
 ## P6 — Release and the deployment guide
 
 A release binary on the forge (D23). The manual's guide to configuring a
@@ -121,7 +74,7 @@ profiles needs one.
 
 ## P8 — Run-history reports
 
-Reports over two runs beyond P4's `diff`: `changed`, the pages whose content
+Reports over two runs beyond `diff`: `changed`, the pages whose content
 hash moved (D15), and `anchors-removed`, the anchors a page lost while links
 still name them. Which hash scope a run used is its first question (its
 inbox).

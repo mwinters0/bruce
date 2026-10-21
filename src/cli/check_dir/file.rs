@@ -1,5 +1,4 @@
-//! The baseline file `--baseline` names, ready to import (D21;
-//! `roadmap-P5-ci.md`, "`export-baseline` and `--baseline`").
+//! The baseline file `--baseline` names, ready to import (D21, D52).
 //!
 //! A path is used as it is. A URL is downloaded to a temporary file, and a
 //! gzipped file, whatever its name, is decompressed into another; nothing is

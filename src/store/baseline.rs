@@ -125,7 +125,9 @@ impl Store {
     /// Copies `from_run`'s rows of [`TABLES`] from schema `from` into schema
     /// `to` as `to_run`, in one transaction, and gives the rows copied per
     /// table. `runs.baseline_run` is cleared: it names a run the other side
-    /// may not hold.
+    /// may not hold. `from` and `to` are schemas, never catalogs: the opened
+    /// database's catalog is named for its file, so its side is `main` and an
+    /// attached one's `<alias>.main`.
     fn copy_run(
         &self,
         from: &str,

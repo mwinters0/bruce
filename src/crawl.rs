@@ -1,6 +1,5 @@
 //! The crawl: the frontier, hops, outcomes and the rows a run writes (D2,
-//! D3, D7, D13, D14, D16, D28; `roadmap-P3-crawler.md`, "What gets
-//! requested", "Redirects", "Assets and allowlisted pages" and "Sitemaps").
+//! D3, D7, D13, D14, D16, D28, D47).
 //!
 //! A run reads the roots' sitemaps first, so a page a sitemap lists is
 //! claimed as listed before any link can name it (D47), and then seeds the
@@ -27,8 +26,7 @@
 //! found writes nothing, since nothing named it (D47). A root with no sitemap
 //! goes on by links alone, and has no `sitemap_file` link to show for it.
 //!
-//! A [`Stopper`] ends a run early (`roadmap-P3-crawler.md`, "An interrupted
-//! run"): no target starts after it, a started one takes no further hop, and
+//! A [`Stopper`] ends a run early (D48, D49): no target starts after it, a started one takes no further hop, and
 //! the fetcher sends no retry or fallback (`fetch`'s doc). A target whose
 //! hops have not ended [`STOP_GRACE`] after the stop is dropped there. What a
 //! stopped run wrote is whole targets, and every target claimed and not

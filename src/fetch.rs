@@ -10,8 +10,7 @@
 //! outcome is the crawler's; what a fetcher owes it is a [`Response`], or a
 //! [`Failure`] saying why there was none.
 //!
-//! A [`Stopper`] ends a crawl early (`roadmap-P3-crawler.md`, "An interrupted
-//! run"). The crawler owns it and hands it to its fetcher, which sends
+//! A [`Stopper`] ends a crawl early (D48). The crawler owns it and hands it to its fetcher, which sends
 //! nothing more once it is stopped: no request, retry or fallback leaves,
 //! and a request still waiting for its host's place or a backoff returns at
 //! once as [`FailureKind::Stopped`]. A request already sent runs to its end.

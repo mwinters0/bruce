@@ -22,8 +22,8 @@ Builds, all with `CI=true` as Forgejo Actions sets it:
   docs.fedoraproject.org do, so `antora`'s Resolve can find a page by its
   source path. A static server serves this directory under `/en-US/`.
 - `runs/e2e/partial/`: `tools` alone, with no `site.url` and no `origin` as a
-  content repo's CI build has neither (`docs/design/roadmap-P5-ci.md`, "Facts
-  found while grilling"): no page carries an edit link, and its xrefs into
+  content repo's CI build has neither (D53; `docs/design/site-invariants.md`,
+  "I15"): no page carries an edit link, and its xrefs into
   `guide` and `ops` render as `#<refspec>`.
 - `runs/e2e/partial-image/`: `partial` less the image `guide` embeds.
 - `runs/e2e/partial-changed/`: `partial` with `plant`'s changes.

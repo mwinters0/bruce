@@ -1,6 +1,5 @@
 //! A run checked against a baseline: what it holds of the build, and what it
-//! leaves to the baseline's answer (D22, D52; `roadmap-P5-ci.md`, "A baseline
-//! answer is copied into the run" and "What a build holds").
+//! leaves to the baseline's answer (D22, D52, D54).
 //!
 //! The frontier sorts a URL the build does not hold, and the config would
 //! have asked about, into two classes. One outside the build's prefix, or on

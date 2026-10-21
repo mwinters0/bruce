@@ -1,6 +1,5 @@
-//! Reading one sitemap file (D14): a `<urlset>` of pages or a
-//! `<sitemapindex>` of further sitemaps, gzip-compressed or not
-//! (`roadmap-P3-crawler.md`, "Sitemaps").
+//! Reading one sitemap file (D14, D47): a `<urlset>` of pages or a
+//! `<sitemapindex>` of further sitemaps, gzip-compressed or not.
 //!
 //! A compressed file is told by its first two bytes, not its name or its
 //! `Content-Type`: a `.xml.gz` file is served as `application/gzip`,

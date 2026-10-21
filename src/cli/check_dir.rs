@@ -1,8 +1,7 @@
 //! `bruce check-dir DIR --prefix URL --baseline FILE|URL [--config f] [--db f]
 //! [--externals skip|baseline|live] [--inverse fail|warn] [--format text|json] [--all]`:
 //! one run over a local build, written to the database and judged against the
-//! baseline (D1, D9, D22, D27; `roadmap-P5-ci.md`, "A `check-dir` run is a
-//! crawl").
+//! baseline (D1, D9, D22, D27).
 //!
 //! The configuration is the one `crawl` reads, so `skip`, the allowlist and
 //! the roots' scopes plan a URL as they did for the baseline; with no file

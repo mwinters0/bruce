@@ -92,7 +92,7 @@ the links counted.
 
 **`sitemap`** has a row for each page a root's scope covers, and for each
 sitemap entry that no page was fetched for: columns `page`, `title`,
-`in_sitemap`, `via_links` (whether a link led to it), `outcome` and `reason`
+`in_sitemap`, `via_links` (whether a link, not a sitemap or the root, claimed it first: false for every page the sitemap lists, which is read before any page), `outcome` and `reason`
 (what its URL answered, as `errors` gives them), `status`, `source_repo` and
 `source_path`. The entries come first, with no title, `via_links` or source
 (a page robots.txt kept the crawl from shows here, never as broken), then the pages absent from the sitemap, then the rest. `--repo` and

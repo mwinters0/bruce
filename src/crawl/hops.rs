@@ -2,7 +2,8 @@
 //! leads.
 //!
 //! A hop is a 3xx with a `Location`, or a 2xx HTML page whose `refresh` has
-//! delay 0 (`roadmap-P3-crawler.md`, "Redirects"). [`Chain`] records them
+//! delay 0 (D7, I14), so a docs.fp.o alias is a hop and never a `pages` row.
+//! [`Chain`] records them
 //! in the shape the `targets` row stores; the crawler decides what to ask
 //! next and reads these for the rest.
 

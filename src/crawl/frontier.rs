@@ -1,8 +1,11 @@
 //! The frontier: which URLs a run asks about, and how (D3, D7, D26).
 //!
-//! [`Frontier::plan`] sorts a URL into one of `roadmap-P3-crawler.md`'s
-//! "What gets requested" classes and returns its canonical form, the string
-//! its `url_id` hashes. A URL in a root's scope, unless skipped, has that
+//! [`Frontier::plan`] sorts a URL into a [`Plan`] by the first test that
+//! applies: a scheme other than `http(s)`, a `skip` glob (D50), a root's
+//! scope, an allowlisted host (D3), a root's own host outside every scope
+//! (`out_of_scope`, D10), any other host (`host_not_allowlisted`); robots.txt
+//! is asked later, at each hop. It returns the URL's canonical form, the
+//! string its `url_id` hashes. A URL in a root's scope, unless skipped, has that
 //! root's form; every other URL has the plain form, `canonical(url, false)`,
 //! since no root's `strip_query` governs it. [`Frontier::claim`] is the run's one
 //! deduplication: a target is written by whoever claims its `url_id` first
@@ -220,7 +223,10 @@ impl Frontier {
     /// [`Frontier::plan`] for the URL a redirect leads to: a hop is followed
     /// wherever it goes, so what a link would leave unchecked is asked for its
     /// status alone. A skipped URL stays skipped, and ends the chain (D50);
-    /// so does an allowlisted one under `--externals=skip` (D54).
+    /// so does an allowlisted one under `--externals=skip` (D54). A hop onto
+    /// a URL the build lacks is asked, never copied from the baseline nor
+    /// judged `not_built`: an Antora alias stays in its component, so no hop
+    /// out of a built page is known to land there.
     pub fn hop_plan(&self, url: &Url, kind: Kind) -> (Plan, Canonical) {
         match self.plan(url, kind) {
             (Plan::Unchecked(SKIPPED), form) => (Plan::Unchecked(SKIPPED), form),

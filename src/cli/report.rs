@@ -1,7 +1,7 @@
 //! `bruce report <kind> [--db f] [--run n | --from n --to n] [--repo r]
 //! [--fact k=v] [--kind k] [--top n] [--format f]`: one report over one run,
-//! or `diff` over two (D6, D27; `roadmap-P4-reports.md`, "Which reports" and
-//! "Which run a report reads").
+//! or `diff` over two (D6, D27): by default the latest finished run, and for
+//! `diff` the two latest.
 //!
 //! A report reads a database a crawl wrote and never creates one; opening it
 //! installs the views, so a database from before them gains them here.

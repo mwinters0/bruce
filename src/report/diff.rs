@@ -1,5 +1,4 @@
-//! The `diff` report: the links broken in one run and not in another
-//! (`roadmap-P4-reports.md`, "What each report holds").
+//! The `diff` report: the links broken in one run and not in another.
 //!
 //! A link is keyed by its page, its target and its fragment, which are the
 //! same in every run (`url_id` is a hash of the canonical form, D26), and is

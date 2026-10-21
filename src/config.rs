@@ -524,6 +524,8 @@ fn http_url(s: &str) -> Result<Url, String> {
     }
 }
 
+/// `Host::parse` refuses a URL or `host:port` only as an IDNA error, so a `/`
+/// or `:` is refused first, to say why.
 fn host(s: &str) -> Result<String, String> {
     if s.contains(['/', ':']) {
         return Err(format!("{s} is not a bare host"));

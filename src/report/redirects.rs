@@ -1,7 +1,8 @@
 //! The `redirects` report: the links whose target was redirected, grouped by
 //! where they landed (D7), so the forge's login page, which a thousand links
-//! reach, is one row. Nothing is filtered by host (`roadmap-P4-reports.md`,
-//! "The redirects report").
+//! reach, is one row. Nothing is filtered by host: a same-host filter would
+//! drop a cross-host move (pagure.io to the forge), the likeliest fix, and an
+//! auth-wall heuristic would surprise.
 
 use duckdb::Connection;
 

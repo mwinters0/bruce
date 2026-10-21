@@ -1,6 +1,5 @@
 //! The xrefs of a built page that Antora could not resolve, resolved against
-//! the baseline once every built page is read (D20, D22, D38, D55;
-//! `roadmap-P5-ci.md`, "Resolve").
+//! the baseline once every built page is read (D20, D22, D38, D55, D57).
 //!
 //! A partial build lacks most components, so every xref into one reaches the
 //! page as `#<refspec>` (I6, I10). The profile that read the page maps the

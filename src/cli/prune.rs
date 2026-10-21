@@ -1,6 +1,5 @@
 //! `bruce prune (--keep N | --older-than AGE) [--db f]`: delete old runs from
-//! a database (D2; `roadmap-P4-reports.md`, "Which run a report reads, and
-//! what `prune` deletes").
+//! a database (D2), as `store::Rule` and `Store::prune` pick them.
 //!
 //! One rule says what goes, so naming neither flag or both is a usage error;
 //! `--keep` takes at least 1, since deleting every run is deleting the file.

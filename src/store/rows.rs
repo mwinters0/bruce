@@ -24,6 +24,9 @@ pub struct PageRow {
     pub source_ref: Option<String>,
     pub source_path: Option<String>,
     pub in_sitemap: bool,
+    /// Whether a link, not a seed or a sitemap, claimed the page. A listed
+    /// page is claimed by its sitemap first (D47), so this is false even where
+    /// links name it; whether anything links to a page is `links`' to say.
     pub via_links: bool,
     /// The root whose scope claimed the page, as the root's canonical URL
     /// (`Root::canonical_url`); `None` for an allowlisted page, which no
@@ -112,6 +115,8 @@ pub struct TargetRow {
     pub reason: Option<String>,
     /// `None` where no request was made.
     pub checked_at: Option<SystemTime>,
+    /// From the target's start to its last hop's end, robots.txt, the host's
+    /// pace and the body's extraction included, so it is no response time.
     pub duration_ms: Option<u32>,
     pub answered_by: AnsweredBy,
 }
