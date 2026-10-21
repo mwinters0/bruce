@@ -6,7 +6,7 @@ discovery and never reused. Walk this file whenever Antora's version changes (I8
 names it), or when docs.fp.o's build or hosting moves: a change here surfaces as wrong verdicts,
 not as an error.
 
-<!-- invariant-watermark: I23 -->
+<!-- invariant-watermark: I24 -->
 
 ### I1 docs.fp.o's sitemap is an index at `/en-US/sitemap.xml`, and lists no translated page
 - **Claim.** `/sitemap.xml` is 404, and robots.txt names no `Sitemap:`. `/en-US/sitemap.xml` is
@@ -317,3 +317,15 @@ not as an error.
 - **Verified against.** forge.fedoraproject.org, gitlab.com, github.com, pagure.io and the sources above, 2026-10-21.
 - **Relied on by.** D36, KD1, KD2 (`forge::parse`).
 - **Re-verify.** `for u in forge.fedoraproject.org/docs/quick-docs/src/branch/main/site.yml gitlab.com/fedora/docs/docs-website/ui-bundle/-/blob/HEAD/src/partials/body.hbs gitlab.com/fedora/docs/docs-website/ui-bundle/edit/HEAD/src/partials/body.hbs github.com/rust-lang/rust/blob/main/README.md; do curl -s -o /dev/null -w "%{http_code} %{redirect_url} $u\n" https://$u; sleep 1; done`
+
+### I24 A CI runner cancels a job with SIGINT then SIGTERM (GitHub Actions) or SIGTERM alone (GitLab), and kills it soon after
+- **Claim.** GitHub Actions sends SIGINT to the step's entry process, SIGTERM 7500 ms later if it has not
+  exited, and kills the process tree 2500 ms after that. GitLab Runner's shell executor sends SIGTERM to the
+  process and its children, and SIGKILL after 10 minutes.
+- **Proof.** Documentation: GitHub's "Workflow cancellation" reference and GitLab Runner's shell executor
+  page. Not observed.
+- **Scope limit.** Unix runners; GitLab's other executors and a configurable grace period are not read.
+- **Verified against.** Both pages, 2026-10-21.
+- **Relied on by.** D58 (each signal is a press; GitHub's 10 s is shorter than the stop's 30 s grace, so its
+  SIGTERM must abandon).
+- **Re-verify.** `curl -s https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-cancellation | grep -o '7500 ms\|2500 ms\|SIGINT\|SIGTERM' | sort -u; curl -s https://docs.gitlab.com/runner/executors/shell/ | grep -o 'SIGTERM[^.]*SIGKILL[^.]*'`

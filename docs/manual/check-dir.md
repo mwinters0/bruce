@@ -149,8 +149,20 @@ database ([`report.md`](report.md)).
 | 0 | No link is introduced, and no inverse breakage is found or `--inverse=warn`. |
 | 1 | A link is introduced, or the inverse check finds breakage and `--inverse=fail`. |
 | 2 | The check could not run: the command line was not understood, the configuration or the baseline could not be read, the baseline or the database is of another schema version, the prefix is outside every root's scope, or the build could not be read. |
+| 128 plus the signal | Stopped by a signal before the build was judged. |
 
 An `error` never moves the status, nor does a redirected link or a warned inverse breakage.
+
+## Stopping a check
+
+A SIGINT (Ctrl-C) or SIGTERM, as a CI cancel sends, stops the run as it does
+[`bruce crawl`](crawl.md#stopping-a-crawl): a second signal of either kind
+abandons what is still out. A check that was stopped is **not judged**: no
+section is printed, stdout stays empty, and stderr says the build was not
+judged. Its run stays in the database unfinished, so a `bruce report` with no
+`--run` reads the latest *finished* run, the baseline this check imported
+([`report.md`](report.md)). The exit status is 128 plus the first signal, 130
+for SIGINT and 143 for SIGTERM.
 
 ## Not beside a crawl
 

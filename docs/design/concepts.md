@@ -21,8 +21,7 @@ decisions each carries are cited in its module's doc.
 
 - **bruce** — `cli/` and the binary's `main.rs`, which only calls it: the
   command line and the registry in the parent file, a child module for
-  each subcommand, `check_dir` (its build, the run over it and the line it prints) with its `file` child (the baseline file a path or URL names, downloaded and decompressed), and the gate's exit status, `crawl` (its roots from the file or the URL, the run and
-  Ctrl-C), `export_baseline` (its files and the line it prints), `prune` (its rule and what it prints) and `report` (its options and
+  each subcommand, `check_dir` (its build, the run over it and the line it prints) with its `file` child (the baseline file a path or URL names, downloaded and decompressed), and the gate's exit status, `crawl` (its roots from the file or the URL and the run), `export_baseline` (its files and the line it prints), `interrupt` (what SIGINT and SIGTERM do to the run `crawl` and `check_dir` make, D58), `prune` (its rule and what it prints) and `report` (its options and
   printing the output), and the `db`
   child, which all five open the database through, installing the reports' views
   that only this layer can hand `store` (D6, D39). It is the top of the

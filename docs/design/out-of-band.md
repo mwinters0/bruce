@@ -38,8 +38,8 @@ Allocated so far: M1–M10. <!-- out-of-band-watermark: M10 -->
 | Item | Date | What changed | Blocks | Why |
 |---|---|---|---|---|
 | M4 | 2026-10-21 | A versionless refspec resolves to the version the baseline serves off its own segment; versions order numerically, case-folded (KD14 rewritten) | | [`2026-10-21`](../status/history/2026-10-21.md), "M4 landed" |
-| M5 | | SIGINT and SIGTERM each stop `crawl` and `check-dir`; a stopped `check-dir` runs no gate; a stopped run exits 128 plus the signal (KD13, with M6) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |
-| M6 | | A bare `report` warns of a later unfinished run and refuses a baseline a later run imported (closes KD13, with M5) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |
+| M5 | 2026-10-21 | SIGINT and SIGTERM each stop `crawl` and `check-dir`; a stopped `check-dir` runs no gate; a stopped run exits 128 plus the signal (KD13 rewritten to M6's part) | | [`2026-10-21`](../status/history/2026-10-21.md), "M5 landed" |
+| M6 | | A bare `report` warns of a later unfinished run and refuses a baseline a later run imported (closes KD13, rewritten by M5) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |
 | M7 | | Two roots are one root by canonical URL (closes KD11) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |
 | M8 | | `prune` spares the baseline run a kept run names (closes KD12) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |
 | M9 | | A Pagure `/edit/<ref>/f/<path>` link parses as Pagure's shape (closes KD15) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |

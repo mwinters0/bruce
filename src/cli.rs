@@ -6,6 +6,7 @@ mod check_dir;
 pub mod crawl;
 mod db;
 mod export_baseline;
+mod interrupt;
 mod prune;
 mod report;
 

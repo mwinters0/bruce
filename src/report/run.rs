@@ -49,6 +49,9 @@ pub(super) fn choose(conn: &Connection, request: &Request) -> Result<Chosen, Err
 
 /// `wanted`, or the latest finished run, and whether the run is unfinished.
 /// A named run may be unfinished, which the caller says; the default never is.
+// deficiency: KD13 The default is the latest finished run whatever came after
+// it. A stopped `check-dir` leaves its run unfinished (D2, D58), so this reads
+// the baseline it imported and says nothing of the later run.
 fn one(conn: &Connection, wanted: Option<RunId>) -> Result<(RunId, bool), Error> {
     match wanted {
         Some(run) => named(conn, run),

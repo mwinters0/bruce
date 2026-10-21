@@ -69,10 +69,10 @@ roadmap's phase index.
   `check-dir` databases and pruning them would promote it. Detail:
   `src/store/prune.rs`
 
-- **KD13** — Neither command stops on SIGTERM and `check-dir` on no signal, so a
-  cancelled check dies mid-target with no message, and a bare `report` then
-  reads the imported baseline as the latest run. **(c) unowned**: out-of-band
-  items M5 and M6 close it. Detail: `src/cli/check_dir.rs`
+- **KD13** — A stopped `check-dir` leaves its run unfinished, so a bare `report`
+  reads the latest finished run, the baseline it imported, and says nothing of
+  the later one. **(c) unowned**: out-of-band item M6 closes it. Detail:
+  `src/report/run.rs`
 
 - **KD14** — Where no version sits off its own segment, Resolve takes a
   component's prerelease for its latest, so a versionless xref into a site

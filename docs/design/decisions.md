@@ -11,7 +11,7 @@ frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' 
 **Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
 phase index.
 
-<!-- decision-watermark: D57 -->
+<!-- decision-watermark: D58 -->
 
 ## Scope and modes
 
@@ -338,13 +338,22 @@ stop went, not what the run lacks. Code: `crawl::Shared::in_grace`, `crawl::Summ
 Evidence: `crawl::tests::a_target_unfinished_at_the_grace_is_cut`.
 
 ### D49 An abandoned run waits for the writes it has begun, and only for them
-The second Ctrl-C closes the run's `Writes`: a write not yet begun sends nothing, and the close blocks,
+The second press closes the run's `Writes`: a write not yet begun sends nothing, and the close blocks,
 unbounded, until each begun has sent its last row, the writer draining meanwhile. Rejected: dropping
 the runtime, whose wait covers all blocking work, an extraction or a parse nobody reads and whatever a
 dependency adds (a resolver off hickory runs `getaddrinfo` there), and whose skipping of queued work
 tokio does not guarantee; a bound on the wait, which can only end it mid-target; a third press, a
 wedged DuckDB being a bug to fix. Code: `crawl::Writes`, `cli::crawl::crawl`.
 Evidence: `crawl::tests::an_abandoned_run_holds_the_page_it_was_writing_whole`.
+
+### D58 SIGINT and SIGTERM are each a press, and a stopped `check-dir` judges nothing
+`crawl` and `check-dir` stop at the first signal of either kind (D48) and abandon at the second (D49), and
+exit 128 plus the first's number (130, 143). A stopped `check-dir` runs no gate, says on stderr the build was
+not judged, and leaves its run unfinished (D2): a gate over a cut build reads what was never written as
+absent. GitHub's SIGTERM comes 7.5 s after its SIGINT and its kill 2.5 s after that (I24), inside the
+30 s grace, so the second press must abandon. Rejected: one flat 130, which hides which signal ended the run
+from a runner's log; judging what was written. Code: `cli::interrupt`, `cli::check_dir::Checked`.
+Evidence: `tests/signals.rs`.
 
 ### D51 A target records where its answer came from, in a column the writer fills and no view reads
 `targets.answered_by` is `local`, `baseline` or `live`, `NOT NULL` with no default, so a path that copies or

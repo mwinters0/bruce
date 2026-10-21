@@ -14,13 +14,16 @@
 //! the finished run, and sets the exit status: 0 where nothing is introduced,
 //! 1 where a link is introduced or, under `--inverse=fail`, the change removed
 //! what a page outside the build links to, 2 where the tool could not run (D16: an `error` moves
-//! nothing).
+//! nothing). A SIGINT or SIGTERM stops the run as it does `crawl`'s (D58): a
+//! build cut short is not judged, so no gate runs, the run is left unfinished
+//! and the exit status is 128 plus the signal.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
+use super::interrupt::{self, Pressed};
 use super::{crawl, db};
 use crate::ci::Build;
 use crate::crawl::{Baseline, Crawl, Externals, Summary};
@@ -164,7 +167,7 @@ pub fn command() -> Command {
 /// Runs `args` with the profiles `registry` holds.
 pub fn run(args: &Args, registry: Registry) -> ExitCode {
     match check(args, registry) {
-        Ok((run, summary, gate)) => {
+        Ok(Checked::Judged(run, summary, gate)) => {
             let line = format!(
                 "run {}: {} targets, {} pages",
                 run.0, summary.targets, summary.pages
@@ -184,6 +187,14 @@ pub fn run(args: &Args, registry: Registry) -> ExitCode {
                 ExitCode::SUCCESS
             }
         }
+        Ok(Checked::Unjudged(run, how, pressed)) => {
+            eprintln!(
+                "bruce check-dir: run {}: {how}, so the build was not judged and the run is left \
+                 unfinished",
+                run.0
+            );
+            pressed.exit()
+        }
         Err(e) => {
             eprintln!("bruce check-dir: {e}");
             ExitCode::from(COULD_NOT_RUN)
@@ -191,9 +202,16 @@ pub fn run(args: &Args, registry: Registry) -> ExitCode {
     }
 }
 
+/// What a check came to.
+enum Checked {
+    Judged(RunId, Summary, Box<Gate>),
+    /// A signal ended the run first, and how, so the gate has nothing to say.
+    Unjudged(RunId, &'static str, Pressed),
+}
+
 /// Checks and writes one run of the build, and judges it against its
-/// baseline.
-fn check(args: &Args, registry: Registry) -> Result<(RunId, Summary, Gate), String> {
+/// baseline unless a signal came first.
+fn check(args: &Args, registry: Registry) -> Result<Checked, String> {
     // With no file the prefix is the root, and a file names its own.
     let given = crawl::Args {
         url: args.config.is_none().then(|| args.prefix.clone()),
@@ -232,21 +250,35 @@ fn check(args: &Args, registry: Registry) -> Result<(RunId, Summary, Gate), Stri
         externals: args.externals,
     };
     let crawl = Crawl::new(fetcher, config, registry, run, writer.handle()).against(site, baseline);
-    // deficiency: KD13 No `Stopper` is given and no signal caught, so SIGINT
-    // or SIGTERM kills the process mid-target, with no message. A stopped run
-    // stays unfinished whatever stops it (D2), so a bare `report` then reads
-    // the latest finished run, the imported baseline: a `Stopper` alone does
-    // not close that.
-    let crawled = runtime.block_on(crawl.run_seeded(build.seeds()));
+    let stop = crawl.stopper();
+    let writes = crawl.writes();
+    // An abandoned run's tasks are not waited for, but its writes begun are (D49).
+    let (crawled, pressed) = interrupt::drive(
+        runtime,
+        "check-dir",
+        stop,
+        &writes,
+        crawl.run_seeded(build.seeds()),
+    );
     // The writer's own error says why a crawl lost it, so it goes first.
     let store = writer.finish().map_err(in_db)?;
+    let Some(crawled) = crawled else {
+        return Ok(Checked::Unjudged(
+            run,
+            "abandoned at the second signal",
+            pressed,
+        ));
+    };
     let summary = crawled.map_err(|e| e.to_string())?;
+    if summary.stopped {
+        return Ok(Checked::Unjudged(run, "stopped before the end", pressed));
+    }
     store.finish_run(run).map_err(in_db)?;
     let mut request = Request::new(Report::Introduced);
     request.run = Some(run);
     request.inverse = args.inverse;
     let gate = crate::report::gate(&store, &request).map_err(|e| e.to_string())?;
-    Ok((run, summary, gate))
+    Ok(Checked::Judged(run, summary, Box::new(gate)))
 }
 
 #[cfg(test)]

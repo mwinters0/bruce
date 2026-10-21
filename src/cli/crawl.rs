@@ -5,12 +5,12 @@
 //! naming roots is refused rather than replacing them, which would drop their
 //! settings silently, and a file naming none takes the URL as its only root,
 //! its other settings applying (D40). A root's profile must be one the
-//! registry holds, which only this layer can check (D39). The first Ctrl-C
-//! stops the crawl, whose requests end within [`STOP_GRACE`] (`crawl`'s
-//! doc), and flushes the writer, leaving `runs.finished_at` NULL; a second abandons the
-//! requests still out, waits for the targets already being written, and
-//! flushes the writer, so the run holds whole targets either way (D49). No
-//! run resumes: the next starts afresh.
+//! registry holds, which only this layer can check (D39). The first SIGINT or
+//! SIGTERM stops the crawl, whose requests end within [`STOP_GRACE`] (`crawl`'s
+//! doc), and flushes the writer, leaving `runs.finished_at` NULL; a second
+//! abandons the requests still out, waits for the targets already being
+//! written, and flushes the writer, so the run holds whole targets either way
+//! (D49, D58). No run resumes: the next starts afresh.
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -19,8 +19,9 @@ use clap::{Arg, ArgMatches, Command};
 use xxhash_rust::xxh3::xxh3_64;
 
 use super::db;
+use super::interrupt::{self, Pressed};
 use crate::config::{Config, ProfileChoice, Root};
-use crate::crawl::{Crawl, STOP_GRACE, Stopper, Summary};
+use crate::crawl::{Crawl, Summary};
 use crate::fetch::http::host::Hosts;
 use crate::fetch::http::{HttpFetcher, Settings};
 use crate::profile::Registry;
@@ -28,9 +29,6 @@ use crate::store::{Mode, RunId, Writer};
 
 /// Rows the writer's channel holds before a sender waits (D28).
 const WRITER_CAPACITY: usize = 4096;
-
-/// The exit status of a run stopped by Ctrl-C, the shell's for SIGINT.
-const INTERRUPTED: u8 = 130;
 
 /// What the command line asked of `crawl`.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -76,20 +74,20 @@ pub fn command() -> Command {
 /// stderr.
 pub fn run(args: &Args, registry: Registry) -> ExitCode {
     match crawl(args, registry) {
-        Ok((run, Some(summary))) => {
+        Ok((run, Some(summary), pressed)) => {
             println!("{}", report(run, &summary));
             if summary.stopped {
-                ExitCode::from(INTERRUPTED)
+                pressed.exit()
             } else {
                 ExitCode::SUCCESS
             }
         }
-        Ok((run, None)) => {
+        Ok((run, None, pressed)) => {
             println!(
-                "run {}: abandoned at the second Ctrl-C, so the run is left unfinished",
+                "run {}: abandoned at the second signal, so the run is left unfinished",
                 run.0
             );
-            ExitCode::from(INTERRUPTED)
+            pressed.exit()
         }
         Err(e) => {
             eprintln!("bruce crawl: {e}");
@@ -99,8 +97,8 @@ pub fn run(args: &Args, registry: Registry) -> ExitCode {
 }
 
 /// Crawls and writes one run, finishing it unless it was stopped. No summary
-/// means the second Ctrl-C abandoned the crawl.
-fn crawl(args: &Args, registry: Registry) -> Result<(RunId, Option<Summary>), String> {
+/// means the second signal abandoned the crawl.
+fn crawl(args: &Args, registry: Registry) -> Result<(RunId, Option<Summary>, Pressed), String> {
     let (config, hash) = configure(args, &registry)?;
     let db = db::path(args.db.as_deref());
     let in_db = |e: crate::store::Error| format!("{}: {e}", db.display());
@@ -122,44 +120,19 @@ fn crawl(args: &Args, registry: Registry) -> Result<(RunId, Option<Summary>), St
     let crawl = Crawl::new(fetcher, config, registry, run, writer.handle());
     let stop = crawl.stopper();
     let writes = crawl.writes();
-    let crawled = runtime.block_on(async {
-        tokio::select! {
-            crawled = crawl.run() => Some(crawled),
-            () = interrupt(stop) => None,
-        }
-    });
     // An abandoned crawl's tasks are not waited for, but its writes begun
     // are, the writer draining meanwhile (D49).
-    runtime.shutdown_background();
-    if crawled.is_none() {
-        writes.close();
-    }
+    let (crawled, pressed) = interrupt::drive(runtime, "crawl", stop, &writes, crawl.run());
     // The writer's own error says why a crawl lost it, so it goes first.
     let store = writer.finish().map_err(in_db)?;
     let Some(crawled) = crawled else {
-        return Ok((run, None));
+        return Ok((run, None, pressed));
     };
     let summary = crawled.map_err(|e| e.to_string())?;
     if !summary.stopped {
         store.finish_run(run).map_err(in_db)?;
     }
-    Ok((run, Some(summary)))
-}
-
-/// Stops the run at the first Ctrl-C, and returns at the second.
-async fn interrupt(stop: Stopper) {
-    if tokio::signal::ctrl_c().await.is_err() {
-        return std::future::pending().await;
-    }
-    stop.stop();
-    eprintln!(
-        "bruce crawl: stopping: finishing requests in flight ({} s at most); Ctrl-C again to \
-         abandon them",
-        STOP_GRACE.as_secs()
-    );
-    if tokio::signal::ctrl_c().await.is_err() {
-        std::future::pending().await
-    }
+    Ok((run, Some(summary), pressed))
 }
 
 /// The run's configuration, and the `runs.config_hash` that names it: the
