@@ -38,12 +38,15 @@ struct Refspec<'a> {
 /// page reference.
 fn parse(reference: &str) -> Option<Refspec<'_>> {
     // deficiency: KD10 Antora's resource ID is
-    // `version@component:module:family$relative` (`@antora/content-classifier`,
-    // `lib/util/parse-resource-id.js`), the family after the module; this
-    // takes `page$` only before the component, so `comp:mod:page$x.adoc` stays
-    // unresolved and `page$comp:mod:x.adoc`, which Antora refuses, resolves. A
-    // version with no component (`2.0@page.adoc`, the page's own component at
-    // another version, which the build need not hold) is refused too.
+    // `version@component:module:family$relative` (I21), the family after the
+    // module; this takes `page$` only before the component, so
+    // `comp:mod:page$x.adoc` stays unresolved and `page$comp:mod:x.adoc`, which
+    // Antora refuses, resolves. Refused too: a version with no component
+    // (`2.0@page.adoc`, the page's own component at another version, which the
+    // build need not hold), `_` as the empty version, and any family but
+    // `page`, which an xref may name (`attachment$`). A third colon is kept in
+    // `rel_path` where Antora refuses the spec, and `./` or `..` there is not
+    // normalised, so a page the facts hold is missed.
     let (id, fragment) = match reference.split_once('#') {
         Some((id, fragment)) => (id, Some(fragment)),
         None => (reference, None),
@@ -197,6 +200,15 @@ fn newest(
 /// prerelease is not told apart from a release by its descriptor, which the
 /// baseline does not hold: only a `-` suffix is lower than its release.
 fn compare(a: &str, b: &str) -> std::cmp::Ordering {
+    // deficiency: KD14 Antora's latest is the first version not flagged
+    // `prerelease` in its `antora.yml` (I20), which no page carries, so this
+    // takes docs.fp.o's `rawhide` over `f44`: a versionless `fedora::x.adoc`
+    // xref out of a partial build resolves to `fedora/rawhide/x/` where
+    // Antora's is `fedora/latest/x/`. Names compare bytewise where Antora
+    // compares them numerically and case-folded (`f9` above `f10`), and a
+    // non-numeric semantic part ties with 0 where Antora sorts it low. The
+    // baseline recording which version a component serves at `latest` (I5)
+    // would close the first.
     use std::cmp::Ordering;
     match (a.is_empty(), b.is_empty()) {
         (true, true) => return Ordering::Equal,

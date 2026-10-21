@@ -58,6 +58,10 @@ pub fn parse(url: &Url) -> Option<Source> {
         let rest = &segments[at..];
         let (marker, pagure) = match rest {
             ["src", "branch" | "tag" | "commit", ..] | ["-", "blob" | "edit", ..] => (2, false),
+            // deficiency: KD15 Pagure's edit page is `/edit/<ref>/f/<path>` as its
+            // file is `/blob/<ref>/f/<path>` (I23), and only `blob` is told apart
+            // from GitHub's shape, so a Pagure edit link parses to the path
+            // `f/<path>`. Matching `edit` here too closes it.
             ["blob", _, "f", ..] => (1, true),
             ["blob" | "edit", ..] => (1, false),
             _ => continue,

@@ -51,10 +51,12 @@ roadmap's phase index.
   link to a page the change deletes passes on the baseline's `ok`. **(c) unowned**: a
   non-Antora site checked in CI would promote it. Detail: `src/crawl.rs`
 
-- **KD10** — Resolve's parse puts a refspec's family before the component where
-  Antora puts it after the module, and refuses a version with no component, so
-  such an xref out of the build stays `unresolved_xref` and fails the gate.
-  **(c) unowned**: a content repo writing either form would promote it.
+- **KD10** — Resolve's parse departs from Antora's resource-ID grammar (I21): it
+  takes the family before the component, not after the module, refuses a version
+  with no component, `_` and any family but `page`, and leaves `./` and `..`
+  unnormalised, so such an xref out of the build stays `unresolved_xref` and
+  fails the gate.
+  **(c) unowned**: a content repo writing any of these forms would promote it.
   Detail: `src/profile/antora/resolve.rs`
 
 - **KD11** — Two roots whose URLs differ only in escaping (`/~x/`, `/%7Ex/`)
@@ -72,4 +74,14 @@ roadmap's phase index.
   unowned**: a CI job cancelled mid-check whose database is kept would promote
   it. Detail: `src/cli/check_dir.rs`
 
-<!-- deficiency-watermark: KD13 -->
+- **KD14** — Resolve takes a component's prerelease for its latest version, so a
+  versionless xref into docs.fp.o's `fedora` out of a partial build resolves to
+  `rawhide` where Antora's is `latest`. **(c) unowned**: the baseline recording
+  which version a component serves at `latest` would promote it. Detail:
+  `src/profile/antora/resolve.rs`
+
+- **KD15** — A Pagure edit link (`/edit/<ref>/f/<path>`) parses as GitHub's
+  shape, giving the path `f/<path>`. **(c) unowned**: a site whose sources are
+  on a live Pagure would promote it. Detail: `src/forge.rs`
+
+<!-- deficiency-watermark: KD15 -->
