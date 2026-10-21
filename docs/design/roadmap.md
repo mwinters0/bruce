@@ -15,8 +15,9 @@ never reused.
 | Phase | State | Where it is |
 |---|---|---|
 | P1–P5 | **Struck** at the first keystone, 2026-10-21 | their decisions are [`decisions.md`](decisions.md)'s |
+| P6 — release | Specified | [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md) |
 | P8 — run-history reports | Sketched; not grilled | this file, below |
-| P6 — release and the deployment guide | Specified; waits for P8 | [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md) |
+| P9 — the deployment guide | Specified; waits for P8 | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
 | P7 — declarative per-root rules | Sketched; not grilled | this file, below |
 
 **A row's state is one of `Sketched`, `Specified`, `Current`, `Complete` or
@@ -65,6 +66,12 @@ A standing rule is added only with the maintainer, and carries its check.
   stated, and no row for a key the config does not read. Check:
   `config::tests::every_key_the_config_reads_is_in_the_manual_with_its_default`.
 
+## P6 — Release
+
+Specified: [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md). A
+release binary built from a tag, so others can experiment before the
+deployment exists.
+
 ## P8 — Run-history reports
 
 Reports over two runs beyond `diff`: `changed`, the pages whose content
@@ -72,10 +79,10 @@ hash moved (D15), and `anchors-removed`, the anchors a page lost while links
 still name them. Which hash scope a run used is its first question (its
 inbox).
 
-## P6 — Release and the deployment guide
+## P9 — The deployment guide
 
-Specified: [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md). It
-follows P8, whose likely schema change a 0.x release would make its first
+Specified: [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md).
+It follows P8, whose likely schema change a 0.x release would make its first
 deployers pay for.
 
 ## P7 — Declarative per-root rules
