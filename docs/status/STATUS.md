@@ -49,10 +49,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **A versionless xref is named under the latest's served segment; an explicit
-  one is not (M4).** `fedora::new.adoc` with no page found resolves to
-  `fedora/latest/new/`, while `f44@fedora::new.adoc` stays unresolved, D57's
-  reading of a version served off its own segment. Made so as to leave D57's
-  explicit-version contract alone; one rule for both would name the explicit
-  one at `latest` too, and unresolve one fewer valid xref.

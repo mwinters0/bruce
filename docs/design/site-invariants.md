@@ -214,10 +214,9 @@ not as an error.
   `computeVersionSegment` and `computePub`. Observed on the fixture site: `guide/1.0/…` against `tools/…` and
   `ops/…`, whose versions render `data-version=""` and `master`.
 - **Scope limit.** Antora 3.1.15, indexify. A build setting `latest_version_segment` writes the latest
-  version under another name, which `crawl::baseline::Held` does not know: a deleted page there is the
-  baseline's answer, not `not_built`.
+  version under another name, which `crawl::baseline::Held` does not know (KD16).
 - **Verified against.** Antora 3.1.15, 2026-10-20.
-- **Relied on by.** D54, D56, D57.
+- **Relied on by.** D54, D56, D57, KD16.
 - **Re-verify.** `grep -n -A12 'function computeVersionSegment' runs/e2e/antora/node_modules/@antora/content-classifier/lib/content-catalog.js; ls runs/e2e/whole/guide runs/e2e/whole/tools`
 
 ### I17 The forge sends an anonymous request for any repository's `issues/new` to `/user/login`

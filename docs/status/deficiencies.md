@@ -84,4 +84,10 @@ roadmap's phase index.
   shape, giving the path `f/<path>`. **(c) unowned**: a site whose sources are
   on a live Pagure would promote it. Detail: `src/forge.rs`
 
-<!-- deficiency-watermark: KD15 -->
+- **KD16** — `Held` knows a version only by its own name, so in a build whose
+  latest sits under a renamed segment (`latest_version_segment`), a URL there
+  that the change deleted is the baseline's answer, not `not_built`. **(c)
+  unowned**: a CI build of a component at its renamed segment would promote
+  it. Detail: `src/crawl/baseline.rs`
+
+<!-- deficiency-watermark: KD16 -->

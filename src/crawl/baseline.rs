@@ -76,6 +76,11 @@ impl Held {
         // skips their links, live though they are (D56). Telling the pages a
         // change owns from the rest takes a flag naming their globs, which
         // every repo's CI would keep current by hand.
+        // deficiency: KD16 A version is matched by its own name, so where a
+        // build serves its latest under a `latest_version_segment` (I16), a
+        // URL under that segment is not held and a page the change deleted
+        // there gets the baseline's answer. Reading the segment each built
+        // page sits at, as `profile::antora::resolve::newest` does, closes it.
         let Some(below) = url.path().strip_prefix(prefix.path()) else {
             return false;
         };
