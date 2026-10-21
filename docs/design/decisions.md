@@ -155,7 +155,7 @@ The hash detects change because validators are unreliable (I3). Profile facts (D
 in an opt-in, prunable table. The hash is xxh3-128 (not adversarial; faster than BLAKE3) over tags, attributes and decoded text
 in a scope `hash_root`/`hash_exclude` set, by default the profile's region; a page matching no root is hashed whole, less
 exclusions. Rejected: storing bodies by default (about 140 MB per en-US run, uncompressed); raw bytes (docs.fp.o's `Last build:`
-changes every page every build); a hash of the extracted record (title, anchors, links), blind to a prose edit; one fixed
+changes every page every build, I19); a hash of the extracted record (title, anchors, links), blind to a prose edit; one fixed
 default root (an exclusion alone would barely act); an empty or region fallback for a set root matching nothing, hiding the
 misconfiguration a page changing every build shows. Code: `extract::hash`. Evidence: `tests/extract.rs`, the `Last build:` test.
 
@@ -296,7 +296,7 @@ Code: `config::Root::in_scope`. Evidence: `config::tests::scope_is_matched_on_th
 Top-level globs on the plain canonical form (D44's, the query kept), any host, a root's scope included:
 the deployer said not to ask. A hop onto one ends the chain, a sitemap's too, as a robots.txt-forbidden
 hop does; a root's `url` matching one is refused at load. Why: the forge answers `issues/new` with a 303
-to `/user/login` for any repo, a false `ok`, and skipping `/user/login*` marks every link sent there.
+to `/user/login` for any repo (I17), a false `ok`, and skipping `/user/login*` marks every link sent there.
 Rejected: detecting a login from a 401 or a login-like redirect, which misfires elsewhere; learning it
 from the first logins; `*` crossing `/` in a query, or the query unmatched, which forks D44's globs.
 Code: `crawl::frontier::Frontier::hop_plan`. Evidence: `crawl::tests::a_redirect_onto_a_skipped_url_ends_the_chain`.
@@ -367,7 +367,7 @@ file. Code: `store::baseline`. Evidence: `store::baseline::tests::a_baseline_alr
 ### D53 In a local build, an href beginning `/` resolves against the prefix
 The build directory's root is the site's root, what a static server serving it at `/` shows, so
 `extract` joins such an href (not `//`) onto `--prefix`, a `<base href>` that is root-relative too.
-Why: a partial build has no `site.url`, so the UI's footer writes `/legal/privacy/` with an empty
+Why: a partial build has no `site.url` (I11), so the UI's footer writes `/legal/privacy/` with an empty
 `site.path`, which against the production origin is a 404 on every built page, a break the tool made.
 Rejected: the production origin, with the guide telling deployers to `skip` those URLs. Reopens: a
 build whose root-relative hrefs are meant for the origin, not the prefix. Code: `extract::links::Links::resolve`.
@@ -387,7 +387,7 @@ A built page's tagged link is written once every built page is read (D54's wait)
 build holds stays `unresolved_xref`; else the profile's Resolve maps it through the baseline's pages, loaded before the run
 as its targets are (D52), and the link points at that page with the refspec's fragment, `xref_refspec` kept, so
 `link_verdicts` reads a refspec as unresolved where the link is to its own page or its fragment is the refspec (I6). No
-version: the latest the baseline holds, in Antora's order. Where no page has the coordinates: D57. Rejected: a column or a cleared refspec marking a resolved link
+version: the latest the baseline holds, in Antora's order (I20). Where no page has the coordinates: D57. Rejected: a column or a cleared refspec marking a resolved link
 (a schema 5 refusing every baseline already published, D43). Reopens: Antora marking an unresolved xref other than as `#<refspec>` (I6). Code:
 `crawl::xref`, `profile::antora::resolve`. Evidence: `crawl::baseline::tests::an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline`.
 

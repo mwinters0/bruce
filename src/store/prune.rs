@@ -67,6 +67,12 @@ impl Store {
     /// The runs `rule` picks, oldest first.
     // Times compare as microseconds from the epoch: the bundled DuckDB has no
     // ICU, so a TIMESTAMPTZ takes no interval arithmetic.
+    // deficiency: KD12 A run a kept run names as its `baseline_run` is picked
+    // like any other, so pruning a `check-dir` database deletes the imported
+    // baseline under `--keep 1` (it is numbered before the CI run, D52) or
+    // under `--older-than` (it keeps the crawl's `started_at`), and the gate
+    // over the kept CI run then fails `NoSuchRun`. Sparing a named baseline
+    // while its run is kept closes it.
     fn doomed(&self, rule: Rule) -> Result<Vec<RunId>, Error> {
         let (sql, arg) = match rule {
             Rule::Keep(n) => (

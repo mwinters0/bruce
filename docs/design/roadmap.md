@@ -54,8 +54,12 @@ plan is frozen as [`historical/initial.md`](historical/initial.md).
 
 ## Standing rules
 
-None yet. A standing rule is added by a grilling, and only with the
-maintainer.
+A standing rule is added only with the maintainer, and carries its check.
+
+- **A config key is documented in the change that adds it**: a row of
+  `../manual/config.md`'s `Key | Default | Meaning` tables, its default
+  stated, and no row for a key the config does not read. Check:
+  `config::tests::every_key_the_config_reads_is_in_the_manual_with_its_default`.
 
 ## P6 — Release and the deployment guide
 

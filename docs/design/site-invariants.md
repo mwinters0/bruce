@@ -6,17 +6,22 @@ discovery and never reused. Walk this file whenever Antora's version changes (I8
 names it), or when docs.fp.o's build or hosting moves: a change here surfaces as wrong verdicts,
 not as an error.
 
-<!-- invariant-watermark: I16 -->
+<!-- invariant-watermark: I23 -->
 
 ### I1 docs.fp.o's sitemap is an index at `/en-US/sitemap.xml`, and lists no translated page
 - **Claim.** `/sitemap.xml` is 404, and robots.txt names no `Sitemap:`. `/en-US/sitemap.xml` is
   a `<sitemapindex>` of per-component `sitemap-<component>.xml` files (68 on 2026-10-17), each with
   `<loc>` and `<lastmod>`. Locale sitemaps repeat the en-US index.
-- **Proof.** Observed behaviour.
-- **Scope limit.** Says nothing about pages reachable only by links.
-- **Verified against.** docs.fp.o, 2026-10-17.
-- **Relied on by.** D14, D10.
-- **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/sitemap.xml | grep -c '<loc>'`
+- **Proof.** Upstream source: `@antora/site-mapper` 3.1.15 `lib/map-site.js` writes no sitemap without
+  `site.url`, stamps every `<lastmod>` with the build time, and publishes the index at the output root
+  alone, production's being `./public/en-US` (docs-fp-o `site.yml`). The rest is observed behaviour.
+- **Scope limit.** Says nothing about pages reachable only by links. A root narrower than `/en-US/`
+  (`/en-US/quick-docs/`) finds no sitemap by D40's probes, robots.txt naming none and `<root>/sitemap.xml`
+  and `/sitemap.xml` being 404; it sets `sitemap` to `/en-US/sitemap-<component>.xml`. `<lastmod>` is the
+  build's time on every entry, not the page's.
+- **Verified against.** docs.fp.o, 2026-10-17; the probes and Antora 3.1.15, 2026-10-21.
+- **Relied on by.** D14, D10, D40.
+- **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/sitemap.xml | grep -c '<loc>'; for u in sitemap.xml en-US/quick-docs/sitemap.xml; do curl -s -o /dev/null -w "%{http_code} $u\n" https://docs.fedoraproject.org/$u; done; curl -s https://docs.fedoraproject.org/robots.txt | grep -ci '^sitemap:'`
 
 ### I2 docs.fp.o's robots.txt asks for `Crawl-delay: 1`
 - **Claim.** `User-agent: *`, `Crawl-delay: 1`, `Disallow: /*/Fedora*/`,
@@ -91,7 +96,7 @@ not as an error.
   attributes, and no edit link. Source repos on GitHub or GitLab have other edit-URL shapes.
 - **Verified against.** docs.fp.o and the UI bundle's `HEAD`, 2026-10-17.
 - **Relied on by.** D12, D17, D19, D34, D36.
-- **Re-verify.** `for p in packaging-guidelines/ReviewGuidelines arm-sbc; do curl -s https://docs.fedoraproject.org/en-US/$p/ | grep -oE 'data-(component|version)="[^"]*"|<a href="[^"]*" title="Edit this Page">|<meta name="generator"[^>]*>'; done; curl -s https://gitlab.com/fedora/docs/docs-website/ui-bundle/-/raw/HEAD/src/partials/body.hbs`
+- **Re-verify.** `for p in packaging-guidelines/ReviewGuidelines arm-sbc; do curl -s https://docs.fedoraproject.org/en-US/$p/ | grep -oE 'data-(component|version)="[^"]*"|<a href="[^"]*" title="Edit this Page">|<meta name="generator"[^>]*>'; done; curl -s 'https://gitlab.com/api/v4/projects/fedora%2Fdocs%2Fdocs-website%2Fui-bundle/repository/files/src%2Fpartials%2Fbody.hbs/raw?ref=HEAD'`
 
 ### I9 Anchors on docs.fp.o are static `id`s, and every page carries template chrome ids
 - **Claim.**
@@ -121,13 +126,15 @@ not as an error.
 ### I11 A content repo's CI build is partial, and may span several components
 - **Claim.** A repo builds with its own `site.yml` (docs-template's `docsbuilder.sh`, image
   `registry.gitlab.com/fedora/docs/docs-website/docs-fp-o:latest`, output `./public`, indexify). That
-  playbook can add sibling sources (quick-docs adds three). Docs repos live on Forgejo at
+  playbook can add sibling sources (quick-docs adds three). Neither docs-template's nor quick-docs's
+  playbook sets `site.url`, and `docsbuilder.sh` passes neither `--url` nor `URL`, so the build has no site
+  URL: no sitemap, no canonical link, an empty `site.path` (I15). Docs repos live on Forgejo at
   forge.fedoraproject.org. The Docs team's content repos run no CI today.
 - **Proof.** Upstream source: `docs/docs-template` and `docs/quick-docs` `site.yml`.
 - **Scope limit.** Repos following docs-template. Some sources are on GitHub or GitLab.
-- **Verified against.** forge.fedoraproject.org, 2026-10-17.
-- **Relied on by.** D1, D4, D22.
-- **Re-verify.** `curl -s https://forge.fedoraproject.org/docs/quick-docs/raw/branch/main/site.yml`
+- **Verified against.** forge.fedoraproject.org, 2026-10-17; the playbooks and `docsbuilder.sh`, 2026-10-21.
+- **Relied on by.** D1, D4, D22, D53.
+- **Re-verify.** `curl -s https://forge.fedoraproject.org/docs/quick-docs/raw/branch/main/site.yml; curl -s https://forge.fedoraproject.org/docs/docs-template/raw/branch/main/site.yml | grep -c '^ *url: http'; curl -s https://forge.fedoraproject.org/docs/docs-template/raw/branch/main/docsbuilder.sh | grep -n 'CMD='`
 
 ### I12 Antora names itself in a generator meta; edit links share no markup across generators
 - **Claim.**
@@ -161,7 +168,7 @@ not as an error.
   nav container (I8) gets no component. A UI may render the partial differently.
 - **Verified against.** docs.fp.o fixtures, lunr-extension `main` and Antora v3.1.x, 2026-10-17.
 - **Relied on by.** D19.
-- **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/arm-sbc/ | grep -o '<script[^>]*search-ui-script[^>]*>'; curl -s https://gitlab.com/antora/antora-lunr-extension/-/raw/main/data/partials/search-scripts.hbs | grep search-ui-script`
+- **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/arm-sbc/ | grep -o '<script[^>]*search-ui-script[^>]*>'; curl -s 'https://gitlab.com/api/v4/projects/antora%2Fantora-lunr-extension/repository/files/data%2Fpartials%2Fsearch-scripts.hbs/raw?ref=main' | grep search-ui-script`
 
 ### I14 A docs.fp.o alias is a 200 HTML page whose meta refresh has delay 0
 - **Claim.** An Antora alias, a component's root among them (`/en-US/fedora-docs/` →
@@ -212,3 +219,102 @@ not as an error.
 - **Verified against.** Antora 3.1.15, 2026-10-20.
 - **Relied on by.** D54, D56, D57.
 - **Re-verify.** `grep -n -A12 'function computeVersionSegment' runs/e2e/antora/node_modules/@antora/content-classifier/lib/content-catalog.js; ls runs/e2e/whole/guide runs/e2e/whole/tools`
+
+### I17 The forge sends an anonymous request for any repository's `issues/new` to `/user/login`
+- **Claim.** An anonymous GET or HEAD of forge.fedoraproject.org's `/<owner>/<repo>/issues/new`, with or
+  without a query, answers `303` with `Location: /user/login`, no query (the return path is a
+  `redirect_to` cookie), for a real repo and for one that does not exist. `/user/login` answers 200, a
+  false `ok`. The group's other routes (`issues/new/choose`, `_edit/<ref>/<path>`) do the same.
+- **Proof.** Upstream source: Forgejo `v15.0.0` `routers/web/web.go`, the group "endpoints that do require
+  authentication" closing with `reqSignIn, context.RepoAssignment`, so sign-in is checked before the
+  repo is looked up; `ctx.Redirect` defaults to 303 (`services/context/base.go`). Observed on the forge.
+- **Scope limit.** Anonymous requests to Forgejo. GitHub's `/edit/` (302 to `/login?return_to=…`) and
+  GitLab's `/-/edit/` (302 to `/users/sign_in`) do the same for their edit routes.
+- **Verified against.** forge.fedoraproject.org (`v15.0.10-6450d`) and Forgejo `v15.0.0`, 2026-10-21.
+- **Relied on by.** D50, and the guide's `skip` globs (`/user/login*` matching, the Location having no query).
+- **Re-verify.** `for p in docs/quick-docs zz-no-org/zz-no-repo; do curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" https://forge.fedoraproject.org/$p/issues/new; done`
+
+### I18 The forge's robots.txt asks for `Crawl-delay: 1` and nothing else
+- **Claim.** forge.fedoraproject.org's `/robots.txt` is exactly `User-agent: *` and `Crawl-delay: 1`: no
+  `Disallow`, no `Sitemap:`.
+- **Proof.** Observed behaviour.
+- **Scope limit.** Only the forge. The file is read at run time (D18), so a change shows as another rate,
+  not a wrong verdict.
+- **Verified against.** forge.fedoraproject.org, 2026-10-21.
+- **Relied on by.** D18 (no root starts on the forge, so the slower rate wins), and the guide's forge
+  `per_second = 1` (`docs/manual/deploy.md`).
+- **Re-verify.** `curl -s https://forge.fedoraproject.org/robots.txt`
+
+### I19 Every docs.fp.o page carries one `Last build:` line in its footer
+- **Claim.** Every docs.fp.o page, the 404 included, has one `<p class="text-center text-xs
+  text-fp-gray-dark">Last build: YYYY-MM-DD HH:MM:SS UTC…</p>` inside `<footer>`, after `</article>`, one
+  value per build; it may go on ` | Last content update: <date>`, the source file's last commit. Three
+  pages fetched again four days after their fixtures differ in that value alone, and asset URLs carry no
+  query.
+- **Proof.** Upstream source: the UI bundle's `partials/footer-content.hbs` writes `Last build:
+  {{{env.ANTORA_DATE}}}`, which docs-fp-o `prod` `build-scripts/rebuild-site.py` sets once a run. That
+  nothing else changes between builds of unchanged source is observed behaviour.
+- **Scope limit.** Production builds through `rebuild-site.py`; a content repo's `docsbuilder.sh` sets no
+  `ANTORA_DATE`. Not covered: a UI bundle change (fetched with `snapshot: true` every build), an Antora
+  upgrade (the image installs `@antora/cli@3.1`), another component's nav changing, `{localdate}` in a page.
+- **Verified against.** `fixtures/docs-fp-o/` (2026-10-17), UI bundle `7f5fb3d`, docs.fp.o, 2026-10-21.
+- **Relied on by.** D15, and `tests/extract.rs`'s `a_new_build_of_a_docs_fp_o_page_keeps_its_hash`.
+- **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/a11y/ | diff fixtures/docs-fp-o/en-US/a11y/index.html -; unzip -p fixtures/antora/ui-bundle.zip partials/footer-content.hbs | grep -n 'Last build'` (one changed line)
+
+### I20 Antora orders a component's versions empty first, then names, then semantic versions; latest is the first not a prerelease
+- **Claim.** Antora 3.1.15 sorts versions newest first: the empty version (`~`); then names, in reverse
+  `localeCompare(…, 'en', {numeric: true})` order (`rawhide` > `f44` > `f10` > `f9`, case-folded); then
+  semantic versions (a digit, or `v` and a digit, then a `.` or an integer), numerically on three parts, a
+  `-` suffix below its release and compared with the same collation, a non-numeric part low. A component's
+  `latest` is the first whose `antora.yml` is not `prerelease`: docs.fp.o's fedora lists `rawhide`
+  (`prerelease: True`) first, and `f44` is latest.
+- **Proof.** Upstream source: `@antora/content-classifier` 3.1.15 `lib/util/version-compare-desc.js` and
+  `lib/content-catalog.js` (`latest`, `latestPrerelease`). Observed: the rawhide page's version menu, and
+  `docs/release-docs-home`'s `antora.yml`.
+- **Scope limit.** Antora 3.1.15. Prerelease is a descriptor flag no page carries.
+- **Verified against.** Antora 3.1.15 and docs.fp.o, 2026-10-21.
+- **Relied on by.** D19, D55 (`profile::antora::resolve::compare`).
+- **Re-verify.** `sed -n '22,31p' runs/e2e/antora/node_modules/@antora/content-classifier/lib/util/version-compare-desc.js; sed -n '101,105p' runs/e2e/antora/node_modules/@antora/content-classifier/lib/content-catalog.js; curl -s https://forge.fedoraproject.org/docs/release-docs-home/raw/branch/main/antora.yml | grep -E '^(version|prerelease)'`
+
+### I21 Antora's resource ID is `version@component:module:family$relative`, defaulted from the referring page
+- **Claim.** The grammar is `^(?:([^@:$]+)@)?(?:(?:([^@:$]+):)?(?:([^@:$]+))?:)?(?:([^@:$]+)\$)?([^:$][^@:$]*)$`:
+  one colon names a module, two a component. With a component, no module is `ROOT` and no version the
+  component's latest (I20); an unknown component is unresolved. Without one, the component, the module
+  and, unless given, the version are the referring page's. `_` is the empty version. No family is `page`
+  for an xref, which permits every family. `./` and `..` are normalised; a spec the regex refuses is
+  unresolved; a miss in `page` is retried as an alias.
+- **Proof.** Upstream source: `@antora/content-classifier` 3.1.15 `lib/util/parse-resource-id.js` and
+  `lib/util/resolve-resource.js`; `@antora/asciidoc-loader` `lib/xref/convert-resource-ref.js`.
+- **Scope limit.** Antora 3.1.15.
+- **Verified against.** Antora 3.1.15, 2026-10-21.
+- **Relied on by.** D19, D55, KD10 (`profile::antora::resolve::parse`).
+- **Re-verify.** `sed -n '5p;42,56p' runs/e2e/antora/node_modules/@antora/content-classifier/lib/util/parse-resource-id.js; sed -n '30,35p' runs/e2e/antora/node_modules/@antora/content-classifier/lib/util/resolve-resource.js`
+
+### I22 Antora builds a page whose image is missing, logging an error and rendering the target as written
+- **Claim.** An `image:` target that is no URL and resolves to no published image logs `target of image not
+  found: <target>` at `error`, gains role `unresolved`, and renders `<img src="<target>">` as written. The
+  build exits 0 unless `runtime.log.failure_level` (`--log-failure-level`) is `error` or `warn`, the default
+  being `fatal`; `docsbuilder.sh` passes none and neither content playbook sets one.
+- **Proof.** Upstream source: `@antora/asciidoc-loader` 3.1.15 `lib/converter/html5.js` (`$image_uri`,
+  `logUnresolved`); `@antora/playbook-builder` `lib/config/schema.js`. Observed: `runs/e2e/partial-changed/`,
+  a build `scripts/e2e.py` requires to exit 0.
+- **Scope limit.** Antora 3.1.15. A repo whose CI sets a failure level of `error` fails its build first.
+- **Verified against.** Antora 3.1.15, docs-template `main`, 2026-10-21.
+- **Relied on by.** D9, D13 (the gate, not Antora, fails such a page).
+- **Re-verify.** `grep -n -A4 'function logUnresolved' runs/e2e/antora/node_modules/@antora/asciidoc-loader/lib/converter/html5.js; grep -n -A4 'failure_level: {' runs/e2e/antora/node_modules/@antora/playbook-builder/lib/config/schema.js`
+
+### I23 Forges spell a file's URL as repo, marker, ref and path
+- **Claim.** Forgejo: `/<o>/<r>/src/branch|tag|commit/<ref>/<path>`, its edit page `/_edit/<ref>/<path>`
+  behind sign-in. GitLab: `/<group…>/<r>/-/blob|edit/<ref>/<path>`; a bare `/blob/` is served as it is, a
+  bare `/edit/` is a 301 to `/-/edit/`. GitHub: `/<o>/<r>/blob|edit/<ref>/<path>`. Pagure:
+  `/[<ns>/]<r>/blob|edit/<ref>/f/<path>`, also under `/fork/<user>/`. Everywhere ref and path are one glob,
+  so a ref holding `/` is not told apart by the URL (KD1). Antora's default edit URL is `edit` on github.com
+  and gitlab.com for a branch (`blob` for a tag) and `/<r>/blob/<ref>/f/<path>` on pagure.io.
+- **Proof.** Upstream source: Forgejo `v15.0.0` `routers/web/web.go`; GitLab `config/routes/repository.rb`
+  and `repository_deprecated.rb`; Pagure `pagure/ui/repo.py`; `@antora/content-aggregator`
+  `lib/compute-origin.js`. GitHub's is observed only.
+- **Scope limit.** pagure.io was sunset in 2026 and is a static snapshot, its blob URLs 404. Bitbucket's
+  `/src/<ref>/<path>` and Forgejo's deprecated `/src/<ref>/…` are no shape `forge::parse` reads.
+- **Verified against.** forge.fedoraproject.org, gitlab.com, github.com, pagure.io and the sources above, 2026-10-21.
+- **Relied on by.** D36, KD1, KD2 (`forge::parse`).
+- **Re-verify.** `for u in forge.fedoraproject.org/docs/quick-docs/src/branch/main/site.yml gitlab.com/fedora/docs/docs-website/ui-bundle/-/blob/HEAD/src/partials/body.hbs gitlab.com/fedora/docs/docs-website/ui-bundle/edit/HEAD/src/partials/body.hbs github.com/rust-lang/rust/blob/main/README.md; do curl -s -o /dev/null -w "%{http_code} %{redirect_url} $u\n" https://$u; sleep 1; done`

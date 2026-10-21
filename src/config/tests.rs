@@ -498,3 +498,88 @@ fn a_run_records_its_roots_in_canonical_form() {
         ["https://a.example/a~b/", "https://b.example/b/?x=1"]
     );
 }
+
+/// The keys `T` reads, as serde's derive names them: its `deserialize_struct`
+/// is handed them, and nothing is deserialized.
+fn keys<'de, T: Deserialize<'de>>() -> &'static [&'static str] {
+    use serde::de::{Error as _, Visitor, value::Error};
+
+    struct Fields(&'static [&'static str]);
+    impl<'de> serde::Deserializer<'de> for &mut Fields {
+        type Error = Error;
+        fn deserialize_any<V: Visitor<'de>>(self, _: V) -> Result<V::Value, Error> {
+            Err(Error::custom("not a struct"))
+        }
+        fn deserialize_struct<V: Visitor<'de>>(
+            self,
+            _: &'static str,
+            fields: &'static [&'static str],
+            _: V,
+        ) -> Result<V::Value, Error> {
+            self.0 = fields;
+            Err(Error::custom("recorded"))
+        }
+        serde::forward_to_deserialize_any! {
+            bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string bytes
+            byte_buf option unit unit_struct newtype_struct seq tuple tuple_struct map
+            enum identifier ignored_any
+        }
+    }
+    let mut fields = Fields(&[]);
+    let _ = T::deserialize(&mut fields);
+    fields.0
+}
+
+/// The rows of every table in `manual` headed `| Key | Default |`: each key
+/// and its default.
+fn manual_keys(manual: &str) -> BTreeMap<String, String> {
+    let mut rows = BTreeMap::new();
+    let mut in_table = false;
+    for line in manual.lines() {
+        if line.starts_with("| Key | Default |") {
+            in_table = true;
+        } else if !line.starts_with('|') {
+            in_table = false;
+        } else if in_table && !line.starts_with("|---") {
+            let cells: Vec<&str> = line.split('|').map(str::trim).collect();
+            let key = cells[1].trim_matches('`').to_owned();
+            assert!(
+                rows.insert(key, cells[2].to_owned()).is_none(),
+                "{line}: a second row"
+            );
+        }
+    }
+    rows
+}
+
+/// A key is documented with its default in the change that adds it
+/// (`docs/design/roadmap.md`, "Standing rules").
+#[test]
+fn every_key_the_config_reads_is_in_the_manual_with_its_default() {
+    let documented = manual_keys(include_str!("../../docs/manual/config.md"));
+    // `root`, `rate` and `host` are tables, whose keys are rows of their own.
+    let mut read: Vec<String> = keys::<RawConfig>()
+        .iter()
+        .filter(|k| !matches!(**k, "root" | "rate" | "host"))
+        .map(|k| k.to_string())
+        .collect();
+    read.extend(keys::<RawRoot>().iter().map(|k| k.to_string()));
+    read.extend(keys::<RawRate>().iter().map(|k| format!("rate.{k}")));
+    read.extend(
+        keys::<RawHost>()
+            .iter()
+            .map(|k| format!("host.\"<host>\".{k}")),
+    );
+    for key in &read {
+        match documented.get(key) {
+            Some(default) => assert!(!default.is_empty(), "{key}: the manual states no default"),
+            None => panic!("{key}: no row in docs/manual/config.md"),
+        }
+    }
+    for key in documented.keys() {
+        assert!(
+            read.contains(key),
+            "{key}: the manual names a key the config does not read"
+        );
+    }
+}
