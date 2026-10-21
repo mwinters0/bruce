@@ -31,9 +31,15 @@ grilling, spec amendment and a numbered slice.
 **Ledger lines stay one line each.** The detail lives in the dated history
 entry each line points at.
 
-Allocated so far: M1–M3. <!-- out-of-band-watermark: M3 -->
+Allocated so far: M1–M9. <!-- out-of-band-watermark: M9 -->
 
 ## The ledger
 
 | Item | Date | What changed | Blocks | Why |
 |---|---|---|---|---|
+| M4 | | A versionless refspec resolves to the version the baseline serves off its own segment; versions order numerically, case-folded (KD14) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |
+| M5 | | SIGINT and SIGTERM each stop `crawl` and `check-dir`; a stopped `check-dir` runs no gate; a stopped run exits 128 plus the signal (KD13, with M6) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |
+| M6 | | A bare `report` warns of a later unfinished run and refuses a baseline a later run imported (closes KD13, with M5) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |
+| M7 | | Two roots are one root by canonical URL (closes KD11) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |
+| M8 | | `prune` spares the baseline run a kept run names (closes KD12) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |
+| M9 | | A Pagure `/edit/<ref>/f/<path>` link parses as Pagure's shape (closes KD15) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |

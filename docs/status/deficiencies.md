@@ -69,15 +69,15 @@ roadmap's phase index.
   `check-dir` databases and pruning them would promote it. Detail:
   `src/store/prune.rs`
 
-- **KD13** — `check-dir` handles no Ctrl-C, so a killed run is left unfinished,
-  and `report` with no `--run` then reads the imported baseline. **(c)
-  unowned**: a CI job cancelled mid-check whose database is kept would promote
-  it. Detail: `src/cli/check_dir.rs`
+- **KD13** — Neither command stops on SIGTERM and `check-dir` on no signal, so a
+  cancelled check dies mid-target with no message, and a bare `report` then
+  reads the imported baseline as the latest run. **(c) unowned**: out-of-band
+  items M5 and M6 close it. Detail: `src/cli/check_dir.rs`
 
 - **KD14** — Resolve takes a component's prerelease for its latest version, so a
   versionless xref into docs.fp.o's `fedora` out of a partial build resolves to
-  `rawhide` where Antora's is `latest`. **(c) unowned**: the baseline recording
-  which version a component serves at `latest` would promote it. Detail:
+  `rawhide` where Antora's is `latest`. **(c) unowned**: out-of-band item M4
+  closes it but for a site serving its latest at its own name. Detail:
   `src/profile/antora/resolve.rs`
 
 - **KD15** — A Pagure edit link (`/edit/<ref>/f/<path>`) parses as GitHub's

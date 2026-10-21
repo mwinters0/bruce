@@ -232,10 +232,11 @@ fn check(args: &Args, registry: Registry) -> Result<(RunId, Summary, Gate), Stri
         externals: args.externals,
     };
     let crawl = Crawl::new(fetcher, config, registry, run, writer.handle()).against(site, baseline);
-    // deficiency: KD13 No `Stopper` is given, so Ctrl-C kills the process
-    // mid-run: `runs.finished_at` stays NULL, and `report` with no `--run`
-    // then reads the latest finished run, the imported baseline. `crawl`'s two-press handling
-    // (D48, D49) closes it.
+    // deficiency: KD13 No `Stopper` is given and no signal caught, so SIGINT
+    // or SIGTERM kills the process mid-target, with no message. A stopped run
+    // stays unfinished whatever stops it (D2), so a bare `report` then reads
+    // the latest finished run, the imported baseline: a `Stopper` alone does
+    // not close that.
     let crawled = runtime.block_on(crawl.run_seeded(build.seeds()));
     // The writer's own error says why a crawl lost it, so it goes first.
     let store = writer.finish().map_err(in_db)?;
