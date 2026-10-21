@@ -26,9 +26,13 @@ command-line error.
   kept, whatever the rule says, so it stays there to inspect
   (`bruce report --run N`). Once a finished run passes it, it is deleted
   like any other.
+- **A baseline a kept run names.** A run that a kept run names as its baseline
+  (a `check-dir` run's imported baseline) is kept too, under `--keep` and
+  `--older-than` alike, so the gate over the kept run still finds it; its own
+  baseline is kept in turn. Such a run does not count toward `N`.
 - With `--keep N` and fewer than `N` finished runs, only the runs before the
   oldest finished one go; with no finished run, none does.
-- `--older-than` is not protected beyond the last attempt: it deletes the
+- `--older-than` is not protected beyond the last attempt and the baselines: it deletes the
   latest finished run too if that started longer ago than `AGE`, which can
   leave no run to report on. The next crawl numbers its run after the
   highest number left, or from 1 if none is.

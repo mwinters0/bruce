@@ -1,7 +1,7 @@
 //! Deleting old runs (D2): the one place rows leave the database.
 //!
 //! A run is a number, and every table but `meta` carries it, so a run goes by
-//! deleting its number from each. The rule picks which runs go; two things
+//! deleting its number from each. The rule picks which runs go; three things
 //! it never deletes are named on [`Rule`] and in [`Store::prune`].
 
 use std::time::Duration;
@@ -39,6 +39,10 @@ impl Store {
     /// **An unfinished run newer than the latest finished one is kept**, so
     /// the last attempt stays inspectable until a finished run passes it; one
     /// older than a finished run is dead and goes by the rule like any other.
+    /// **A run a kept run names as its `baseline_run` is kept too**, however
+    /// the rule picks it, so the gate over a kept `check-dir` run still finds
+    /// its baseline; that run's own baseline is kept in turn. A run kept so
+    /// does not count toward `Keep(n)`'s `n`.
     /// DuckDB lets one process write a file (D28), so the caller holds the
     /// database alone and no crawl is writing one of these runs.
     pub fn prune(&self, rule: Rule) -> Result<Vec<RunId>, Error> {
@@ -64,16 +68,30 @@ impl Store {
         Ok(doomed)
     }
 
-    /// The runs `rule` picks, oldest first.
+    /// The runs `rule` deletes, oldest first.
+    fn doomed(&self, rule: Rule) -> Result<Vec<RunId>, Error> {
+        let mut doomed = self.picked(rule)?;
+        let mut stmt = self.conn.prepare(
+            "SELECT run_id, baseline_run FROM runs WHERE baseline_run IS NOT NULL \
+             ORDER BY run_id",
+        )?;
+        let named = stmt
+            .query_map([], |row| Ok((row.get::<_, u64>(0)?, row.get::<_, u64>(1)?)))?
+            .collect::<Result<Vec<_>, _>>()?;
+        // A baseline is numbered before the run that names it (D52), so one
+        // pass from the newest run down spares a chain.
+        for (kept, baseline) in named.into_iter().rev() {
+            if !doomed.contains(&RunId(kept)) {
+                doomed.retain(|r| r.0 != baseline);
+            }
+        }
+        Ok(doomed)
+    }
+
+    /// The runs `rule` picks before any is spared, oldest first.
     // Times compare as microseconds from the epoch: the bundled DuckDB has no
     // ICU, so a TIMESTAMPTZ takes no interval arithmetic.
-    // deficiency: KD12 A run a kept run names as its `baseline_run` is picked
-    // like any other, so pruning a `check-dir` database deletes the imported
-    // baseline under `--keep 1` (it is numbered before the CI run, D52) or
-    // under `--older-than` (it keeps the crawl's `started_at`), and the gate
-    // over the kept CI run then fails `NoSuchRun`. Sparing a named baseline
-    // while its run is kept closes it.
-    fn doomed(&self, rule: Rule) -> Result<Vec<RunId>, Error> {
+    fn picked(&self, rule: Rule) -> Result<Vec<RunId>, Error> {
         let (sql, arg) = match rule {
             Rule::Keep(n) => (
                 "SELECT run_id FROM runs WHERE run_id < (SELECT min(run_id) FROM \

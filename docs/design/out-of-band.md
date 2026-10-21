@@ -41,6 +41,6 @@ Allocated so far: M1–M10. <!-- out-of-band-watermark: M10 -->
 | M5 | 2026-10-21 | SIGINT and SIGTERM each stop `crawl` and `check-dir`; a stopped `check-dir` runs no gate; a stopped run exits 128 plus the signal (KD13 rewritten to M6's part) | | [`2026-10-21`](../status/history/2026-10-21.md), "M5 landed" |
 | M6 | 2026-10-21 | A bare `report` warns of a later unfinished run and refuses a baseline a later run imported (closes KD13, rewritten by M5) | | [`2026-10-21`](../status/history/2026-10-21.md), "M6 landed" |
 | M7 | 2026-10-21 | Two roots are one root by canonical URL (closes KD11) | | [`2026-10-21`](../status/history/2026-10-21.md), "M7 landed" |
-| M8 | | `prune` spares the baseline run a kept run names (closes KD12) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |
+| M8 | 2026-10-21 | `prune` spares the baseline run a kept run names (closes KD12) | | [`2026-10-21`](../status/history/2026-10-21.md), "M8 landed" |
 | M9 | | A Pagure `/edit/<ref>/f/<path>` link parses as Pagure's shape (closes KD15) | | [`2026-10-21`](../status/history/2026-10-21.md), "The KD register grilled into M items" |
 | M10 | | An explicit refspec whose version is served off its own segment is named under the served one, as a versionless one is (D57 rewritten) | | [`2026-10-21`](../status/history/2026-10-21.md), "M4's explicit-version asymmetry reviewed" |

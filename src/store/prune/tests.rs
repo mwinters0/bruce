@@ -183,3 +183,73 @@ fn a_pruned_file_reopens_holding_what_was_kept() {
     let s = Store::open(&path, &registry).unwrap();
     assert_eq!(left(&s), [2]);
 }
+
+/// Makes `run` name `baseline` as its `baseline_run`.
+fn names(store: &Store, run: RunId, baseline: RunId) {
+    store
+        .connection()
+        .execute(
+            "UPDATE runs SET baseline_run = ? WHERE run_id = ?",
+            [baseline.0, run.0],
+        )
+        .unwrap();
+}
+
+#[test]
+fn keep_spares_the_baseline_a_kept_run_names_and_does_not_count_it() {
+    let s = store();
+    run(&s, 0, true); // 1
+    let baseline = run(&s, 0, true); // 2
+    run(&s, 0, true); // 3
+    let ci = run(&s, 0, true); // 4
+    names(&s, ci, baseline);
+    assert_eq!(s.prune(Rule::Keep(1)).unwrap(), [RunId(1), RunId(3)]);
+    assert_eq!(left(&s), [2, 4]);
+    assert_eq!(rows_of(&s, baseline), 7);
+}
+
+#[test]
+fn older_than_spares_the_baseline_a_kept_run_names() {
+    let s = store();
+    let baseline = run(&s, 40, true); // 1
+    run(&s, 40, true); // 2
+    let ci = run(&s, 1, true); // 3
+    names(&s, ci, baseline);
+    let age = Duration::from_secs(30 * DAY);
+    assert_eq!(s.prune(Rule::OlderThan(age)).unwrap(), [RunId(2)]);
+    assert_eq!(left(&s), [1, 3]);
+}
+
+#[test]
+fn a_spared_baseline_spares_its_own_baseline() {
+    let s = store();
+    let first = run(&s, 0, true); // 1
+    let second = run(&s, 0, true); // 2
+    let ci = run(&s, 0, true); // 3
+    names(&s, second, first);
+    names(&s, ci, second);
+    assert!(s.prune(Rule::Keep(1)).unwrap().is_empty());
+    assert_eq!(left(&s), [1, 2, 3]);
+}
+
+#[test]
+fn the_baseline_of_a_deleted_run_goes_with_it() {
+    let s = store();
+    let baseline = run(&s, 0, true); // 1
+    let old = run(&s, 0, true); // 2
+    run(&s, 0, true); // 3
+    names(&s, old, baseline);
+    assert_eq!(s.prune(Rule::Keep(1)).unwrap(), [RunId(1), RunId(2)]);
+    assert_eq!(left(&s), [3]);
+}
+
+#[test]
+fn the_baseline_an_unfinished_last_attempt_names_is_spared() {
+    let s = store();
+    let baseline = run(&s, 0, true); // 1
+    run(&s, 0, true); // 2
+    let attempt = run(&s, 0, false); // 3
+    names(&s, attempt, baseline);
+    assert_eq!(s.prune(Rule::Keep(1)).unwrap(), Vec::<RunId>::new());
+    assert_eq!(left(&s), [1, 2, 3]);
+}

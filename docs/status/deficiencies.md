@@ -59,11 +59,6 @@ roadmap's phase index.
   **(c) unowned**: a content repo writing any of these forms would promote it.
   Detail: `src/profile/antora/resolve.rs`
 
-- **KD12** — `prune` deletes the baseline run a kept CI run names, so the gate
-  over that CI run fails `NoSuchRun`. **(c) unowned**: a deployer keeping
-  `check-dir` databases and pruning them would promote it. Detail:
-  `src/store/prune.rs`
-
 - **KD14** — Where no version sits off its own segment, Resolve takes a
   component's prerelease for its latest, so a versionless xref into a site
   serving its latest at its own name beside a prerelease (`2.0`, `3.0-beta`)
