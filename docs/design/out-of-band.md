@@ -43,4 +43,4 @@ Allocated so far: M1–M10. <!-- out-of-band-watermark: M10 -->
 | M7 | 2026-10-21 | Two roots are one root by canonical URL (closes KD11) | | [`2026-10-21`](../status/history/2026-10-21.md), "M7 landed" |
 | M8 | 2026-10-21 | `prune` spares the baseline run a kept run names (closes KD12) | | [`2026-10-21`](../status/history/2026-10-21.md), "M8 landed" |
 | M9 | 2026-10-21 | A Pagure `/edit/<ref>/f/<path>` link parses as Pagure's shape (closes KD15) | | [`2026-10-21`](../status/history/2026-10-21.md), "M9 landed" |
-| M10 | | An explicit refspec whose version is served off its own segment is named under the served one, as a versionless one is (D57 rewritten) | | [`2026-10-21`](../status/history/2026-10-21.md), "M4's explicit-version asymmetry reviewed" |
+| M10 | 2026-10-21 | An explicit refspec whose version is served off its own segment is named under the served one, as a versionless one is (D57 rewritten) | | [`2026-10-21`](../status/history/2026-10-21.md), "M4's explicit-version asymmetry reviewed" |

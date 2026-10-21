@@ -233,7 +233,7 @@ fn a_page_with_no_edit_link_is_named_by_its_component_version_alone() {
 }
 
 #[test]
-fn a_page_at_a_segment_that_is_not_its_version_names_no_prefix() {
+fn a_page_at_a_segment_that_is_not_its_version_is_named_under_that_segment() {
     let mut pages = Pages::new(&[]);
     // The latest of a component whose latest version is served as `latest`.
     pages.pages.push((
@@ -243,7 +243,10 @@ fn a_page_at_a_segment_that_is_not_its_version_names_no_prefix() {
             (VERSION.to_owned(), "f44".to_owned()),
         ],
     ));
-    assert_eq!(resolved("f44@fedora::new.adoc", &pages), None);
+    assert_eq!(
+        resolved("f44@fedora::new.adoc", &pages).as_deref(),
+        Some("https://x.org/fedora/latest/new/")
+    );
 }
 
 #[test]
@@ -302,6 +305,11 @@ fn a_page_the_baseline_lacks_is_named_under_the_latest_segment() {
     assert_eq!(
         resolved("fedora:release-notes:missing.adoc", &pages).as_deref(),
         Some("https://x.org/fedora/latest/release-notes/missing/")
+    );
+    assert_eq!(
+        resolved("f44@fedora:release-notes:missing.adoc", &pages).as_deref(),
+        Some("https://x.org/fedora/latest/release-notes/missing/"),
+        "the version's name is the refspec's, its segment the site's"
     );
     assert_eq!(
         resolved("f43@fedora:release-notes:missing.adoc", &pages).as_deref(),

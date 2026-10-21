@@ -105,10 +105,9 @@ pub(super) fn resolve(reference: &str, lookup: &dyn Lookup) -> Result<Option<Url
 /// there: the component-version's prefix, read off a baseline page carrying
 /// its facts (`held` names them), then the module unless `ROOT` and the page
 /// without `.adoc`, an `index` dropped. `None` where the baseline holds no
-/// page of the component-version carrying a version fact, or the newest it
-/// holds is not under its version's own segment (the latest at a
-/// `latest_version_segment`, I16); except for a versionless refspec, whose
-/// latest so served is named under that segment (D55).
+/// page of the component-version carrying a version fact. A version served
+/// under another name (the latest at a `latest_version_segment`, I5) is named
+/// under that segment, whether or not the refspec names the version (D57).
 fn named(
     spec: &Refspec<'_>,
     held: &[(&str, &str)],
@@ -118,12 +117,7 @@ fn named(
     let Some(found) = newest(candidates, spec.component, lookup, true)? else {
         return Ok(None);
     };
-    let Some(mut url) = prefix(
-        &found.page,
-        spec.component,
-        &found.version,
-        found.elsewhere && spec.version.is_none(),
-    ) else {
+    let Some(mut url) = prefix(&found.page, spec.component, &found.version, found.elsewhere) else {
         return Ok(None);
     };
     let (dir, file) = spec

@@ -420,11 +420,11 @@ Reopens: I16 changing, its layout read in three places (D57). Code: `report::inv
 ### D57 An xref no page's facts find is the URL its refspec names, answered as any URL the build lacks
 Antora resolves a refspec through a page-alias, and to either of two files sharing an output URL; the baseline holds facts once
 per URL, and an alias only if crawled. So where Resolve's facts find no page it returns the URL I16 names, under the prefix read
-off a baseline page of the component-version, and D22's chain answers it: the baseline's rows, else a request. A URL answering
-`broken_url` makes the link `unresolved_xref` (`link_verdicts` rule 1); `error` and `unchecked` stay as they are. Rejected: the
-baseline's redirect targets alone (an uncrawled alias is missed); live alone; any outcome but `ok` as unresolved, failing a PR on a
-timeout or refusal its author cannot fix (D16) and judging a derived URL more harshly than a page the facts found (D55). Reopens:
-I16 changing (the layout in three places), a `latest_version_segment`. Code: `profile::antora::resolve`. Evidence: `crawl::baseline::tests::an_xref_no_page_has_the_coordinates_of_resolves_by_the_url_it_names`.
+off a baseline page of the component-version, at the segment its pages sit at (I5), the refspec naming the version or not; D22's
+chain answers it: the baseline's rows, else a request. A URL answering `broken_url` makes the link `unresolved_xref`
+(`link_verdicts` rule 1); `error` and `unchecked` stay. Rejected: the baseline's redirect targets alone (an uncrawled alias is missed);
+live alone; any outcome but `ok` as unresolved, failing a PR on a timeout or refusal its author cannot fix (D16) and judging a derived
+URL more harshly than a page the facts found (D55). Reopens: I16 changing (the layout in three places). Code: `profile::antora::resolve`. Evidence: `crawl::baseline::tests::an_xref_no_page_has_the_coordinates_of_resolves_by_the_url_it_names`.
 
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
 `check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status
