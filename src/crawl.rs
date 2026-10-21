@@ -963,8 +963,8 @@ where
         if !whole {
             return Ok(());
         }
-        if self.frontier.baseline().is_some() {
-            self.note_held(e.facts.pairs());
+        if let Some(prefix) = self.frontier.prefix() {
+            self.note_held(prefix, form, e.facts.pairs());
         }
         for (key, value) in e.facts.pairs() {
             self.rows.send(Row::Fact(FactRow {
@@ -1067,9 +1067,9 @@ where
         Ok(None)
     }
 
-    /// Records the component-version a built page carries, from its facts
-    /// (D19, D37).
-    pub(super) fn note_held(&self, facts: &[(String, String)]) {
+    /// Records the component-version the built page `form` carries, from its
+    /// facts (D19, D37), and the segment it sits at below `prefix`.
+    pub(super) fn note_held(&self, prefix: &Url, form: &Canonical, facts: &[(String, String)]) {
         let get = |key| {
             facts
                 .iter()
@@ -1080,7 +1080,9 @@ where
         // build of a site of any other generator holds nothing, and a link to
         // a page the change deletes passes on the baseline's `ok`.
         if let Some(component) = get("antora.component") {
-            self.pending.hold(component, get("antora.version"));
+            let page = Url::parse(form.as_str()).expect("a canonical form is a URL's");
+            self.pending
+                .hold(prefix, &page, component, get("antora.version"));
         }
     }
 

@@ -7,9 +7,9 @@
 //! built pages carry `antora.component` and `antora.version` (D19), and a
 //! component-version is held as `crawl::baseline::Held` has it, a URL below
 //! the component's segment of a built page's URL and, for a named version,
-//! below that version's segment too (I16, D56). A baseline link is
-//! **inverse breakage** when it is on a crawled page outside the build, was
-//! `ok`, and the run removed what it reached:
+//! below the segment the page sits at after it too (I16, D56). A baseline
+//! link is **inverse breakage** when it is on a crawled page outside the
+//! build, was `ok`, and the run removed what it reached:
 //!
 //! - `page`: the target, or the page it redirected to, is in a held
 //!   component-version, is a page in the baseline and is not built; a
@@ -43,8 +43,8 @@ const LINK: Cols = Cols {
 };
 
 /// The URL prefixes the build holds: for each built page's component-version,
-/// the URL through the component's segment, or through its version's where
-/// the version is named.
+/// the URL through the component's segment, or through the version segment
+/// its pages sit at where the version is named.
 fn held(conn: &Connection, run: RunId) -> Result<BTreeSet<String>, Error> {
     let mut stmt = conn.prepare(
         "SELECT t.url, c.value, v.value FROM pages p \
@@ -66,8 +66,10 @@ fn held(conn: &Connection, run: RunId) -> Result<BTreeSet<String>, Error> {
 }
 
 /// The prefix of `url`, a page of `component` at `version`: its URL through
-/// the first segment that is the component, followed by a named version's,
-/// and that version's.
+/// the first segment that is the component and, for a named version, the
+/// segment after it, the version's own name where one follows the
+/// component's, else whatever non-empty one does, the build serving the
+/// version under another name (a `latest_version_segment`, I16).
 /// The placeholders Antora writes for a version its URLs omit, `""` and
 /// `master`, and no version, name none (D19).
 fn prefix(url: &str, component: &str, version: Option<&str>) -> Option<String> {
@@ -75,10 +77,15 @@ fn prefix(url: &str, component: &str, version: Option<&str>) -> Option<String> {
     let parsed = Url::parse(url).ok()?;
     let segments: Vec<&str> = parsed.path().split('/').collect();
     let decoded = |s: &str| percent_decode_str(s).decode_utf8_lossy().into_owned();
-    let at = (1..segments.len()).find(|&i| {
-        decoded(segments[i]) == component
-            && named.is_none_or(|v| segments.get(i + 1).is_some_and(|s| decoded(s) == v))
-    })?;
+    let followed = |by: &dyn Fn(&str) -> bool| {
+        (1..segments.len()).find(|&i| {
+            decoded(segments[i]) == component && segments.get(i + 1).is_some_and(|s| by(s))
+        })
+    };
+    let at = match named {
+        None => (1..segments.len()).find(|&i| decoded(segments[i]) == component)?,
+        Some(v) => followed(&|s| decoded(s) == v).or_else(|| followed(&|s| !s.is_empty()))?,
+    };
     let end = at + usize::from(named.is_some());
     Some(format!(
         "{}{}/",

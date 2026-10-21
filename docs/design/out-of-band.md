@@ -31,7 +31,7 @@ grilling, spec amendment and a numbered slice.
 **Ledger lines stay one line each.** The detail lives in the dated history
 entry each line points at.
 
-Allocated so far: M1–M10. <!-- out-of-band-watermark: M10 -->
+Allocated so far: M1–M11. <!-- out-of-band-watermark: M11 -->
 
 ## The ledger
 
@@ -44,3 +44,4 @@ Allocated so far: M1–M10. <!-- out-of-band-watermark: M10 -->
 | M8 | 2026-10-21 | `prune` spares the baseline run a kept run names (closes KD12) | | [`2026-10-21`](../status/history/2026-10-21.md), "M8 landed" |
 | M9 | 2026-10-21 | A Pagure `/edit/<ref>/f/<path>` link parses as Pagure's shape (closes KD15) | | [`2026-10-21`](../status/history/2026-10-21.md), "M9 landed" |
 | M10 | 2026-10-21 | An explicit refspec whose version is served off its own segment is named under the served one, as a versionless one is (D57 rewritten) | | [`2026-10-21`](../status/history/2026-10-21.md), "M4's explicit-version asymmetry reviewed" |
+| M11 | 2026-10-21 | `Held` and the inverse check read the segment a built page sits at, so a renamed latest segment is held (closes KD16; files KD17) | | [`2026-10-21`](../status/history/2026-10-21.md), "M11 landed" |

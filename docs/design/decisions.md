@@ -397,7 +397,7 @@ held, else a request one hop deep. The copies are sent last, `targets` having no
 the build's own. `--externals=skip` means never ask: an allowlisted URL gets the baseline's rows where held (a new link to
 one broken there is introduced), else `unchecked`, reason `externals_skipped`, as does a hop onto one (D50's way); in-scope
 URLs are not reached. Rejected: a pre-scan of the build (D38); `skip` as no verdict, passing that link. Reopens: a prefix
-below the site root, a renamed version segment. Code: `crawl::baseline`. Evidence: `crawl::baseline::tests`.
+below the site root. Code: `crawl::baseline`. Evidence: `crawl::baseline::tests`.
 
 ### D55 An xref waits for the held set, resolves through the baseline's pages, and keeps its refspec
 A built page's tagged link is written once every built page is read (D54's wait). A refspec whose component-version the build holds stays `unresolved_xref`; else the

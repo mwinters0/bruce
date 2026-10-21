@@ -42,32 +42,61 @@ pub(super) struct Held {
 
 #[derive(Debug, Default)]
 struct Versions {
-    /// Versions whose URLs carry a version segment.
+    /// Versions whose URLs carry a version segment, by name, as a refspec
+    /// names them.
     named: HashSet<String>,
+    /// The version segments the built pages of those versions sit at: a
+    /// version's own name, or the one the build serves it under, as a
+    /// `latest_version_segment` serves the latest (I16).
+    served: HashSet<String>,
     /// A version whose URLs carry none: a placeholder, or no version.
     bare: bool,
 }
 
 impl Held {
-    /// Records a built page's component and `version`, as the nav container
-    /// gives them (D19). The placeholders Antora writes for a version its
-    /// URLs omit, `""` and `master`, and a page with no version, are alike.
-    pub(super) fn record(&mut self, component: &str, version: Option<&str>) {
+    /// Records a built page at `page`, below the build's `prefix`, of its
+    /// component and `version` as the nav container gives them (D19). The
+    /// placeholders Antora writes for a version its URLs omit, `""` and
+    /// `master`, and a page with no version, are alike. A named version is
+    /// served at the segment the page sits at, the second below the prefix
+    /// where the first is the component, else at its own name.
+    pub(super) fn record(
+        &mut self,
+        prefix: &Url,
+        page: &Url,
+        component: &str,
+        version: Option<&str>,
+    ) {
         let versions = self.components.entry(component.to_owned()).or_default();
         match version {
             None | Some("" | "master") => versions.bare = true,
             Some(version) => {
                 versions.named.insert(version.to_owned());
+                let segment = page
+                    .path()
+                    .strip_prefix(prefix.path())
+                    .and_then(|below| {
+                        let mut segments = below.split('/').map(decode);
+                        if segments.next()? == component {
+                            segments.next()
+                        } else {
+                            None
+                        }
+                    })
+                    .filter(|s| !s.is_empty());
+                versions
+                    .served
+                    .insert(segment.unwrap_or_else(|| version.to_owned()));
             }
         }
     }
 
     /// Whether `url`, below the build's `prefix`, is in a component-version
-    /// held: its first segment is a held component, and its second is a held
-    /// version of it or the component holds a version whose URLs name none
-    /// (`site-invariants.md`, I16). A URL whose second segment names a
-    /// version the build lacks is the baseline's, unless the component's held
-    /// version is a bare one.
+    /// held: its first segment is a held component, and its second is a
+    /// segment a held version of it is served at, or the component holds a
+    /// version whose URLs name none (`site-invariants.md`, I16). A URL whose
+    /// second segment is no built page's is the baseline's, unless the
+    /// component's held version is a bare one.
     pub(super) fn holds(&self, prefix: &Url, url: &Url) -> bool {
         // `report::inverse::prefix` reads the same layout back from the stored run (D56).
         // deficiency: KD5 A component-version is held whole, so a component
@@ -76,11 +105,17 @@ impl Held {
         // skips their links, live though they are (D56). Telling the pages a
         // change owns from the rest takes a flag naming their globs, which
         // every repo's CI would keep current by hand.
-        // deficiency: KD16 A version is matched by its own name, so where a
-        // build serves its latest under a `latest_version_segment` (I16), a
-        // URL under that segment is not held and a page the change deleted
-        // there gets the baseline's answer. Reading the segment each built
-        // page sits at, as `profile::antora::resolve::newest` does, closes it.
+        // deficiency: KD17 A build serving its latest at its own name (its
+        // playbook sets no `urls.latest_version_segment`, as docs.fp.o's CI
+        // playbooks do not) holds no `latest` segment, so a link written
+        // under production's `latest` (113 absolute hrefs on 112 `fedora`
+        // pages, `runs/p5.2-en-us-20261020/en-us.duckdb`) is the baseline's:
+        // where the change deleted its page it passes on production's `ok`,
+        // and where the change adds it, production lacks it and it fails the
+        // gate as introduced though the build has it. Nothing in the build
+        // says which version `latest` stands for. A config key naming it
+        // would mirror each playbook by hand in the deployment's config
+        // (D27), and a single-repo build may not hold production's latest.
         let Some(below) = url.path().strip_prefix(prefix.path()) else {
             return false;
         };
@@ -88,7 +123,10 @@ impl Held {
         let Some(versions) = segments.next().and_then(|c| self.components.get(&c)) else {
             return false;
         };
-        segments.next().is_some_and(|s| versions.named.contains(&s)) || versions.bare
+        segments
+            .next()
+            .is_some_and(|s| versions.served.contains(&s))
+            || versions.bare
     }
 }
 
@@ -96,8 +134,9 @@ impl Held {
     /// Whether the build holds the component `component` at `version`, as a
     /// refspec names them: a refspec with no version asks for the component's
     /// latest, which the build holds whenever it holds the component, and one
-    /// with a version is held as a URL under that version segment is
-    /// ([`Held::holds`]).
+    /// with a version is held where a built page carries that version, by
+    /// name, whatever segment it is served at, or the component's held
+    /// version is a bare one.
     pub(super) fn holds_coordinates(&self, component: &str, version: Option<&str>) -> bool {
         let Some(versions) = self.components.get(component) else {
             return false;
@@ -147,8 +186,9 @@ fn locked<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
 }
 
 impl Pending {
-    pub(super) fn hold(&self, component: &str, version: Option<&str>) {
-        locked(&self.held).record(component, version);
+    /// Records a built page's component-version ([`Held::record`]).
+    pub(super) fn hold(&self, prefix: &Url, page: &Url, component: &str, version: Option<&str>) {
+        locked(&self.held).record(prefix, page, component, version);
     }
 
     /// The component-versions held so far.

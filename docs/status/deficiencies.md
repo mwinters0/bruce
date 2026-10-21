@@ -65,10 +65,11 @@ roadmap's phase index.
   resolves to the prerelease. **(c) unowned**: such a site checked in CI would
   promote it. Detail: `src/profile/antora/resolve.rs`
 
-- **KD16** — `Held` knows a version only by its own name, so in a build whose
-  latest sits under a renamed segment (`latest_version_segment`), a URL there
-  that the change deleted is the baseline's answer, not `not_built`. **(c)
-  unowned**: a CI build of a component at its renamed segment would promote
-  it. Detail: `src/crawl/baseline.rs`
+- **KD17** — A build serving its latest at its own name holds no `latest`
+  segment, so a link under production's `latest` to a page the change deleted
+  passes on the baseline's `ok`, and one to a page it adds fails as introduced.
+  **(c) unowned**: a content repo's CI linking under `latest`, or a decision on
+  how a run learns the served latest, would promote it.
+  Detail: `src/crawl/baseline.rs`
 
-<!-- deficiency-watermark: KD16 -->
+<!-- deficiency-watermark: KD17 -->

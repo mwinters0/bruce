@@ -309,6 +309,36 @@ fn an_alias_landing_outside_the_held_set_is_its_owners_and_one_landing_inside_is
 }
 
 #[test]
+fn a_build_serving_its_latest_under_another_segment_holds_that_segment() {
+    let store = store();
+    // `named` at 3.0 is served at `latest`: the build has 41, and lacks the
+    // page 40, the image 43 and the page 42, which links to 3.
+    for (id, path, page) in [
+        (40, "named/latest/gone/", true),
+        (41, "named/latest/kept/", true),
+        (42, "named/latest/dead/", true),
+        (43, "named/latest/_images/gone.png", false),
+    ] {
+        put(&store, 1, id, path, "ok", "live", page);
+    }
+    put(&store, 2, 41, "named/latest/kept/", "ok", "local", true);
+    fact(&store, 2, 41, "antora.component", "named");
+    fact(&store, 2, 41, "antora.version", "3.0");
+    link(&store, 1, 1, 40, None, "anchor");
+    link(&store, 1, 1, 43, None, "image");
+    link(&store, 1, 42, 3, None, "anchor");
+    let g = gate_of(&store, |_| {});
+    let raw = column(&g.inverse, "raw_href");
+    assert!(raw.contains(&"1>40#".to_owned()), "{raw:?}");
+    assert!(raw.contains(&"1>43#".to_owned()), "{raw:?}");
+    assert!(
+        !raw.contains(&"42>3#".to_owned()),
+        "a deleted latest page links from inside the build: {raw:?}"
+    );
+    assert_eq!(raw.len(), 9);
+}
+
+#[test]
 fn the_inverse_report_prints_the_rows_and_the_baseline_and_counts_in_notes() {
     let mut request = Request::new(Report::Inverse);
     request.run = Some(RunId(2));
@@ -337,7 +367,22 @@ fn a_prefix_runs_through_the_components_segment_and_a_named_versions() {
         prefix(&named, "handbook", Some("1.0")),
         Some(at("handbook/1.0/"))
     );
-    assert_eq!(prefix(&named, "handbook", Some("2.0")), None);
+    assert_eq!(
+        prefix(&named, "handbook", Some("2.0")),
+        Some(at("handbook/1.0/")),
+        "the segment the page sits at"
+    );
+    assert_eq!(
+        prefix(&at("handbook/latest/p/"), "handbook", Some("3.0")),
+        Some(at("handbook/latest/")),
+        "a version served under another name"
+    );
+    assert_eq!(
+        prefix(&at("handbook/x/handbook/1.0/p/"), "handbook", Some("1.0")),
+        Some(at("handbook/x/handbook/1.0/")),
+        "the version's own name first"
+    );
+    assert_eq!(prefix(&at("handbook/"), "handbook", Some("1.0")), None);
     assert_eq!(prefix(&url, "other", None), None);
     assert_eq!(prefix(&at("a%20b/p/"), "a b", None), Some(at("a%20b/")));
 }

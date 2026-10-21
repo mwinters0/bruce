@@ -23,12 +23,16 @@ fn url(s: &str) -> Url {
 fn a_url_is_held_when_its_component_and_version_are() {
     let prefix = url("https://x.org/en-US/");
     let mut held = Held::default();
-    held.record("tools", Some(""));
-    held.record("ops", Some("master"));
-    held.record("arm-sbc", None);
-    held.record("guide", Some("1.0"));
-    held.record("guide", Some("2.0"));
-    held.record("old", Some("1.0"));
+    let mut record = |at: &str, component, version| {
+        let page = url(&format!("https://x.org/en-US/{at}"));
+        held.record(&prefix, &page, component, version);
+    };
+    record("tools/", "tools", Some(""));
+    record("ops/admin/", "ops", Some("master"));
+    record("arm-sbc/", "arm-sbc", None);
+    record("guide/1.0/install/", "guide", Some("1.0"));
+    record("guide/2.0/", "guide", Some("2.0"));
+    record("old/1.0/", "old", Some("1.0"));
     let holds = |at: &str| held.holds(&prefix, &url(&format!("https://x.org/en-US/{at}")));
     assert!(holds("tools/usage/"), "a bare version names no segment");
     assert!(holds("ops/admin/partitions/"));
@@ -58,8 +62,46 @@ fn a_url_is_held_when_its_component_and_version_are() {
 fn a_component_name_is_compared_decoded() {
     let prefix = url("https://x.org/");
     let mut held = Held::default();
-    held.record("a b", None);
+    held.record(&prefix, &url("https://x.org/a%20b/"), "a b", None);
     assert!(held.holds(&prefix, &url("https://x.org/a%20b/page/")));
+}
+
+#[test]
+fn a_version_is_held_at_the_segment_its_pages_sit_at_and_named_by_its_own_name() {
+    let prefix = url("https://x.org/en-US/");
+    let mut held = Held::default();
+    let mut record = |at: &str, component, version| {
+        let page = url(&format!("https://x.org/en-US/{at}"));
+        held.record(&prefix, &page, component, version);
+    };
+    // The latest served at `latest`, as a `latest_version_segment` serves it.
+    record("fedora/latest/install/", "fedora", Some("f44"));
+    record("fedora/f43/", "fedora", Some("f43"));
+    record("fedora%20x/v%201/", "fedora x", Some("v 1"));
+    // A page off the layout is held at its version's own name.
+    record("elsewhere/p/", "odd", Some("1.0"));
+    let holds = |at: &str| held.holds(&prefix, &url(&format!("https://x.org/en-US/{at}")));
+    assert!(holds("fedora/latest/gone/"), "a page the change deleted");
+    assert!(holds("fedora/f43/gone/"));
+    assert!(
+        holds("fedora%20x/v%201/p/"),
+        "a segment is compared decoded"
+    );
+    assert!(
+        !holds("fedora/f44/gone/"),
+        "no built page sits at the latest's own name"
+    );
+    assert!(!holds("fedora/rawhide/"));
+    assert!(holds("odd/1.0/p/"));
+    assert!(!holds("odd/p/"));
+    assert!(
+        held.holds_coordinates("fedora", Some("f44")),
+        "a refspec names f44"
+    );
+    assert!(
+        !held.holds_coordinates("fedora", Some("latest")),
+        "a segment is no version"
+    );
 }
 
 fn registry() -> Registry {
@@ -458,6 +500,47 @@ async fn a_build_holding_no_component_version_trusts_the_baseline_and_asks_for_w
             t("/docs/gone/", "broken_url", None, "live"),
         ]
     );
+}
+
+/// A build serving its latest at `latest` holds what sits under it, and
+/// nothing under another version's segment.
+#[tokio::test]
+async fn a_page_the_change_deleted_under_a_renamed_latest_segment_is_not_built() {
+    let production = MockServer::start().await;
+    let base = production.uri();
+    let config = format!("[[root]]\nurl = \"{base}/docs/\"\n");
+    let prefix = format!("{base}/docs/");
+    let tmp = tempfile::tempdir().unwrap();
+    let files = [(
+        "fedora/latest/index.html",
+        page(
+            "fedora",
+            "f44",
+            r#"<a href="gone/">g</a> <a href="../f43/gone/">o</a>"#,
+        ),
+    )];
+    let (local, seeds) = build(tmp.path(), &prefix, &files);
+    let none = Baseline {
+        run: RunId(0),
+        index: BaselineIndex::default(),
+        externals: Externals::Baseline,
+    };
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let done = check(store, &config, local, &seeds, none).await;
+    assert_eq!(
+        done.targets(done.run, &base),
+        [
+            t("/docs/fedora/f43/gone/", "broken_url", None, "live"),
+            t("/docs/fedora/latest/", "ok", None, "local"),
+            t(
+                "/docs/fedora/latest/gone/",
+                "broken_url",
+                Some("not_built"),
+                "local"
+            ),
+        ]
+    );
+    assert_eq!(asked(&production).await, 1, "the version the build lacks");
 }
 
 #[tokio::test]
