@@ -48,6 +48,10 @@ fit the same way. What existing tools don't provide:
 - **External links** checked only for allowlisted hosts (D3).
 - **Fast**, with configurable politeness (D8, D18).
 
+**CI and manual use are equals**: the gate run unattended in a content repo's
+CI, and every command run by hand, each serve their purpose fully; neither is
+the other's afterthought.
+
 The decisions are in [`decisions.md`](decisions.md), and the external facts
 they rest on are in [`site-invariants.md`](site-invariants.md). The bootstrap
 plan is frozen as [`historical/initial.md`](historical/initial.md).
