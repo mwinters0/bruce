@@ -76,8 +76,8 @@ fn parse(reference: &str) -> Option<Refspec<'_>> {
 
 /// The URL `reference` resolves to in the pages `lookup` knows, fragment
 /// included. Without a version the latest of the component's pages with that
-/// module and path is taken, as Antora takes its catalog's; where none has
-/// them, the URL the refspec names ([`named`]).
+/// module and path is taken ([`newest`]); where none has them, the URL the
+/// refspec names ([`named`]).
 pub(super) fn resolve(reference: &str, lookup: &dyn Lookup) -> Result<Option<Url>, BoxError> {
     let Some(spec) = parse(reference) else {
         return Ok(None);
@@ -93,7 +93,7 @@ pub(super) fn resolve(reference: &str, lookup: &dyn Lookup) -> Result<Option<Url
     let page = match (spec.version, candidates.as_slice()) {
         (_, []) => named(&spec, &held, lookup)?,
         (Some(_), [page, ..]) | (None, [page]) => Some(page.clone()),
-        (None, _) => Some(latest(candidates, lookup)?),
+        (None, _) => Some(latest(candidates, spec.component, lookup)?),
     };
     Ok(page.map(|mut page| {
         page.set_fragment(spec.fragment);
@@ -107,17 +107,23 @@ pub(super) fn resolve(reference: &str, lookup: &dyn Lookup) -> Result<Option<Url
 /// without `.adoc`, an `index` dropped. `None` where the baseline holds no
 /// page of the component-version carrying a version fact, or the newest it
 /// holds is not under its version's own segment (the latest at a
-/// `latest_version_segment`, I16).
+/// `latest_version_segment`, I16); except for a versionless refspec, whose
+/// latest so served is named under that segment (D55).
 fn named(
     spec: &Refspec<'_>,
     held: &[(&str, &str)],
     lookup: &dyn Lookup,
 ) -> Result<Option<Url>, BoxError> {
     let candidates = lookup.pages_with_facts(held)?;
-    let Some((page, version)) = newest(candidates, lookup, true)? else {
+    let Some(found) = newest(candidates, spec.component, lookup, true)? else {
         return Ok(None);
     };
-    let Some(mut url) = prefix(&page, spec.component, &version) else {
+    let Some(mut url) = prefix(
+        &found.page,
+        spec.component,
+        &found.version,
+        found.elsewhere && spec.version.is_none(),
+    ) else {
         return Ok(None);
     };
     let (dir, file) = spec
@@ -143,14 +149,12 @@ fn named(
 /// The URL of `page`, a page of `component` at `version`, cut after the
 /// component's segment and a named version's (I16); the placeholders
 /// Antora writes for a version its URLs omit, `""` and `master`, name none.
-fn prefix(page: &Url, component: &str, version: &str) -> Option<Url> {
+/// With `elsewhere` (see [`Found`]) the segment after the component's is cut
+/// whatever it is, the version being served under another name (I5).
+fn prefix(page: &Url, component: &str, version: &str, elsewhere: bool) -> Option<Url> {
     let named = !matches!(version, "" | "master");
     let raw: Vec<&str> = page.path_segments()?.collect();
-    let decoded = |s: &str| percent_decode_str(s).decode_utf8_lossy().into_owned();
-    let at = (0..raw.len()).find(|&i| {
-        decoded(raw[i]) == component
-            && (!named || raw.get(i + 1).is_some_and(|s| decoded(s) == version))
-    })?;
+    let at = segment_after_component(&raw, component, (!elsewhere && named).then_some(version))?;
     let mut url = page.clone();
     url.set_query(None);
     url.set_fragment(None);
@@ -158,22 +162,48 @@ fn prefix(page: &Url, component: &str, version: &str) -> Option<Url> {
     Some(url)
 }
 
-/// The page of `candidates` whose version Antora orders first (a version it
-/// would call the component's latest), the lookup's first where two tie.
-fn latest(candidates: Vec<Url>, lookup: &dyn Lookup) -> Result<Url, BoxError> {
-    Ok(newest(candidates, lookup, false)?
+/// The index of the first segment of `raw` that is `component` and, given
+/// `version`, followed by it; decoded, as Antora writes them escaped.
+fn segment_after_component(raw: &[&str], component: &str, version: Option<&str>) -> Option<usize> {
+    let decoded = |s: &str| percent_decode_str(s).decode_utf8_lossy().into_owned();
+    (0..raw.len()).find(|&i| {
+        decoded(raw[i]) == component
+            && match version {
+                Some(version) => raw.get(i + 1).is_some_and(|s| decoded(s) == version),
+                None => raw.get(i + 1).is_some_and(|s| !s.is_empty()),
+            }
+    })
+}
+
+/// A page of a component with the version it carries.
+struct Found {
+    page: Url,
+    version: String,
+    /// The page sits under the component but not under its version's own
+    /// segment: the version is served under another name, as docs.fp.o
+    /// serves its latest at `latest` (I5, I16).
+    elsewhere: bool,
+}
+
+/// The page of `candidates`, pages of `component`, whose version is its
+/// latest: the one version served off its own segment, since a site serves
+/// only its latest so (I5); with none or several, the version Antora orders
+/// first (I20), the lookup's first where two tie.
+fn latest(candidates: Vec<Url>, component: &str, lookup: &dyn Lookup) -> Result<Url, BoxError> {
+    Ok(newest(candidates, component, lookup, false)?
         .expect("at least two candidates")
-        .0)
+        .page)
 }
 
 /// [`latest`] with its version, `None` for no candidate; a page with no
 /// version fact is passed over when `versioned`, else a bare one.
 fn newest(
     candidates: Vec<Url>,
+    component: &str,
     lookup: &dyn Lookup,
     versioned: bool,
-) -> Result<Option<(Url, String)>, BoxError> {
-    let mut best: Option<(String, Url)> = None;
+) -> Result<Option<Found>, BoxError> {
+    let mut all: Vec<Found> = Vec::new();
     for page in candidates {
         let facts = lookup.facts(&page)?;
         let version = facts
@@ -184,31 +214,50 @@ fn newest(
             continue;
         }
         let version = version.unwrap_or_default();
-        let newer = best
+        let elsewhere = !matches!(version.as_str(), "" | "master") && {
+            let raw: Vec<&str> = page.path_segments().into_iter().flatten().collect();
+            segment_after_component(&raw, component, Some(&version)).is_none()
+                && segment_after_component(&raw, component, None).is_some()
+        };
+        all.push(Found {
+            page,
+            version,
+            elsewhere,
+        });
+    }
+    let mut served = all.iter().filter(|f| f.elsewhere);
+    let only = served
+        .next()
+        .filter(|first| served.all(|f| f.version == first.version))
+        .map(|first| first.version.clone());
+    if let Some(only) = only {
+        return Ok(all.into_iter().find(|f| f.elsewhere && f.version == only));
+    }
+    let mut best: Option<Found> = None;
+    for found in all {
+        if best
             .as_ref()
-            .is_none_or(|(held, _)| compare(&version, held).is_gt());
-        if newer {
-            best = Some((version, page));
+            .is_none_or(|held| compare(&found.version, &held.version).is_gt())
+        {
+            best = Some(found);
         }
     }
-    Ok(best.map(|(version, page)| (page, version)))
+    Ok(best)
 }
 
-/// Antora's version order, `Greater` for the version it lists first: no
+/// Antora's version order, `Greater` for the version it lists first (I20): no
 /// version (a bare one) before any, then a name that is no semantic version
-/// in reverse alphabetical order, then semantic versions newest first. A
-/// prerelease is not told apart from a release by its descriptor, which the
-/// baseline does not hold: only a `-` suffix is lower than its release.
+/// in reverse alphabetical order ([`collate`]), then semantic versions newest
+/// first. A prerelease is not told apart from a release by its descriptor,
+/// which the baseline does not hold: only a `-` suffix is lower than its
+/// release.
 fn compare(a: &str, b: &str) -> std::cmp::Ordering {
     // deficiency: KD14 Antora's latest is the first version not flagged
-    // `prerelease` in its `antora.yml` (I20), which no page carries, so this
-    // takes docs.fp.o's `rawhide` over `f44`: a versionless `fedora::x.adoc`
-    // xref out of a partial build resolves to `fedora/rawhide/x/` where
-    // Antora's is `fedora/latest/x/`. Names compare bytewise where Antora
-    // compares them numerically and case-folded (`f9` above `f10`), and a
-    // non-numeric semantic part ties with 0 where Antora sorts it low. The
-    // baseline recording which version a component serves at `latest` (I5)
-    // would close the first.
+    // `prerelease` in its `antora.yml` (I20), which no page carries. This
+    // takes the one version served off its own segment (I5), and with none
+    // or several this order, so a site serving its latest at its own name
+    // beside a prerelease (`2.0` and `3.0-beta`) resolves a versionless xref
+    // to the prerelease where Antora's is the release.
     use std::cmp::Ordering;
     match (a.is_empty(), b.is_empty()) {
         (true, true) => return Ordering::Equal,
@@ -217,17 +266,68 @@ fn compare(a: &str, b: &str) -> std::cmp::Ordering {
         _ => {}
     }
     match (semver(a), semver(b)) {
-        (Some(a), Some(b)) => a.cmp(&b),
+        (Some(a), Some(b)) => a
+            .numbers
+            .cmp(&b.numbers)
+            .then(a.release.cmp(&b.release))
+            .then_with(|| collate(a.pre, b.pre)),
         (Some(_), None) => Ordering::Less,
         (None, Some(_)) => Ordering::Greater,
-        (None, None) => a.cmp(b),
+        (None, None) => collate(a, b),
     }
 }
 
-/// `(major, minor, patch, is a release, prerelease)` of a version that begins
-/// with a number (or `v` and a number) and has a `.` or is one number, which
-/// is what Antora calls semantic.
-fn semver(version: &str) -> Option<([u64; 3], bool, &str)> {
+/// `localeCompare(…, 'en', {numeric: true})` as far as version names need it:
+/// digit runs by value, the rest case-folded, and a lowercase letter before
+/// its capital where nothing else differs.
+fn collate(a: &str, b: &str) -> std::cmp::Ordering {
+    let mut chunks = (chunks(a), chunks(b));
+    loop {
+        match (chunks.0.next(), chunks.1.next()) {
+            (None, None) => return b.cmp(a),
+            (None, Some(_)) => return std::cmp::Ordering::Less,
+            (Some(_), None) => return std::cmp::Ordering::Greater,
+            (Some(x), Some(y)) => {
+                let digits = |s: &str| s.starts_with(|c: char| c.is_ascii_digit());
+                let order = if digits(x) && digits(y) {
+                    let (x, y) = (x.trim_start_matches('0'), y.trim_start_matches('0'));
+                    x.len().cmp(&y.len()).then_with(|| x.cmp(y))
+                } else {
+                    x.to_lowercase().cmp(&y.to_lowercase())
+                };
+                if order.is_ne() {
+                    return order;
+                }
+            }
+        }
+    }
+}
+
+/// `s` cut into runs of ASCII digits and runs of anything else.
+fn chunks(s: &str) -> impl Iterator<Item = &str> {
+    let mut rest = s;
+    std::iter::from_fn(move || {
+        let digit = rest.chars().next()?.is_ascii_digit();
+        let end = rest
+            .find(|c: char| c.is_ascii_digit() != digit)
+            .unwrap_or(rest.len());
+        let (chunk, tail) = rest.split_at(end);
+        rest = tail;
+        Some(chunk)
+    })
+}
+
+/// A version that begins with a number (or `v` and a number) and has a `.` or
+/// is one number, which is what Antora calls semantic.
+struct Semver<'a> {
+    /// The three parts, a part that is no number lower than any (`None`).
+    numbers: [Option<u64>; 3],
+    /// No `-` suffix.
+    release: bool,
+    pre: &'a str,
+}
+
+fn semver(version: &str) -> Option<Semver<'_>> {
     let rest = version.strip_prefix('v').unwrap_or(version);
     if !rest.starts_with(|c: char| c.is_ascii_digit()) {
         return None;
@@ -236,9 +336,13 @@ fn semver(version: &str) -> Option<([u64; 3], bool, &str)> {
         return None;
     }
     let (numbers, pre) = rest.split_once('-').unwrap_or((rest, ""));
-    let mut parts = numbers.split('.').map(|n| n.parse::<u64>().unwrap_or(0));
-    let mut next = || parts.next().unwrap_or(0);
-    Some(([next(), next(), next()], pre.is_empty(), pre))
+    let mut parts = numbers.split('.');
+    let mut next = || parts.next().map_or(Some(0), |n| n.parse::<u64>().ok());
+    Some(Semver {
+        numbers: [next(), next(), next()],
+        release: pre.is_empty(),
+        pre,
+    })
 }
 
 #[cfg(test)]

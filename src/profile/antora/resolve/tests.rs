@@ -255,6 +255,95 @@ fn no_version_is_the_latest_the_baseline_holds() {
     );
 }
 
+/// A fedora whose latest, `f44`, is served at `latest`, beside a prerelease
+/// at its own name and older versions.
+fn fedora() -> Pages {
+    let page = |segment, version| {
+        (
+            format!("https://x.org/fedora/{segment}/release-notes/"),
+            "fedora",
+            Some(version),
+            "release-notes",
+            "index.adoc",
+        )
+    };
+    let rows = [
+        page("rawhide", "rawhide"),
+        page("latest", "f44"),
+        page("f43", "f43"),
+        page("f9", "f9"),
+        page("f10", "f10"),
+    ];
+    Pages::new(
+        &rows
+            .iter()
+            .map(|(u, c, v, m, p)| (u.as_str(), *c, *v, *m, *p))
+            .collect::<Vec<_>>(),
+    )
+}
+
+#[test]
+fn no_version_is_the_one_served_off_its_own_segment() {
+    let pages = fedora();
+    assert_eq!(
+        resolved("fedora:release-notes:index.adoc#x", &pages).as_deref(),
+        Some("https://x.org/fedora/latest/release-notes/#x"),
+        "not rawhide, which Antora orders first"
+    );
+    assert_eq!(
+        resolved("f43@fedora:release-notes:index.adoc", &pages).as_deref(),
+        Some("https://x.org/fedora/f43/release-notes/")
+    );
+}
+
+#[test]
+fn a_page_the_baseline_lacks_is_named_under_the_latest_segment() {
+    let pages = fedora();
+    assert_eq!(
+        resolved("fedora:release-notes:missing.adoc", &pages).as_deref(),
+        Some("https://x.org/fedora/latest/release-notes/missing/")
+    );
+    assert_eq!(
+        resolved("f43@fedora:release-notes:missing.adoc", &pages).as_deref(),
+        Some("https://x.org/fedora/f43/release-notes/missing/")
+    );
+}
+
+/// Adds `install.adoc` of `guide` at `version`, served at `at`.
+fn serve(pages: &mut Pages, at: &str, version: &str) {
+    pages.pages.push((
+        url(&format!("https://x.org/guide/{at}/install/")),
+        vec![
+            (COMPONENT.to_owned(), "guide".to_owned()),
+            (VERSION.to_owned(), version.to_owned()),
+            (MODULE.to_owned(), "ROOT".to_owned()),
+            (REL_PATH.to_owned(), "install.adoc".to_owned()),
+        ],
+    ));
+}
+
+#[test]
+fn with_none_or_several_served_off_their_segment_antora_orders_them() {
+    let mut pages = site();
+    serve(&mut pages, "3.0-beta", "3.0-beta");
+    assert_eq!(
+        resolved("guide::install.adoc", &pages).as_deref(),
+        Some("https://x.org/guide/3.0-beta/install/"),
+        "none off its segment: the prerelease is no page's fact (KD14)"
+    );
+    serve(&mut pages, "latest", "2.5");
+    assert_eq!(
+        resolved("guide::install.adoc", &pages).as_deref(),
+        Some("https://x.org/guide/latest/install/")
+    );
+    serve(&mut pages, "stable", "2.6");
+    assert_eq!(
+        resolved("guide::install.adoc", &pages).as_deref(),
+        Some("https://x.org/guide/3.0-beta/install/"),
+        "two versions served elsewhere name no latest"
+    );
+}
+
 #[test]
 fn a_refspec_into_a_component_version_the_build_holds_stays_unresolved() {
     let mut pages = site();
@@ -291,4 +380,22 @@ fn versions_order_as_antora_lists_them() {
     assert_eq!(compare("1.0", "1.0.0"), Ordering::Equal);
     assert_eq!(compare("1.0-beta", "1.0"), Ordering::Less);
     assert_eq!(compare("", ""), Ordering::Equal);
+}
+
+#[test]
+fn names_order_numerically_and_case_folded() {
+    assert_eq!(compare("f10", "f9"), Ordering::Greater);
+    assert_eq!(compare("F10", "f9"), Ordering::Greater);
+    assert_eq!(compare("rawhide", "f44"), Ordering::Greater);
+    assert_eq!(compare("Rawhide", "f44"), Ordering::Greater);
+    assert_eq!(compare("f1a", "f1"), Ordering::Greater);
+    assert_eq!(compare("a", "A"), Ordering::Less, "lowercase first, as ICU");
+}
+
+#[test]
+fn a_part_of_a_semantic_version_that_is_no_number_sorts_low() {
+    assert_eq!(compare("1.x", "1.0"), Ordering::Less);
+    assert_eq!(compare("1.x", "1.x"), Ordering::Equal);
+    assert_eq!(compare("1.0-rc.10", "1.0-rc.9"), Ordering::Greater);
+    assert_eq!(compare("1.0-beta", "1.0-alpha"), Ordering::Greater);
 }

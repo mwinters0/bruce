@@ -74,11 +74,11 @@ roadmap's phase index.
   reads the imported baseline as the latest run. **(c) unowned**: out-of-band
   items M5 and M6 close it. Detail: `src/cli/check_dir.rs`
 
-- **KD14** — Resolve takes a component's prerelease for its latest version, so a
-  versionless xref into docs.fp.o's `fedora` out of a partial build resolves to
-  `rawhide` where Antora's is `latest`. **(c) unowned**: out-of-band item M4
-  closes it but for a site serving its latest at its own name. Detail:
-  `src/profile/antora/resolve.rs`
+- **KD14** — Where no version sits off its own segment, Resolve takes a
+  component's prerelease for its latest, so a versionless xref into a site
+  serving its latest at its own name beside a prerelease (`2.0`, `3.0-beta`)
+  resolves to the prerelease. **(c) unowned**: such a site checked in CI would
+  promote it. Detail: `src/profile/antora/resolve.rs`
 
 - **KD15** — A Pagure edit link (`/edit/<ref>/f/<path>`) parses as GitHub's
   shape, giving the path `f/<path>`. **(c) unowned**: a site whose sources are

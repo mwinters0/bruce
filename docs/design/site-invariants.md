@@ -57,7 +57,7 @@ not as an error.
 - **Proof.** Observed behaviour, plus `docs-fp-o/build-scripts/rebuild-site.py` (upstream source).
 - **Scope limit.** The number moves at each Fedora release.
 - **Verified against.** docs.fp.o, 2026-10-17 (latest = f44).
-- **Relied on by.** D7, D10.
+- **Relied on by.** D7, D10, D55 (`profile::antora::resolve::newest`).
 - **Re-verify.** `curl -sI https://docs.fedoraproject.org/en-US/fedora/f44/ | grep -iE '^(HTTP|location)'`
 
 ### I6 Antora renders an xref it cannot resolve as `href="#<raw refspec>" class="xref unresolved"`
@@ -273,7 +273,7 @@ not as an error.
   `docs/release-docs-home`'s `antora.yml`.
 - **Scope limit.** Antora 3.1.15. Prerelease is a descriptor flag no page carries.
 - **Verified against.** Antora 3.1.15 and docs.fp.o, 2026-10-21.
-- **Relied on by.** D19, D55 (`profile::antora::resolve::compare`).
+- **Relied on by.** D19, D55 (`profile::antora::resolve::compare`, `collate`), KD14.
 - **Re-verify.** `sed -n '22,31p' runs/e2e/antora/node_modules/@antora/content-classifier/lib/util/version-compare-desc.js; sed -n '101,105p' runs/e2e/antora/node_modules/@antora/content-classifier/lib/content-catalog.js; curl -s https://forge.fedoraproject.org/docs/release-docs-home/raw/branch/main/antora.yml | grep -E '^(version|prerelease)'`
 
 ### I21 Antora's resource ID is `version@component:module:family$relative`, defaulted from the referring page

@@ -383,13 +383,13 @@ URLs are not reached. Rejected: a pre-scan of the build (D38); `skip` as no verd
 below the site root, a renamed version segment. Code: `crawl::baseline`. Evidence: `crawl::baseline::tests`.
 
 ### D55 An xref waits for the held set, resolves through the baseline's pages, and keeps its refspec
-A built page's tagged link is written once every built page is read (D54's wait). A refspec whose component-version the
-build holds stays `unresolved_xref`; else the profile's Resolve maps it through the baseline's pages, loaded before the run
-as its targets are (D52), and the link points at that page with the refspec's fragment, `xref_refspec` kept, so
-`link_verdicts` reads a refspec as unresolved where the link is to its own page or its fragment is the refspec (I6). No
-version: the latest the baseline holds, in Antora's order (I20). Where no page has the coordinates: D57. Rejected: a column or a cleared refspec marking a resolved link
-(a schema 5 refusing every baseline already published, D43). Reopens: Antora marking an unresolved xref other than as `#<refspec>` (I6). Code:
-`crawl::xref`, `profile::antora::resolve`. Evidence: `crawl::baseline::tests::an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline`.
+A built page's tagged link is written once every built page is read (D54's wait). A refspec whose component-version the build holds stays `unresolved_xref`; else the
+profile's Resolve maps it through the baseline's pages, loaded before the run as its targets are (D52), and the link points at that page with the refspec's fragment,
+`xref_refspec` kept, so `link_verdicts` reads a refspec as unresolved where the link is to its own page or its fragment is the refspec (I6). No version: the one whose pages
+sit off their own segment (I5), named under it where no page is found (D57); none or several, Antora's order (I20). Rejected: a column or cleared refspec marking a resolved
+link (schema 5 refusing every published baseline, D43); a config key of prerelease versions; `rawhide` by name (D32). Reopens: Antora marking an unresolved xref other than
+as `#<refspec>` (I6). Code: `crawl::xref`, `profile::antora::resolve`. Evidence:
+`crawl::baseline::tests::an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline`, `profile::antora::resolve::tests`.
 
 ### D56 The inverse check reads the held component-versions back from the CI run, and counts the links of pages outside them
 A built page's `antora.*` facts and URL give the held prefixes (I16), so `report inverse --run` works from the DB alone. The
