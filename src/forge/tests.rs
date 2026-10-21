@@ -60,6 +60,11 @@ fn github_and_pagure_shapes() {
         shape("https://pagure.io/fedora-docs", "master", "docs/a.adoc"),
         "Pagure's f/ is not part of the path"
     );
+    assert_eq!(
+        parsed("https://pagure.io/fedora-docs/edit/master/f/docs/a.adoc"),
+        shape("https://pagure.io/fedora-docs", "master", "docs/a.adoc"),
+        "Pagure's edit page has the same f/"
+    );
 }
 
 #[test]

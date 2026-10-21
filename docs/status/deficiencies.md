@@ -65,10 +65,6 @@ roadmap's phase index.
   resolves to the prerelease. **(c) unowned**: such a site checked in CI would
   promote it. Detail: `src/profile/antora/resolve.rs`
 
-- **KD15** — A Pagure edit link (`/edit/<ref>/f/<path>`) parses as GitHub's
-  shape, giving the path `f/<path>`. **(c) unowned**: a site whose sources are
-  on a live Pagure would promote it. Detail: `src/forge.rs`
-
 - **KD16** — `Held` knows a version only by its own name, so in a build whose
   latest sits under a renamed segment (`latest_version_segment`), a URL there
   that the change deleted is the baseline's answer, not `not_built`. **(c)

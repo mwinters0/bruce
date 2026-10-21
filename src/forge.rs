@@ -7,11 +7,11 @@
 //! |---|---|
 //! | Forgejo, Gitea | `/src/branch\|tag\|commit/<ref>/<path>` |
 //! | GitLab | `/-/blob\|edit/<ref>/<path>` |
-//! | Pagure | `/blob/<ref>/f/<path>` |
+//! | Pagure | `/blob\|edit/<ref>/f/<path>` |
 //! | GitHub | `/blob\|edit/<ref>/<path>` |
 //!
 //! The leftmost marker past the first segment that leaves a ref and a file
-//! path decides. Pagure's is tried before GitHub's, whose `/blob/<ref>/f/…`
+//! path decides. Pagure's is tried before GitHub's, whose `/blob\|edit/<ref>/f/…`
 //! it shadows. Query and fragment are dropped, and the path is kept as the
 //! URL spells it, percent-encoding included.
 
@@ -58,11 +58,7 @@ pub fn parse(url: &Url) -> Option<Source> {
         let rest = &segments[at..];
         let (marker, pagure) = match rest {
             ["src", "branch" | "tag" | "commit", ..] | ["-", "blob" | "edit", ..] => (2, false),
-            // deficiency: KD15 Pagure's edit page is `/edit/<ref>/f/<path>` as its
-            // file is `/blob/<ref>/f/<path>` (I23), and only `blob` is told apart
-            // from GitHub's shape, so a Pagure edit link parses to the path
-            // `f/<path>`. Matching `edit` here too closes it.
-            ["blob", _, "f", ..] => (1, true),
+            ["blob" | "edit", _, "f", ..] => (1, true),
             ["blob" | "edit", ..] => (1, false),
             _ => continue,
         };
