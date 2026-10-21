@@ -35,14 +35,15 @@ pages, chosen and saved by `scripts/fixtures.py`, and `fixtures/antora/`, a
 three-component Antora site, the Fedora UI bundle and seven built pages, which
 `mise run e2e` rebuilds and then crawls, exports and runs `check-dir` over, asserting
 the gate's exit status and sections.
+The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` by `scripts/notices.py`, whose unit tests fail when it is out of date.
 
 ## P6 progress
 
 The spec is [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md).
 
-- [ ] **6.1** License and notices: `MIT OR Apache-2.0`, both texts and
+- [x] **6.1** License and notices: `MIT OR Apache-2.0`, both texts and
   `Cargo.toml`'s `license`, and the third-party notices file generated from
-  `Cargo.lock`.
+  `Cargo.lock`. Notes: [`../wip/roadmap-P6.1-license-notes.md`](../wip/roadmap-P6.1-license-notes.md).
 - [ ] **6.2** The release workflow: a `debian:trixie` build on a `v*` tag, the
   archive of binary, notices and licenses with its sha256, `gh release` draft,
   upload and publish; the no-third-party-actions standing rule and its check;
@@ -63,3 +64,13 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **The copyright holder is `Michael Winters`, 2026, in `LICENSE-MIT`.** The
+  spec settled `MIT OR Apache-2.0` and named no holder; this is the git
+  author's name. Reconsidering changes one line in `LICENSE-MIT`.
+- **The notices name DuckDB's bundled C++ libraries and do not reproduce their
+  texts.** The crate ships none (`libduckdb-sys`'s `duckdb.tar.gz` has no
+  `LICENSE` under `third_party/`), and writing them from memory was refused.
+  Reconsidering means vendoring each library's text from DuckDB's repository
+  at the pinned version, into `scripts/` or a data directory the generator
+  reads, before `v0.1.0`.

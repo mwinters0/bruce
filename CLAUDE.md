@@ -19,6 +19,7 @@ cd scripts && uv run deficiencies.py     # KD index vs code markers, vs STATUS c
 cd scripts && uv run upstream.py         # UF register vs `upstream: UF<k>` markers
 cd scripts && uv run seam_register.py    # S register vs `seam: S<k>` markers
 cd scripts && uv run repoint.py          # the record's caps, and its growth since the last blind read
+cd scripts && uv run notices.py          # THIRD-PARTY-NOTICES.txt regenerated from Cargo.lock
 cd scripts && uv run file_limits.py      # every .rs against the size limits (`docs/process.md`, "Seams")
 cd scripts && uv run module_graph.py     # every module edge one-way, read off rust-analyzer
 cd scripts && uv run concepts.py         # every production .rs claimed by one concept in docs/design/concepts.md
