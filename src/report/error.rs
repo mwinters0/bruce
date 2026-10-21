@@ -15,6 +15,12 @@ pub enum Error {
     /// An `introduced` or `inverse` report over a run that names no baseline,
     /// which only a `check-dir` run does.
     NoBaseline(RunId),
+    /// No `--run`, and the latest finished run is the baseline of a later run
+    /// that never finished: a stopped `check-dir` (D59).
+    BaselineOfLater {
+        run: RunId,
+        later: RunId,
+    },
 }
 
 impl fmt::Display for Error {
@@ -34,6 +40,12 @@ impl fmt::Display for Error {
                 f,
                 "run {} was not checked against a baseline; name a `check-dir` run with --run",
                 run.0
+            ),
+            Error::BaselineOfLater { run, later } => write!(
+                f,
+                "run {} is the baseline run {} was checked against, and run {} never finished; \
+                 name a run with --run",
+                run.0, later.0, later.0
             ),
         }
     }

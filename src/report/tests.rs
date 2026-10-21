@@ -295,6 +295,46 @@ fn the_latest_finished_run_is_read_unless_a_run_is_named() {
 }
 
 #[test]
+fn a_later_unfinished_run_is_named_beside_the_default_and_not_beside_a_named_run() {
+    let store = store();
+    let out = report(&store, |_| {});
+    assert_eq!((out.run, out.later_unfinished), (RunId(1), Some(RunId(2))));
+    let out = report(&store, |r| r.run = Some(RunId(1)));
+    assert_eq!(out.later_unfinished, None);
+}
+
+#[test]
+fn the_default_refuses_the_baseline_of_a_later_unfinished_run() {
+    let store = store();
+    store
+        .connection()
+        .execute("UPDATE runs SET baseline_run = 1 WHERE run_id = 2", [])
+        .unwrap();
+    let err = run(&store, &Request::new(Report::Broken)).unwrap_err();
+    assert!(matches!(
+        err,
+        Error::BaselineOfLater {
+            run: RunId(1),
+            later: RunId(2)
+        }
+    ));
+    let text = err.to_string();
+    assert!(text.contains("run 1") && text.contains("run 2") && text.contains("--run"));
+    let mut gate = Request::new(Report::Introduced);
+    assert!(matches!(
+        super::gate(&store, &gate),
+        Err(Error::BaselineOfLater { .. })
+    ));
+    gate.run = Some(RunId(2));
+    assert!(super::gate(&store, &gate).is_ok());
+    assert_eq!(
+        report(&store, |r| r.run = Some(RunId(1))).run,
+        RunId(1),
+        "a named run is read whatever names it"
+    );
+}
+
+#[test]
 fn with_no_finished_run_a_report_says_so() {
     let store = Store::open_in_memory(&Registry::new(Box::new(Generic))).unwrap();
     store.install(VIEWS).unwrap();

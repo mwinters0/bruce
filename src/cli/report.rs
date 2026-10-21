@@ -231,6 +231,12 @@ fn report(args: &Args, registry: &Registry) -> Result<(), String> {
     let in_db = |e: &dyn std::fmt::Display| format!("{}: {e}", db.display());
     let store = db::open(db, registry).map_err(|e| in_db(&e))?;
     let output = report::run(&store, &args.request).map_err(|e| in_db(&e))?;
+    if let Some(later) = output.later_unfinished {
+        eprintln!(
+            "bruce report: run {} stopped before the end; reporting run {}",
+            later.0, output.run.0
+        );
+    }
     let runs = output
         .from
         .into_iter()

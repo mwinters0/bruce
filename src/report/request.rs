@@ -133,6 +133,9 @@ pub struct Output {
     pub run: RunId,
     /// The run never finished, so the report is incomplete.
     pub unfinished: bool,
+    /// Where no run was named, the latest run after the one read that never
+    /// finished, which a report of the latest finished run does not see.
+    pub later_unfinished: Option<RunId>,
     /// `diff` only: the run compared against, and whether it never finished.
     pub from: Option<(RunId, bool)>,
     pub table: Table,

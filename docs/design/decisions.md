@@ -11,7 +11,7 @@ frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' 
 **Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
 phase index.
 
-<!-- decision-watermark: D58 -->
+<!-- decision-watermark: D59 -->
 
 ## Scope and modes
 
@@ -354,6 +354,14 @@ absent. GitHub's SIGTERM comes 7.5 s after its SIGINT and its kill 2.5 s after t
 30 s grace, so the second press must abandon. Rejected: one flat 130, which hides which signal ended the run
 from a runner's log; judging what was written. Code: `cli::interrupt`, `cli::check_dir::Checked`.
 Evidence: `tests/signals.rs`.
+
+### D59 A bare `report` keeps the latest finished run, says of a later unfinished one, and refuses a baseline it imported
+Without `--run` a report reads the latest finished run (D2), says on stderr that a later run stopped before
+the end, and **refuses** where that run is a later unfinished run's `baseline_run` (D58 leaves such a run):
+the rows would be the imported baseline's, read as the build's. `diff`'s default `to` does likewise.
+`--run`, `--to` and `--from` read what they name. Rejected: the latest run, finished or not, which would
+read a stopped crawl's partial rows over the last whole run; a warning alone, which a CI log buries under
+a report that looks whole. Code: `report::run::one`. Evidence: `report::tests::the_default_refuses_the_baseline_of_a_later_unfinished_run`.
 
 ### D51 A target records where its answer came from, in a column the writer fills and no view reads
 `targets.answered_by` is `local`, `baseline` or `live`, `NOT NULL` with no default, so a path that copies or

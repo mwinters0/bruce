@@ -160,8 +160,8 @@ A SIGINT (Ctrl-C) or SIGTERM, as a CI cancel sends, stops the run as it does
 abandons what is still out. A check that was stopped is **not judged**: no
 section is printed, stdout stays empty, and stderr says the build was not
 judged. Its run stays in the database unfinished, so a `bruce report` with no
-`--run` reads the latest *finished* run, the baseline this check imported
-([`report.md`](report.md)). The exit status is 128 plus the first signal, 130
+`--run` refuses, naming both runs, rather than read the baseline this check
+imported ([`report.md`](report.md#which-run)). The exit status is 128 plus the first signal, 130
 for SIGINT and 143 for SIGTERM.
 
 ## Not beside a crawl

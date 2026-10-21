@@ -118,6 +118,26 @@ fn a_fixed_row_describes_the_link_as_it_was_broken() {
 }
 
 #[test]
+fn the_default_pair_refuses_a_to_that_a_later_unfinished_run_was_checked_against() {
+    let store = store();
+    let out = diff(&store, |_| {});
+    assert_eq!((out.run, out.later_unfinished), (RunId(2), Some(RunId(3))));
+    store
+        .connection()
+        .execute("UPDATE runs SET baseline_run = 2 WHERE run_id = 3", [])
+        .unwrap();
+    let err = run(&store, &Request::new(Report::Diff)).unwrap_err();
+    assert!(matches!(
+        err,
+        Error::BaselineOfLater {
+            run: RunId(2),
+            later: RunId(3)
+        }
+    ));
+    assert_eq!(diff(&store, |r| r.to = Some(RunId(2))).run, RunId(2));
+}
+
+#[test]
 fn from_and_to_name_the_runs_and_either_may_be_unfinished() {
     let store = store();
     let out = diff(&store, |r| {

@@ -44,6 +44,7 @@ pub fn run(store: &Store, request: &Request) -> Result<Output, Error> {
     Ok(Output {
         run: chosen.run,
         unfinished: chosen.unfinished,
+        later_unfinished: chosen.later_unfinished,
         from: chosen.from,
         table,
         notes,
