@@ -158,6 +158,14 @@ fn a_root_named_twice_is_refused() {
 }
 
 #[test]
+fn two_roots_differing_only_in_escaping_are_one_root() {
+    let msg = invalid_msg(
+        "[[root]]\nurl = \"https://a.example/~x/\"\n[[root]]\nurl = \"https://a.example/%7Ex/\"",
+    );
+    assert!(msg.starts_with("root[1]:") && msg.contains("already a root"));
+}
+
+#[test]
 fn bad_values_name_their_key() {
     let cases = [
         (

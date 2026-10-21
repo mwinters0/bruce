@@ -59,11 +59,6 @@ roadmap's phase index.
   **(c) unowned**: a content repo writing any of these forms would promote it.
   Detail: `src/profile/antora/resolve.rs`
 
-- **KD11** — Two roots whose URLs differ only in escaping (`/~x/`, `/%7Ex/`)
-  load as two, and the second never claims a page, the duplicate check comparing
-  `url` as written. **(c) unowned**: a config writing a root both ways would
-  promote it. Detail: `src/config.rs`
-
 - **KD12** — `prune` deletes the baseline run a kept CI run names, so the gate
   over that CI run fails `NoSuchRun`. **(c) unowned**: a deployer keeping
   `check-dir` databases and pruning them would promote it. Detail:

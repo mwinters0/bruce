@@ -229,12 +229,10 @@ impl Config {
         let mut roots: Vec<Root> = Vec::with_capacity(raw.root.len());
         for (i, r) in raw.root.into_iter().enumerate() {
             let root = Root::from_raw(r).map_err(|e| invalid(format!("root[{i}]: {e}")))?;
-            // deficiency: KD11 Two roots are the same root by `url` as
-            // written, not by its canonical form, so `/~x/` and `/%7Ex/`
-            // load as two and the second never claims a page: a URL takes
-            // the first root whose scope holds it. Comparing
-            // `Root::canonical_url` closes it.
-            if roots.iter().any(|seen| seen.url == root.url) {
+            // A root is named by its canonical URL, as `runs.roots` and
+            // `pages.root` hold it: `/~x/` and `/%7Ex/` are one root.
+            let canonical = root.canonical_url();
+            if roots.iter().any(|seen| seen.canonical_url() == canonical) {
                 return Err(invalid(format!(
                     "root[{i}]: {} is already a root",
                     root.url
