@@ -15,9 +15,9 @@ never reused.
 | Phase | State | Where it is |
 |---|---|---|
 | P1–P5 | **Struck** at the first keystone, 2026-10-21 | their decisions are [`decisions.md`](decisions.md)'s |
-| P6 — release and the deployment guide | Sketched; not grilled | this file, below |
-| P7 — declarative per-root rules | Sketched; not grilled | this file, below |
 | P8 — run-history reports | Sketched; not grilled | this file, below |
+| P6 — release and the deployment guide | Specified; waits for P8 | [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md) |
+| P7 — declarative per-root rules | Sketched; not grilled | this file, below |
 
 **A row's state is one of `Sketched`, `Specified`, `Current`, `Complete` or
 `Struck`.** The prose after it is a caption. Two states are set in the same
@@ -65,12 +65,18 @@ A standing rule is added only with the maintainer, and carries its check.
   stated, and no row for a key the config does not read. Check:
   `config::tests::every_key_the_config_reads_is_in_the_manual_with_its_default`.
 
+## P8 — Run-history reports
+
+Reports over two runs beyond `diff`: `changed`, the pages whose content
+hash moved (D15), and `anchors-removed`, the anchors a page lost while links
+still name them. Which hash scope a run used is its first question (its
+inbox).
+
 ## P6 — Release and the deployment guide
 
-A release binary on the forge (D23). The manual's guide to configuring a
-deployment: its config, a scheduled crawl, and publishing a baseline for CI
-(D21). The guide is verified against the simulated deployment (D41). Running
-docs.fp.o's nightly crawl is the deployer's job, not this repo's.
+Specified: [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md). It
+follows P8, whose likely schema change a 0.x release would make its first
+deployers pay for.
 
 ## P7 — Declarative per-root rules
 
@@ -79,10 +85,3 @@ and attribute giving a fact, a content-region selector, and a URL regex giving
 a source (D33). They write the same key/value facts a compiled profile does
 (D37). Resolution logic stays code. Scheduled when a site outside the compiled
 profiles needs one.
-
-## P8 — Run-history reports
-
-Reports over two runs beyond `diff`: `changed`, the pages whose content
-hash moved (D15), and `anchors-removed`, the anchors a page lost while links
-still name them. Which hash scope a run used is its first question (its
-inbox).

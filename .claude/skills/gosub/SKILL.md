@@ -127,8 +127,7 @@ not hold, stop the job with `stop` and stop the loop. **2. Release the subagent*
 * * * *`, recurring, prompt *Long-job check for `<handoff path>`. Read its
 frontmatter. Run `check` and `progress`. Follow `.claude/skills/gosub/SKILL.md`,
 "A round that launches a long job", step 4.* Cron fires only while this session
-is idle, so end your turn, stay idle, and start no other round — `CLAUDE.md`
-forbids a `cargo` build or test while a long job runs.
+is idle, so end your turn, stay idle, and start no other round.
 
 **4. Each fire**, run `check` and `progress`, keeping the last `progress` value
 to compare. *Running, progress moving* — one line, end the turn. *Stuck* by the

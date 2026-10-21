@@ -40,8 +40,10 @@ A job over about 10 minutes, such as a full `bruce crawl` of docs.fp.o at its
 notification**: waiting expires the prompt cache and reloads the whole
 conversation. Record what was launched, and its log path, in today's history
 entry, and a later session reads the result. Stop a job by process group
-(`pkill -g <pgid>`). Nothing else may build or test while one runs. Over 30
-minutes inside `/gosub`, follow `.claude/skills/gosub/handoff.md`.
+(`pkill -g <pgid>`). Nothing else may build or test while a performance
+measurement runs, as that disturbs its timing. A crawl paced by its hosts'
+rates is not a measurement. Over 30 minutes inside `/gosub`, follow
+`.claude/skills/gosub/handoff.md`.
 
 ## Where things are, and when to read them
 

@@ -46,3 +46,15 @@ by destination").
   column of the view or the report's rendering.
 - **Origin.** The reports phase's grilling, 2026-10-19, moved from CI mode's
   inbox at its grilling, 2026-10-20.
+
+## The deployment guide's roots hash the profile's region
+
+- **Fact.** P6's grilling settled that the guide's roots set neither
+  `hash_root` nor `hash_exclude`, so a docs.fp.o page hashes `article.doc`
+  (D15): a whole-page scope takes in the nav, which lists a component's
+  pages, so one added page would move every page of its component.
+- **Why P8 cares.** `changed` reads that scope on a deployment's runs; a
+  report proposing another scope reopens P6's spec, not just the guide.
+- **Origin.** P6's grilling, 2026-10-21 (`../wip/roadmap-P6-release.md`,
+  "The guide's hash scope is the profile's region"). Contingent on the nav
+  being inside no hashed region.

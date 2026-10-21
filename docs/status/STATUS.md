@@ -38,8 +38,8 @@ the gate's exit status and sections.
 
 ## Not started
 
-P6 onward in [`../design/roadmap.md`](../design/roadmap.md)'s index. None has
-been grilled.
+Every phase in [`../design/roadmap.md`](../design/roadmap.md)'s index. P6 is
+specified and waits for P8; P7 and P8 have not been grilled.
 
 ## Decisions worth another look
 
