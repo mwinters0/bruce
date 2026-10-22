@@ -36,7 +36,7 @@ three-component Antora site, the Fedora UI bundle and seven built pages, which
 `mise run e2e` rebuilds and then crawls, exports and runs `check-dir` over, asserting
 the gate's exit status and sections.
 The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball.
-`.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23); `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
+`.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
 
 ## P6 progress
 
@@ -59,11 +59,10 @@ The spec is [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md).
   and published by the id its create returns; the no-third-party-actions standing rule and its check;
   D23 and D43 amended. `v0.1.0-rc.1` built, published, downloaded and run on
   Trixie and F44. Notes: [`../wip/roadmap-P6.2-release-workflow-notes.md`](../wip/roadmap-P6.2-release-workflow-notes.md).
-- [ ] **6.3** `v0.1.0`, and the README's quickstart: where the binary is, its
-  glibc floor, and that a 0.x release migrates no DB. The quickstart landed;
-  the `v0.1.0` tag, the maintainer's push (after a `v0.1.0-rc.2` that has the
-  runner build the static binary), has not. Notes:
-  [`../wip/roadmap-P6.3-v0.1.0-notes.md`](../wip/roadmap-P6.3-v0.1.0-notes.md).
+- [x] **6.3** `v0.1.0`, and the README's quickstart: where the binary is, its
+  glibc floor, and that a 0.x release migrates no DB. `v0.1.0` is published,
+  and the quickstart's recipe passes against its assets on Trixie and F44.
+  Notes: [`../wip/roadmap-P6.3-v0.1.0-notes.md`](../wip/roadmap-P6.3-v0.1.0-notes.md).
 
 ## Not started
 

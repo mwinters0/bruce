@@ -1,37 +1,24 @@
 # P6.3 — `v0.1.0` and the README's quickstart: notes
 
-What landed: the README's quickstart, which replaces "There is no release yet"
-with the release page, a download-verify-unpack recipe keyed on the tag, and
-the three facts a downloader needs (below). What did not: the `v0.1.0` tag,
-which is the maintainer's push (P6 spec, "The slice order the split proposed"),
-so the box stays empty.
+`v0.1.0` is published on GitHub, not a prerelease and the releases page's
+Latest, and the README's quickstart recipe passes against its assets. What the
+slice inherits is below; the wrap inherits nothing to run.
 
-## What the tag push inherits
+## What the release carries
 
-- **`v0.1.0-rc.2` first.** The workflow that builds the static `libstdc++` and
-  `libgcc_s` (M13, D23) has been rehearsed in a container but never run by the
-  GitHub runner, and a published release is immutable. A prerelease is the
-  cheap check: "Build" must print `newest glibc symbol:` at or under
-  `GLIBC_2.41` and pass its `ldd` check, and the release must be a prerelease
-  ([`roadmap-P6.2-release-workflow-notes.md`](roadmap-P6.2-release-workflow-notes.md),
-  "What the rest of 6.2 and 6.3 inherit").
-- **`v0.1.0` is tagged at `72f1ba0` and unpublished** (Publish failed twice;
-  M14 replaced its lookup, `../status/history/2026-10-22.md`). Re-tag it at
-  the commit carrying M14: delete the tag, push it again at that commit. Two
-  drafts of that tag are left on GitHub (ids 420877200 and 420894690); the
-  re-run's Publish deletes the ones the listing shows and logs them, else the
-  maintainer deletes them. The first run of the M14 Publish is unrehearsed
-  against GitHub (stubs only), so `v0.1.0-rc.3` first is the cheap check.
-- **`v0.1.0` needs `Cargo.toml`'s `version` to be `0.1.0`** (it is) and the
-  tree at the tag to be the one wanted: the workflow refuses a `HEAD` moved
-  since the push. Without a `-` suffix the release is not a prerelease, and
-  only then does the releases page's "latest" name one.
-- **The README's recipe is untested against a real release asset** until a tag
-  with no `-` exists: its `tag=v0.1.0` names none yet. It follows the asset
-  layout 6.2 checked on `v0.1.0-rc.1` (archive of a directory of the same name,
-  `<asset>.sha256` in `sha256sum`'s format).
-- **Ticking 6.3** is the change after the tag publishes: check the published
-  release's assets against the recipe, then tick the box.
+- **`v0.1.0` is tagged at `aa7d0f2`**, the tree `v0.1.0-rc.3` was built from,
+  after M14 replaced Publish's lookup by the draft's id. Its first attempt
+  failed twice in Publish ([`../status/history/2026-10-22.md`](../status/history/2026-10-22.md),
+  "`v0.1.0`'s Publish failed twice; M14 admitted"); the tag moved once, which
+  is possible only while no release has published from it.
+- **The release is immutable.** A fault in `v0.1.0`'s assets is fixed in
+  `v0.1.1`, never in place. Only a tag with no `-` suffix is a non-prerelease,
+  so only it can be "latest".
+- **The recipe, as written** with `tag=v0.1.0`, downloaded, verified and
+  unpacked the assets, and `bruce crawl` over `fixtures/antora/pages` exited 0,
+  in `debian:trixie`, `fedora:44` and `fedora-minimal:42`. Evidence: the
+  history entry's "`v0.1.0` published"; script and logs in
+  `runs/release-v0.1.0/`.
 
 ## `v0.1.0-rc.2`, checked
 
