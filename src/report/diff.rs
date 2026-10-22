@@ -1,7 +1,8 @@
 //! The `diff` report: the links broken in one run and not in another.
 //!
 //! A link is keyed by its page, its target and its fragment, which are the
-//! same in every run (`url_id` is a hash of the canonical form, D26), and is
+//! same in every run (a page's `url_id` is a hash of the canonical form, D26;
+//! the target is matched by its URL text), and is
 //! broken where `report_broken` has it. A key broken in `to` and not in
 //! `from` is `new`; broken in `from` and not in `to` is `fixed`. Not broken
 //! includes absent, so a broken link on a page the run did not reach is

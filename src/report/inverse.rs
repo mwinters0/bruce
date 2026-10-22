@@ -66,9 +66,9 @@ fn held(conn: &Connection, run: RunId) -> Result<BTreeSet<String>, Error> {
 }
 
 /// The prefix of `url`, a page of `component` at `version`: its URL through
-/// the first segment that is the component and, for a named version, the
-/// segment after it, the version's own name where one follows the
-/// component's, else whatever non-empty one does, the build serving the
+/// a segment that is the component and, for a named version, the
+/// segment after it: the first component segment the version's own name
+/// follows, else the first that any non-empty one does, the build serving the
 /// version under another name (a `latest_version_segment`, I16).
 /// The placeholders Antora writes for a version its URLs omit, `""` and
 /// `master`, and no version, name none (D19).
@@ -181,8 +181,8 @@ pub(super) fn inverse(
 }
 
 /// How many linking pages and groups of them (a component, else a repo, else
-/// none) `table` holds, for D9's "N inbound pages across M
-/// components".
+/// none) `table` holds, for the gate's "N inbound pages across M
+/// components" (D56).
 pub(super) fn counts(table: &Table) -> (usize, usize) {
     let column = |name: &str| table.columns.iter().position(|c| c == name);
     let (Some(page), Some(component), Some(repo)) =

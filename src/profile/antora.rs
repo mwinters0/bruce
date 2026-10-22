@@ -158,7 +158,8 @@ impl Profile for Antora {
         extract
     }
 
-    /// A refspec names its page whole, so the page it is on is not read.
+    /// A refspec naming no component is the page's own and is not resolved
+    /// (`resolve`), so the page it is on is not read.
     fn resolve(
         &self,
         reference: &str,

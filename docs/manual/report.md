@@ -55,9 +55,9 @@ and `--from` or `--to` with any other report, are command-line errors.
 
 ## The reports
 
-Rows are sorted worst first, `orphans` and `unlisted` by root and page,
-`inverse` by the linking page's group and page, and
-`--top N` keeps the first N.
+Rows come in the order each report states below: worst or most first,
+`orphans` and `unlisted` by root and page, `inverse` by the linking page's
+group and page. `--top N` keeps the first N.
 
 **`broken`** has a row for each link whose outcome is `broken_url` or
 `broken_anchor`, `broken_url` first, then by page:

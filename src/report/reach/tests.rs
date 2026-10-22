@@ -187,7 +187,7 @@ fn an_index_children_count_for_the_root_that_reached_the_index() {
 }
 
 #[test]
-fn sitemap_lists_what_was_not_fetched_then_what_it_does_not_list() {
+fn sitemap_lists_what_was_not_fetched_then_what_it_does_not_list_then_what_it_does() {
     let out = report(&store(), Report::Sitemap, |_| {});
     // Entry 20 redirected to page 3, so it was fetched; 30 was not.
     assert_eq!(

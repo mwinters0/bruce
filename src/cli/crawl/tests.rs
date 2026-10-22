@@ -140,7 +140,7 @@ fn the_report_says_what_the_run_wrote_and_whether_it_finished() {
     );
 }
 
-/// The command line end to end: a run is added to the file `--db` names,
+/// `run` from parsed arguments, end to end: a run is added to the file `--db` names,
 /// finished, and a second run after it is numbered on.
 #[test]
 fn a_crawl_writes_a_finished_run_to_the_db() {

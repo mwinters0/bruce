@@ -267,7 +267,7 @@ async fn a_partial_build_is_answered_by_the_build_the_baseline_and_production() 
     ok(&production, "GET", "/docs/guide/1.0/new/").await;
     let tmp = tempfile::tempdir().unwrap();
 
-    // The baseline: the whole site, asked of nobody.
+    // The baseline: the whole site, from no baseline of its own.
     let whole = [
         (
             "tools/index.html",
@@ -479,8 +479,9 @@ async fn a_build_holding_no_component_version_trusts_the_baseline_and_asks_for_w
     let config = format!("[[root]]\nurl = \"{base}/docs/\"\n");
     let prefix = format!("{base}/docs/");
     let tmp = tempfile::tempdir().unwrap();
-    // A page with no nav container carries no component, so the build holds
-    // nothing and `gone/` is not `not_built`.
+    // A page with no nav container, at the prefix root, has no component
+    // segment to take, so the build holds nothing and `gone/` is not
+    // `not_built`.
     let files = [(
         "index.html",
         r#"<title>t</title><a href="gone/">g</a>"#.to_owned(),

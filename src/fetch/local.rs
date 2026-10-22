@@ -12,8 +12,9 @@
 //! D22) are the crawl's to open before it asks, and it asks this module's
 //! [`Site`] which URLs are built. The query and the
 //! fragment are not part of a file's name. Bodies are read as `fetch::http`
-//! reads them: decoded HTML up to [`MAX_BODY`] for a page, bytes for a
-//! sitemap, nothing for a status.
+//! reads them: decoded HTML up to [`MAX_BODY`] for a page (a `.html` or
+//! `.htm` file alone, `.xhtml` being unread here), bytes for a sitemap,
+//! nothing for a status.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -30,7 +31,8 @@ use crate::url::canonical;
 #[derive(Debug)]
 pub struct Site {
     prefix: Url,
-    /// The canonical form of the prefix, which every URL answered starts with.
+    /// The canonical form of the prefix, which every URL the caller's map holds
+    /// starts with: `lookup` answers a map entry without testing it.
     key: String,
     files: HashMap<String, PathBuf>,
 }

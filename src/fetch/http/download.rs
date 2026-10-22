@@ -1,6 +1,6 @@
 //! Downloading one file whole, for a baseline given as a URL (D21).
 //!
-//! It is one request outside the crawl's pacing and robots.txt: the file is
+//! It is one download, up to `REDIRECTS` + 1 requests, outside the crawl's pacing and robots.txt: the file is
 //! the deployment's own, named by whoever runs the check. Redirects are
 //! followed here, a published file often being served from elsewhere, and the
 //! body is written as it arrives.

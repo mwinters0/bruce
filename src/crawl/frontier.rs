@@ -257,8 +257,9 @@ impl Frontier {
 
 /// How a URL is asked about, by the kind of link that names it.
 fn live(kind: Kind) -> Plan {
-    // deficiency: KD4 The first link to an allowlisted URL decides how
-    // it is asked: an anchor link gets a GET and its anchors are
+    // deficiency: KD4 The first link to a URL asked live (an allowlisted
+    // one, or one the build lacks and the baseline does not hold) decides
+    // how it is asked: an anchor link gets a GET and its anchors are
     // stored, any other kind gets a HEAD. A URL named first by an
     // image and later by an anchor link with a fragment is never
     // read, so that fragment has no anchors to be checked against.

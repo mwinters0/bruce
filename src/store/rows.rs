@@ -132,8 +132,8 @@ pub struct AnchorRow {
     pub placement: &'static str,
 }
 
-/// A row of `links` (D13, D26): one occurrence of a reference on a page, or
-/// one entry of a sitemap.
+/// A row of `links` (D13, D26): one occurrence of a reference on a page, one
+/// entry of a sitemap, or a root's link to a sitemap file it read (D47).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LinkRow {
     pub run_id: u64,

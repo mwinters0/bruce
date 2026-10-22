@@ -41,7 +41,7 @@ struct Candidate {
     rel_edit: bool,
     class: bool,
     title: Option<String>,
-    /// Its text, undecoded, cut off past [`TEXT_LIMIT`] bytes.
+    /// Its text, undecoded, appended a chunk at a time until [`TEXT_LIMIT`] bytes.
     text: String,
 }
 

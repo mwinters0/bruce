@@ -7,7 +7,7 @@
 //! nothing else is read from the directory. A URL under the prefix that the
 //! build lacks, and the baseline does not answer, is asked of production.
 //! robots.txt and the rate are the live fetcher's and apply to its URLs
-//! alone.
+//! alone, but for `sitemaps`, which always asks the live host's robots.txt.
 
 use std::future::Future;
 

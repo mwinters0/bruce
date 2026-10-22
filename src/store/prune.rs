@@ -1,7 +1,7 @@
 //! Deleting old runs (D2): the one place rows leave the database.
 //!
 //! A run is a number, and every table but `meta` carries it, so a run goes by
-//! deleting its number from each. The rule picks which runs go; three things
+//! deleting its number from each. The rule picks which runs go; two things
 //! it never deletes are named in [`Store::prune`].
 
 use std::time::Duration;

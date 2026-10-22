@@ -4,7 +4,8 @@
 //! A refspec is `[version@][component:][module:]page.adoc[#fragment]`, where
 //! with a component and no module the module is `ROOT` (`component::page`). A
 //! refspec naming no component is the page's own, whose component-version the
-//! build holds, so only one naming a component is resolved here, and only
+//! build holds unless it names a version (refused, KD10), so only one naming
+//! a component is resolved here, and only
 //! while the build does not hold that component-version ([`Lookup::built`]):
 //! Antora had the held catalog whole, so an xref into it that stayed
 //! unresolved is broken (D20, D22).

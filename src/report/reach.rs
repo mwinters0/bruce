@@ -77,7 +77,7 @@ pub(super) fn unlisted(
 
 /// Every crawled page, and every sitemap entry no page was fetched for, with
 /// what its target answered. The entries come first, then the pages the
-/// sitemap does not list. `--kind` is no filter here, and an entry has no
+/// sitemap does not list, then those it does. `--kind` is no filter here, and an entry has no
 /// page to match `--repo` or `--fact` against.
 pub(super) fn sitemap(conn: &Connection, run: RunId, request: &Request) -> Result<Table, Error> {
     let mut sql = Sql::new(

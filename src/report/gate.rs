@@ -1,13 +1,13 @@
 //! The gate: what a CI run broke that its baseline had not (D9), and the
 //! sections `check-dir` prints beside it.
 //!
-//! A link is keyed by its page, its target URL and its fragment, the same in
-//! every run (D26), and a run's `baseline_run` names the run it was checked
+//! A link is keyed by its page's `url_id` (D26), its target URL and its
+//! fragment, the same in every run, and a run's `baseline_run` names the run it was checked
 //! against. A CI run holds the links of built pages alone, a copied page
 //! having none (D52), so a baseline link on a page not built is absent from
 //! it and is no one's to call fixed. **Introduced** is a link broken in the
-//! run whose key the baseline has as anything but broken, absent, `ok`,
-//! `unchecked` or `error`; the row names which. Several links sharing a key
+//! run whose key the baseline does not have broken: absent, `ok`,
+//! `unchecked` or `error`, which the row names. Several links sharing a key
 //! are one row. `error` never fails (D16) and is listed, and breakage the
 //! baseline had stays a count until asked for. The **inverse** section is
 //! the baseline's links from pages outside the build to what the change
@@ -102,7 +102,7 @@ impl Gate {
     }
 
     /// The inverse breakage, and how many pages across how many components
-    /// link to what was removed (D9).
+    /// link to what was removed (D56).
     fn inverse_section(&self) -> String {
         let title = match self.mode {
             InverseMode::Fail => "inverse breakage",

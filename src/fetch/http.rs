@@ -267,7 +267,7 @@ impl HttpFetcher {
 
 impl Fetcher for HttpFetcher {
     /// Whether `url` may be requested, by its host's robots.txt (D8), which
-    /// is fetched the first time any URL of the host is asked about. RFC
+    /// is fetched the first time any URL of a host that reads it (`robots`) is asked about. RFC
     /// 9309 decides what its answer means: a 4xx allows everything; a 5xx, a
     /// failure, a 429 that outlasts the retries or too many redirects make
     /// the host [`Access::Unavailable`] for the run.
@@ -276,7 +276,7 @@ impl Fetcher for HttpFetcher {
     }
 
     /// The `Sitemap:` lines of the robots.txt of `url`'s host, which is
-    /// fetched first if no one has asked about the host yet.
+    /// fetched first, for a host that reads it, if no one has asked yet.
     async fn sitemaps(&self, url: &Url) -> Vec<String> {
         let host = self.hosts.host(url);
         host.access(url, self.robots_txt(url)).await;

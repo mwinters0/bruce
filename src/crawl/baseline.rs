@@ -95,8 +95,9 @@ impl Held {
     /// held: its first segment is a held component, and its second is a
     /// segment a held version of it is served at, or the component holds a
     /// version whose URLs name none (`site-invariants.md`, I16). A URL whose
-    /// second segment is neither a built page's nor a held version's own name
-    /// is the baseline's, unless the component's held version is a bare one.
+    /// second segment no built page sits at is the baseline's, unless the
+    /// component's held version is a bare one; a held version's own name is
+    /// such a segment only where its page sits off the layout.
     pub(super) fn holds(&self, prefix: &Url, url: &Url) -> bool {
         // `report::inverse::prefix` reads the same layout back from the stored run (D56).
         // deficiency: KD5 A component-version is held whole, so a component
@@ -156,7 +157,7 @@ fn decode(segment: &str) -> String {
 /// A URL under the prefix, in scope and not built, claimed and not yet judged.
 pub(super) struct Unbuilt {
     pub(super) url: Url,
-    /// The kind of the first link to it, as KD4 has it for an allowlisted URL.
+    /// The kind of the first link to it, as KD4 has it for a URL asked live.
     pub(super) kind: Kind,
     pub(super) form: Canonical,
 }

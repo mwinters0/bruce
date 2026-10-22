@@ -291,7 +291,7 @@ fn a_file_that_is_not_a_baseline_is_refused_and_left_alone() {
 
 /// Two runs of one database: run 1 holds a redirect from `/old` to `/new`,
 /// the page `/new` with an anchor and a fact, and `/gone`, a 404; run 2 is
-/// the CI run, empty.
+/// the CI run, holding one link and nothing else.
 fn two_runs() -> (Store, RunId, RunId) {
     let store = Store::open_in_memory(&registry()).unwrap();
     let from = store

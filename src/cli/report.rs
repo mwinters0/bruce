@@ -164,7 +164,7 @@ pub fn command() -> Command {
                 .long("top")
                 .value_name("N")
                 .value_parser(value_parser!(u64).range(1..))
-                .help("Print only the first N rows, the worst first"),
+                .help("Print only the first N rows, in the report's order"),
         )
         .arg(
             Arg::new("format")

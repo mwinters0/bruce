@@ -3,8 +3,8 @@
 //! A fetcher answers **one hop**: the response to one URL, never the chain a
 //! redirect starts, because the crawler follows hops itself so each one
 //! passes its host's rate limit and robots.txt (D7). It reads a body only
-//! where the caller can use it: a page's 2xx `text/html` or
-//! `application/xhtml+xml` response, decoded to a `String` (`charset`), or a
+//! where the caller can use it: a page's 2xx `text/html` (over HTTP,
+//! `application/xhtml+xml` too) response, decoded to a `String` (`charset`), or a
 //! sitemap's 2xx body as bytes. Every other response is classified by its
 //! status alone, so a link to a PDF costs one request and no download (D16). Classifying a status into an
 //! outcome is the crawler's; what a fetcher owes it is a [`Response`], or a
@@ -93,7 +93,7 @@ pub struct Failure {
 }
 
 /// The cause of a [`Failure`], in D16's terms: `NxDomain` is `broken_url`,
-/// every other cause `error`.
+/// every other cause `error` but `Stopped`, which is no outcome.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FailureKind {
     /// The name does not exist.
