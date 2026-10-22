@@ -55,8 +55,8 @@ The spec is [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md).
   them verbatim. Notes:
   [`../wip/roadmap-P6.1.2-postgresql-license-notes.md`](../wip/roadmap-P6.1.2-postgresql-license-notes.md).
 - [x] **6.2** The release workflow: a `debian:trixie` build on a `v*` tag, the
-  archive of binary, notices and licenses with its sha256, `gh release` draft,
-  upload and publish; the no-third-party-actions standing rule and its check;
+  archive of binary, notices and licenses with its sha256, a draft made, filled
+  and published by the id its create returns; the no-third-party-actions standing rule and its check;
   D23 and D43 amended. `v0.1.0-rc.1` built, published, downloaded and run on
   Trixie and F44. Notes: [`../wip/roadmap-P6.2-release-workflow-notes.md`](../wip/roadmap-P6.2-release-workflow-notes.md).
 - [ ] **6.3** `v0.1.0`, and the README's quickstart: where the binary is, its
@@ -78,3 +78,9 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **M14's Publish is untried against GitHub.** It uploads assets with `curl` to
+  `uploads.github.com` by the draft's id, not with `gh release upload`, which
+  finds a draft by tag, and no run has exercised the POST's fields or the
+  upload. Reconsidering changes whether `v0.1.0-rc.3` is pushed before
+  re-tagging `v0.1.0`, which would otherwise be the first run of it.

@@ -15,6 +15,13 @@ so the box stays empty.
   `GLIBC_2.41` and pass its `ldd` check, and the release must be a prerelease
   ([`roadmap-P6.2-release-workflow-notes.md`](roadmap-P6.2-release-workflow-notes.md),
   "What the rest of 6.2 and 6.3 inherit").
+- **`v0.1.0` is tagged at `72f1ba0` and unpublished** (Publish failed twice;
+  M14 replaced its lookup, `../status/history/2026-10-22.md`). Re-tag it at
+  the commit carrying M14: delete the tag, push it again at that commit. Two
+  drafts of that tag are left on GitHub (ids 420877200 and 420894690); the
+  re-run's Publish deletes the ones the listing shows and logs them, else the
+  maintainer deletes them. The first run of the M14 Publish is unrehearsed
+  against GitHub (stubs only), so `v0.1.0-rc.3` first is the cheap check.
 - **`v0.1.0` needs `Cargo.toml`'s `version` to be `0.1.0`** (it is) and the
   tree at the tag to be the one wanted: the workflow refuses a `HEAD` moved
   since the push. Without a `-` suffix the release is not a prerelease, and

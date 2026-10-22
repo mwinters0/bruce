@@ -13,9 +13,8 @@ Trixie and F44 (below).
 - **The tag is `v<x>.<y>.<z>[-<pre>]` and its base must be `Cargo.toml`'s
   `version`.** The workflow refuses any other, and one moved since the push
   (`HEAD` is not `GITHUB_SHA`). A `-` suffix makes a prerelease. A rerun after a
-  failure deletes the tag's draft and creates it again; once published, a
-  release is immutable and the next try is `v0.1.0-rc.2`. Debian's `gh` is
-  2.46.0, which has `--verify-tag` and `--generate-notes`.
+  failure deletes the tag's drafts it can list and makes a new one; once
+  published, a release is immutable and the next try is `v0.1.0-rc.2`.
 - **What to check in a run**: every step green; "Build" printing `newest glibc
   symbol:` at or under `GLIBC_2.41`; the release a prerelease.
 - **The asset** is `bruce-<tag>-x86_64-unknown-linux-gnu.tar.gz` holding a
@@ -72,7 +71,11 @@ localhost in `fedora-minimal:42` (docs-fp-o's image), `fedora:44` and
   took `$(git log …)` inside `tar`'s option, where a failure (git's dubious
   ownership, in the rehearsal) printed and archived with no mtime; it is now its
   own statement under `set -e`.
-- **A draft is not found by tag.** `GET /releases/tags/<tag>` omits drafts, so
-  the workflow lists releases and selects by `tag_name`, deleting and
-  publishing by id through `gh api`; assets go up inside `gh release create
-  --draft`, so no `gh release upload` looks a draft up by tag.
+- **A draft is not found by tag, nor reliably by listing.** `GET
+  /releases/tags/<tag>` omits drafts, and a listing run seconds after a create
+  missed the draft (M14, `../status/history/2026-10-22.md`). So the workflow
+  creates the draft through `gh api -X POST`, which returns its id, and uploads
+  to `uploads.github.com/.../releases/<id>/assets` with `curl` (`gh release
+  create` prints a URL, not an id, and `gh release upload` looks a draft up by
+  tag), checks the draft holds both assets by a read of that id, and publishes
+  by it. The only listing left deletes a failed run's drafts, each id logged.

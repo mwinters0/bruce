@@ -99,25 +99,40 @@ jobs:
           tar -tzf "$name.tar.gz"
 
       # Releases are immutable once published, so the draft carries both assets
-      # before it is published, and a draft a failed run left is replaced.
+      # before it is published. The draft is made, filled and published by the
+      # id its create call returns; no release is listed to find it.
       - name: Publish
         working-directory: src/dist
         run: |
           export GH_REPO=$GITHUB_REPOSITORY
+          repo=repos/$GITHUB_REPOSITORY/releases
           name=bruce-$GITHUB_REF_NAME-x86_64-unknown-linux-gnu
-          case $GITHUB_REF_NAME in *-*) pre=--prerelease ;; *) pre= ;; esac
-          drafts() {
-            gh api --paginate "repos/$GITHUB_REPOSITORY/releases" \
-              --jq '.[] | select(.draft and .tag_name == env.GITHUB_REF_NAME) | .id'
-          }
-          stale=$(drafts)
-          for id in $stale; do
-            gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/$id"
+          case $GITHUB_REF_NAME in *-*) pre=true ;; *) pre=false ;; esac
+          # A draft an earlier failed run left is removed. The list can be
+          # stale, so one it misses stays, harmless, and each id is logged.
+          gh api --paginate "$repo" \
+            --jq '.[] | select(.draft and .tag_name == env.GITHUB_REF_NAME) | .id' |
+            while read -r old; do
+              echo "stale draft $old"
+              gh api -X DELETE "$repo/$old" || echo "could not delete draft $old"
+            done
+          id=$(gh api -X POST "$repo" --jq .id \
+            -f tag_name="$GITHUB_REF_NAME" -f name="$GITHUB_REF_NAME" \
+            -f body="A 0.x release migrates no database: a schema change is named here, and the new binary starts a new one." \
+            -F draft=true -F prerelease=$pre -F generate_release_notes=true)
+          echo "draft $id"
+          test -n "$id"
+          for f in "$name.tar.gz" "$name.tar.gz.sha256"; do
+            case $f in *.gz) type=application/gzip ;; *) type=text/plain ;; esac
+            curl -sS --fail-with-body -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Content-Type: $type" --data-binary "@$f" \
+              "https://uploads.github.com/$repo/$id/assets?name=$f"
+            echo
           done
-          gh release create "$GITHUB_REF_NAME" --draft --verify-tag $pre \
-            --title "$GITHUB_REF_NAME" --generate-notes \
-            --notes "A 0.x release migrates no database: a schema change is named here, and the new binary starts a new one." \
-            "$name.tar.gz" "$name.tar.gz.sha256"
-          id=$(drafts)
-          test "$(echo "$id" | wc -w)" = 1
-          gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/$id" -F draft=false
+          assets=$(gh api "$repo/$id" --jq '[.assets[].name] | sort | join(" ")')
+          echo "draft $id holds: $assets"
+          test "$assets" = "$name.tar.gz $name.tar.gz.sha256"
+          gh api -X PATCH "$repo/$id" -F draft=false \
+            --jq '"published \(.html_url) prerelease=\(.prerelease)"'
