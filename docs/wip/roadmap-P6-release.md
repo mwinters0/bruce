@@ -91,6 +91,14 @@ Rejected: fetching at generation, which puts the network in `mise run check`;
 contract. **A notice a library's source carries and its LICENSE omits is
 vendored too**, verbatim from the tarball's source (hyperloglog's Redis BSD-3,
 libpg_query's PostgreSQL and Regents notices), and is refreshed by hand.
+**The one exception is libpg_query's PostgreSQL License paragraphs**
+(maintainer, 2026-10-22): its source carries the two copyright lines and no
+permission paragraphs, which the license asks to accompany them, so the
+standard text from postgresql.org is vendored by hand beside the lines and
+marked as hand-vendored. The drift check cannot hold it verbatim against the
+tarball, which is accepted, the text not changing. Rejected: the copyright
+lines alone, which leave the license's own condition unmet. It lands before
+the release workflow, so `v0.1.0-rc.1`'s immutable assets already carry it.
 **Each directory's license files are vendored**, `LICENSE*`, `COPYING*`,
 `NOTICE*` and `AUTHORS*` (tdigest's `NOTICES`, re2's `AUTHORS`). **The check
 fails on drift**: a vendored source id other than the tarball's, a
@@ -101,7 +109,7 @@ and whitespace aside. A bump then cannot land with stale texts.
 that version, unmodified (MPL-2.0 §3.2(a)); its repository URL names a branch,
 not what was built.
 Facts: [`../status/history/2026-10-22.md`](../status/history/2026-10-22.md),
-"6.1's unattended calls reviewed".
+"6.1's unattended calls reviewed" and "The PostgreSQL License paragraphs".
 
 ## No third-party action, in any workflow, is a standing rule
 

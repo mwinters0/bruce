@@ -48,6 +48,10 @@ The spec is [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md).
   `third_party/` directory the tarball holds, mbedtls under Apache-2.0, and
   each MPL-2.0 crate's exact source. Notes:
   [`../wip/roadmap-P6.1.1-bundled-licenses-notes.md`](../wip/roadmap-P6.1.1-bundled-licenses-notes.md).
+- [ ] **6.1.2** libpg_query's PostgreSQL License paragraphs, hand-vendored from
+  postgresql.org beside the two copyright lines of its `SOURCE-NOTICE`, marked
+  as hand-vendored and printed in the notices; the drift check does not hold
+  them verbatim. Lands before 6.2.
 - [ ] **6.2** The release workflow: a `debian:trixie` build on a `v*` tag, the
   archive of binary, notices and licenses with its sha256, `gh release` draft,
   upload and publish; the no-third-party-actions standing rule and its check;
@@ -68,11 +72,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **libpg_query's PostgreSQL License text is not in the notices.** The call:
-  `licenses/duckdb/libpg_query/SOURCE-NOTICE` holds only the two copyright lines
-  its Postgres-derived source files carry, verbatim, because the spec vendors
-  what the tarball's source holds and the permission paragraphs are in no file
-  of it. The PostgreSQL License asks that its paragraphs accompany the copyright
-  notice, so reconsidering means vendoring that standard text from
-  postgresql.org by hand beside the lines, which the check cannot hold verbatim.
