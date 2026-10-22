@@ -60,7 +60,10 @@ The spec is [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md).
   D23 and D43 amended. `v0.1.0-rc.1` built, published, downloaded and run on
   Trixie and F44. Notes: [`../wip/roadmap-P6.2-release-workflow-notes.md`](../wip/roadmap-P6.2-release-workflow-notes.md).
 - [ ] **6.3** `v0.1.0`, and the README's quickstart: where the binary is, its
-  glibc floor, and that a 0.x release migrates no DB.
+  glibc floor, and that a 0.x release migrates no DB. The quickstart landed;
+  the `v0.1.0` tag, the maintainer's push (after a `v0.1.0-rc.2` that has the
+  runner build the static binary), has not. Notes:
+  [`../wip/roadmap-P6.3-v0.1.0-notes.md`](../wip/roadmap-P6.3-v0.1.0-notes.md).
 
 ## Not started
 

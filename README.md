@@ -17,8 +17,32 @@ the check fails only on breakage that the change introduced.
 
 ## Quickstart
 
-There is no release yet, so build it from source. The toolchain is pinned in
-`mise.toml`; with [mise](https://mise.jdx.dev/) installed:
+Download the archive for the latest release from
+[`mwinters0/bruce`'s releases](https://github.com/mwinters0/bruce/releases),
+check it against its `.sha256` file and unpack it:
+
+```sh
+tag=v0.1.0
+asset=bruce-$tag-x86_64-unknown-linux-gnu
+base=https://github.com/mwinters0/bruce/releases/download/$tag
+curl -fLO $base/$asset.tar.gz -O $base/$asset.tar.gz.sha256
+sha256sum -c $asset.tar.gz.sha256
+tar xzf $asset.tar.gz        # $asset/bruce, with the licenses and third-party notices
+```
+
+- The binary is `x86_64-unknown-linux-gnu`, built on Debian 13 (Trixie). Its
+  only library is glibc, and it needs 2.41 or newer: it runs on Debian 13,
+  Fedora 42 and anything newer, and not on Alpine (musl). There is no aarch64
+  build.
+- It needs the system's CA certificate bundle (the `ca-certificates` package),
+  even to crawl an `http://` site. A bare `debian:trixie` image lacks one, and
+  `bruce crawl` fails there with `No CA certificates were loaded from the system`.
+- A `0.x` release migrates no database. A release that changes the schema says
+  so in its notes, and an older database is refused by name: crawl afresh into
+  a new file, and the old binary still reads the old one.
+
+To build it from source instead, the toolchain is pinned in `mise.toml`; with
+[mise](https://mise.jdx.dev/) installed:
 
 ```sh
 mise install
