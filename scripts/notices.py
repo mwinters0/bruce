@@ -21,10 +21,12 @@ the `LICENSE*`, `COPYING*`, `NOTICE*` and `AUTHORS*` files DuckDB's repository
 holds at the tag the tarball names, vendored by `--refresh-duckdb` and by it
 alone, so generating and checking stay offline; plus `SOURCE-NOTICE`, a notice
 a library's source carries and its LICENSE omits, vendored by hand from the
-tarball's source file (`HAND_VENDORED`). The check fails on drift: a vendored
-source id other than the tarball's, a directory with no texts, a vendored one
-the tarball lost, a hand-vendored notice no longer in its source. A crate whose
-expression names MPL-2.0 is listed with its exact source (§3.2(a)).
+tarball's source file (`HAND_VENDORED`); plus a text the source does not carry
+at all, copied by hand from the license's own site (`HAND_TEXTS`). The check
+fails on drift: a vendored source id other than the tarball's, a directory with
+no texts, a vendored one the tarball lost, a hand-vendored notice no longer in
+its source, a hand-copied text missing or no longer marked as hand-vendored. A
+crate whose expression names MPL-2.0 is listed with its exact source (§3.2(a)).
 
 The file is committed, so the release workflow copies it and a reader sees it
 in the tree. `--check` fails when it differs from what the lockfile now
@@ -83,6 +85,13 @@ HAND_VENDORED = (
     ("libpg_query", "libpg_query/src_backend_parser_parser.cpp"),
 )
 HAND_NAME = "SOURCE-NOTICE"
+#: A text the tarball holds nowhere, copied by hand from the license's site and
+#: kept beside the library's other texts: (library, file, the marker its first
+#: line must carry). The check cannot hold it verbatim against the tarball; it
+#: holds that it is present and says where it came from.
+HAND_TEXTS = (
+    ("libpg_query", "SOURCE-NOTICE-TERMS", "Hand-vendored from https://www.postgresql.org/"),
+)
 #: Where a crate's exact source is downloaded.
 CRATE_SOURCE = "https://crates.io/api/v1/crates/{name}/{version}/download"
 
@@ -221,6 +230,14 @@ def bundled_problems(package: dict[str, Any], libs_dir: Path) -> list[str]:
                 out.append(f"{lib}: {HAND_NAME} or its source {src} is missing")
             elif normalise(notice.read_text()) not in normalise(member.read().decode(errors="replace")):
                 out.append(f"{lib}: {HAND_NAME} is no longer verbatim in {src}")
+    for lib, name, marker in HAND_TEXTS:
+        if lib not in b.libraries:
+            continue
+        text = libs_dir / lib / name
+        if not text.exists():
+            out.append(f"{lib}: {name} is missing")
+        elif not text.read_text().startswith(marker):
+            out.append(f"{lib}: {name} no longer opens with {marker!r}")
     return out
 
 
@@ -275,8 +292,10 @@ def render(packages: Sequence[dict[str, Any]], libs_dir: Path | None = None) -> 
             "third_party directory. Every directory is listed, whether or not it is",
             "compiled in, with the license files DuckDB's repository holds for it at",
             "that tag; a notice in a library's source that its LICENSE omits is",
-            "marked SOURCE-NOTICE. mbedtls is offered under Apache-2.0 OR",
-            "GPL-2.0-or-later and is taken here under Apache-2.0.",
+            "marked SOURCE-NOTICE, and a license text no source carries, copied by",
+            "hand from the license's site, opens with Hand-vendored. mbedtls is",
+            "offered under Apache-2.0 OR GPL-2.0-or-later and is taken here under",
+            "Apache-2.0.",
             "",
         ]
         for lib in duckdb.libraries:
@@ -314,7 +333,8 @@ def refresh_duckdb(repo: Path = REPO) -> None:
         head = git("rev-parse", "HEAD")
         if not head.startswith(b.source_id):
             raise SystemExit(f"tag {b.version} is {head}, the tarball's source id is {b.source_id}")
-        keep = {lib: (libs_dir / lib / HAND_NAME).read_bytes() for lib, _ in HAND_VENDORED}
+        kept = [(lib, HAND_NAME) for lib, _ in HAND_VENDORED] + [(lib, n) for lib, n, _ in HAND_TEXTS]
+        keep = {Path(lib) / name: (libs_dir / lib / name).read_bytes() for lib, name in kept}
         if libs_dir.exists():
             shutil.rmtree(libs_dir)
         for lib in b.libraries:
@@ -324,8 +344,8 @@ def refresh_duckdb(repo: Path = REPO) -> None:
                     dest = libs_dir / lib / f.relative_to(root)
                     dest.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(f, dest)
-        for lib, body in keep.items():
-            (libs_dir / lib / HAND_NAME).write_bytes(body)
+        for rel, body in keep.items():
+            (libs_dir / rel).write_bytes(body)
         (libs_dir / SOURCE_FILE).write_text(f"{b.version} {b.source_id}\n")
 
 

@@ -28,7 +28,7 @@ exact crates.io source. The texts are vendored under `licenses/duckdb/`;
   only `Portions Copyright (c) 1996-2017, PostgreSQL Global Development PGGroup`
   and `... 1994, Regents of the University of California`, so `SOURCE-NOTICE`
   holds those two lines and the license's permission paragraphs are in no file
-  the tarball ships (6.1.2 vendors them from postgresql.org).
+  the tarball ships (vendored from postgresql.org by 6.1.2).
 - **The Bison skeleton's FSF notice** in libpg_query's generated grammar is not
   vendored: its output carries the Bison exception, which asks for no notice.
 - **Identical texts are not shared.** Unlike the crate section, the library

@@ -199,6 +199,19 @@ class Problems(unittest.TestCase):
         (self.libs / lib / notices.HAND_NAME).unlink()
         self.assertIn("missing", notices.bundled_problems(p, self.libs)[0])
 
+    def test_a_hand_copied_text_must_be_present_and_marked(self):
+        lib, name, marker = notices.HAND_TEXTS[0]
+        p = duckdb(self.root, [lib])
+        for src_lib, src in notices.HAND_VENDORED:
+            if src_lib == lib:
+                p = duckdb(self.root, [lib], extra={notices.BUNDLED_THIRD_PARTY + src: "Copyright (c) 1994, X\n"})
+                vendor(self.libs, {f"{lib}/LICENSE": "x", f"{lib}/{notices.HAND_NAME}": "Copyright (c) 1994, X\n"})
+        self.assertEqual(notices.bundled_problems(p, self.libs), [f"{lib}: {name} is missing"])
+        (self.libs / lib / name).write_text(marker + "gone\nthe paragraphs\n")
+        self.assertEqual(notices.bundled_problems(p, self.libs), [])
+        (self.libs / lib / name).write_text("the paragraphs\n")
+        self.assertIn("no longer opens with", notices.bundled_problems(p, self.libs)[0])
+
     def test_comment_markers_and_whitespace_do_not_matter(self):
         self.assertEqual(notices.normalise(" * a  b\n *   * c\n */"), "a b c")
 
@@ -255,6 +268,12 @@ class ThisRepo(unittest.TestCase):
     def test_every_bundled_library_has_vendored_texts_at_the_tarball_s_source_id(self):
         for p in notices.shipped(notices.cargo_metadata()):
             self.assertEqual(notices.bundled_problems(p, notices.REPO / notices.LICENSES), [], p["name"])
+
+    def test_the_notices_print_the_postgresql_license_beside_libpg_query_s_lines(self):
+        text = (notices.REPO / "THIRD-PARTY-NOTICES.txt").read_text()
+        self.assertIn("libpg_query: SOURCE-NOTICE-TERMS", text)
+        self.assertIn("Permission to use, copy, modify, and distribute this software", text)
+        self.assertIn("Portions Copyright (c) 1996-2017, PostgreSQL Global Development PGGroup", text)
 
     def test_no_shipped_crate_lacks_an_expression(self):
         for p in notices.shipped(notices.cargo_metadata()):

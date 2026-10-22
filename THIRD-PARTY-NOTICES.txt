@@ -264,8 +264,10 @@ binary (libduckdb-sys, MIT) holds the libraries below under its
 third_party directory. Every directory is listed, whether or not it is
 compiled in, with the license files DuckDB's repository holds for it at
 that tag; a notice in a library's source that its LICENSE omits is
-marked SOURCE-NOTICE. mbedtls is offered under Apache-2.0 OR
-GPL-2.0-or-later and is taken here under Apache-2.0.
+marked SOURCE-NOTICE, and a license text no source carries, copied by
+hand from the license's site, opens with Hand-vendored. mbedtls is
+offered under Apache-2.0 OR GPL-2.0-or-later and is taken here under
+Apache-2.0.
 
 ------------------------------------------------------------------------
 brotli: LICENSE
@@ -784,6 +786,32 @@ libpg_query: SOURCE-NOTICE
 
 Portions Copyright (c) 1996-2017, PostgreSQL Global Development PGGroup
 Portions Copyright (c) 1994, Regents of the University of California
+
+------------------------------------------------------------------------
+libpg_query: SOURCE-NOTICE-TERMS
+------------------------------------------------------------------------
+
+Hand-vendored from https://www.postgresql.org/about/licence/ (fetched
+2026-10-22), not from DuckDB's repository or the tarball: libpg_query's source
+carries the "Portions Copyright" lines (SOURCE-NOTICE, above) and not the
+paragraphs the PostgreSQL License asks to accompany them, which follow.
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose, without fee, and without a written agreement
+is hereby granted, provided that the above copyright notice and this
+paragraph and the following two paragraphs appear in all copies.
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
+ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO
+PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 ------------------------------------------------------------------------
 lz4: LICENSE
