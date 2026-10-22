@@ -78,9 +78,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **M14's Publish is untried against GitHub.** It uploads assets with `curl` to
-  `uploads.github.com` by the draft's id, not with `gh release upload`, which
-  finds a draft by tag, and no run has exercised the POST's fields or the
-  upload. Reconsidering changes whether `v0.1.0-rc.3` is pushed before
-  re-tagging `v0.1.0`, which would otherwise be the first run of it.
