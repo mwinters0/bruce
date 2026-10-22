@@ -26,6 +26,24 @@ so the box stays empty.
 - **Ticking 6.3** is the change after the tag publishes: check the published
   release's assets against the recipe, then tick the box.
 
+## `v0.1.0-rc.2`, checked
+
+[Run 39793421276](https://github.com/mwinters0/bruce/actions/runs/39793421276)
+passed, the first static build by the runner: "Build" logged `newest glibc
+symbol: GLIBC_2.38` and an `ldd` of `libm`, `libc` and the loader only. It took
+14m22s against rc.1's 9m40s, during a GitHub Actions incident that also left
+the run shown in progress for about 25 minutes after its last step. The
+release is a prerelease with the two assets; the archive is 19,988,532 bytes,
+the binary 60,829,584.
+
+The README's recipe, with `tag=v0.1.0-rc.2`, then `bruce --version` and `bruce
+crawl http://127.0.0.1:8765/whole/` over `fixtures/antora/pages`, printed
+`bruce 0.1.0` and `run 1: 40 targets, 7 pages, no sitemap` with exit 0 in
+`debian:trixie` (after `curl` and `ca-certificates`), `fedora:44` and
+`fedora-minimal:42`. In `fedora-minimal:42` the recipe first failed at `tar
+xzf`, the image having neither `tar` nor `gzip`, so the README names the
+recipe's tools. Script and logs: `runs/release-rc2/`.
+
 ## Negative results
 
 - **No quickstart claim about aarch64, Alpine's workaround or a CA bundle

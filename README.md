@@ -30,6 +30,9 @@ sha256sum -c $asset.tar.gz.sha256
 tar xzf $asset.tar.gz        # $asset/bruce, with the licenses and third-party notices
 ```
 
+- The recipe needs `curl`, `sha256sum`, `tar` and `gzip`. Minimal images lack
+  some: `fedora-minimal` has no `tar` or `gzip` (`microdnf install tar gzip`),
+  and a bare `debian:trixie` has no `curl`.
 - The binary is `x86_64-unknown-linux-gnu`, built on Debian 13 (Trixie). Its
   only library is glibc, and it needs 2.41 or newer: it runs on Debian 13,
   Fedora 42 and anything newer, and not on Alpine (musl). There is no aarch64
