@@ -173,8 +173,9 @@ Rejected: deduplicated links with a count, which is smaller but loses the raw hr
 unresolvable href, no link row (reported nowhere) or a crawl-time `links.outcome` and no target.
 
 ### D43 A DB records its schema version, and `bruce` refuses a DB of another version
-A `meta` table holds `schema_version`, and the refusal names both versions. Before a release every
-DB is ours and disposable, so migrations wait for the first release. Views are outside the
+A `meta` table holds `schema_version`, and the refusal names both versions. A 0.x release migrates no
+DB: a schema change is named in its release notes and the user starts a new DB, the old binary still
+reading the old one, so migrations wait for a release that promises them. Views are outside the
 version: `Store::install` replaces each at every open, so a changed view needs no bump and refuses no
 baseline. Rejected: recreating on mismatch, which silently destroys the history D2 keeps; migrations
 from day one, for no user; a one-off script rewriting an old DB, a migration in all but name, evidence
@@ -448,12 +449,14 @@ which profiles and D33's rules want. Rejected: html5gum (2 crates to lol_html's 
 open-element stack and a selector matcher to write; a governor limiter per host, rebuilt as a host's rate changes.
 Evidence: `historical/initial.md`, "Existing tools"; `cargo bench` in `spikes/tokenizer/` at b436db8, `runs/tokenizer-spike/`.
 
-### D23 DuckDB is bundled; distribution is a release binary on the forge
+### D23 DuckDB is bundled; distribution is a release binary on GitHub
 The `duckdb` crate's `bundled` feature makes a self-contained binary that a CI job in the
-Fedora-minimal docs image fetches in one step. Rust is pinned in `mise.toml`. Rejected for now:
-container image, RPM. Its cargo tasks sit beside `check`, which runs the same commands with its own
-flags. Rejected: `check` calling the tasks, which would make `mise run fmt` stop writing or lose
-the check's summaries.
+Fedora-minimal docs image fetches in one step. Rust is pinned in `mise.toml`, whose cargo tasks sit
+beside `check`, which runs the same commands with its own flags. A `v*` tag builds the binary in a
+`debian:trixie` container, glibc 2.41 its floor (Fedora 42 and later meet it), and publishes it at
+`mwinters0/bruce`'s releases, immutable once published. Rejected: `check` calling the tasks, which
+would make `mise run fmt` stop writing or lose the summaries; F44's glibc, shutting out Trixie and F42; static musl, DuckDB's C++ being untried there; a release built from a maintainer's tree; the Fedora forge, whose policy admits Fedora software only; for now, a container image, RPM.
+Code: `.github/workflows/release.yml`. Evidence: `scripts/workflows.py`, the workflow's glibc check.
 
 ### D45 TLS is rustls on ring and DNS is hickory's, so a failure arrives typed
 reqwest's default `rustls` feature builds aws-lc-rs, a C build, against D23's one self-contained

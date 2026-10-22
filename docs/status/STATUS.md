@@ -36,6 +36,7 @@ three-component Antora site, the Fedora UI bundle and seven built pages, which
 `mise run e2e` rebuilds and then crawls, exports and runs `check-dir` over, asserting
 the gate's exit status and sections.
 The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball.
+`.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and publishes the archive on GitHub (D23); `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
 
 ## P6 progress
 
@@ -57,6 +58,10 @@ The spec is [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md).
   archive of binary, notices and licenses with its sha256, `gh release` draft,
   upload and publish; the no-third-party-actions standing rule and its check;
   D23 and D43 amended. Closes on `v0.1.0-rc.1` built and run on Trixie and F44.
+  Landed: the workflow, rehearsed by hand in `debian:trixie`, its check
+  (`scripts/workflows.py`), the rule and the amended D23 and D43. Remains: the
+  tag push, the run, and the published asset checked and run on Trixie and F44.
+  Notes: [`../wip/roadmap-P6.2-release-workflow-notes.md`](../wip/roadmap-P6.2-release-workflow-notes.md).
 - [ ] **6.3** `v0.1.0`, and the README's quickstart: where the binary is, its
   glibc floor, and that a 0.x release migrates no DB.
 
@@ -73,3 +78,13 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **The release binary links `libstdc++` and `libgcc_s` dynamically (6.2).**
+  D23 calls the binary self-contained, and `ldd` on the Trixie build shows both
+  libraries. The call: ship it so, since Trixie, `fedora:44` and
+  `fedora-minimal:42` (docs-fp-o's image) all carry them and each ran the
+  binary. Reconsidering means building with `-static-libstdc++ -static-libgcc`
+  (untried, DuckDB's C++ unlinked statically on the pinned toolchain) so the
+  binary needs only glibc, at the cost of a larger file and a build flag.
+  [`../wip/roadmap-P6.2-release-workflow-notes.md`](../wip/roadmap-P6.2-release-workflow-notes.md),
+  "Negative results".

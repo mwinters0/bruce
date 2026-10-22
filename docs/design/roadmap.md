@@ -65,6 +65,11 @@ A standing rule is added only with the maintainer, and carries its check.
   `../manual/config.md`'s `Key | Default | Meaning` tables, its default
   stated, and no row for a key the config does not read. Check:
   `config::tests::every_key_the_config_reads_is_in_the_manual_with_its_default`.
+- **No workflow uses a third-party action**: every step under
+  `.github/workflows/` is a command in the job's container, a checkout
+  included, and what an action would give is built from commands. Check:
+  `scripts/workflows.py`, which fails on a `uses:` (`mise run check` runs its
+  tests over the real workflows).
 
 ## P6 — Release
 

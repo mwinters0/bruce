@@ -1,0 +1,112 @@
+# A release: the binary built from a `v*` tag in a Debian Trixie container, so
+# its glibc floor is Trixie's (D23), archived with the notices and licenses,
+# and published on GitHub. No step uses an action (`roadmap.md`, "Standing
+# rules"): each is a command in the container, and `scripts/workflows.py`
+# fails on a `uses:`. `uv run workflows.py script release.yml` prints the steps
+# as one shell script, to run in a `debian:trixie` container by hand.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Install the build tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            binutils build-essential ca-certificates curl gh git
+
+      - name: Check out the tag
+        run: |
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          git -c "http.extraheader=Authorization: Basic $auth" clone --depth 1 \
+            --branch "$GITHUB_REF_NAME" \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" src
+          # A tag moved after the push is not the commit this run was started for.
+          test "$(git -C src rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Check the tag against the crate
+        working-directory: src
+        run: |
+          case $GITHUB_REF_NAME in
+            v[0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "$GITHUB_REF_NAME is not v<major>.<minor>.<patch>[-<pre>]"; exit 1 ;;
+          esac
+          crate=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
+          base=${GITHUB_REF_NAME#v}
+          base=${base%%-*}
+          if [ "$base" != "$crate" ]; then
+            echo "$GITHUB_REF_NAME is not a release of Cargo.toml's $crate"
+            exit 1
+          fi
+
+      - name: Install the pinned Rust
+        working-directory: src
+        run: |
+          rust=$(sed -n 's/^rust = { version = "\([^"]*\)".*/\1/p' mise.toml)
+          test -n "$rust"
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
+            sh -s -- -y --profile minimal --default-toolchain "$rust"
+
+      - name: Build
+        working-directory: src
+        run: |
+          . "$HOME/.cargo/env"
+          cargo build --release --locked
+          bin=target/release/bruce
+          "$bin" --version
+          # The floor D23 promises: no symbol newer than Trixie's glibc, 2.41.
+          newest=$(objdump -T "$bin" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)
+          echo "newest glibc symbol: $newest"
+          ldd "$bin"
+          test "$(printf '%s\n' GLIBC_2.41 "$newest" | sort -V | tail -n 1)" = GLIBC_2.41
+
+      - name: Archive
+        working-directory: src
+        run: |
+          name=bruce-$GITHUB_REF_NAME-x86_64-unknown-linux-gnu
+          mkdir -p "dist/$name"
+          cp target/release/bruce THIRD-PARTY-NOTICES.txt LICENSE-MIT LICENSE-APACHE "dist/$name/"
+          epoch=$(git log -1 --format=%ct)
+          cd dist
+          # The same tree archives to the same bytes.
+          tar --sort=name --owner=0 --group=0 --numeric-owner \
+            --mtime="@$epoch" -cf - "$name" |
+            gzip -n -9 > "$name.tar.gz"
+          sha256sum "$name.tar.gz" > "$name.tar.gz.sha256"
+          cat "$name.tar.gz.sha256"
+          tar -tzf "$name.tar.gz"
+
+      # Releases are immutable once published, so the draft carries both assets
+      # before it is published, and a draft a failed run left is replaced.
+      - name: Publish
+        working-directory: src/dist
+        run: |
+          export GH_REPO=$GITHUB_REPOSITORY
+          name=bruce-$GITHUB_REF_NAME-x86_64-unknown-linux-gnu
+          case $GITHUB_REF_NAME in *-*) pre=--prerelease ;; *) pre= ;; esac
+          drafts() {
+            gh api --paginate "repos/$GITHUB_REPOSITORY/releases" \
+              --jq '.[] | select(.draft and .tag_name == env.GITHUB_REF_NAME) | .id'
+          }
+          stale=$(drafts)
+          for id in $stale; do
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/$id"
+          done
+          gh release create "$GITHUB_REF_NAME" --draft --verify-tag $pre \
+            --title "$GITHUB_REF_NAME" --generate-notes \
+            --notes "A 0.x release migrates no database: a schema change is named here, and the new binary starts a new one." \
+            "$name.tar.gz" "$name.tar.gz.sha256"
+          id=$(drafts)
+          test "$(echo "$id" | wc -w)" = 1
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/$id" -F draft=false

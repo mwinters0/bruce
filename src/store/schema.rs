@@ -4,7 +4,7 @@
 //! bulk tables, which an appender would pay to check for nothing.
 
 /// The version this build writes and reads (D43). A schema change bumps it;
-/// before a release no migration exists (D43).
+/// a 0.x release migrates no database (D43).
 pub const SCHEMA_VERSION: u32 = 4;
 
 /// The `meta` key holding [`SCHEMA_VERSION`].
