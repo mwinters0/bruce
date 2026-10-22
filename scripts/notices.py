@@ -16,11 +16,11 @@ with its expression and its repository, and says so.
 DuckDB is bundled (D23): `libduckdb-sys` compiles a C++ source tree that holds
 libraries of its own under `third_party/`, and its tarball ships none of their
 license texts. The file prints the texts of **every** `third_party/` directory
-the tarball holds, whether or not it is compiled in (the P6 spec, "`bruce` is
-MIT OR Apache-2.0, and ships its dependencies' notices"), from
+the tarball holds, whether or not it is compiled in (D60), from
 `licenses/duckdb/`: the `LICENSE*`, `LICENCE*`, `COPYING*`, `NOTICE*` and
-`AUTHORS*` files DuckDB's repository holds at the tag the tarball names, vendored by `--refresh-duckdb` and by it
-alone, so generating and checking stay offline; plus `SOURCE-NOTICE`, a notice
+`AUTHORS*` files DuckDB's repository holds at the tag the tarball names,
+vendored by `--refresh-duckdb` and by it alone, so generating and checking
+stay offline; plus `SOURCE-NOTICE`, a notice
 a library's source carries and its LICENSE omits, vendored by hand from the
 tarball's source file (`HAND_VENDORED`); plus a text the source does not carry
 at all, copied by hand from the license's own site (`HAND_TEXTS`). The check

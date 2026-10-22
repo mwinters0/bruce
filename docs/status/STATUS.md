@@ -35,39 +35,14 @@ pages, chosen and saved by `scripts/fixtures.py`, and `fixtures/antora/`, a
 three-component Antora site, the Fedora UI bundle and seven built pages, which
 `mise run e2e` rebuilds and then crawls, exports and runs `check-dir` over, asserting
 the gate's exit status and sections.
-The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball.
+The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball (D60).
 `.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
-
-## P6 progress
-
-The spec is [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md).
-
-- [x] **6.1** License and notices: `MIT OR Apache-2.0`, both texts and
-  `Cargo.toml`'s `license`, and the third-party notices file generated from
-  `Cargo.lock`. Notes: [`../wip/roadmap-P6.1-license-notes.md`](../wip/roadmap-P6.1-license-notes.md).
-- [x] **6.1.1** DuckDB's bundled libraries' license texts in the notices, every
-  `third_party/` directory the tarball holds, mbedtls under Apache-2.0, and
-  each MPL-2.0 crate's exact source. Notes:
-  [`../wip/roadmap-P6.1.1-bundled-licenses-notes.md`](../wip/roadmap-P6.1.1-bundled-licenses-notes.md).
-- [x] **6.1.2** libpg_query's PostgreSQL License paragraphs, hand-vendored from
-  postgresql.org beside the two copyright lines of its `SOURCE-NOTICE`, marked
-  as hand-vendored and printed in the notices; the drift check does not hold
-  them verbatim. Notes:
-  [`../wip/roadmap-P6.1.2-postgresql-license-notes.md`](../wip/roadmap-P6.1.2-postgresql-license-notes.md).
-- [x] **6.2** The release workflow: a `debian:trixie` build on a `v*` tag, the
-  archive of binary, notices and licenses with its sha256, a draft made, filled
-  and published by the id its create returns; the no-third-party-actions standing rule and its check;
-  D23 and D43 amended. `v0.1.0-rc.1` built, published, downloaded and run on
-  Trixie and F44. Notes: [`../wip/roadmap-P6.2-release-workflow-notes.md`](../wip/roadmap-P6.2-release-workflow-notes.md).
-- [x] **6.3** `v0.1.0`, and the README's quickstart: where the binary is, its
-  glibc floor, and that a 0.x release migrates no DB. `v0.1.0` is published,
-  and the quickstart's recipe passes against its assets on Trixie and F44.
-  Notes: [`../wip/roadmap-P6.3-v0.1.0-notes.md`](../wip/roadmap-P6.3-v0.1.0-notes.md).
 
 ## Not started
 
-Every other phase in [`../design/roadmap.md`](../design/roadmap.md)'s index.
-P9 is specified and waits for P8; P7 and P8 have not been grilled.
+No phase is current. Every phase in
+[`../design/roadmap.md`](../design/roadmap.md)'s index not `Complete` or
+`Struck`: P9 is specified and waits for P8; P7 and P8 have not been grilled.
 
 ## Decisions worth another look
 

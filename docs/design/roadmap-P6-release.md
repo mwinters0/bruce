@@ -2,8 +2,8 @@
 
 What P6 does and why, settled in its grilling on 2026-10-21, which drained
 its inbox, and in the split the same day that gave the deployment guide to P9
-([`roadmap-P9-deployment.md`](roadmap-P9-deployment.md)). The decisions are
-in [`../design/decisions.md`](../design/decisions.md) and are cited here,
+([`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md)). The decisions are
+in [`decisions.md`](decisions.md) and are cited here,
 never restated.
 
 ## Intent
@@ -37,9 +37,9 @@ Rejected: migrations from the first release.
 Settled 2026-10-21 (maintainer). **A release is published on GitHub,
 `mwinters0/bruce`**, at `releases/download/<tag>/<asset>`; D23's "on the
 forge" is amended by the release slice. The forge's usage policy admits
-Fedora-specific software only (`roadmap-P9-deployment.md`, "Facts the
+Fedora-specific software only (`../wip/roadmap-P9-deployment.md`, "Facts the
 grilling found"), and a content repo's CI fetches the binary from the
-deployment anyway (`roadmap-P9-deployment.md`, "CI fetches the binary from
+deployment anyway (`../wip/roadmap-P9-deployment.md`, "CI fetches the binary from
 beside the baseline"). Rejected: a Fedora forge org, an Infra ticket and a
 ruling on whether `bruce` is Fedora software.
 
@@ -118,7 +118,7 @@ every step is a command in the job's container, a checkout included, and what
 an action would give is built from commands. A script test fails on any
 `uses:` under `.github/workflows/`; P9 extends it to the workflow the guide
 tags. The slice that adds the first workflow adds the rule to
-`../design/roadmap.md`'s "Standing rules" with that check, a rule landing
+`roadmap.md`'s "Standing rules" with that check, a rule landing
 with its check.
 
 ## Prereleases while iterating, `v0.1.0` at the close
@@ -133,7 +133,7 @@ Settled 2026-10-22 (maintainer). **`v0.1.0-rc.1` is tagged with the binary
 linking `libstdc++` and `libgcc_s` dynamically, and a static build
 (`-static-libstdc++ -static-libgcc`) is tried before `v0.1.0`**; ship static or
 dynamic is decided on what the attempt finds, and D23's "self-contained" with
-it. The attempt is out-of-band M13 (`../design/out-of-band.md`), ahead of 6.3.
+it. The attempt is out-of-band M13 (`out-of-band.md`), ahead of 6.3.
 Reasoning: [`../status/history/2026-10-22.md`](../status/history/2026-10-22.md),
 "The `libstdc++` and `libgcc_s` call, answered".
 

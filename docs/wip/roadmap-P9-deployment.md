@@ -2,7 +2,7 @@
 
 What P9 does and why, settled in P6's grilling on 2026-10-21, which drained
 P6's inbox, and given to P9 when the release was split from it the same day
-([`roadmap-P6-release.md`](roadmap-P6-release.md)). The decisions are in
+([`../design/roadmap-P6-release.md`](../design/roadmap-P6-release.md)). The decisions are in
 [`../design/decisions.md`](../design/decisions.md) and are cited here, never
 restated.
 
@@ -20,7 +20,7 @@ designed for a site of many locale roots, not for one.
 Settled 2026-10-21 (maintainer). **P9 is specified and waits for P8**, the
 run-history reports. P8 is likely to change the schema (its inbox asks
 whether a run records its hash scope), and a 0.x release migrates nothing
-(`roadmap-P6-release.md`, "The first release promises no migrations"), so a
+(`../design/roadmap-P6-release.md`, "The first release promises no migrations"), so a
 deployment before P8 would discard its history at the next release. P8 needs no
 deployment, its evidence being local en-US crawls, and nothing P9 builds
 serves anyone before a deployment exists. When P9 is sliced, the grilling
@@ -102,7 +102,7 @@ locales, nearly all one host.
 Settled 2026-10-21 (maintainer). **The guide's CI example is a workflow
 that runs on Forgejo Actions, the production target, and on GitHub Actions**,
 where the maintainer runs Fedora's docs CI while iterating in development.
-**It uses no third-party action** (`roadmap-P6-release.md`, "No
+**It uses no third-party action** (`../design/roadmap-P6-release.md`, "No
 third-party action, in any workflow, is a standing rule"), and P9 extends that rule's check to the
 workflow the guide tags. Rejected: a bare shell script each repo wraps
 itself, which leaves every repo writing the workflow anyway.
@@ -175,7 +175,7 @@ en-US one. Rejected: 69 roots, a list kept by hand.
 ## Prereleases while the deployment is stood up
 
 Settled 2026-10-21. **The release P9 needs is tagged `-rc.N` while the dev
-deployment is stood up**, as P6's are (`roadmap-P6-release.md`,
+deployment is stood up**, as P6's are (`../design/roadmap-P6-release.md`,
 "Prereleases while iterating, `v0.1.0` at the close"), and in full when P9
 closes.
 

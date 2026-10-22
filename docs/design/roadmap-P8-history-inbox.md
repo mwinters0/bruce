@@ -59,3 +59,17 @@ by destination").
 - **Origin.** P6's grilling, 2026-10-21 (`../wip/roadmap-P9-deployment.md`,
   "The guide's hash scope is the profile's region"). Contingent on the nav
   being inside no hashed region.
+
+## Nothing puts a schema change into a release's notes
+
+- **Fact.** D43 and the README promise that a release changing the schema
+  says so in its notes, but `.github/workflows/release.yml`'s Publish gives
+  every release the same body, with GitHub's generated notes beneath it, and
+  publishes it unattended; nothing reads the schema version or asks for a
+  line.
+- **Why P8 cares.** P8 is the phase likely to change the schema (D43), so
+  the release carrying it is the first to need the line. P8 decides how it
+  gets there: a body the tag's tree carries, a check against the schema
+  version, or a hand edit after Publish.
+- **Origin.** P6's wrap repoint, 2026-10-22, the release tooling's blind
+  read. Contingent on P8 changing the schema.

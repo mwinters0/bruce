@@ -11,7 +11,7 @@ frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' 
 **Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
 phase index.
 
-<!-- decision-watermark: D59 -->
+<!-- decision-watermark: D60 -->
 
 ## Scope and modes
 
@@ -457,6 +457,15 @@ glibc 2.41 its floor (Fedora 42 and later meet it), `libstdc++` and `libgcc_s` l
 its only library, and publishes it at `mwinters0/bruce`'s releases, immutable once published.
 Rejected: `check` calling the tasks, which would make `mise run fmt` stop writing or lose the summaries; F44's glibc, shutting out Trixie and F42; static musl, DuckDB's C++ being untried there; a release built from a maintainer's tree; the Fedora forge, whose policy admits Fedora software only; for now, a container image, RPM; `-static-libstdc++` as a linker argument, with or without `-C linker=g++`, a no-op because rustc names `-lstdc++` and `-lgcc_s` itself (hence the `-L native=` directory of static ones).
 Code: `.github/workflows/release.yml`. Evidence: `scripts/workflows.py`, the workflow's glibc and `ldd` checks.
+
+### D60 `bruce` is `MIT OR Apache-2.0`, and a release carries every notice its binary owes, made offline
+`LICENSE-MIT` names the holder once, its year first publication. `THIRD-PARTY-NOTICES.txt` is committed, generated from `Cargo.lock`
+and from the license files of every `third_party/` directory DuckDB's tarball holds, compiled in or not, vendored at the tarball's
+source id so generating and the drift check stay offline. mbedtls is taken under Apache-2.0; an MPL-2.0 crate names its crates.io
+source (§3.2(a)); libpg_query's PostgreSQL License paragraphs, absent from its source, are copied from postgresql.org, unchecked.
+Rejected: `cargo about`, a tool to pin and fetch with no action; exactly the libraries linked, needing an include scan; fetching at
+generation, the network in `check`; `duckdb.cpp`'s trailer; a pointer to DuckDB's repository; `The bruce contributors`; a year range.
+Reopens: a DuckDB tag whose commit is not the tarball's source id. Code: `scripts/notices.py`. Evidence: `test_notices.ThisRepo`.
 
 ### D45 TLS is rustls on ring and DNS is hickory's, so a failure arrives typed
 reqwest's default `rustls` feature builds aws-lc-rs, a C build, against D23's one self-contained
