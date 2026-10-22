@@ -75,13 +75,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **The release binary links `libstdc++` and `libgcc_s` dynamically (6.2).**
-  D23 calls the binary self-contained, and `ldd` on the Trixie build shows both
-  libraries. The call: ship it so, since Trixie, `fedora:44` and
-  `fedora-minimal:42` (docs-fp-o's image) all carry them and each ran the
-  binary. Reconsidering means building with `-static-libstdc++ -static-libgcc`
-  (untried, DuckDB's C++ unlinked statically on the pinned toolchain) so the
-  binary needs only glibc, at the cost of a larger file and a build flag.
-  [`../wip/roadmap-P6.2-release-workflow-notes.md`](../wip/roadmap-P6.2-release-workflow-notes.md),
-  "Negative results".

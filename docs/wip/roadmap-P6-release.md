@@ -129,6 +129,14 @@ tag with a `-` suffix a GitHub prerelease, so `latest` never names one.
 Rejected: full releases from the start, each fix while iterating an
 immutable `v0.1.x`.
 
+Settled 2026-10-22 (maintainer). **`v0.1.0-rc.1` is tagged with the binary
+linking `libstdc++` and `libgcc_s` dynamically, and a static build
+(`-static-libstdc++ -static-libgcc`) is tried before `v0.1.0`**; ship static or
+dynamic is decided on what the attempt finds, and D23's "self-contained" with
+it. The attempt is out-of-band M13 (`../design/out-of-band.md`), ahead of 6.3.
+Reasoning: [`../status/history/2026-10-22.md`](../status/history/2026-10-22.md),
+"The `libstdc++` and `libgcc_s` call, answered".
+
 ## Facts the grilling found
 
 - **This machine's glibc is 2.44**, newer than Trixie's and F44's, so a
