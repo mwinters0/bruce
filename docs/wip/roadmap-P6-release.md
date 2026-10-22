@@ -66,6 +66,43 @@ third-party notices file generated from `Cargo.lock`** (DuckDB, bundled, is
 MIT; rustls and the rest Apache-2.0 or MIT), by `cargo about` or a script of
 our own under the no-third-party-actions rule. Nothing licensed it before.
 
+Settled 2026-10-22 (maintainer). **The holder is named once, in
+`LICENSE-MIT`'s `Copyright (c) 2026 Michael Winters`**: the author of every
+commit, a later contributor adding their own line. The year is first
+publication and is never bumped. No `authors` in `Cargo.toml`, no holder line
+in `LICENSE-APACHE` or a `NOTICE`, and the README names the two licenses and
+points at the files. Rejected: `The bruce contributors`, naming no legal
+person; a year range, upkeep with no legal effect.
+
+Settled 2026-10-22 (maintainer). **The notices carry the license text of every
+library DuckDB bundles**, since most of their terms require it beside a binary
+and the crate's `duckdb.tar.gz` ships none; a pointer to DuckDB's repository
+does not meet them. **The section covers every directory under the tarball's
+`third_party/`**, worded as what the bundled source holds, not what is
+compiled: over-crediting costs nothing, and it stays true across features and
+DuckDB bumps. Rejected: exactly the libraries linked, which needs a transitive
+include scan or a hand-kept list of the header-only ones. **mbedtls
+(`Apache-2.0 OR GPL-2.0-or-later`) is taken under Apache-2.0**, said in one line.
+**The texts are vendored in the repo** with the DuckDB source id they were
+taken at, fetched from DuckDB's repository at the tag the tarball names only by
+a deliberate refresh, so generating and checking the notices stay offline.
+Rejected: fetching at generation, which puts the network in `mise run check`;
+`libduckdb-src.zip`'s `duckdb.cpp` trailer, upstream's format and not a
+contract. **A notice a library's source carries and its LICENSE omits is
+vendored too**, verbatim from the tarball's source (hyperloglog's Redis BSD-3,
+libpg_query's PostgreSQL and Regents notices), and is refreshed by hand.
+**Each directory's license files are vendored**, `LICENSE*`, `COPYING*`,
+`NOTICE*` and `AUTHORS*` (tdigest's `NOTICES`, re2's `AUTHORS`). **The check
+fails on drift**: a vendored source id other than the tarball's, a
+`third_party/` directory without texts or a vendored one the tarball lost, and
+a hand-vendored notice no longer verbatim in its source file, comment markers
+and whitespace aside. A bump then cannot land with stale texts.
+**An MPL-2.0 crate's entry names its exact source**, the crates.io download of
+that version, unmodified (MPL-2.0 §3.2(a)); its repository URL names a branch,
+not what was built.
+Facts: [`../status/history/2026-10-22.md`](../status/history/2026-10-22.md),
+"6.1's unattended calls reviewed".
+
 ## No third-party action, in any workflow, is a standing rule
 
 Settled 2026-10-21 (maintainer). **No workflow uses a third-party action**:
