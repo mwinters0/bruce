@@ -4,39 +4,44 @@ What landed, per the P6 spec's "The release is Debian Trixie's glibc, built
 from the tag by a workflow": `.github/workflows/release.yml`, whose header
 comment says what it does; `scripts/workflows.py`, which fails on a `uses:` in
 any workflow and prints a workflow's steps as one shell script; the rule in
-`roadmap.md`'s "Standing rules"; and D23 and D43 amended. **The box is
-unticked**: the slice closes on a tag that has been pushed, built by the
-runner, published, downloaded, and run on Trixie and F44.
+`roadmap.md`'s "Standing rules"; and D23 and D43 amended. The slice closed on
+`v0.1.0-rc.1`, pushed, built by the runner, published, downloaded and run on
+Trixie and F44 (below).
 
 ## What the rest of 6.2 and 6.3 inherit
 
-- **The tag to push is `v0.1.0-rc.1`**, on a commit holding this slice. The
-  workflow refuses a tag that is not `v<x>.<y>.<z>[-<pre>]` or whose base is not
-  `Cargo.toml`'s `version` (0.1.0), and one moved since the push (`HEAD` is not
-  `GITHUB_SHA`). A `-` suffix makes a prerelease.
-- **What to check in the run**: every step green; "Build" printing `newest
-  glibc symbol:` at or under `GLIBC_2.41` (the rehearsal's was `GLIBC_2.38`);
-  the draft carrying both assets before it is published; the release a
-  prerelease. A rerun after a failure deletes the tag's draft and creates it
-  again; once published, a release is immutable and the next try is
-  `v0.1.0-rc.2`.
-- **Not exercised without a tag**: `gh release create`, the API delete and the
-  publishing `PATCH`, the runner's `container:` job, the clone with
-  `GITHUB_TOKEN`, and `permissions: contents: write` sufficing. The `drafts`
-  query was run read-only against the repo (no draft, exit 0). Debian's `gh` is
+- **The tag is `v<x>.<y>.<z>[-<pre>]` and its base must be `Cargo.toml`'s
+  `version`.** The workflow refuses any other, and one moved since the push
+  (`HEAD` is not `GITHUB_SHA`). A `-` suffix makes a prerelease. A rerun after a
+  failure deletes the tag's draft and creates it again; once published, a
+  release is immutable and the next try is `v0.1.0-rc.2`. Debian's `gh` is
   2.46.0, which has `--verify-tag` and `--generate-notes`.
+- **What to check in a run**: every step green; "Build" printing `newest glibc
+  symbol:` at or under `GLIBC_2.41`; the release a prerelease.
 - **The asset** is `bruce-<tag>-x86_64-unknown-linux-gnu.tar.gz` holding a
   directory of the same name with `bruce`, `THIRD-PARTY-NOTICES.txt`,
   `LICENSE-MIT` and `LICENSE-APACHE`, beside `<asset>.sha256` in `sha256sum`'s
   format. Archiving the same tree twice gave the same sha256 (a sorted tar with
   the commit's time, `gzip -n`), so a rebuild's archive differs only by the
   binary.
-- **Closing 6.2**, after the release is published: download both assets
-  (`gh release download v0.1.0-rc.1 -R mwinters0/bruce`), `sha256sum -c` the
-  file, extract it, and run `bruce --version` and a crawl of a local server in
-  `debian:trixie` (with `ca-certificates`, below) and `fedora:44`.
 - **6.3's README states** that `bruce` needs the system CA bundle even for
   an `http://` crawl, and links `libstdc++` and `libgcc_s` dynamically.
+
+## The release, checked
+
+[Run 39703334491](https://github.com/mwinters0/bruce/actions/runs/39703334491)
+passed; "Build" logged `newest glibc symbol: GLIBC_2.38`. The release is
+published, a prerelease, not a draft, with the two assets. Its downloaded
+assets are `runs/release-rc1/dl/` (the archive is 19.7 MB, the binary 60 MB).
+`sha256sum -c` passed; the archive holds the four files; the digest GitHub
+shows for the archive is the `.sha256` file's.
+
+`bruce --version` printed `bruce 0.1.0`, and `bruce crawl
+http://127.0.0.1:8765/whole/` (`fixtures/antora/pages` served by `python3 -m
+http.server`, `--net host`, rootful `nerdctl`, the archive mounted read-only)
+printed `run 1: 40 targets, 7 pages, no sitemap` and exited 0, in `debian:trixie`
+(after `apt-get install ca-certificates`), `fedora:44` and
+`registry.fedoraproject.org/fedora-minimal:42`. The three were identical.
 
 ## The rehearsal
 
