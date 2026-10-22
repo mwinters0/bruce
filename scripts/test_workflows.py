@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Unit tests for workflows.py, run with `uv run python -m unittest test_workflows`.
 
-Each test breaks exactly one thing and asserts the failure names it;
-`ThisRepo` holds the real workflows to the rule and to the parser.
+A test of a failure breaks exactly one thing and asserts the failure names
+it; `ThisRepo` holds the real workflows to the rule and to the parser.
 """
 
 from __future__ import annotations

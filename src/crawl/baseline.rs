@@ -95,8 +95,8 @@ impl Held {
     /// held: its first segment is a held component, and its second is a
     /// segment a held version of it is served at, or the component holds a
     /// version whose URLs name none (`site-invariants.md`, I16). A URL whose
-    /// second segment is no built page's is the baseline's, unless the
-    /// component's held version is a bare one.
+    /// second segment is neither a built page's nor a held version's own name
+    /// is the baseline's, unless the component's held version is a bare one.
     pub(super) fn holds(&self, prefix: &Url, url: &Url) -> bool {
         // `report::inverse::prefix` reads the same layout back from the stored run (D56).
         // deficiency: KD5 A component-version is held whole, so a component

@@ -29,7 +29,8 @@ command-line error.
 - **A baseline a kept run names.** A run that a kept run names as its baseline
   (a `check-dir` run's imported baseline) is kept too, under `--keep` and
   `--older-than` alike, so the gate over the kept run still finds it; its own
-  baseline is kept in turn. Such a run does not count toward `N`.
+  baseline is kept in turn. An imported baseline is a finished run, so one
+  among the `N` latest counts toward `N`; one older is kept without counting.
 - With `--keep N` and fewer than `N` finished runs, only the runs before the
   oldest finished one go; with no finished run, none does.
 - `--older-than` is not protected beyond the last attempt and the baselines: it deletes the

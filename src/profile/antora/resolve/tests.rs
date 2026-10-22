@@ -133,7 +133,7 @@ fn a_refspec_is_its_version_component_module_page_and_fragment() {
     assert_eq!(
         parse("ops:admin:page$x.adoc#"),
         None,
-        "a family before the module is not a page"
+        "a family after the module is not read (KD10)"
     );
     assert_eq!(
         parse("guide::page$install.adoc"),

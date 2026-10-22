@@ -30,8 +30,8 @@ fn an_out_file_is_required_and_the_rest_default() {
     assert!(parse(&["--out", "b", "--run", "x"]).is_err());
 }
 
-/// A database holding a finished run 1, an unfinished run 2, and a file in
-/// its directory to export to.
+/// A database holding a finished run 1 and an unfinished run 2, in a
+/// directory the caller exports into.
 fn dir_with_runs() -> (tempfile::TempDir, PathBuf) {
     let dir = tempfile::tempdir().unwrap();
     let db = dir.path().join("bruce.duckdb");

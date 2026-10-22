@@ -4,9 +4,11 @@ a workflow's steps printed as one shell script to run by hand.
 
 **No workflow uses an action** (`docs/design/roadmap.md`, "Standing rules"):
 every step is a command in the job's container, a checkout included. A
-`uses:` key anywhere in a workflow, a step's or a reusable workflow's, fails
-the check; a comment naming one does not. What an action would give is built
-from commands, so a step runs the same on a maintainer's machine.
+`uses:` key written as a block key, a step's or a job's (a reusable
+workflow), fails the check; a comment naming one does not, and nor does one
+in a flow mapping (`{uses: …}`), which no workflow here writes. What an action
+would give is built from commands, so a step runs the same on a maintainer's
+machine.
 
 `script` is that second half. A workflow's `run:` steps are joined, in order,
 each in a subshell with `set -e`, in its `working-directory` under
@@ -16,9 +18,12 @@ container before a tag is pushed. The runner supplies `GITHUB_REF_NAME`,
 caller sets what its steps use. `--skip` leaves a step out and `--before`
 stops ahead of one, each by name.
 
-The parser reads the subset the repo's workflows are written in: a `steps:`
-list whose steps carry `name:`, `working-directory:` and `run:` as a scalar or
-a `|` block. A step it cannot read is an error rather than a skipped step.
+The parser reads the subset the repo's workflows are written in: the first
+`steps:` list, whose steps carry `name:`, `working-directory:` and `run:` as a
+scalar or a `|` block; a later job's steps are not read. A step's other keys
+(`if:`, `shell:`, `env:`) are dropped, a nested mapping's keys read as the
+step's own. A step with no `run:`, a line that is no `key: value` and a folded
+block are errors.
 
 Usage:
 

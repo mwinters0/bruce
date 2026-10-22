@@ -90,6 +90,12 @@ pub(super) fn resolve(reference: &str, lookup: &dyn Lookup) -> Result<Option<Url
     let held = coordinates.clone();
     coordinates.extend([(MODULE, spec.module), (REL_PATH, spec.rel_path)]);
     let candidates = lookup.pages_with_facts(&coordinates)?;
+    // deficiency: KD18 Antora resolves a versionless refspec in the
+    // component's latest version alone (I21); this takes the latest version
+    // among the pages holding the module and path, so a page the latest lacks
+    // and an older version has resolves there, an `ok` where production's xref
+    // is unresolved. Choosing the version from the component's pages first,
+    // then the page in it or `named`'s URL, is the fix (D55).
     let page = match (spec.version, candidates.as_slice()) {
         (_, []) => named(&spec, &held, lookup)?,
         (Some(_), [page, ..]) | (None, [page]) => Some(page.clone()),
@@ -105,7 +111,8 @@ pub(super) fn resolve(reference: &str, lookup: &dyn Lookup) -> Result<Option<Url
 /// there: the component-version's prefix, read off a baseline page carrying
 /// its facts (`held` names them), then the module unless `ROOT` and the page
 /// without `.adoc`, an `index` dropped. `None` where the baseline holds no
-/// page of the component-version carrying a version fact. A version served
+/// page of the component-version carrying a version fact, or where the page
+/// [`newest`] picks gives no prefix (KD19). A version served
 /// under another name (the latest at a `latest_version_segment`, I5) is named
 /// under that segment, whether or not the refspec names the version (D57).
 fn named(
@@ -147,6 +154,12 @@ fn named(
 /// whatever it is, the version being served under another name (I5).
 fn prefix(page: &Url, component: &str, version: &str, elsewhere: bool) -> Option<Url> {
     let named = !matches!(version, "" | "master");
+    // deficiency: KD19 With a bare version and no `elsewhere`, the component's
+    // segment must be followed by a non-empty one, so a page at the
+    // component's root (`/ops/`) gives no prefix and `named` none, though
+    // `/ops/` is the prefix. Bare versions tie in `compare`, so the lookup's
+    // first page decides, and an xref to a page the baseline lacks stays
+    // `unresolved_xref` or not by row order.
     let raw: Vec<&str> = page.path_segments()?.collect();
     let at = segment_after_component(&raw, component, (!elsewhere && named).then_some(version))?;
     let mut url = page.clone();
@@ -157,7 +170,8 @@ fn prefix(page: &Url, component: &str, version: &str, elsewhere: bool) -> Option
 }
 
 /// The index of the first segment of `raw` that is `component` and, given
-/// `version`, followed by it; decoded, as Antora writes them escaped.
+/// `version`, followed by it, else followed by a non-empty segment; decoded,
+/// as Antora writes them escaped.
 fn segment_after_component(raw: &[&str], component: &str, version: Option<&str>) -> Option<usize> {
     let decoded = |s: &str| percent_decode_str(s).decode_utf8_lossy().into_owned();
     (0..raw.len()).find(|&i| {

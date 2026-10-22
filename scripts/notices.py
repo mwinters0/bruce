@@ -1,24 +1,25 @@
 #!/usr/bin/env python3
 """The third-party notices a release carries, generated from `Cargo.lock`.
 
-`THIRD-PARTY-NOTICES.txt` at the repository root names every crate linked
-into the release binary with its license expression, and prints each license
-text the crates ship. The set is the **normal-dependency closure** of `bruce`
-for `x86_64-unknown-linux-gnu`, the release's target, read from `cargo
+`THIRD-PARTY-NOTICES.txt` at the repository root names every crate the
+release binary is built from with its license expression, and prints each
+license text the crates ship. The set is the **normal-dependency closure** of
+`bruce` for `x86_64-unknown-linux-gnu`, the release's target, read from `cargo
 metadata --locked --offline`: a dev-dependency, a build-dependency and a
-crate only another platform pulls in are not in the binary, so they are not
-listed. A license text is each top-level `LICENSE*`, `LICENSE*`, `COPYING*`,
-`NOTICE*` or `UNLICENSE*` file of the crate's source; crates sharing one text
-share one entry. A crate that ships none is listed with its expression and its
-repository, and says so.
+crate only another platform pulls in are not listed. A proc-macro crate and
+what it pulls in are normal dependencies, so they are listed though compiled
+for the host and not linked. A license text is each top-level `LICENSE*`,
+`LICENCE*`, `COPYING*`, `NOTICE*` or `UNLICENSE*` file of the crate's source;
+crates sharing one text share one entry. A crate that ships none is listed
+with its expression and its repository, and says so.
 
 DuckDB is bundled (D23): `libduckdb-sys` compiles a C++ source tree that holds
 libraries of its own under `third_party/`, and its tarball ships none of their
 license texts. The file prints the texts of **every** `third_party/` directory
 the tarball holds, whether or not it is compiled in (the P6 spec, "`bruce` is
-MIT OR Apache-2.0, and ships its dependencies' notices"), from `licenses/duckdb/`:
-the `LICENSE*`, `COPYING*`, `NOTICE*` and `AUTHORS*` files DuckDB's repository
-holds at the tag the tarball names, vendored by `--refresh-duckdb` and by it
+MIT OR Apache-2.0, and ships its dependencies' notices"), from
+`licenses/duckdb/`: the `LICENSE*`, `LICENCE*`, `COPYING*`, `NOTICE*` and
+`AUTHORS*` files DuckDB's repository holds at the tag the tarball names, vendored by `--refresh-duckdb` and by it
 alone, so generating and checking stay offline; plus `SOURCE-NOTICE`, a notice
 a library's source carries and its LICENSE omits, vendored by hand from the
 tarball's source file (`HAND_VENDORED`); plus a text the source does not carry
@@ -112,8 +113,9 @@ def cargo_metadata(repo: Path = REPO) -> dict[str, Any]:
 
 
 def shipped(meta: dict[str, Any]) -> list[dict[str, Any]]:
-    """The packages linked into the binary: the root's normal-dependency
-    closure, the root excluded, sorted by name and version."""
+    """The packages the binary is built from: the root's normal-dependency
+    closure, proc-macro crates included, the root excluded, sorted by name
+    and version."""
     packages = {p["id"]: p for p in meta["packages"]}
     nodes = {n["id"]: n for n in meta["resolve"]["nodes"]}
     root = meta["resolve"]["root"]
@@ -271,7 +273,7 @@ def render(packages: Sequence[dict[str, Any]], libs_dir: Path | None = None) -> 
         "THIRD-PARTY NOTICES",
         "",
         "bruce is licensed MIT OR Apache-2.0 (LICENSE-MIT, LICENSE-APACHE). The",
-        "release binary links the crates below, each under the license named.",
+        "release binary is built from the crates below, each under the license named.",
         "Generated from Cargo.lock by scripts/notices.py; do not edit by hand.",
         "",
         RULE,

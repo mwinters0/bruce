@@ -2,7 +2,7 @@
 //!
 //! A run is a number, and every table but `meta` carries it, so a run goes by
 //! deleting its number from each. The rule picks which runs go; three things
-//! it never deletes are named on [`Rule`] and in [`Store::prune`].
+//! it never deletes are named in [`Store::prune`].
 
 use std::time::Duration;
 

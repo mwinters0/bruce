@@ -5,8 +5,8 @@ bruce crawl [URL] [--config FILE] [--db FILE]
 ```
 
 Crawls a site and adds one **run** to a database: every URL the site's pages
-name and each sitemap entry in a root's scope, whether it answered, and each page's title, anchors and
-links. A run does not judge links; the reports read that from the database.
+name and each sitemap entry in a root's scope that `skip` leaves, whether it answered, and each page's
+title, anchors and links (an allowlisted page's anchors alone). A run does not judge links; the reports read that from the database.
 
 ## Arguments
 

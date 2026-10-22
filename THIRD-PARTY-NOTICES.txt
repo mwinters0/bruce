@@ -1,7 +1,7 @@
 THIRD-PARTY NOTICES
 
 bruce is licensed MIT OR Apache-2.0 (LICENSE-MIT, LICENSE-APACHE). The
-release binary links the crates below, each under the license named.
+release binary is built from the crates below, each under the license named.
 Generated from Cargo.lock by scripts/notices.py; do not edit by hand.
 
 ========================================================================

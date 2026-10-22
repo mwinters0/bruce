@@ -72,4 +72,22 @@ roadmap's phase index.
   how a run learns the served latest, would promote it.
   Detail: `src/crawl/baseline.rs`
 
-<!-- deficiency-watermark: KD17 -->
+- **KD18** — A versionless xref out of the build resolves to an older
+  version's page where the component's latest lacks it, so the gate passes a
+  link production's Antora leaves unresolved. **(c) unowned**: a content repo
+  linking without a version to a page a later version removed would promote
+  it. Detail: `src/profile/antora/resolve.rs`
+
+- **KD19** — Into a component whose version is bare, an xref to a page the
+  baseline lacks stays `unresolved_xref` when the lookup's first page of the
+  component is its root page, by row order alone. **(c) unowned**: such an
+  xref in a content repo's CI would promote it.
+  Detail: `src/profile/antora/resolve.rs`
+
+- **KD20** — `report introduced` and `report inverse` with `--top N` count
+  the breakage already in the baseline, the inverse links, and their inbound
+  pages and components over the N rows they print. **(c) unowned**: anyone
+  reading those counts under `--top` would promote it.
+  Detail: `src/report/gate.rs`
+
+<!-- deficiency-watermark: KD20 -->

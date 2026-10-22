@@ -107,7 +107,7 @@ decisions each carries are cited in its module's doc.
 
 **Not in one place.** I16's URL layout, a component-version's prefix in a
 page's URL, is read in `crawl/baseline.rs` (`Held::record`, `Held::holds`), `report/inverse.rs`
-(`prefix`) and `profile/antora/resolve.rs` (`prefix`); a shared reader sits
+(`prefix`) and `profile/antora/resolve.rs` (`prefix`); a shared reader would sit
 below `profile` (D39).
 
 ## Forge edit-URL shapes

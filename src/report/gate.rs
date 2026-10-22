@@ -154,6 +154,11 @@ fn section(title: &str, table: &Table, rows: bool) -> String {
 
 /// The gate over `run`, the CI run, and the baseline run it names.
 pub(super) fn gate(conn: &Connection, run: RunId, request: &Request) -> Result<Gate, Error> {
+    // deficiency: KD20 Each section is fetched under `--top`'s limit and its
+    // counts are taken from the rows fetched, so `report introduced --top N`
+    // and `report inverse --top N` count the breakage already in the
+    // baseline, the inverse links and their inbound pages and components over
+    // N rows at most; `stats` counts before it cuts. `check-dir` sets no limit.
     let (baseline, baseline_date) = baseline(conn, run)?;
     Ok(Gate {
         run,

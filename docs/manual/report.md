@@ -24,7 +24,7 @@ refused access (a timeout, a 5xx after retries, a 401, 403 or 429).
 | `--repo REPO` | none | Only pages whose source file is in this repo, as the page records it (`https://forge.fedoraproject.org/fedora/docs`); for `broken`, `errors`, `stats`, `redirects`, `diff`, `introduced` and `inverse`, the links on those pages (for `inverse`, the baseline's pages outside the build). |
 | `--fact KEY=VALUE` | none | Only pages with this fact, such as `antora.component=fedora-docs`, or the links on them. Repeat to require several. |
 | `--kind KIND` | `anchor`; every kind for `introduced` and `inverse` | Count links of this kind. Repeat to add kinds; `all` is every kind. `sitemap` and `unlisted` ignore it. |
-| `--top N` | all rows | Print the first N rows, in the report's order. |
+| `--top N` | all rows | Print the first N rows, in the report's order. `introduced`'s and `inverse`'s counts are then counted over those rows alone. |
 | `--format` | `text` | `text`, or `json`. |
 
 The kinds are `anchor` (`<a>` and `<area>`), `image`, `canonical`,
@@ -194,5 +194,5 @@ outcome. Each holds every run, so filter on `run_id`.
 | Status | Meaning |
 |---|---|
 | 0 | The report ran. Finding broken links does not change this. |
-| 1 | The database could not be read, or has no such run, `diff` has no finished run to compare, or an `introduced` or `inverse` run names no baseline; the message says which. |
+| 1 | The database could not be read, or has no such run or no finished one, `diff` has no finished run to compare, the run a bare report would read is the baseline of a later unfinished `check-dir` run, or an `introduced` or `inverse` run names no baseline; the message says which. |
 | 2 | The command line was not understood. |

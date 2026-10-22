@@ -123,8 +123,8 @@ fn empty_baseline(path: &Path) {
     store.finish_run(run).unwrap();
 }
 
-/// A build of three pages under `https://x.test/docs/sub/`, whose root in
-/// the configuration is `https://x.test/docs/`.
+/// A build of three pages, which a test serves under `<base>/docs/sub/` with
+/// the configuration's root at `<base>/docs/`.
 fn build(dir: &Path) {
     let page = |at: &str, body: &str| {
         let path = dir.join(at);

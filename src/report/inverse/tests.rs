@@ -43,8 +43,9 @@ fn anchor(store: &Store, run: u64, id: u64, name: &str) {
 }
 
 /// Run 1 is the baseline; run 2 a CI run over a build of the component
-/// `handbook` (no version) and of `named` at `1.0`. Page 1, in `other`, and page
-/// 20, in `named` at 2.0, are outside the build and link to:
+/// `handbook` (no version) and of `named` at `1.0`. Page 1, in `other`, is
+/// outside the build and links to every target below; page 20, in `named` at
+/// 2.0, is outside it too and links to 3 and 7:
 ///
 /// - 2, a `handbook` page the build still has, at `#lost` (an anchor run 2
 ///   lacks) and at `#keep` (one it has);
@@ -128,7 +129,7 @@ fn store() -> Store {
         link(&store, 1, src, to, fragment, kind);
     }
     // The build: `handbook` has the page 2 and a `named/1.0` page, and the
-    // image 4 is a built page's `not_built`.
+    // image 4, which a built page names, answers `broken_url`.
     put(&store, 2, 2, "handbook/kept/", "ok", "local", true);
     put(&store, 2, 21, "named/1.0/kept/", "ok", "local", true);
     put(

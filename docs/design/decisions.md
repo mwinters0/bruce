@@ -293,7 +293,7 @@ which cannot scope by host; regexes; `include` narrowing the prefix. Reopens: a 
 its prefix and an include. A root's `url` must be in its own scope, refused at load.
 Code: `config::Root::in_scope`. Evidence: `config::tests::scope_is_matched_on_the_canonical_form`.
 
-### D50 A config `skip` list makes a matching link `unchecked`, reason `skipped`, before scope and the allowlist
+### D50 A config `skip` list makes a matching page link or seed `unchecked`, reason `skipped`, before scope and the allowlist
 Top-level globs on the plain canonical form (D44's, the query kept), any host, a root's scope included:
 the deployer said not to ask. A hop onto one ends the chain, a sitemap's too, as a robots.txt-forbidden
 hop does; a root's `url` matching one is refused at load. Why: the forge answers `issues/new` with a 303
@@ -304,7 +304,7 @@ Code: `crawl::frontier::Frontier::hop_plan`. Evidence: `crawl::tests::a_redirect
 
 ### D6 Reports are SQL views stored in the DB and run by `bruce report <kind>`
 Ad-hoc `duckdb` users see the same views as the CLI. Output is text, or `--format json`. A view
-takes no parameter, so each `report_*` view holds every run and `bruce report` binds the run and the
+takes no parameter, so each `report_*` view holds every run and `bruce report` names the run and the
 filters in its query; `cli` installs them at every open, `store` being below `report` (D39).
 Rejected: a view per run; installing them only when `bruce report` runs, which hides them from
 `duckdb` after a crawl; a JSON shape carrying `stats`' totals or `unlisted`'s roots with no sitemap,
@@ -366,10 +366,10 @@ a report that looks whole. Code: `report::run::one`. Evidence: `report::tests::t
 
 ### D51 A target records where its answer came from, in a column the writer fills and no view reads
 `targets.answered_by` is `local`, `baseline` or `live`, `NOT NULL` with no default, so a path that copies or
-writes a target must say which. A target the build holds, and the `not_built` verdict on one it lacks, is
-`local`; every other row a crawl writes is `live`, `unchecked` included: the run decided it, as a copy does not.
-The verdict views ignore it, so the gate compares like with like (D28); `report::inverse` alone reads it,
-`local` meaning built (D56). Rejected: a default of `live`, which
+writes a target must say which. A target the build answers, and the `not_built` verdict on one it lacks, is
+`local`; every other row a crawl writes is `live`, `unchecked` included (a held URL `skip` or scope leaves
+unchecked among them): the run decided it, as a copy does not. The verdict views ignore it, so the gate
+compares like with like (D28); `report::inverse` alone reads it, `local` meaning built (D56). Rejected: a default of `live`, which
 labels a forgotten copy as a request; a table of copies, giving `link_verdicts` a second path. Reopens: a report
 wanting to split a run's answers by route. Code: `store::schema`, `store::AnsweredBy`. Evidence: `store::tests::a_target_records_where_its_answer_came_from`.
 
