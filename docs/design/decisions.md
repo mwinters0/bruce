@@ -450,13 +450,13 @@ open-element stack and a selector matcher to write; a governor limiter per host,
 Evidence: `historical/initial.md`, "Existing tools"; `cargo bench` in `spikes/tokenizer/` at b436db8, `runs/tokenizer-spike/`.
 
 ### D23 DuckDB is bundled; distribution is a release binary on GitHub
-The `duckdb` crate's `bundled` feature makes a self-contained binary that a CI job in the
-Fedora-minimal docs image fetches in one step. Rust is pinned in `mise.toml`, whose cargo tasks sit
-beside `check`, which runs the same commands with its own flags. A `v*` tag builds the binary in a
-`debian:trixie` container, glibc 2.41 its floor (Fedora 42 and later meet it), and publishes it at
-`mwinters0/bruce`'s releases, immutable once published. Rejected: `check` calling the tasks, which
-would make `mise run fmt` stop writing or lose the summaries; F44's glibc, shutting out Trixie and F42; static musl, DuckDB's C++ being untried there; a release built from a maintainer's tree; the Fedora forge, whose policy admits Fedora software only; for now, a container image, RPM.
-Code: `.github/workflows/release.yml`. Evidence: `scripts/workflows.py`, the workflow's glibc check.
+The `duckdb` crate's `bundled` feature makes a binary that a CI job in the Fedora-minimal docs image
+fetches in one step. Rust is pinned in `mise.toml`, whose cargo tasks sit beside `check`, which runs
+the same commands with its own flags. A `v*` tag builds the binary in a `debian:trixie` container,
+glibc 2.41 its floor (Fedora 42 and later meet it), `libstdc++` and `libgcc_s` linked in so glibc is
+its only library, and publishes it at `mwinters0/bruce`'s releases, immutable once published.
+Rejected: `check` calling the tasks, which would make `mise run fmt` stop writing or lose the summaries; F44's glibc, shutting out Trixie and F42; static musl, DuckDB's C++ being untried there; a release built from a maintainer's tree; the Fedora forge, whose policy admits Fedora software only; for now, a container image, RPM; `-static-libstdc++` as a linker argument, with or without `-C linker=g++`, a no-op because rustc names `-lstdc++` and `-lgcc_s` itself (hence the `-L native=` directory of static ones).
+Code: `.github/workflows/release.yml`. Evidence: `scripts/workflows.py`, the workflow's glibc and `ldd` checks.
 
 ### D45 TLS is rustls on ring and DNS is hickory's, so a failure arrives typed
 reqwest's default `rustls` feature builds aws-lc-rs, a C build, against D23's one self-contained

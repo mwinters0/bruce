@@ -62,13 +62,24 @@ jobs:
         working-directory: src
         run: |
           . "$HOME/.cargo/env"
-          cargo build --release --locked
+          # libstdc++ and libgcc_s are linked in (D23): rustc names both as
+          # dynamic libraries, so a directory holding only the static ones
+          # (libgcc_s as a script for libgcc_eh and libgcc) is searched first.
+          libs=$PWD/target/static-libs
+          mkdir -p "$libs"
+          ln -sf "$(g++ -print-file-name=libstdc++.a)" "$libs/libstdc++.a"
+          echo 'INPUT(-lgcc_eh -lgcc)' > "$libs/libgcc_s.a"
+          RUSTFLAGS="-L native=$libs" cargo build --release --locked
           bin=target/release/bruce
           "$bin" --version
           # The floor D23 promises: no symbol newer than Trixie's glibc, 2.41.
           newest=$(objdump -T "$bin" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)
           echo "newest glibc symbol: $newest"
           ldd "$bin"
+          if ldd "$bin" | grep -E 'libstdc\+\+|libgcc_s'; then
+            echo "$bin links libstdc++ or libgcc_s dynamically"
+            exit 1
+          fi
           test "$(printf '%s\n' GLIBC_2.41 "$newest" | sort -V | tail -n 1)" = GLIBC_2.41
 
       - name: Archive

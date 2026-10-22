@@ -25,7 +25,7 @@ Trixie and F44 (below).
   the commit's time, `gzip -n`), so a rebuild's archive differs only by the
   binary.
 - **6.3's README states** that `bruce` needs the system CA bundle even for
-  an `http://` crawl, and links `libstdc++` and `libgcc_s` dynamically.
+  an `http://` crawl, and that glibc is its only library (M13, below).
 
 ## The release, checked
 
@@ -55,11 +55,9 @@ localhost in `fedora-minimal:42` (docs-fp-o's image), `fedora:44` and
 
 ## Negative results
 
-- **The binary is not fully self-contained.** `ldd` lists `libstdc++.so.6`,
-  `libgcc_s.so.1`, `libm` and `libc`. Trixie, `fedora:44` and
-  `fedora-minimal:42` all carry the first two, so nothing was changed;
-  `-static-libstdc++` would remove a floor on the libstdc++ version and was not
-  tried, no image checked lacking it.
+- **rc.1's binary linked `libstdc++` and `libgcc_s` dynamically**, which M13
+  ended from `v0.1.0-rc.2` (D23; `../status/history/2026-10-22.md`, "M13
+  landed"). rc.1 is immutable and keeps them.
 - **A bare `debian:trixie` cannot crawl.** Without `ca-certificates`,
   `bruce crawl http://…` fails with `tls: builder error: … No CA certificates
   were loaded from the system`, the TLS client being built whether or not a
