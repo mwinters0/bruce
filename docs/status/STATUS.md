@@ -35,7 +35,7 @@ pages, chosen and saved by `scripts/fixtures.py`, and `fixtures/antora/`, a
 three-component Antora site, the Fedora UI bundle and seven built pages, which
 `mise run e2e` rebuilds and then crawls, exports and runs `check-dir` over, asserting
 the gate's exit status and sections.
-The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` by `scripts/notices.py`, whose unit tests fail when it is out of date.
+The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball.
 
 ## P6 progress
 
@@ -44,11 +44,10 @@ The spec is [`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md).
 - [x] **6.1** License and notices: `MIT OR Apache-2.0`, both texts and
   `Cargo.toml`'s `license`, and the third-party notices file generated from
   `Cargo.lock`. Notes: [`../wip/roadmap-P6.1-license-notes.md`](../wip/roadmap-P6.1-license-notes.md).
-- [ ] **6.1.1** DuckDB's bundled libraries' license texts in the notices, every
+- [x] **6.1.1** DuckDB's bundled libraries' license texts in the notices, every
   `third_party/` directory the tarball holds, mbedtls under Apache-2.0, and
-  each MPL-2.0 crate's exact source
-  ([`../wip/roadmap-P6-release.md`](../wip/roadmap-P6-release.md), "`bruce`
-  is MIT OR Apache-2.0, and ships its dependencies' notices").
+  each MPL-2.0 crate's exact source. Notes:
+  [`../wip/roadmap-P6.1.1-bundled-licenses-notes.md`](../wip/roadmap-P6.1.1-bundled-licenses-notes.md).
 - [ ] **6.2** The release workflow: a `debian:trixie` build on a `v*` tag, the
   archive of binary, notices and licenses with its sha256, `gh release` draft,
   upload and publish; the no-third-party-actions standing rule and its check;
@@ -69,3 +68,11 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **libpg_query's PostgreSQL License text is not in the notices.** The call:
+  `licenses/duckdb/libpg_query/SOURCE-NOTICE` holds only the two copyright lines
+  its Postgres-derived source files carry, verbatim, because the spec vendors
+  what the tarball's source holds and the permission paragraphs are in no file
+  of it. The PostgreSQL License asks that its paragraphs accompany the copyright
+  notice, so reconsidering means vendoring that standard text from
+  postgresql.org by hand beside the lines, which the check cannot hold verbatim.

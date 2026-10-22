@@ -94,18 +94,113 @@ class Render(unittest.TestCase):
             self.assertEqual(notices.render(ps), notices.render(list(ps)))
             self.assertTrue(notices.render(ps).endswith("\n"))
 
-    def test_the_bundled_libraries_are_listed_from_the_archive(self):
+    def test_an_mpl_crate_names_its_exact_source(self):
         with tempfile.TemporaryDirectory() as t:
-            p = package(Path(t), notices.BUNDLED_CRATE, {"LICENSE": "duck"})
-            archive = Path(t) / notices.BUNDLED_CRATE / notices.BUNDLED_ARCHIVE
-            with tarfile.open(archive, "w:gz") as tar:
-                for member in ("duckdb/third_party/", "duckdb/third_party/fmt/format.cc",
-                               "duckdb/third_party/re2/re2.h", "duckdb/src/main.cpp"):
-                    info = tarfile.TarInfo(member)
-                    tar.addfile(info, io.BytesIO(b""))
+            mpl = package(Path(t), "m", license="MPL-2.0")
+            dual = package(Path(t), "d", license="MIT OR (MPL-2.0 AND Apache-2.0)")
+            mit = package(Path(t), "x", license="MIT OR Apache-2.0")
+            out = notices.render([mpl, dual, mit])
+            self.assertIn("m 1.0.0: MPL-2.0 (https://example.invalid/m); the crate ships no license text\n"
+                          "    source (MPL-2.0): https://crates.io/api/v1/crates/m/1.0.0/download, unmodified", out)
+            self.assertIn("crates/d/1.0.0/download", out)
+            self.assertNotIn("crates/x/", out)
+            self.assertIn("CRATES (3)", out)
+
+
+def duckdb(root: Path, libs: list[str], version: str = "v9.9.9", source_id: str = "abc123",
+           extra: dict[str, str] | None = None) -> dict:
+    """A `libduckdb-sys` package whose tarball holds `libs` under
+    `third_party/` and the version header, plus `extra` members."""
+    p = package(root, notices.BUNDLED_CRATE, {"LICENSE": "duck"})
+    header = f'#define DUCKDB_VERSION "{version}"\n#define DUCKDB_SOURCE_ID "{source_id}"\n'
+    members = {notices.BUNDLED_VERSION_SOURCE: header, **(extra or {})}
+    for lib in libs:
+        members[f"duckdb/third_party/{lib}/code.cpp"] = ""
+    archive = root / notices.BUNDLED_CRATE / notices.BUNDLED_ARCHIVE
+    with tarfile.open(archive, "w:gz") as tar:
+        for name, body in {"duckdb/third_party/": "", "duckdb/src/main.cpp": "", **members}.items():
+            info = tarfile.TarInfo(name)
+            data = body.encode()
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+    return p
+
+
+def vendor(libs_dir: Path, files: dict[str, str], source: str = "v9.9.9 abc123\n") -> None:
+    for name, body in files.items():
+        f = libs_dir / name
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(body)
+    (libs_dir / notices.SOURCE_FILE).write_text(source)
+
+
+class Bundled(unittest.TestCase):
+    def test_the_bundled_libraries_are_read_from_the_archive(self):
+        with tempfile.TemporaryDirectory() as t:
+            p = duckdb(Path(t), ["fmt", "re2"])
+            b = notices.bundled(p)
+            self.assertEqual((b.version, b.source_id, b.libraries), ("v9.9.9", "abc123", ["fmt", "re2"]))
             self.assertEqual(notices.bundled_libraries(p), ["fmt", "re2"])
-            self.assertIn("LIBRARIES BUNDLED IN DUCKDB", notices.render([p]))
-            self.assertNotIn("LIBRARIES BUNDLED", notices.render([package(Path(t), "other")]))
+            self.assertIsNone(notices.bundled(package(Path(t), "other")))
+
+    def test_every_library_s_texts_are_printed_at_the_source_id(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            libs = root / "licenses"
+            vendor(libs, {"fmt/LICENSE": "fmt text\n", "re2/LICENSE": "re2 text", "re2/AUTHORS": "re2 authors"})
+            out = notices.render([duckdb(root, ["fmt", "re2"])], libs)
+            self.assertIn("LIBRARIES BUNDLED IN DUCKDB", out)
+            self.assertIn("v9.9.9 (abc123)", out)
+            for want in ("fmt: LICENSE", "fmt text", "re2: AUTHORS", "re2 authors", "re2: LICENSE", "re2 text"):
+                self.assertIn(want, out)
+            self.assertNotIn("LIBRARIES BUNDLED", notices.render([package(root, "other")], libs))
+
+
+class Problems(unittest.TestCase):
+    def setUp(self):
+        self._t = tempfile.TemporaryDirectory()
+        self.root = Path(self._t.name)
+        self.libs = self.root / "licenses"
+        self.addCleanup(self._t.cleanup)
+
+    def test_vendored_texts_that_match_the_tarball_have_no_problem(self):
+        vendor(self.libs, {"fmt/LICENSE": "x"})
+        p = duckdb(self.root, ["fmt"])
+        self.assertEqual(notices.bundled_problems(p, self.libs), [])
+
+    def test_a_source_id_other_than_the_tarball_s_is_drift(self):
+        vendor(self.libs, {"fmt/LICENSE": "x"}, source="v9.9.9 old\n")
+        problems = notices.bundled_problems(duckdb(self.root, ["fmt"]), self.libs)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("--refresh-duckdb", problems[0])
+
+    def test_a_library_without_texts_and_a_vendored_one_the_tarball_lost_are_drift(self):
+        vendor(self.libs, {"gone/LICENSE": "x"})
+        problems = notices.bundled_problems(duckdb(self.root, ["fmt"]), self.libs)
+        self.assertEqual(len(problems), 2)
+        self.assertIn("third_party/fmt has no vendored text", problems[0])
+        self.assertIn("gone is vendored but the tarball has no", problems[1])
+
+    def test_nothing_vendored_is_drift_not_a_crash(self):
+        problems = notices.bundled_problems(duckdb(self.root, ["fmt"]), self.libs)
+        self.assertTrue(any("no SOURCE" in m for m in problems))
+
+    def test_a_hand_vendored_notice_must_stay_verbatim_in_its_source(self):
+        lib, src = notices.HAND_VENDORED[0]
+        comment = "/* head\n * Copyright (c) 2014, A\n *   * Redistributions\n */\n"
+        p = duckdb(self.root, [lib], extra={notices.BUNDLED_THIRD_PARTY + src: comment})
+        vendor(self.libs, {f"{lib}/LICENSE": "x",
+                           f"{lib}/{notices.HAND_NAME}": "Copyright (c) 2014, A\n  * Redistributions\n"})
+        self.assertEqual(notices.bundled_problems(p, self.libs), [])
+        (self.libs / lib / notices.HAND_NAME).write_text("Copyright (c) 2015, A\n")
+        problems = notices.bundled_problems(p, self.libs)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("no longer verbatim", problems[0])
+        (self.libs / lib / notices.HAND_NAME).unlink()
+        self.assertIn("missing", notices.bundled_problems(p, self.libs)[0])
+
+    def test_comment_markers_and_whitespace_do_not_matter(self):
+        self.assertEqual(notices.normalise(" * a  b\n *   * c\n */"), "a b c")
 
 
 class Check(unittest.TestCase):
@@ -125,6 +220,21 @@ class Check(unittest.TestCase):
             self.assertIn("out of date", out.getvalue())
 
 
+class CheckDrift(unittest.TestCase):
+    def test_a_drifted_vendored_text_fails_the_check_and_says_why(self):
+        out = io.StringIO()
+        real = notices.generate
+        def drifted(repo):
+            raise notices.Drift("fmt: no vendored text")
+        notices.generate = drifted
+        try:
+            self.assertEqual(notices.check(Path("."), out), 1)
+        finally:
+            notices.generate = real
+        self.assertIn("drifted", out.getvalue())
+        self.assertIn("fmt: no vendored text", out.getvalue())
+
+
 class ThisRepo(unittest.TestCase):
     """The committed file and the license, held to the tree."""
 
@@ -141,6 +251,10 @@ class ThisRepo(unittest.TestCase):
         apache = (notices.REPO / "LICENSE-APACHE").read_text()
         self.assertIn("Apache License", apache)
         self.assertIn("Version 2.0, January 2004", apache)
+
+    def test_every_bundled_library_has_vendored_texts_at_the_tarball_s_source_id(self):
+        for p in notices.shipped(notices.cargo_metadata()):
+            self.assertEqual(notices.bundled_problems(p, notices.REPO / notices.LICENSES), [], p["name"])
 
     def test_no_shipped_crate_lacks_an_expression(self):
         for p in notices.shipped(notices.cargo_metadata()):

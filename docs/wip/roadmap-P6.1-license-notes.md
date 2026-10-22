@@ -16,8 +16,9 @@ slice inherits and what was refused.
   `LICENSE-APACHE` are the root files, the Apache text copied verbatim from
   serde's `LICENSE-APACHE`; the copyright line is `Copyright (c) 2026 Michael
   Winters` (STATUS, "Decisions worth another look").
-- **The file is 567 KB**, 242 crates and one entry per distinct text; crates
-  differ in copyright lines, so most MIT and Apache texts do not collapse.
+- **The file is about 680 KB**, 242 crates, DuckDB's bundled libraries' texts
+  (6.1.1) and one entry per distinct crate text; crates differ in copyright
+  lines, so most MIT and Apache texts do not collapse.
 
 ## Negative results
 
@@ -30,9 +31,8 @@ slice inherits and what was refused.
   of `duckdb`'s MIT is `libduckdb-sys`'s `LICENSE`, which is listed, and
   `selectors` is MPL-2.0, whose text `cssparser` ships.
 - **DuckDB's bundled C++ libraries have no license text in the crate.**
-  `libduckdb-sys`'s `duckdb.tar.gz` holds 26 directories under
-  `third_party/` and no `LICENSE` file; the notices name the directories,
-  read from the archive, and point at DuckDB's repository. The texts are not
-  vendored.
+  `libduckdb-sys`'s `duckdb.tar.gz` holds 26 directories under `third_party/`
+  and no `LICENSE` file; their texts are vendored by 6.1.1
+  ([`roadmap-P6.1.1-bundled-licenses-notes.md`](roadmap-P6.1.1-bundled-licenses-notes.md)).
 - **Build-dependencies are not listed**: they run at build time and are not
   linked. A crate only a dev-dependency or another platform reaches is out too.
