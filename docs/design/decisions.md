@@ -11,7 +11,7 @@ frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' 
 **Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
 phase index.
 
-<!-- decision-watermark: D61 -->
+<!-- decision-watermark: D63 -->
 
 ## Scope and modes
 
@@ -23,8 +23,8 @@ querying the baseline, which rebuilds the frontier, the hops (a local alias is o
 Reopens: a published full-site build artifact. Code: `cli::check_dir`, `fetch::routed::Routed`.
 
 ### D3 Allowlisted external hosts are checked one hop deep and never crawled
-An allowlisted target gets a full GET, so its fragment can be checked. A link to any other host is
-stored as `unchecked` with no request, keeping the link graph whole. Rejected: crawling allowlisted
+An allowlisted target an anchor link names first gets a full GET, so its fragment can be checked; any other kind
+of link gets a HEAD (KD4). A link to any other host is stored as `unchecked` with no request, keeping the link graph whole. Rejected: crawling allowlisted
 hosts, which would make them roots by another name (D5 holds roots).
 
 ### D10 Default scope: en-US, every fedora version; locales are a root that is off by default
@@ -40,8 +40,8 @@ less its own). Code: `crawl::frontier::Frontier::plan`.
 (`src` on `<video>`, `<audio>`, `<source>`, `<track>`; `poster`) and the `url=` of a meta refresh,
 each link carrying its `kind`; no page yields `sitemap` (an entry) or `sitemap_file` (a file, D47).
 Assets get a HEAD request with GET fallback; reports default to `kind = anchor`, the gate (D9) to every
-kind. `mailto:`, `tel:`, `javascript:` and `data:` are `unchecked`. A `<link>` whose `rel` is only
-`preconnect` or `dns-prefetch` is skipped; the first `<base href>` resolves every href after it. Rejected:
+kind. `mailto:`, `tel:`, `javascript:` and `data:` are `unchecked`. A `<link>` with no `href`, or
+whose `rel` is empty or only `preconnect` or `dns-prefetch`, is skipped; the first `<base href>` resolves every href after it. Rejected:
 `<a href>` only (misses broken images, canonicals); ignoring `<base>` (resolves a site wrongly).
 
 ### D14 Discovery is sitemap and link-following both, and each page records which
@@ -52,11 +52,11 @@ canonical, so a root is its own target's `url`. Rejected: either source alone, w
 reports; matching a page to its root by scope in SQL, which `include` globs (D44) defeat; the root as
 configured, which an escape or a stripped query fails to match. Code: `report::views`, `store::rows`.
 
-### D47 A run reads its sitemaps before any page, and each root links to the files it read
+### D47 A run reads its sitemaps before any page, and each root links to its sitemaps
 A listed page is then claimed by its sitemap before a link can name it, so `pages.in_sitemap` holds
-for every listed page; the files (69 at docs.fp.o) cost about a minute on a pace-bound run. Each
-file a root read is a `sitemap_file` link from it, so a broken one shows as any broken link and "no
-sitemap" is per root; a probe that misses writes nothing, nothing having named it. Rejected: reading
+for every listed page; the files (69 at docs.fp.o) cost about a minute on a pace-bound run. A
+root links `sitemap_file` to each top-level sitemap it names or found, an index to the files it lists, so a broken one shows as any
+broken link and "no sitemap" is per root; a probe that misses writes nothing, nothing having named it. Rejected: reading
 sitemaps beside the pages (`in_sitemap` left to a race); a target per failed probe; a `runs` column,
 per run and naming no broken file. Code: `crawl::Shared::discover`.
 Evidence: `crawl::tests::each_root_links_once_to_each_sitemap_it_read`.
@@ -100,9 +100,9 @@ one generator; a `title` match in `antora`, a docs.fp.o quirk in a generator pro
 
 ### D37 Profile facts live in one core table, `page_facts`, under namespaced keys
 `(run_id, url_id, key, value)`, keys like `antora.component`. A profile ships views pivoting its
-keys into columns, and D19 resolves through Antora's. D33's rules can write only a key and a value.
+keys into columns for `duckdb` users; D19 resolves through `Lookup` over `page_facts`. D33's rules can write only a key and a value.
 Rejected: a typed table per profile (a migration story each); a JSON column (no typed joins, no
-simpler). Reopens: D19 slow over the view, fixed by materializing that view alone.
+simpler).
 
 ### D40 A run needs no config: the URL given is the root, and every other setting has a default
 Without a file, the URL is the only root, scoped to its path prefix. Its sitemap comes from
@@ -125,7 +125,7 @@ crawl there, a two-hour job at every sim.
 Code: `scripts/sim.py`. Evidence: `scripts/test_sim.py`.
 
 ### D38 A profile has four hooks: detect, extract, resolve, views
-Detect claims a generator string (D35). Extract hands the core's one lol_html pass (D11) a declared
+Detect claims a generator string (D35). Extract hands the core's lol_html pass (D11), which follows a pre-pass reading the generator meta (D35), a declared
 content region (selectors, D34), element handlers and a finish step run over the core's settled
 result; handlers write a sink: a fact, a tag on the link being read (I6), a preferred edit link (D36).
 Resolve maps a tagged reference to a URL through the store's lookup (D19, D20, D22). Views is its SQL
@@ -136,7 +136,7 @@ alone settles. Reopens: a hook empty in `generic` for any other reason, the trai
 ### D39 The layering: `cli` › `crawl`, `ci`, `report` › `fetch`, `extract`, `store` › `profile` › `forge`, `config` › `url`
 Edges point down only. `config` reads `url`, its scope matching the canonical form (D44). `store`
 implements `profile`'s lookup trait and asks each profile for its views, so a profile never reaches
-the DB. Only `cli` names a concrete profile, to build the registry. Rejected: `profile` above
+the DB. Only `cli` names a concrete profile in production code, to build the registry. Rejected: `profile` above
 `extract`, driving the pass, which makes the core a library of the profile, the inverse of D32;
 scope moved to `crawl` to keep `config` lowest, splitting it and losing D44's refusal at load; a tier
 check in `module_graph.py`, its cycle check catching nearly every upward edge. Reopens: a skip-tier
@@ -151,13 +151,13 @@ and the next starts afresh. Rejected: latest-state upsert, which cannot date a b
 frontier to resume from, much machinery for a job that fits in a night.
 
 ### D15 Pages store metadata, a content hash and their profile's facts; bodies only on request
-The hash detects change because validators are unreliable (I3). Profile facts (D37) group reports by what owns a page. Bodies go
-in an opt-in, prunable table. The hash is xxh3-128 (not adversarial; faster than BLAKE3) over tags, attributes and decoded text
-in a scope `hash_root`/`hash_exclude` set, by default the profile's region; a page matching no root is hashed whole, less
-exclusions. Rejected: storing bodies by default (about 140 MB per en-US run, uncompressed); raw bytes (docs.fp.o's `Last build:`
-changes every page every build, I19); a hash of the extracted record (title, anchors, links), blind to a prose edit; one fixed
-default root (an exclusion alone would barely act); an empty or region fallback for a set root matching nothing, hiding the
-misconfiguration a page changing every build shows. Code: `extract::hash`. Evidence: `tests/extract.rs`, the `Last build:` test.
+The hash detects change because validators are unreliable (I3). Profile facts (D37) group reports by what owns a page. The opt-in,
+prunable `bodies` table exists and nothing writes it yet. The hash is xxh3-128 (not adversarial; faster than BLAKE3) over tags, attributes
+and decoded text in a scope `hash_root`/`hash_exclude` set, by default the profile's region; a page matching no root is hashed whole, less
+exclusions. Rejected: storing bodies by default (about 330 MB per en-US run, uncompressed: `select sum(size) from pages` over
+`runs/p5.2-en-us-20261020/en-us.duckdb`); raw bytes (docs.fp.o's `Last build:` changes every page every build, I19); a hash of the
+extracted record, blind to a prose edit; one fixed default root (an exclusion alone would barely act); an empty or region fallback for a
+set root matching nothing, hiding the misconfiguration a page changing every build shows. Code: `extract::hash`. Evidence: `tests/extract.rs`.
 
 ### D17 Each page stores its source file and repo, read from its edit link
 This routes a breakage to the repo and file that own it, and groups more precisely than component
@@ -165,9 +165,8 @@ This routes a breakage to the repo and file that own it, and groups more precise
 component-versions (D54, D56). Finding the link is core (D36); docs.fp.o's markup is I8.
 
 ### D26 A URL's identity is a u64 hash of its canonical form, stable across runs
-Cross-run joins then need no URL comparison. `links` keeps one row per occurrence, raw href
-included, so a report can point at the link in its source. Tables: `runs`, `targets`, `pages`,
-`page_facts` (D37), `anchors`, `links`, and opt-in `bodies`; the columns are `store::schema`'s. An href resolving to no URL is a
+A link's page then joins across runs by id with no URL comparison; its target joins by URL text. `links` keeps one row per occurrence, raw href
+included, so a report can point at the link in its source. The tables and columns are `store::schema`'s (`page_facts` D37, opt-in `bodies` D15). An href resolving to no URL is a
 target keyed by its raw text (`url` that text, `broken_url`, `invalid_url`), one per text per run.
 Rejected: deduplicated links with a count, which is smaller but loses the raw href; for an
 unresolvable href, no link row (reported nowhere) or a crawl-time `links.outcome` and no target.
@@ -203,12 +202,12 @@ having content of its own. Code: `url::canonical`, `crawl::hops`. Evidence: `url
 
 ### D12 A fragment is valid where a browser would scroll to it
 Valid: any non-empty `id`, `name` on `<a>` only, and always `#` and `#top` in any case. Matching is exact,
-after percent-decoding. Each anchor stores its tag and its placement (D34), so links to
+against the fragment as written or percent-decoded. Each anchor stores its tag and its placement (D34), so links to
 template chrome are reportable (I9). Text fragments are `unchecked`.
 Rejected: every `name` attribute, which makes `#viewport` and `#generator` pass on every page.
 
 ### D16 Five outcomes; `error` is separate from broken and never fails CI alone
-`ok`, `broken_url` (4xx except below, NXDOMAIN, redirect loop), `broken_anchor`, `error` (timeouts,
+`ok`, `broken_url` (4xx except below, NXDOMAIN, a redirect loop, a 3xx that led nowhere), `broken_anchor`, `error` (timeouts,
 TLS, 5xx after 3 retries with backoff, and 401/403/429 with status kept), `unchecked`. A `Retry-After`
 over 60 s is `error` at once rather than stalling the run. A 2xx body over 16 MiB is `ok`, reason
 `too_large`, and not extracted, half a page's anchors giving false `broken_anchor`s. Rejected: `error`
@@ -222,8 +221,8 @@ from a fuzzy match over resource IDs, run only on failures. CI: resolved via D19
 Rejected: checking `#comp::page.adoc` against the page's own ids, which is what a naive checker does.
 
 ### D46 Where a redirect lands is a target of its own, written by whoever claims it first
-A `final_url` then names a `targets` row bar a stopped run's, so D28's fragment join is two key lookups
-from the link to the final page's `anchors`. The redirecting target is claimed at discovery, its landing
+A `final_url` then names a `targets` row bar a stopped run's, so D28's fragment join finds the landing
+target by that URL and the final page's `anchors` by key. The redirecting target is claimed at discovery, its landing
 URL after the hops end; the first claim writes the landing target and, if it reads it, its page, a loser
 still has its own answer from the chain. Rejected: holding the hops open on the landing URL's own task,
 which makes one target's outcome wait on another's; a memo of settled targets, to save a repeat request
@@ -265,7 +264,7 @@ queries; a `--max-age` refusal, failing a PR for a reason its author cannot fix,
 Code: `store::baseline`.
 
 ### D22 A local build's links resolve locally, then against the baseline, then by allowlist
-A relative href is resolved against the page's production URL. Under the prefix and built: check
+A relative href is resolved against the page's production URL, one beginning `/` against the build's site root (D53). Under the prefix and built: check
 locally (`foo/` → `foo/index.html`). Under the prefix and not built: `broken_url` in a
 component-version the build holds, else baseline, then live. An unresolved xref: D19 outside what
 the build holds, then the same steps. Externals default to the baseline's verdict
@@ -353,7 +352,7 @@ unbounded, until each begun has sent its last row, the writer draining meanwhile
 the runtime, whose wait covers all blocking work, an extraction or a parse nobody reads and whatever a
 dependency adds (a resolver off hickory runs `getaddrinfo` there), and whose skipping of queued work
 tokio does not guarantee; a bound on the wait, which can only end it mid-target; a third press, a
-wedged DuckDB being a bug to fix. Code: `crawl::Writes`, `cli::crawl::crawl`.
+wedged DuckDB being a bug to fix. Code: `crawl::Writes`, `cli::interrupt::drive`.
 Evidence: `crawl::tests::an_abandoned_run_holds_the_page_it_was_writing_whole`.
 
 ### D58 SIGINT and SIGTERM are each a press, and a stopped `check-dir` judges nothing
@@ -464,25 +463,43 @@ fetches in one step. Rust is pinned in `mise.toml`, whose cargo tasks sit beside
 the same commands with its own flags. A `v*` tag builds the binary in a `debian:trixie` container,
 glibc 2.41 its floor (Fedora 42 and later meet it), `libstdc++` and `libgcc_s` linked in so glibc is
 its only library, and publishes it at `mwinters0/bruce`'s releases, immutable once published.
-Rejected: `check` calling the tasks, which would make `mise run fmt` stop writing or lose the summaries; F44's glibc, shutting out Trixie and F42; static musl, DuckDB's C++ being untried there; a release built from a maintainer's tree; the Fedora forge, whose policy admits Fedora software only; for now, a container image, RPM; `-static-libstdc++` as a linker argument, with or without `-C linker=g++`, a no-op because rustc names `-lstdc++` and `-lgcc_s` itself (hence the `-L native=` directory of static ones).
+Rejected: `check` calling the tasks, which would make `mise run fmt` stop writing or lose the summaries; F44's glibc, shutting out Trixie and F42; static musl, DuckDB's C++ being untried there; a release built from a maintainer's tree; the Fedora forge, whose policy admits Fedora software only; for now, a container image, RPM or aarch64; `-static-libstdc++` as a linker argument, with or without `-C linker=g++`, a no-op because rustc names `-lstdc++` and `-lgcc_s` itself (hence the `-L native=` directory of static ones).
 Code: `.github/workflows/release.yml`. Evidence: `scripts/workflows.py`, the workflow's glibc and `ldd` checks.
 
+### D62 A release is tried as `-rc.N` prereleases, since a published release is immutable
+A tag with a `-` suffix is a GitHub prerelease, so Latest never names one, and the workflow is iterated on `v<x>.<y>.<z>-rc.<N>` tags until it
+is right; the bare tag follows. The repo's releases are immutable, so a fault in a published release's assets is fixed in the next patch,
+never in place, and a tag can move only while nothing has published from it (`v0.1.0` moved once, after two failed Publish runs). Every tag
+push is the maintainer's. Rejected: full releases from the start, each fix an immutable `v0.1.x`. Code: `.github/workflows/release.yml`.
+Evidence: `v0.1.0-rc.1` to `-rc.3` and `v0.1.0`, each downloaded, verified and run on `debian:trixie`, `fedora:44` and `fedora-minimal:42`
+by `runs/release-v0.1.0/recipe.sh <image> <tag>` (README's quickstart); logs in `runs/release-rc2/` and `runs/release-v0.1.0/`, and D23's
+static link in `runs/release-static/` (`build-a.log`, `build-b.log`: the two linker arguments that left it dynamic).
+
+### D63 The release workflow publishes the draft its create call returned, by id
+`gh api -X POST` creates the draft and its id is kept; both assets are uploaded to it with `curl`, the id is read back and must hold both, and
+the release is published by it. The one listing deletes a failed run's drafts, logging each id. Why: a draft is found neither by tag (`GET
+/releases/tags/<tag>` omits drafts) nor reliably by listing: `v0.1.0`'s Publish failed twice seconds after a create, inside GitHub incidents,
+its listing missing a 15-minute-old draft. Rejected: `gh release create`, which prints a URL and not an id, and `gh release upload`, which
+finds its draft by tag; finding the release by listing. Code: `.github/workflows/release.yml`.
+Evidence: runs 39820173534 (`v0.1.0-rc.3`) and 39822121858 (`v0.1.0`) on `mwinters0/bruce`, Publish logging `draft <id>` and what it holds.
+
 ### D60 `bruce` is `MIT OR Apache-2.0`, and a release carries every notice its binary owes, made offline
-`LICENSE-MIT` names the holder once, its year first publication. `THIRD-PARTY-NOTICES.txt` is committed, generated from `Cargo.lock`
-and from the license files of every `third_party/` directory DuckDB's tarball holds, compiled in or not, vendored at the tarball's
-source id so generating and the drift check stay offline. mbedtls is taken under Apache-2.0; an MPL-2.0 crate names its crates.io
-source (§3.2(a)); libpg_query's PostgreSQL License paragraphs, absent from its source, are copied from postgresql.org, unchecked.
-Rejected: `cargo about`, a tool to pin and fetch with no action; exactly the libraries linked, needing an include scan; fetching at
-generation, the network in `check`; `duckdb.cpp`'s trailer; a pointer to DuckDB's repository; `The bruce contributors`; a year range.
-Reopens: a DuckDB tag whose commit is not the tarball's source id. Code: `scripts/notices.py`. Evidence: `test_notices.ThisRepo`.
+`LICENSE-MIT` names the holder once, its year first publication and never bumped. `THIRD-PARTY-NOTICES.txt` is committed, generated from
+`Cargo.lock` and from the license files of every `third_party/` directory DuckDB's tarball holds, compiled in or not, vendored at the
+tarball's source id so generating and the drift check stay offline. mbedtls is taken under Apache-2.0; an MPL-2.0 crate names its
+crates.io source (§3.2(a)); libpg_query's PostgreSQL License paragraphs, absent from its source, are copied from postgresql.org, held by
+their header alone. Rejected: `cargo about`; exactly the libraries linked, needing an include scan; fetching at generation; `duckdb.cpp`'s
+trailer; a pointer to DuckDB's repository; the Bison skeleton's FSF notice, its exception asking none; `The bruce contributors`; a year
+range. Reopens: a DuckDB tag whose commit is not the tarball's source id. Code: `scripts/notices.py`. Evidence: `test_notices.ThisRepo`.
 
 ### D45 TLS is rustls on ring and DNS is hickory's, so a failure arrives typed
 reqwest's default `rustls` feature builds aws-lc-rs, a C build, against D23's one self-contained
 binary for the Fedora CI image; `rustls-no-provider` plus ring avoids it. hickory-dns makes NXDOMAIN
 (`broken_url`, D16) a `NetError` down the error chain, where the system resolver gives a message
-string. Cost: about 30 crates, and a resolver reading `resolv.conf`
-itself. Rejected: aws-lc-rs; matching the system resolver's message. Reopens: ring failing to build
-on the CI image. Code: `fetch::http`. Evidence: `fetch::http::tests::the_cause_is_found_down_the_chain`.
+string. Cost: about 30 crates, a resolver reading `resolv.conf`
+itself, and a client that loads the system's CA bundle when built, so a crawl needs one even over `http://` (the README says so).
+Rejected: aws-lc-rs; matching the system resolver's message. Reopens: ring failing to build
+on the CI image; a use case crawling with no bundle. Code: `fetch::http`. Evidence: `fetch::http::tests::the_cause_is_found_down_the_chain`.
 
 ### D31 One crate, `bruce`; its concepts are separated by top-level module, not by crate
 The binary is the only consumer, so a crate boundary buys nothing a module boundary does not.

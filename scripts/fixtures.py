@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Choose and save the docs.fp.o fixture pages (D24, `fixtures/README.md`).
+"""Choose and save the docs.fp.o fixture pages (D24).
 
 Three steps, each its own subcommand, so the choice is reproducible and the
 network is touched only by the first and the last:

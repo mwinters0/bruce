@@ -15,7 +15,7 @@ never reused.
 | Phase | State | Where it is |
 |---|---|---|
 | P1–P5 | **Struck** at the first keystone, 2026-10-21 | their decisions are [`decisions.md`](decisions.md)'s |
-| P6 — release | **Complete**, 2026-10-22 | [`roadmap-P6-release.md`](roadmap-P6-release.md), its notes [`roadmap-P6-release-notes.md`](roadmap-P6-release-notes.md) |
+| P6 — release | **Struck** at the second keystone, 2026-10-22 | its decisions are [`decisions.md`](decisions.md)'s |
 | P8 — run-history reports | Sketched; not grilled | this file, below |
 | P9 — the deployment guide | Specified; waits for P8 | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
 | P7 — declarative per-root rules | Sketched; not grilled | this file, below |
@@ -70,13 +70,6 @@ A standing rule is added only with the maintainer, and carries its check.
   included, and what an action would give is built from commands. Check:
   `scripts/workflows.py`, which fails on a `uses:` (`mise run check` runs its
   tests over the real workflows).
-
-## P6 — Release
-
-Complete: [`roadmap-P6-release.md`](roadmap-P6-release.md) and its notes,
-[`roadmap-P6-release-notes.md`](roadmap-P6-release-notes.md). A release
-binary built from a tag, so others can experiment before the deployment
-exists; `v0.1.0` is the first.
 
 ## P8 — Run-history reports
 

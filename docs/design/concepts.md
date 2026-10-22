@@ -37,7 +37,7 @@ decisions each carries are cited in its module's doc.
   the run's slots, in the `schedule` child (D61); and reading one
   sitemap file, gzip and index included, in the `sitemap` child, discovery
   staying in the parent. A run over a local build begins from its seeds in the
-  parent, and resolves an href beginning `/` against the build's site root (D53).
+  parent, which holds the build's site root for `extract` to resolve an href beginning `/` against (D53).
   What a run over a build leaves to the baseline, the component-versions its
   pages hold and the copies the parent sends last is in the `baseline` child (D54); the
   xrefs of a built page, resolved through the baseline's pages once the held
@@ -78,8 +78,8 @@ decisions each carries are cited in its module's doc.
   the body-to-text decoding in the `charset` child, and the build-directory
   fetcher in the `local` child, which holds a map from URL to file and no
   directory logic, that being `ci`'s, and reuses `charset`; the `routed` child
-  sends a URL the build holds to it and any other to the live fetcher. It sits above `config` (it reads the rate and `user_agent`) and
-  `url`; the crawler above it follows the hops (D39).
+  sends a URL the build holds to it and any other to the live fetcher. It sits above `config` (it reads the rate, the hosts, the roots and
+  the robots token; `cli` passes the user agent in) and `url`; the crawler above it follows the hops (D39).
 
 ## The extraction pass and its core heuristics
 

@@ -88,6 +88,8 @@ jobs:
           name=bruce-$GITHUB_REF_NAME-x86_64-unknown-linux-gnu
           mkdir -p "dist/$name"
           cp target/release/bruce THIRD-PARTY-NOTICES.txt LICENSE-MIT LICENSE-APACHE "dist/$name/"
+          # Its own statement: inside tar's options a failed git leaves no
+          # mtime and no error.
           epoch=$(git log -1 --format=%ct)
           cd dist
           # The same tree archives to the same bytes.

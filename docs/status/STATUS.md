@@ -53,7 +53,7 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-- **A local build's host shares the slots like any other (M12, D61).** `check-dir`
+- **A local build's host shares the slots like any other (D61).** `check-dir`
   over a build with a live host also in play (a baseline miss asked of
   production, an allowlisted host) gives the build's reads 32 of the 64 slots,
   where they had all 64. Built so because `schedule` keys by host name and

@@ -1,15 +1,14 @@
 # P9 — The deployment guide
 
-What P9 does and why, settled in P6's grilling on 2026-10-21, which drained
-P6's inbox, and given to P9 when the release was split from it the same day
-([`../design/roadmap-P6-release.md`](../design/roadmap-P6-release.md)). The decisions are in
+What P9 does and why, settled in the grilling of 2026-10-21 that split the
+release from it. The decisions are in
 [`../design/decisions.md`](../design/decisions.md) and are cited here, never
 restated.
 
 ## Intent
 
-A deployer can run `bruce` for a site from the manual alone: P6's release
-binary, and the deployment guide's remaining parts, scheduling a crawl,
+A deployer can run `bruce` for a site from the manual alone: the release
+binary (D23), and the deployment guide's remaining parts, scheduling a crawl,
 publishing a baseline for CI (D21), and a content repo's CI job, verified
 against the simulated deployment (D41, D42). **The deployment will soon check
 every locale, not only en-US** (maintainer, 2026-10-21), so each part is
@@ -20,7 +19,7 @@ designed for a site of many locale roots, not for one.
 Settled 2026-10-21 (maintainer). **P9 is specified and waits for P8**, the
 run-history reports. P8 is likely to change the schema (its inbox asks
 whether a run records its hash scope), and a 0.x release migrates nothing
-(`../design/roadmap-P6-release.md`, "The first release promises no migrations"), so a
+(D43), so a
 deployment before P8 would discard its history at the next release. P8 needs no
 deployment, its evidence being local en-US crawls, and nothing P9 builds
 serves anyone before a deployment exists. When P9 is sliced, the grilling
@@ -88,12 +87,11 @@ maintainer has judged the reports acceptable on en-US runs (maintainer,
 crawl is a P9 slice**, run after that verdict, on the maintainer's machine,
 measuring the figures the guide's locale section states.
 
-## A crawl's hosts overlapping is out-of-band
+## A crawl's hosts overlap
 
-Settled 2026-10-21. Scheduling per host, so a waiter for one host's pace
-holds no worker slot, would take the nightly en-US crawl from 1:48 towards
-the forge's 70 minutes. It changes no recorded decision and fits a session,
-so it is **M12** (`../design/out-of-band.md`), not a slice; the guide quotes
+Settled 2026-10-21. Scheduling per host (D61), so a waiter for one host's pace
+cannot fill the worker slots, should take the nightly en-US crawl from 1:48
+towards the forge's 70 minutes. It has not been re-timed; the guide quotes
 whatever crawl time is measured when it is written. It does nothing for the
 locales, nearly all one host.
 
@@ -102,9 +100,8 @@ locales, nearly all one host.
 Settled 2026-10-21 (maintainer). **The guide's CI example is a workflow
 that runs on Forgejo Actions, the production target, and on GitHub Actions**,
 where the maintainer runs Fedora's docs CI while iterating in development.
-**It uses no third-party action** (`../design/roadmap-P6-release.md`, "No
-third-party action, in any workflow, is a standing rule"), and P9 extends that rule's check to the
-workflow the guide tags. Rejected: a bare shell script each repo wraps
+**It uses no third-party action** (`../design/roadmap.md`, "Standing
+rules"), and P9 extends that rule's check to the workflow the guide tags. Rejected: a bare shell script each repo wraps
 itself, which leaves every repo writing the workflow anyway.
 
 ## The CI job runs on Fedora 44 and installs Antora
@@ -129,7 +126,7 @@ releases, an immutable release refusing a nightly overwrite. The crawl's
 1:48 fits GitHub's six-hour job; **the weekly every-locale crawl runs on the
 maintainer's machine**, its 20 hours fitting no runner. Mirrors of content repos
 on the same GitHub run the guide's CI workflow against the Pages URL: **that
-is P9's closing evidence**, as quick-docs' build was P5's. The slice standing
+is P9's closing evidence**, as quick-docs' build was CI mode's. The slice standing
 it up measures whether Anubis challenges a GitHub runner's address, which no
 crawl from here has met. D41 holds: the deployment lives outside this repo.
 Rejected: crawling on the maintainer's machine alone.
@@ -175,15 +172,13 @@ en-US one. Rejected: 69 roots, a list kept by hand.
 ## Prereleases while the deployment is stood up
 
 Settled 2026-10-21. **The release P9 needs is tagged `-rc.N` while the dev
-deployment is stood up**, as P6's are (`../design/roadmap-P6-release.md`,
-"Prereleases while iterating, `v0.1.0` at the close"), and in full when P9
-closes.
+deployment is stood up** (D62), and in full when P9 closes.
 
 ## What the guide states, from the drained inbox
 
 Settled 2026-10-21, each figure re-measured when its section is written.
 **Scheduling**: an en-US crawl took 1:48:22 and 161 MiB under the guide's
-config at one a second, the hosts nearly in turn (M12 overlaps them; 3 a
+config at one a second, the hosts nearly in turn (D61 overlaps them; 3 a
 second on docs.fp.o shortens its share); `prune` fails at open on DuckDB's
 lock beside a crawl, which the one script rules out. **Publishing**: the
 en-US baseline is 27 MB and 5.9 MiB gzipped, so it is published gzipped,
@@ -224,7 +219,7 @@ maintainer's: a round stops there, as at 9.6's verdict.
 
 ## Facts the grilling found
 
-Found 2026-10-21, for the decisions above and P6's.
+Found 2026-10-21, for the decisions above.
 
 - **docs.fp.o has 69 locales, and each carries en-US's pages.** A
   quick-docs page's language menu links 69 (en-US among them); 12 of 12
@@ -239,12 +234,6 @@ Found 2026-10-21, for the decisions above and P6's.
   some 61 hours, where en-US alone is under one; the forge's share does not
   grow, each target being fetched once a run (D13). The en-US baseline's 27 MB
   (the inbox) would grow towards 69 times that.
-- **The hosts of a crawl run one after the other because of the queue, not
-  the pacing.** Pacing is per host (`fetch::http::host`), but `crawl::drive`
-  keeps one FIFO under a cap of 64 tasks (`WORKERS`, `src/crawl.rs`), the
-  sitemap's pages are seeded first (D47), and a task takes its slot before
-  its host's pace admits it, so 64 forge waiters fill the cap at one a
-  second. No `D<k>` governs the queue's order or the cap.
 - **`mise run sim` extracts a tagged block of any language** (`scripts/sim.py`,
   `TAG_RE`) but executes only the config load; `scripts/e2e.py` runs only
   the commands it hard-codes.
@@ -258,7 +247,7 @@ Found 2026-10-21, for the decisions above and P6's.
   `registry.gitlab.com/fedora/docs/docs-website/docs-fp-o:latest`
   (fedora-minimal 42, glibc 2.41, built 2025-09-08 and rebuilt by nothing
   since; F42 is EOL) or the upstream `antora/antora`, which is Alpine, musl.
-  P6's Trixie-built binary runs in the first, its glibc floor being 2.41.
+  The release binary, built on Trixie, runs in the first, its glibc floor being 2.41.
 - **The forge's runners are per-org, unprivileged Podman, and a shared
   runner's job is capped at 10 minutes** (the Forge Usage Policy, approved
   2026-10-06, `council/tickets` #558). So a content repo's `check-dir` fits

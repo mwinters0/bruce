@@ -49,14 +49,14 @@ by destination").
 
 ## The deployment guide's roots hash the profile's region
 
-- **Fact.** P6's grilling settled that the deployment guide's roots, now
-  P9's, set neither `hash_root` nor `hash_exclude`, so a docs.fp.o page
+- **Fact.** P9's spec settles that the deployment guide's roots set neither
+  `hash_root` nor `hash_exclude`, so a docs.fp.o page
   hashes `article.doc` (D15): a whole-page scope takes in the nav, which
   lists a component's pages, so one added page would move every page of its
   component.
 - **Why P8 cares.** `changed` reads that scope on a deployment's runs; a
   report proposing another scope reopens P9's spec, not just the guide.
-- **Origin.** P6's grilling, 2026-10-21 (`../wip/roadmap-P9-deployment.md`,
+- **Origin.** The grilling of 2026-10-21 (`../wip/roadmap-P9-deployment.md`,
   "The guide's hash scope is the profile's region"). Contingent on the nav
   being inside no hashed region.
 
@@ -71,5 +71,5 @@ by destination").
   the release carrying it is the first to need the line. P8 decides how it
   gets there: a body the tag's tree carries, a check against the schema
   version, or a hand edit after Publish.
-- **Origin.** P6's wrap repoint, 2026-10-22, the release tooling's blind
+- **Origin.** A repoint of the release tooling, 2026-10-22, its blind
   read. Contingent on P8 changing the schema.

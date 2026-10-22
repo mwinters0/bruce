@@ -37,14 +37,3 @@ Allocated so far: M1–M14. <!-- out-of-band-watermark: M14 -->
 
 | Item | Date | What changed | Blocks | Why |
 |---|---|---|---|---|
-| M4 | 2026-10-21 | A versionless refspec resolves to the version the baseline serves off its own segment; versions order numerically, case-folded (KD14 rewritten) | | [`2026-10-21`](../status/history/2026-10-21.md), "M4 landed" |
-| M5 | 2026-10-21 | SIGINT and SIGTERM each stop `crawl` and `check-dir`; a stopped `check-dir` runs no gate; a stopped run exits 128 plus the signal (KD13 rewritten to M6's part) | | [`2026-10-21`](../status/history/2026-10-21.md), "M5 landed" |
-| M6 | 2026-10-21 | A bare `report` warns of a later unfinished run and refuses a baseline a later run imported (closes KD13, rewritten by M5) | | [`2026-10-21`](../status/history/2026-10-21.md), "M6 landed" |
-| M7 | 2026-10-21 | Two roots are one root by canonical URL (closes KD11) | | [`2026-10-21`](../status/history/2026-10-21.md), "M7 landed" |
-| M8 | 2026-10-21 | `prune` spares the baseline run a kept run names (closes KD12) | | [`2026-10-21`](../status/history/2026-10-21.md), "M8 landed" |
-| M9 | 2026-10-21 | A Pagure `/edit/<ref>/f/<path>` link parses as Pagure's shape (closes KD15) | | [`2026-10-21`](../status/history/2026-10-21.md), "M9 landed" |
-| M10 | 2026-10-21 | An explicit refspec whose version is served off its own segment is named under the served one, as a versionless one is (D57 rewritten) | | [`2026-10-21`](../status/history/2026-10-21.md), "M4's explicit-version asymmetry reviewed" |
-| M11 | 2026-10-21 | `Held` and the inverse check read the segment a built page sits at, so a renamed latest segment is held (closes KD16; files KD17) | | [`2026-10-21`](../status/history/2026-10-21.md), "M11 landed" |
-| M12 | 2026-10-22 | A crawl schedules per host, so a waiter for one host's pace cannot fill the worker slots and the hosts overlap (D61) | | [`2026-10-22`](../status/history/2026-10-22.md), "M12 landed" |
-| M13 | 2026-10-22 | The release binary links `libstdc++` and `libgcc_s` statically, so glibc is its only library (D23 amended; the workflow fails on a dynamic one) | | [`2026-10-22`](../status/history/2026-10-22.md), "M13 landed" |
-| M14 | 2026-10-22 | The release workflow publishes the draft its create call returned, by id, and logs the ids it finds, never listing releases to find its own | | [`2026-10-22`](../status/history/2026-10-22.md), "`v0.1.0`'s Publish failed twice; M14 admitted" |
