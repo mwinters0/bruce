@@ -4,8 +4,8 @@
 //! A run reads the roots' sitemaps first, so a page a sitemap lists is
 //! claimed as listed before any link can name it (D47), and then seeds the
 //! roots' URLs and the pages the sitemaps listed. It writes each target
-//! once, at most [`WORKERS`] at a time, a host's own pace held by the
-//! fetcher (D8). One task follows one target's hops itself, so each passes
+//! once, at most [`WORKERS`] at a time and each host at most its share of
+//! them (`schedule`, D61), a host's own pace held by the fetcher (D8). One task follows one target's hops itself, so each passes
 //! robots.txt and its host's rate (D7), reads the answer, and then, on the
 //! blocking pool, extracts the page and sends its rows to the writer from
 //! there, so the writer's bounded channel pushes back on the pool and not on
@@ -48,10 +48,10 @@ mod baseline;
 mod frontier;
 mod hops;
 mod outcome;
+mod schedule;
 mod sitemap;
 mod xref;
 
-use std::collections::VecDeque;
 use std::fmt;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard};
@@ -73,13 +73,15 @@ use crate::store::{
 use crate::url::Canonical;
 use frontier::{EXTERNALS_SKIPPED, Frontier, Plan, SKIPPED};
 use hops::{Chain, Stop};
+use schedule::{Schedule, host_of};
 use sitemap::Sitemap;
 
 pub use crate::fetch::Stopper;
 pub use frontier::{Baseline, Externals};
 
-/// Targets in flight at once, across hosts. A host's own cap and pace are
-/// the fetcher's (D8); this only bounds the tasks a run holds.
+/// Targets in flight at once, across hosts, each host holding at most its
+/// share (D61). A host's own cap and pace are the fetcher's (D8); this only
+/// bounds the tasks a run holds.
 const WORKERS: usize = 64;
 
 /// How many files deep sitemap indexes are followed, the first counting as 1.
@@ -444,36 +446,38 @@ where
     }
 
     /// Asks about `start` and every target it leads to, at most [`WORKERS`]
-    /// at a time. With `hold`, only sitemaps are asked about and every other
-    /// target found goes there instead. Once stopped it starts nothing, and
-    /// returns when the targets started are done.
+    /// at a time and each host at most its share of them (D61). With `hold`,
+    /// only sitemaps are asked about and every other target found goes there
+    /// instead. Once stopped it starts nothing, and returns when the targets
+    /// started are done.
     async fn drive(
         self: &Arc<Self>,
         start: Vec<Item>,
         mut hold: Option<&mut Vec<Item>>,
     ) -> Result<(), Error> {
-        let mut queue = VecDeque::new();
+        let mut schedule = Schedule::new(WORKERS);
         let mut tasks = JoinSet::new();
         let mut found = start;
         loop {
             for item in found.drain(..) {
                 match &mut hold {
                     Some(held) if !matches!(item.plan, Plan::Sitemap { .. }) => held.push(item),
-                    _ => queue.push_back(item),
+                    _ => schedule.push(host_of(&item.url), item),
                 }
             }
-            if !queue.is_empty() && self.stopping() {
-                queue.clear();
+            if schedule.is_waiting() && self.stopping() {
+                schedule.clear();
             }
-            while tasks.len() < WORKERS
-                && let Some(item) = queue.pop_front()
-            {
-                tasks.spawn(Arc::clone(self).process(item));
+            while let Some((host, item)) = schedule.next() {
+                let shared = Arc::clone(self);
+                tasks.spawn(async move { (host, shared.process(item).await) });
             }
             let Some(joined) = tasks.join_next().await else {
                 return Ok(());
             };
-            found = joined.map_err(|_| Error::Panicked)??;
+            let (host, next) = joined.map_err(|_| Error::Panicked)?;
+            schedule.finished(&host);
+            found = next?;
         }
     }
 

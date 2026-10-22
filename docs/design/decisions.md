@@ -11,7 +11,7 @@ frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' 
 **Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
 phase index.
 
-<!-- decision-watermark: D60 -->
+<!-- decision-watermark: D61 -->
 
 ## Scope and modes
 
@@ -319,6 +319,15 @@ follows RFC 9309: a 4xx allows all; a 5xx, no answer or a 429 outlasting the ret
 of the file) closes the host for the run. Rejected: one global rate, which throttles the root to the
 slowest host's courtesy; `robots` on a root, where two roots on one host could disagree and a host an
 `include` reaches had no setting. Code: `fetch::http::host`. Evidence: `fetch::http::host::tests`.
+
+### D61 A run's slots are shared among the hosts with work, so a paced host's waiters cannot fill them
+Each host holds at most the 64 slots divided by the hosts with a target waiting or running, taken in
+turn, so the forge's waiters for its one-a-second pace leave docs.fp.o its half and the hosts overlap
+(the en-US crawl's 1:48 had them nearly in turn); a host alone has every slot. Rejected: a fixed cap
+per host, idle for one host and crowdable for a third; turn-taking alone, the slow host regrowing to
+all 64 on the fast one's completions; asking the fetcher whether a host's pace is free, a trait method.
+Reopens: a host whose concurrency (D8) exceeds its share. Code: `crawl::schedule`.
+Evidence: `crawl::schedule::tests::a_host_with_a_long_queue_leaves_the_other_its_share_of_the_slots`.
 
 ### D18 A host's `Crawl-delay` is obeyed unless a root's host overrides it with `per_second`
 The default (D40). A `per_second` written for a host a root starts on beats `Crawl-delay`: a faster
