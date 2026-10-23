@@ -186,7 +186,8 @@ fn the_digest_takes_a_directory_a_name_and_a_run() {
             db: Some("d".into()),
             run: Some(RunId(4)),
             out: "o".into(),
-            name: "bruce".into()
+            name: "bruce".into(),
+            format: DigestFormat::Both,
         }
     );
     let Job::Digest(d) = job(&[
@@ -196,6 +197,11 @@ fn the_digest_takes_a_directory_a_name_and_a_run() {
         panic!("a digest")
     };
     assert_eq!((d.name.as_str(), d.run), ("en-us", None));
+    assert_eq!(d.format, DigestFormat::Json);
+    let Job::Digest(d) = job(&["digest", "--out", "o", "--format", "html"]).unwrap() else {
+        panic!("a digest")
+    };
+    assert_eq!(d.format, DigestFormat::Html);
     assert!(matches!(job(&["broken"]).unwrap(), Job::Report(_)));
 }
 
@@ -218,7 +224,12 @@ fn the_digest_refuses_what_is_not_its_own() {
             "{bad:?}"
         );
     }
-    for bad in [["--out", "o"], ["--name", "n"]] {
+    for bad in [
+        ["--out", "o"],
+        ["--name", "n"],
+        ["--format", "html"],
+        ["--format", "both"],
+    ] {
         assert!(job(&["broken", bad[0], bad[1]]).is_err(), "{bad:?}");
     }
 }
@@ -240,25 +251,43 @@ fn a_digest_is_written_under_the_day_the_run_started() {
         run: None,
         out: out.clone(),
         name: "en-us".into(),
+        format: DigestFormat::Both,
     };
     assert_eq!(
         run(&Job::Digest(args.clone()), crate::cli::registry()),
         ExitCode::SUCCESS
     );
-    let files: Vec<_> = std::fs::read_dir(&out)
+    let mut files: Vec<_> = std::fs::read_dir(&out)
         .unwrap()
         .map(|e| e.unwrap().file_name().into_string().unwrap())
         .collect();
-    assert_eq!(files.len(), 1);
+    files.sort();
+    assert_eq!(files.len(), 2);
+    let (html, json) = (&files[0], &files[1]);
     assert!(
-        files[0].starts_with("en-us-20") && files[0].ends_with(".json"),
+        html.starts_with("en-us-20") && html.ends_with(".html"),
         "{files:?}"
     );
-    let text = std::fs::read_to_string(out.join(&files[0])).unwrap();
+    assert_eq!(html.trim_end_matches("html"), json.trim_end_matches("json"));
+    let text = std::fs::read_to_string(out.join(json)).unwrap();
     assert!(text.contains("\"format_version\": 1"));
+    let page = std::fs::read_to_string(out.join(html)).unwrap();
+    assert!(page.starts_with("<!doctype html>") && page.contains("<title>Link check digest 20"));
     // A second digest of the day replaces the first.
-    assert_eq!(run(&Job::Digest(args), registry), ExitCode::SUCCESS);
-    assert_eq!(std::fs::read_dir(&out).unwrap().count(), 1);
+    assert_eq!(run(&Job::Digest(args.clone()), registry), ExitCode::SUCCESS);
+    assert_eq!(std::fs::read_dir(&out).unwrap().count(), 2);
+    // One format writes one file.
+    let only = DigestArgs {
+        out: dir.path().join("html"),
+        format: DigestFormat::Html,
+        ..args
+    };
+    assert_eq!(
+        run(&Job::Digest(only.clone()), crate::cli::registry()),
+        ExitCode::SUCCESS
+    );
+    let written: Vec<_> = std::fs::read_dir(&only.out).unwrap().collect();
+    assert_eq!(written.len(), 1);
 }
 
 #[test]
@@ -269,6 +298,7 @@ fn a_digest_of_a_database_that_is_not_there_is_refused() {
         run: None,
         out: dir.path().join("out"),
         name: "bruce".into(),
+        format: DigestFormat::Both,
     };
     assert_eq!(
         run(&Job::Digest(args), crate::cli::registry()),

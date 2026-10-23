@@ -1,6 +1,6 @@
 //! The digest: one crawl run's report, a document built once and written as
 //! dated JSON (`json`), for a database to load and graph over a retention the
-//! crawl's own never has (D64).
+//! crawl's own never has, and as HTML (`html`) for a person to read (D64).
 //!
 //! It composes what the reports hold into the sections of the P8 spec: the
 //! figures, the broken targets ranked by the links naming them, the pages
@@ -11,6 +11,7 @@
 //! reads the pages a root covers alone.
 
 mod document;
+mod html;
 mod json;
 mod sections;
 

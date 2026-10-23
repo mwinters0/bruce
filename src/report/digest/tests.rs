@@ -23,7 +23,7 @@ const START: i64 = 1_792_785_851;
 /// (13); page 2 to 10, to itself and to 15, a redirect to page 2; 4 to page 1;
 /// and the allowlisted 6 to 10. Run 2 is a finished `check-dir` run, run 3 a
 /// crawl that never finished.
-fn store() -> Store {
+pub(super) fn store() -> Store {
     let store = Store::open_in_memory(&Registry::new(Box::new(Generic))).unwrap();
     store.install(VIEWS).unwrap();
     let conn = store.connection();
@@ -116,7 +116,7 @@ fn store() -> Store {
     store
 }
 
-fn of(store: &Store) -> Digest {
+pub(super) fn of(store: &Store) -> Digest {
     digest(store, Some(RunId(1))).unwrap()
 }
 

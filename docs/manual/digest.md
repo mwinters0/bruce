@@ -1,12 +1,13 @@
 # `bruce report digest`
 
 ```sh
-bruce report digest --out DIR [--name STEM] [--db FILE] [--run N] [--format json]
+bruce report digest --out DIR [--name STEM] [--db FILE] [--run N] [--format json|html|both]
 ```
 
 Writes one **digest** of a crawl run: the run's figures, the broken links
 ranked so that the fix removing the most links comes first, and the housekeeping
-a maintainer tidies, in a file named for the day the run started. It is the
+a maintainer tidies, in files named for the day the run started: an
+[HTML document](#the-html) to read and [JSON](#the-json) to load. It is the
 report to keep: a crawl database is pruned ([`bruce prune`](prune.md)) and
 truncated, and the digests it leaves behind hold every broken and error row,
 so a database loading them can say how long a link has been broken after the
@@ -27,15 +28,42 @@ fetched for.
 | `--name STEM` | `bruce` | The file name's first part, so the digests of an en-US crawl and an every-locale crawl share a directory. It holds no `/`. |
 | `--db FILE` | `bruce.duckdb` | The database to read. It must exist. |
 | `--run N` | the latest finished run | The run to digest, as [`bruce report`](report.md#which-run) chooses it. A run that never finished is digested with a warning on stderr. A run that [`bruce check-dir`](check-dir.md) made has no digest. |
-| `--format` | `json` | `json`, the only format. |
+| `--format` | `both` | `json`, `html` or `both`: the files to write. |
 
 ## The files
 
-`DIR/STEM-YYYY-MM-DD.json`, the date being **the day the run started, in UTC**,
+`DIR/STEM-YYYY-MM-DD.json` and `DIR/STEM-YYYY-MM-DD.html`, the date being **the day the run started, in UTC**,
 so a digest made again later is named for the same day. A second run on the
-same day overwrites the first's file: the file is the day's report, and the
-`run` inside it says which run that was. `bruce` prints the path of each file
+same day overwrites the first's files: the files are the day's report, and the
+`run` inside them says which run that was. `bruce` prints the path of each file
 it wrote.
+
+## The HTML
+
+One page with no script and no outside file, so it reads the same opened from
+a disk, from an archive or from a web server. It is the JSON's data laid out
+for a reader, and is dark on a screen and light in print, where every
+`<details>` is opened. Its times are UTC and its links absolute, those into the
+page excepted. In this order:
+
+1. **The header**: the roots, the run's id, start, finish and duration, the
+   `bruce` that crawled it, and the run compared with.
+2. **Figures**: the pages and links checked, and the broken URLs, broken anchors
+   and errors among them.
+3. **Fix once, fix many**: the broken targets that more than one link names,
+   the most links first, each with the source of its page, the repo that would
+   restore a missing anchor. The targets one link names are not listed; their
+   links are in the next section.
+4. **Pages by broken links**: each page that holds one, the most first, as a
+   drill-down of its broken links, with its live page and its source.
+5. **By repo**: the repos whose pages hold broken links, the most first, each
+   with links to its pages in section 4.
+6. **Errors**, apart from the breakage.
+7. **Housekeeping**, closed: the redirected links, the sitemap entries no page
+   was fetched for, the orphans, the unlisted pages and the unchecked links.
+
+The JSON holds every row the HTML lists and the targets it leaves out, and
+the by-component counts it has no section for.
 
 ## The JSON
 

@@ -2,7 +2,8 @@
 //! [--fact k=v] [--kind k] [--top n] [--format f]`: one report over one run,
 //! or `diff` over two (D6, D27): by default the latest finished run, and for
 //! `diff` the two latest. `bruce report digest --out dir [--name s] [--db f]
-//! [--run n] [--format json]` writes a crawl run's dated digest instead (D64).
+//! [--run n] [--format json|html|both]` writes a crawl run's dated digest
+//! instead (D64).
 //!
 //! A report reads a database a crawl wrote and never creates one; opening it
 //! installs the views, so a database from before them gains them here.
@@ -57,6 +58,24 @@ impl From<&ArgMatches> for Job {
     }
 }
 
+/// Which of the digest's files `report digest` writes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DigestFormat {
+    Json,
+    Html,
+    Both,
+}
+
+impl DigestFormat {
+    fn json(self) -> bool {
+        self != DigestFormat::Html
+    }
+
+    fn html(self) -> bool {
+        self != DigestFormat::Json
+    }
+}
+
 /// What the command line asked of `report digest`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DigestArgs {
@@ -64,6 +83,7 @@ pub struct DigestArgs {
     pub run: Option<RunId>,
     pub out: PathBuf,
     pub name: String,
+    pub format: DigestFormat,
 }
 
 impl From<&ArgMatches> for DigestArgs {
@@ -79,6 +99,11 @@ impl From<&ArgMatches> for DigestArgs {
                 .get_one::<String>("name")
                 .cloned()
                 .unwrap_or_else(|| STEM.to_owned()),
+            format: match m.get_one::<String>("format").map(String::as_str) {
+                Some("json") => DigestFormat::Json,
+                Some("html") => DigestFormat::Html,
+                _ => DigestFormat::Both,
+            },
         }
     }
 }
@@ -235,10 +260,10 @@ pub fn command() -> Command {
             Arg::new("format")
                 .long("format")
                 .value_name("FORMAT")
-                .value_parser(PossibleValuesParser::new(["text", "json"]))
+                .value_parser(PossibleValuesParser::new(["text", "json", "html", "both"]))
                 .help(
                     "A text table, or one JSON array of objects [default: text]; \
-                     `digest` writes JSON",
+                     `digest` writes `json`, `html` or `both` [default: both]",
                 ),
         )
 }
@@ -256,7 +281,8 @@ pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
         ))
     };
     if name == Some(DIGEST) {
-        let whole = "the digest is of a whole run; it takes --run, --db, --out and --name";
+        let whole =
+            "the digest is of a whole run; it takes --run, --db, --out, --name and --format";
         for (id, flag) in [
             ("from", "--from"),
             ("to", "--to"),
@@ -270,7 +296,7 @@ pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
             }
         }
         if m.get_one::<String>("format").map(String::as_str) == Some("text") {
-            return refuse("--format", "the digest is JSON");
+            return refuse("--format", "the digest is written as json, html or both");
         }
         return if given("out") {
             Ok(())
@@ -285,6 +311,12 @@ pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
         if given(id) {
             return refuse(flag, "only digest writes files");
         }
+    }
+    if let Some(format @ ("html" | "both")) = m.get_one::<String>("format").map(String::as_str) {
+        return refuse(
+            "--format",
+            &format!("`{format}` is the digest's; a report is text or json"),
+        );
     }
     if name == Some("diff") {
         if given("run") {
@@ -394,8 +426,8 @@ fn report(args: &Args, registry: &Registry) -> Result<(), String> {
     say(&text)
 }
 
-/// Writes the digest of the run named, as `DIR/STEM-YYYY-MM-DD.json`, and
-/// prints the path (D64).
+/// Writes the digest of the run named, as `DIR/STEM-YYYY-MM-DD.json` and
+/// `.html`, and prints the path of each (D64).
 fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
     let (store, db) = open(args.db.as_deref(), registry)?;
     let digest: Digest =
@@ -407,11 +439,24 @@ fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
     );
     let io_error = |path: &Path, e: io::Error| format!("{}: {e}", path.display());
     fs::create_dir_all(&args.out).map_err(|e| io_error(&args.out, e))?;
-    let path = args
-        .out
-        .join(format!("{}-{}.json", args.name, digest.date()));
-    fs::write(&path, digest.json()).map_err(|e| io_error(&path, e))?;
-    say(&path.display().to_string())
+    let file = |extension| {
+        args.out
+            .join(format!("{}-{}.{extension}", args.name, digest.date()))
+    };
+    // The files are rendered before either is written, so a failing one
+    // leaves no half of the pair.
+    let mut files = Vec::new();
+    if args.format.json() {
+        files.push((file("json"), digest.json()));
+    }
+    if args.format.html() {
+        files.push((file("html"), digest.html()));
+    }
+    for (path, text) in files {
+        fs::write(&path, text).map_err(|e| io_error(&path, e))?;
+        say(&path.display().to_string())?;
+    }
+    Ok(())
 }
 
 /// Prints `text` and a newline. A reader that closes the pipe, as `head`

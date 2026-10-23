@@ -37,6 +37,11 @@ exactly the rows `PLANTED_*` name. Nothing leaves the machine: the
 configuration allowlists no host. Needs `cargo`, node and, on the first run,
 the network.
 
+The crawl's digest is written too (`bruce report digest`), and its HTML, less
+what varies from run to run (`normalise_digest`), is held to `fixtures/antora/
+digest.html`, the golden file of the rendering over this site; `--save-digest`
+writes it anew, to be read in a diff before it is committed.
+
 `--save-pages` also copies a few of the builds' pages into
 `fixtures/antora/pages/`, recorded in a manifest, so tests read what a build
 writes rather than what one is remembered to write. The run is slow beside the
@@ -57,6 +62,7 @@ import hashlib
 import http.server
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -94,6 +100,8 @@ SAVED = {
     ],
 }
 PAGES = FIXTURES / "pages"
+#: The digest's HTML over the whole site's crawl, as `normalise_digest` leaves it.
+GOLDEN = FIXTURES / "digest.html"
 #: A hosted-git remote Antora derives an edit link from, the whole build's pages
 #: carrying one as production's do and a content repo's CI build not.
 ORIGIN = "https://github.com/bruce-fixture/{}.git"
@@ -305,6 +313,61 @@ def plant(tools: Path) -> None:
         )
 
 
+#: What a digest holds that differs between two crawls of one site: the run's
+#: times and duration, the date in its title and heading, and the tool version.
+VOLATILE = (
+    (re.compile(r'<time datetime="[^"]*">[^<]*</time>'), '<time datetime="T">T</time>'),
+    (re.compile(r'(<span class="(?:duration|version|date)">)[^<]*'), r"\1V"),
+    (re.compile(r"(<title>Link check digest )\d{4}-\d{2}-\d{2}"), r"\1DATE"),
+)
+
+
+def normalise_digest(html: str) -> str:
+    """`html` with `VOLATILE` replaced by fixed text, so two crawls of one site
+    give one document."""
+    for pattern, fixed in VOLATILE:
+        html = pattern.sub(fixed, html)
+    return html
+
+
+def digest(bin: Path, db: Path, out: Path) -> tuple[str, str]:
+    """`bruce report digest` of the crawl in `db`: the JSON and the HTML it wrote."""
+    if out.exists():
+        shutil.rmtree(out)
+    code, stdout, err = bruce(bin, "report", "digest", "--db", db, "--out", out, "--name", "e2e")
+    if code:
+        raise E2eError(f"bruce report digest exited {code}:\n{stdout}{err}")
+    files = sorted(out.iterdir())
+    if [f.suffix for f in files] != [".html", ".json"]:
+        raise E2eError(f"bruce report digest wrote {[f.name for f in files]}, not an .html and a .json")
+    return files[1].read_text(), files[0].read_text()
+
+
+def check_digest(js: str, html: str, port: int, golden: Path = GOLDEN, save: bool = False) -> list[str]:
+    """Every way the digest of the whole site's crawl differs from what the site
+    promises, empty when there is none. The golden file is written anew with `save`."""
+    problems: list[str] = []
+    doc = json.loads(js)
+    totals = doc["totals"]
+    if not (totals["pages"] and totals["links"]):
+        problems.append(f"the digest's totals are empty: {totals}")
+    if f"http://127.0.0.1:{port}{SITE_PATH}/" not in doc["run"]["roots"]:
+        problems.append(f"the digest's roots are not the site's: {doc['run']['roots']}")
+    for banned in ("<script", "<link", " src=", "@import"):
+        if banned in html:
+            problems.append(f"the digest's HTML holds {banned!r}")
+    seen = normalise_digest(html)
+    if save:
+        golden.write_text(seen)
+    elif port != PORT:
+        print(f"digest: golden file not compared, it is the port {PORT} crawl's")
+    elif not golden.exists():
+        problems.append(f"no golden file {golden}: run with --save-digest")
+    elif seen != golden.read_text():
+        problems.append(f"the digest's HTML is not {golden}: read the diff, then run with --save-digest")
+    return problems
+
+
 def check_dir(
     bin: Path, build: Path, port: int, config: Path, baseline: Path, db: Path, *extra: str,
 ) -> tuple[int, Any, str]:
@@ -433,6 +496,7 @@ def verify(
 def main(argv: Sequence[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--port", type=int, default=PORT, help="the whole site's port (default: %(default)s)")
+    ap.add_argument("--save-digest", action="store_true", help="write the digest's HTML as the golden file")
     ap.add_argument("--save-pages", action="store_true", help="copy a few built pages into fixtures/antora/pages/")
     args = ap.parse_args(argv)
     server = None
@@ -466,6 +530,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             if code:
                 raise E2eError(f"bruce {step[0]} exited {code}:\n{out}{err}")
             print(out + err, end="")
+        js, html = digest(bin, crawl_db, OUT / "digest")
+        problems = check_digest(js, html, args.port, save=args.save_digest)
+        if problems:
+            raise E2eError("the digest is not what the site promises:\n  " + "\n  ".join(problems))
+        print(f"digest: {len(html)} bytes of HTML, {len(js)} of JSON, as the golden file has it")
         ci = (args.port, config, baseline, ci_db)
         unchanged = check_dir(bin, partial, *ci)
         (repos[PARTIAL] / "modules" / "ROOT" / "images" / "diagram.svg").unlink()

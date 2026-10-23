@@ -227,6 +227,38 @@ class Verify(unittest.TestCase):
         self.assertTrue(any("bad config" in p for p in problems))
 
 
+class Digest(unittest.TestCase):
+    PAGE = (
+        '<title>Link check digest 2026-10-23 \u2013 x</title><h1><span class="date">2026-10-23</span></h1>'
+        '<time datetime="2026-10-23T20:04:11Z">2026-10-23 20:04:11 UTC</time> after '
+        '<span class="duration">1 min 2 s</span> <span class="version">0.1.0</span>'
+    )
+    JSON = json.dumps({"totals": {"pages": 3, "links": 9}, "run": {"roots": ["http://127.0.0.1:8099/en-US/"]}})
+
+    def test_what_differs_between_two_crawls_is_replaced(self) -> None:
+        other = self.PAGE.replace("2026-10-23", "2027-01-02").replace("20:04:11", "01:02:03").replace("1 min 2 s", "5 s")
+        self.assertEqual(e2e.normalise_digest(self.PAGE), e2e.normalise_digest(other))
+        self.assertIn("<title>Link check digest DATE", e2e.normalise_digest(self.PAGE))
+
+    def test_a_page_is_compared_with_its_golden_file_and_a_difference_is_named(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            golden = Path(d) / "digest.html"
+            self.assertTrue(any("no golden file" in p for p in e2e.check_digest(self.JSON, self.PAGE, e2e.PORT, golden)))
+            self.assertEqual(e2e.check_digest(self.JSON, self.PAGE, e2e.PORT, golden, save=True), [])
+            self.assertEqual(e2e.check_digest(self.JSON, self.PAGE, e2e.PORT, golden), [])
+            problems = e2e.check_digest(self.JSON, self.PAGE + "<p>more</p>", e2e.PORT, golden)
+            self.assertTrue(any("--save-digest" in p for p in problems), problems)
+
+    def test_a_script_or_an_empty_run_is_named(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            golden = Path(d) / "digest.html"
+            problems = e2e.check_digest(self.JSON, self.PAGE + "<script>", e2e.PORT, golden, save=True)
+            self.assertTrue(any("<script" in p for p in problems))
+            empty = json.dumps({"totals": {"pages": 0, "links": 0}, "run": {"roots": []}})
+            problems = e2e.check_digest(empty, self.PAGE, e2e.PORT, golden, save=True)
+            self.assertEqual(len(problems), 2, problems)
+
+
 class Committed(unittest.TestCase):
     def test_every_saved_page_hashes_to_the_manifest(self) -> None:
         manifest = e2e.PAGES / "manifest.json"
@@ -242,6 +274,13 @@ class Committed(unittest.TestCase):
             f = e2e.PAGES / e["path"]
             self.assertEqual(e2e.sha256(f), e["sha256"], e["path"])
             self.assertEqual(f.stat().st_size, e["bytes"], e["path"])
+
+    def test_the_golden_digest_holds_nothing_that_varies(self) -> None:
+        if not e2e.GOLDEN.exists():
+            self.skipTest("no golden digest yet")
+        golden = e2e.GOLDEN.read_text()
+        self.assertEqual(e2e.normalise_digest(golden), golden)
+        self.assertNotIn("<script", golden)
 
     def test_the_pages_were_built_with_the_vendored_bundle(self) -> None:
         manifest = e2e.PAGES / "manifest.json"
