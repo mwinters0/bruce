@@ -35,6 +35,7 @@ pages, chosen and saved by `scripts/fixtures.py`, and `fixtures/antora/`, a
 three-component Antora site, the Fedora UI bundle and seven built pages, which
 `mise run e2e` rebuilds and then crawls, exports and runs `check-dir` over, asserting
 the gate's exit status and sections.
+`mise run shot` renders a page of HTML headless with Servo to PNGs, for review.
 The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball (D60).
 `.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), its body naming a schema change from the latest release's (D43), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
 

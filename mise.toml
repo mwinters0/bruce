@@ -15,6 +15,10 @@ rust = { version = "1.99.1", components = "clippy,rustfmt,rust-analyzer" }
 # Runs the Antora that `mise run e2e` builds its test site with (D24); the
 # Antora version is pinned in `scripts/e2e.py`.
 node = "24.21.0"
+# `mise run shot` renders an HTML page headless with servoshell (`scripts/shot.py`),
+# and DejaVu is the one font a machine with none installed then has.
+"github:servo/servo" = "0.7.0"
+"github:dejavu-fonts/dejavu-fonts" = { version = "2_37", asset_pattern = "dejavu-fonts-ttf-*.tar.bz2", version_prefix = "version_" }
 
 # Every per-round check once, logged under `runs/check/`; `--verify` reuses a
 # passing run of the same tree. `scripts/check.py` says what it runs and why.
@@ -38,6 +42,14 @@ run = "uv run sim.py"
 description = "Build the fixture Antora site whole and in part, and gate it"
 dir = "{{config_root}}/scripts"
 run = "uv run e2e.py"
+
+# An HTML page rendered headless, at a desktop's and a phone's width and with
+# its print rules applied, to PNGs under `runs/shot/` for a person to read; it
+# is no check (`scripts/shot.py`). `mise run shot PAGE` renders another page.
+[tasks.shot]
+description = "Render the digest's HTML headless with Servo to PNGs under runs/shot/"
+dir = "{{config_root}}/scripts"
+run = "uv run shot.py"
 
 # The cargo commands one at a time; `check` runs fmt, clippy and test among
 # the rest, each with the flags it holds a round to.
