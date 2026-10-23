@@ -38,11 +38,36 @@ the gate's exit status and sections.
 The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball (D60).
 `.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
 
+## P8 progress
+
+The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
+
+- [ ] **8.1** A hash records its scope: `extract::hash` says which it hashed,
+  the writer records it and a run its roots' `hash_root` and `hash_exclude`,
+  schema 5. Closes on an en-US crawl launched detached under `runs/`.
+- [ ] **8.2** A release names its schema change: `release.yml` compares
+  `SCHEMA_VERSION` with the latest published release's, rehearsed by
+  `scripts/workflows.py`.
+- [ ] **8.3** The digest's document and JSON: `report/digest`, its
+  `format_version`, `bruce report digest --out --name --format`, the
+  sections over one run, the manual.
+- [ ] **8.4** The digest's HTML: the rendering, the no-script test, the golden
+  file over `mise run e2e`'s site.
+- [ ] **8.5** An unresolved xref's hint: the `antora` view, `broken`'s and the
+  digest's `hint`, measure and floor chosen on en-US's rows.
+- [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
+  verdict and what it spawns in the notes.
+- [ ] **8.7** `changed` and `anchors-removed`: `report` children and kinds,
+  the scope changed and the root missed flagged.
+- [ ] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,
+  section 3's causes, section 7, the figures' changes; over a second en-US
+  crawl against 8.1's.
+
 ## Not started
 
-No phase is current. Every phase in
-[`../design/roadmap.md`](../design/roadmap.md)'s index not `Complete` or
-`Struck`: P9 is specified and waits for P8; P7 and P8 have not been grilled.
+Every phase in [`../design/roadmap.md`](../design/roadmap.md)'s index not
+`Complete`, `Struck` or `Current`: P9 is specified and waits for P8; P7 has
+not been grilled.
 
 ## Decisions worth another look
 
