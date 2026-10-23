@@ -157,7 +157,7 @@ and decoded text in a scope `hash_root`/`hash_exclude` set, by default the profi
 exclusions. Rejected: storing bodies by default (about 330 MB per en-US run, uncompressed: `select sum(size) from pages` over
 `runs/p5.2-en-us-20261020/en-us.duckdb`); raw bytes (docs.fp.o's `Last build:` changes every page every build, I19); a hash of the
 extracted record, blind to a prose edit; one fixed default root (an exclusion alone would barely act); an empty or region fallback for a
-set root matching nothing, hiding the misconfiguration a page changing every build shows. Code: `extract::hash`. Evidence: `tests/extract.rs`.
+set root matching nothing, hiding the misconfiguration a page changing every build shows. A page records the scope its hash covered (`root`, `region`, `whole`) and a run its roots' keys (schema 5, D43), so a changed scope is told from changed content. Code: `extract::hash`. Evidence: `tests/extract.rs`.
 
 ### D17 Each page stores its source file and repo, read from its edit link
 This routes a breakage to the repo and file that own it, and groups more precisely than component

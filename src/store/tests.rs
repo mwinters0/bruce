@@ -49,6 +49,7 @@ fn page(run: RunId, url_id: u64) -> PageRow {
         content_type: Some("text/html".into()),
         size: Some(10),
         content_hash: Some(vec![1, 2, 3]),
+        hash_scope: "region",
         profile: "viewing".into(),
         source_url: None,
         source_repo: None,
@@ -508,8 +509,12 @@ fn a_link_stores_no_verdict() {
 fn a_run_records_its_roots_and_a_page_its_root() {
     let store = Store::open_in_memory(&registry()).unwrap();
     let roots = [
-        "https://a.test/docs/".to_string(),
-        "https://b.test/".to_string(),
+        RunRoot {
+            url: "https://a.test/docs/".into(),
+            hash_root: vec!["main".into(), "article".into()],
+            hash_exclude: vec!["footer".into()],
+        },
+        "https://b.test/".into(),
     ];
     let run = store.begin_run(Mode::Crawl, "abc", None, &roots).unwrap();
     let none = store.begin_run(Mode::Local, "abc", None, &[]).unwrap();
@@ -526,6 +531,37 @@ fn a_run_records_its_roots_and_a_page_its_root() {
         count(
             &store,
             &format!("SELECT len(roots) FROM runs WHERE run_id = {}", none.0)
+        ),
+        0
+    );
+    let scopes: Vec<String> = {
+        let mut stmt = store
+            .connection()
+            .prepare(
+                "SELECT s.root || '|' || array_to_string(s.hash_root, ',') || '|' || \
+                 array_to_string(s.hash_exclude, ',') \
+                 FROM (SELECT unnest(hash_scopes) AS s FROM runs WHERE run_id = ?)",
+            )
+            .unwrap();
+        stmt.query_map([run.0], |r| r.get(0))
+            .unwrap()
+            .collect::<Result<_, _>>()
+            .unwrap()
+    };
+    assert_eq!(
+        scopes,
+        [
+            "https://a.test/docs/|main,article|footer",
+            "https://b.test/||"
+        ]
+    );
+    assert_eq!(
+        count(
+            &store,
+            &format!(
+                "SELECT len(hash_scopes) FROM runs WHERE run_id = {}",
+                none.0
+            )
         ),
         0
     );

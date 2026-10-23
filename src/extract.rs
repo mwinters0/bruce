@@ -27,6 +27,7 @@ use crate::profile::{ElementHandlers, Extract, Facts, Registry, Settled, Sink, U
 pub use anchors::{Anchor, Placement};
 use anchors::{Anchors, attribute};
 use edit_link::EditLinks;
+pub use hash::Covered;
 use hash::Hash;
 use links::Links;
 pub use links::{Kind, Link};
@@ -51,6 +52,8 @@ pub struct Extracted {
     /// The xxh3-128 hash of the page's content, scoped by the root's
     /// `hash_root` and `hash_exclude` (D15).
     pub hash: u128,
+    /// Which scope the hash covered (D15).
+    pub covered: Covered,
 }
 
 /// Why a page could not be extracted.
@@ -156,6 +159,7 @@ pub fn extract_under(
         };
         finish(&settled, &mut sink);
     }
+    let (hash, covered) = hash.into_inner().finish();
     Ok(Extracted {
         profile: profile.name(),
         title: title.into_inner().text,
@@ -163,7 +167,8 @@ pub fn extract_under(
         links: links.finish(),
         edit_link,
         facts: sink.into_facts(),
-        hash: hash.into_inner().finish(),
+        hash,
+        covered,
     })
 }
 

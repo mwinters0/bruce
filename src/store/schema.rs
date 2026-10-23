@@ -1,17 +1,24 @@
-//! The DuckDB schema (D26 as amended by D28, D34, D35, D36, D37, D43 and D51) and its
-//! version. Rows are append-only (D2), so only `runs.finished_at` is ever
+//! The DuckDB schema (D26 as amended by D15, D28, D34, D35, D36, D37, D43 and D51) and
+//! its version. Rows are append-only (D2), so only `runs.finished_at` is ever
 //! updated and only `Store::prune` deletes; there are no primary keys on the
 //! bulk tables, which an appender would pay to check for nothing.
 
 /// The version this build writes and reads (D43). A schema change bumps it;
 /// a 0.x release migrates no database (D43).
-pub const SCHEMA_VERSION: u32 = 4;
+pub const SCHEMA_VERSION: u32 = 5;
 
 /// The `meta` key holding [`SCHEMA_VERSION`].
 pub const VERSION_KEY: &str = "schema_version";
 
 /// The five outcomes of D16.
 const OUTCOME: &str = "('ok', 'broken_url', 'broken_anchor', 'error', 'unchecked')";
+
+/// A run root's hash scope (D15): the root's canonical URL, as `runs.roots`
+/// holds it, and its `hash_root` and `hash_exclude`.
+pub(super) const SCOPE: &str = "STRUCT(root VARCHAR, hash_root VARCHAR[], hash_exclude VARCHAR[])";
+
+/// What a page's hash covered (D15).
+const HASH_SCOPE: &str = "('root', 'region', 'whole')";
 
 /// Where a target's answer came from (D51).
 const ANSWERED_BY: &str = "('local', 'baseline', 'live')";
@@ -32,7 +39,8 @@ CREATE TABLE runs (
     tool_version VARCHAR NOT NULL,
     config_hash VARCHAR NOT NULL,
     baseline_run UBIGINT,
-    roots VARCHAR[] NOT NULL
+    roots VARCHAR[] NOT NULL,
+    hash_scopes {SCOPE}[] NOT NULL
 );
 CREATE TABLE targets (
     run_id UBIGINT NOT NULL,
@@ -54,6 +62,7 @@ CREATE TABLE pages (
     content_type VARCHAR,
     size UBIGINT,
     content_hash BLOB,
+    hash_scope VARCHAR NOT NULL CHECK (hash_scope IN {HASH_SCOPE}),
     profile VARCHAR NOT NULL,
     source_url VARCHAR,
     source_repo VARCHAR,

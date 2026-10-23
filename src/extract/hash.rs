@@ -24,6 +24,32 @@ use xxhash_rust::xxh3::Xxh3;
 use crate::config::HashScope;
 use crate::profile::ElementHandlers;
 
+/// Which scope a page's hash covered (D15): what `hash_root` or the
+/// profile's region matched, or the whole page where nothing did. A reader
+/// comparing two hashes needs it, since the same page hashes differently
+/// under each.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Covered {
+    /// An element `hash_root` names matched.
+    Root,
+    /// The profile's region matched, `hash_root` being unset.
+    Region,
+    /// No root element matched, or none was set: the page less its
+    /// exclusions.
+    Whole,
+}
+
+impl Covered {
+    /// The value `pages.hash_scope` holds.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Covered::Root => "root",
+            Covered::Region => "region",
+            Covered::Whole => "whole",
+        }
+    }
+}
+
 /// One page's two running hashes and the flags that route each item.
 pub(super) struct Hash {
     /// Everything in scope in a root element, its own start tag included.
@@ -31,6 +57,8 @@ pub(super) struct Hash {
     /// Everything not excluded, the fallback where no root matched.
     page: Xxh3,
     root_seen: bool,
+    /// What a matched root is, set by [`Hash::handlers`].
+    rooted: Covered,
     in_root: bool,
     excluded: bool,
     /// The current text node's chunks, undecoded, until its last.
@@ -72,6 +100,7 @@ impl Default for Hash {
             root: Xxh3::new(),
             page: Xxh3::new(),
             root_seen: false,
+            rooted: Covered::Whole,
             in_root: false,
             excluded: false,
             text_root: String::new(),
@@ -90,7 +119,13 @@ impl Hash {
         region: &[&str],
     ) -> ElementHandlers<'h> {
         let mut handlers = ElementHandlers::new();
-        for r in roots(scope, region) {
+        let roots = roots(scope, region);
+        this.borrow_mut().rooted = match () {
+            _ if roots.is_empty() => Covered::Whole,
+            _ if scope.root.is_empty() => Covered::Region,
+            _ => Covered::Root,
+        };
+        for r in roots {
             handlers.push((
                 selector(r),
                 ElementContentHandlers::default()
@@ -196,12 +231,12 @@ impl Hash {
         )
     }
 
-    /// The page's hash, once the page has ended.
-    pub(super) fn finish(self) -> u128 {
+    /// The page's hash and the scope it covered, once the page has ended.
+    pub(super) fn finish(self) -> (u128, Covered) {
         if self.root_seen {
-            self.root.digest128()
+            (self.root.digest128(), self.rooted)
         } else {
-            self.page.digest128()
+            (self.page.digest128(), Covered::Whole)
         }
     }
 }

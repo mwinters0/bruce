@@ -8,6 +8,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use duckdb::types::{TimeUnit, Value};
 
+use crate::config::Config;
+
 /// A row of `pages` (D26, D34–D36).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PageRow {
@@ -17,6 +19,8 @@ pub struct PageRow {
     pub content_type: Option<String>,
     pub size: Option<u64>,
     pub content_hash: Option<Vec<u8>>,
+    /// What the hash covered: `root`, `region` or `whole` (D15).
+    pub hash_scope: &'static str,
     /// The name of the profile that extracted the page (D35).
     pub profile: String,
     pub source_url: Option<String>,
@@ -32,6 +36,42 @@ pub struct PageRow {
     /// (`Root::canonical_url`); `None` for an allowlisted page, which no
     /// root's scope holds (D3).
     pub root: Option<String>,
+}
+
+/// A root as a run records it (D15): its canonical URL, which `runs.roots` and
+/// `pages.root` hold, and the `hash_root` and `hash_exclude` its pages were
+/// hashed under.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RunRoot {
+    pub url: String,
+    pub hash_root: Vec<String>,
+    pub hash_exclude: Vec<String>,
+}
+
+impl RunRoot {
+    /// Every root `config` names, in its order.
+    pub fn of(config: &Config) -> Vec<RunRoot> {
+        config
+            .roots
+            .iter()
+            .map(|r| RunRoot {
+                url: r.canonical_url(),
+                hash_root: r.hash.root.clone(),
+                hash_exclude: r.hash.exclude.clone(),
+            })
+            .collect()
+    }
+}
+
+impl From<&str> for RunRoot {
+    /// A root with the default hash scope.
+    fn from(url: &str) -> RunRoot {
+        RunRoot {
+            url: url.to_owned(),
+            hash_root: Vec::new(),
+            hash_exclude: Vec::new(),
+        }
+    }
 }
 
 /// A row of `page_facts` (D37): `key` is the full `<profile>.<key>`, as

@@ -144,7 +144,7 @@ without history with no comparison.
 
 Settled 2026-10-23 (maintainer), draining three entries of the inbox. **`changed`
 reads only the pages a root covers** (`pages.root` set), so the forge's
-pages, `generic` and hashed whole, never appear: between two en-US crawls 3
+pages, `generic` and hashed by its `[role=main]` region, never appear: between two en-US crawls 3
 hours apart 137 of the 138 pages whose hash moved were the forge's
 (`runs/p4.10-en-us-20261019-2125/combined.duckdb`). **A page records which
 scope its hash covered**, `root`, `region` or `whole`, and **a run its

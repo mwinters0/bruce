@@ -39,7 +39,7 @@ fn store() -> Store {
     let conn = store.connection();
     for (run, mode, baseline) in [(1, "crawl", None), (2, "local", Some(1))] {
         conn.execute(
-            "INSERT INTO runs VALUES (?, '2026-10-19 12:00:00+00', now(), ?, 'x', 'h', ?, [])",
+            "INSERT INTO runs VALUES (?, '2026-10-19 12:00:00+00', now(), ?, 'x', 'h', ?, [], [])",
             params![run, mode, baseline],
         )
         .unwrap();

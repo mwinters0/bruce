@@ -13,7 +13,7 @@ use crate::fetch::routed::Routed;
 use crate::profile::Registry;
 use crate::profile::antora::Antora;
 use crate::profile::generic::Generic;
-use crate::store::{BaselineIndex, Mode, RunId, Store, Writer};
+use crate::store::{BaselineIndex, Mode, RunId, RunRoot, Store, Writer};
 
 fn url(s: &str) -> Url {
     Url::parse(s).unwrap()
@@ -149,7 +149,7 @@ async fn check(
     let config = Config::parse(config).unwrap();
     let baseline_run = (baseline.run.0 > 0).then_some(baseline.run);
     let run = store
-        .begin_run(Mode::Local, "test", baseline_run, &config.root_urls())
+        .begin_run(Mode::Local, "test", baseline_run, &RunRoot::of(&config))
         .unwrap();
     let writer = Writer::start(store, 16);
     let live = HttpFetcher::new(Settings::default(), Hosts::unlimited()).unwrap();

@@ -20,7 +20,7 @@ code: `cli`, the command line, the five subcommands and the profile registry; `c
 `link_verdicts` view, the deleting of old runs, the baseline export and import, the index of a baseline's targets and its pages' facts, the copy of a target's rows between runs, which the writer also runs on request, and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views, Extract and Resolve; `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
-the profile's facts and the content hash;
+the profile's facts and the content hash with the scope it covered;
 `forge`, the edit-URL shape parse;
 `url`, the canonical form and `url_id`;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, the body decoding, the local fetcher over a map of URLs to files and the router that sends a URL the build holds to it and any other to HTTP;
@@ -42,9 +42,10 @@ The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-P
 
 The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
 
-- [ ] **8.1** A hash records its scope: `extract::hash` says which it hashed,
+- [x] **8.1** A hash records its scope: `extract::hash` says which it hashed,
   the writer records it and a run its roots' `hash_root` and `hash_exclude`,
   schema 5. Closes on an en-US crawl launched detached under `runs/`.
+  Notes: [`../wip/roadmap-P8.1-hash-scope-notes.md`](../wip/roadmap-P8.1-hash-scope-notes.md).
 - [ ] **8.2** A release names its schema change: `release.yml` compares
   `SCHEMA_VERSION` with the latest published release's, rehearsed by
   `scripts/workflows.py`.

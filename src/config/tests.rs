@@ -501,10 +501,8 @@ fn a_run_records_its_roots_in_canonical_form() {
         "#,
     )
     .unwrap();
-    assert_eq!(
-        c.root_urls(),
-        ["https://a.example/a~b/", "https://b.example/b/?x=1"]
-    );
+    let urls: Vec<String> = c.roots.iter().map(Root::canonical_url).collect();
+    assert_eq!(urls, ["https://a.example/a~b/", "https://b.example/b/?x=1"]);
 }
 
 /// The keys `T` reads, as serde's derive names them: its `deserialize_struct`

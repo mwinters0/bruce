@@ -757,7 +757,8 @@ where
 
     /// Extracts `text`, the body of the page at `url`, on the blocking pool
     /// (`lol_html` is synchronous). A page of a root is read under that
-    /// root's profile and hash scope, and any other under neither.
+    /// root's profile and hash scope, and any other under `auto` and no
+    /// keys, which hash its profile's region where one matches (D15).
     async fn read(
         self: &Arc<Self>,
         url: &Url,
@@ -767,13 +768,13 @@ where
         let shared = Arc::clone(self);
         let url = url.clone();
         tokio::task::spawn_blocking(move || {
-            let (auto, whole) = (ProfileChoice::Auto, HashScope::default());
+            let (auto, unset) = (ProfileChoice::Auto, HashScope::default());
             let (choice, scope) = match plan {
                 Plan::Page { root } => {
                     let root = &shared.frontier.config().roots[root];
                     (&root.profile, &root.hash)
                 }
-                _ => (&auto, &whole),
+                _ => (&auto, &unset),
             };
             let site_root = shared.site_root.as_ref();
             extract::extract_under(&text, &url, site_root, choice, scope, &shared.registry)
@@ -954,6 +955,7 @@ where
             content_type: content_type.map(str::to_owned),
             size: Some(page.size),
             content_hash: Some(e.hash.to_be_bytes().to_vec()),
+            hash_scope: e.covered.as_str(),
             profile: e.profile.to_owned(),
             source_url: edit.map(|l| l.url.to_string()),
             source_repo: source.map(|s| s.repo.clone()),

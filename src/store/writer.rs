@@ -158,6 +158,7 @@ impl<'a> Tables<'a> {
                 p.content_type,
                 p.size,
                 p.content_hash,
+                p.hash_scope,
                 p.profile,
                 p.source_url,
                 p.source_repo,

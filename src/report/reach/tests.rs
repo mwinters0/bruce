@@ -20,7 +20,7 @@ fn store() -> Store {
     store.install(VIEWS).unwrap();
     let conn = store.connection();
     conn.execute(
-        "INSERT INTO runs VALUES (1, now(), now(), 'crawl', 'x', 'h', NULL, ?)",
+        "INSERT INTO runs VALUES (1, now(), now(), 'crawl', 'x', 'h', NULL, ?, [])",
         params![format!("['{ROOT}', '{OTHER}']")],
     )
     .unwrap();

@@ -7,7 +7,7 @@ use crate::fetch::http::host::Hosts;
 use crate::fetch::http::{HttpFetcher, Settings};
 use crate::profile::antora::Antora;
 use crate::profile::generic::Generic;
-use crate::store::{Mode, Store, Writer};
+use crate::store::{Mode, RunRoot, Store, Writer};
 
 use super::*;
 
@@ -45,7 +45,7 @@ async fn crawl_config(server: &MockServer, config: &str, settings: Settings) -> 
     let config = Config::parse(config).unwrap();
     let store = Store::open_in_memory(&registry()).unwrap();
     let run = store
-        .begin_run(Mode::Crawl, "test", None, &config.root_urls())
+        .begin_run(Mode::Crawl, "test", None, &RunRoot::of(&config))
         .unwrap();
     let writer = Writer::start(store, 16);
     let fetcher = HttpFetcher::new(settings, Hosts::unlimited()).unwrap();
@@ -271,6 +271,50 @@ async fn every_target_gets_its_outcome_and_every_link_a_row() {
     let hits = requests(&server).await;
     assert_eq!(hits.iter().filter(|(_, p)| p == "/docs/ok").count(), 1);
     assert!(hits.iter().all(|(_, p)| p != "/fr/docs/"));
+}
+
+#[tokio::test]
+async fn a_page_records_the_scope_its_hash_covered_and_a_run_its_roots_scopes() {
+    let server = MockServer::start().await;
+    page(
+        &server,
+        "/docs/",
+        r#"<title>Home</title><main>a</main><a href="/docs/two">two</a>"#,
+    )
+    .await;
+    page(&server, "/docs/two", "<title>Two</title>").await;
+    let config = format!(
+        "[[root]]\nurl = \"{}/docs/\"\nhash_root = [\"main\"]\nhash_exclude = [\"footer\"]\n",
+        server.uri()
+    );
+
+    let done = crawl_config(&server, &config, quick()).await;
+
+    let scopes: Vec<(String, String)> = rows(
+        &done.store,
+        "SELECT t.url, p.hash_scope FROM pages p \
+         JOIN targets t USING (run_id, url_id) ORDER BY t.url",
+        |r| Ok((r.get(0)?, r.get(1)?)),
+    );
+    let base = &done.base;
+    assert_eq!(
+        scopes,
+        [
+            (format!("{base}/docs/"), "root".to_string()),
+            (format!("{base}/docs/two"), "whole".to_string()),
+        ]
+    );
+    let recorded: String = done
+        .store
+        .connection()
+        .query_row(
+            "SELECT array_to_string(s.hash_root, ',') || '|' || array_to_string(s.hash_exclude, ',') \
+             FROM (SELECT unnest(hash_scopes) AS s FROM runs)",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(recorded, "main|footer");
 }
 
 #[tokio::test]
@@ -1443,7 +1487,7 @@ async fn stop_at(server: &MockServer, at: &str, grace: Duration) -> (Done, Durat
     let config = Config::parse(&config).unwrap();
     let store = Store::open_in_memory(&registry()).unwrap();
     let run = store
-        .begin_run(Mode::Crawl, "test", None, &config.root_urls())
+        .begin_run(Mode::Crawl, "test", None, &RunRoot::of(&config))
         .unwrap();
     let writer = Writer::start(store, 16);
     let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();
@@ -1560,7 +1604,7 @@ async fn a_stop_before_the_run_asks_about_nothing() {
     let config = Config::parse(&config).unwrap();
     let store = Store::open_in_memory(&registry()).unwrap();
     let run = store
-        .begin_run(Mode::Crawl, "test", None, &config.root_urls())
+        .begin_run(Mode::Crawl, "test", None, &RunRoot::of(&config))
         .unwrap();
     let writer = Writer::start(store, 16);
     let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();
@@ -1604,7 +1648,7 @@ async fn an_abandoned_run_holds_the_page_it_was_writing_whole() {
     let config = Config::parse(&config).unwrap();
     let store = Store::open_in_memory(&registry()).unwrap();
     let run = store
-        .begin_run(Mode::Crawl, "test", None, &config.root_urls())
+        .begin_run(Mode::Crawl, "test", None, &RunRoot::of(&config))
         .unwrap();
     let writer = Writer::start(store, 1);
     let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();

@@ -18,7 +18,7 @@ fn run(store: &Store, days: u32, finished: bool) -> RunId {
     let id = run.0;
     for sql in [
         "INSERT INTO targets (answered_by, run_id, url_id, url, outcome) VALUES ('live', ?, 1, 'https://a.test/', 'ok')",
-        "INSERT INTO pages VALUES (?, 1, NULL, NULL, NULL, NULL, 'generic', NULL, NULL, NULL, NULL, true, false, NULL)",
+        "INSERT INTO pages VALUES (?, 1, NULL, NULL, NULL, NULL, 'whole', 'generic', NULL, NULL, NULL, NULL, true, false, NULL)",
         "INSERT INTO page_facts VALUES (?, 1, 'k', 'v')",
         "INSERT INTO anchors VALUES (?, 1, 'x', 'h2', 'content')",
         "INSERT INTO links VALUES (?, 1, 1, NULL, '/', 'anchor', NULL)",

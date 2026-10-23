@@ -34,7 +34,7 @@ use crate::fetch::local::LocalFetcher;
 use crate::fetch::routed::Routed;
 use crate::profile::Registry;
 use crate::report::{Format, Gate, InverseMode, Report, Request};
-use crate::store::{Mode, RunId, Writer};
+use crate::store::{Mode, RunId, RunRoot, Writer};
 
 mod file;
 
@@ -242,7 +242,12 @@ fn check(args: &Args, registry: Registry) -> Result<Checked, String> {
     let site = local.site();
     let fetcher = Routed::new(local, live);
     let run = store
-        .begin_run(Mode::Local, &hash, Some(imported.run), &config.root_urls())
+        .begin_run(
+            Mode::Local,
+            &hash,
+            Some(imported.run),
+            &RunRoot::of(&config),
+        )
         .map_err(in_db)?;
     let writer = Writer::start(store, WRITER_CAPACITY);
     let baseline = Baseline {

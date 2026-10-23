@@ -25,7 +25,7 @@ use crate::crawl::{Crawl, Summary};
 use crate::fetch::http::host::Hosts;
 use crate::fetch::http::{HttpFetcher, Settings};
 use crate::profile::Registry;
-use crate::store::{Mode, RunId, Writer};
+use crate::store::{Mode, RunId, RunRoot, Writer};
 
 /// Rows the writer's channel holds before a sender waits (D28).
 const WRITER_CAPACITY: usize = 4096;
@@ -114,7 +114,7 @@ fn crawl(args: &Args, registry: Registry) -> Result<(RunId, Option<Summary>, Pre
         .map_err(|e| e.to_string())?;
     // Nothing after this fails before the crawl, so no run is begun idle.
     let run = store
-        .begin_run(Mode::Crawl, &hash, None, &config.root_urls())
+        .begin_run(Mode::Crawl, &hash, None, &RunRoot::of(&config))
         .map_err(in_db)?;
     let writer = Writer::start(store, WRITER_CAPACITY);
     let crawl = Crawl::new(fetcher, config, registry, run, writer.handle());

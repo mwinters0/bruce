@@ -34,7 +34,7 @@ pub(super) fn page(store: &Store, run: u64, id: u64, repo: Option<&str>, root: O
     let conn = store.connection();
     target(store, run, id, 200, "ok", None);
     conn.execute(
-        "INSERT INTO pages VALUES (?, ?, NULL, NULL, NULL, NULL, 'generic', NULL, ?, NULL, ?, \
+        "INSERT INTO pages VALUES (?, ?, NULL, NULL, NULL, NULL, 'whole', 'generic', NULL, ?, NULL, ?, \
          false, true, ?)",
         params![run, id, repo, repo.map(|_| format!("{id}.adoc")), root],
     )
@@ -107,7 +107,7 @@ fn store() -> Store {
     for (run, finished) in [(1, true), (2, false)] {
         conn.execute(
             "INSERT INTO runs VALUES (?, now(), CASE WHEN ? THEN now() END, 'crawl', 'x', 'h', \
-             NULL, [])",
+             NULL, [], [])",
             params![run, finished],
         )
         .unwrap();

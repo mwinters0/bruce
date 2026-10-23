@@ -24,7 +24,9 @@ use crate::profile::{BoxError, Lookup, Registry, View};
 
 pub use baseline::{BaselineIndex, Exported, Imported};
 pub use prune::Rule;
-pub use rows::{AnchorRow, AnsweredBy, FactRow, Hop, LinkRow, Outcome, PageRow, Row, TargetRow};
+pub use rows::{
+    AnchorRow, AnsweredBy, FactRow, Hop, LinkRow, Outcome, PageRow, Row, RunRoot, TargetRow,
+};
 pub use schema::SCHEMA_VERSION;
 pub use writer::{WriteHandle, Writer, WriterGone};
 
@@ -182,27 +184,21 @@ impl Store {
     }
 
     /// Starts a run: the next number, recorded with the tool's version, a
-    /// hash of the configuration it ran under and its roots' canonical URLs, so
-    /// a root that crawled nothing still shows (D2).
+    /// hash of the configuration it ran under and its roots (D2): their
+    /// canonical URLs, so a root that crawled nothing still shows, and the
+    /// scope each hashed its pages under (D15).
     pub fn begin_run(
         &self,
         mode: Mode,
         config_hash: &str,
         baseline: Option<RunId>,
-        roots: &[String],
+        roots: &[RunRoot],
     ) -> Result<RunId, Error> {
         let id: u64 =
             self.conn
                 .query_row("SELECT coalesce(max(run_id), 0) + 1 FROM runs", [], |row| {
                     row.get(0)
                 })?;
-        // upstream: UF1 -- bound parameters take no list, so the roots are
-        // placeholders inside a list literal.
-        let list = if roots.is_empty() {
-            "[]::VARCHAR[]".to_string()
-        } else {
-            format!("[{}]", vec!["?"; roots.len()].join(", "))
-        };
         let mut args: Vec<duckdb::types::Value> = vec![
             id.into(),
             mode.as_str().to_string().into(),
@@ -210,9 +206,23 @@ impl Store {
             config_hash.to_string().into(),
             baseline.map(|b| b.0).into(),
         ];
-        args.extend(roots.iter().map(|r| r.clone().into()));
+        let urls = list(&mut args, roots.iter().map(|r| r.url.as_str()));
+        let scopes = if roots.is_empty() {
+            format!("[]::{}[]", schema::SCOPE)
+        } else {
+            let each: Vec<String> = roots
+                .iter()
+                .map(|r| {
+                    args.push(r.url.clone().into());
+                    let root = list(&mut args, r.hash_root.iter().map(String::as_str));
+                    let exclude = list(&mut args, r.hash_exclude.iter().map(String::as_str));
+                    format!("{{'root': ?, 'hash_root': {root}, 'hash_exclude': {exclude}}}")
+                })
+                .collect();
+            format!("[{}]", each.join(", "))
+        };
         self.conn.execute(
-            &format!("INSERT INTO runs VALUES (?, now(), NULL, ?, ?, ?, ?, {list})"),
+            &format!("INSERT INTO runs VALUES (?, now(), NULL, ?, ?, ?, ?, {urls}, {scopes})"),
             params_from_iter(args),
         )?;
         Ok(RunId(id))
@@ -236,6 +246,23 @@ impl Store {
     pub fn connection(&self) -> &Connection {
         &self.conn
     }
+}
+
+/// A list of `items` as a literal, their values pushed onto `args` in the
+/// order its placeholders fall.
+// upstream: UF1 -- bound parameters take no list, so a list is placeholders
+// inside a list literal.
+fn list<'a>(args: &mut Vec<duckdb::types::Value>, items: impl Iterator<Item = &'a str>) -> String {
+    let items: Vec<&str> = items.collect();
+    if items.is_empty() {
+        return "[]::VARCHAR[]".to_string();
+    }
+    args.extend(
+        items
+            .iter()
+            .map(|i| duckdb::types::Value::from((*i).to_string())),
+    );
+    format!("[{}]", vec!["?"; items.len()].join(", "))
 }
 
 fn table_exists(conn: &Connection, name: &str) -> Result<bool, Error> {

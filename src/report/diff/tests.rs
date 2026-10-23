@@ -25,7 +25,7 @@ fn store() -> Store {
     for (run, finished) in [(1, true), (2, true), (3, false)] {
         conn.execute(
             "INSERT INTO runs VALUES (?, now(), CASE WHEN ? THEN now() END, 'crawl', 'x', 'h', \
-             NULL, [])",
+             NULL, [], [])",
             params![run, finished],
         )
         .unwrap();

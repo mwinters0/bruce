@@ -33,7 +33,7 @@ fn store() -> Store {
     store
         .connection()
         .execute(
-            "INSERT INTO runs VALUES (1, now(), now(), 'crawl', 'x', 'h', NULL, [])",
+            "INSERT INTO runs VALUES (1, now(), now(), 'crawl', 'x', 'h', NULL, [], [])",
             [],
         )
         .unwrap();

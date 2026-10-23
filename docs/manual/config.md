@@ -126,6 +126,10 @@ and attribute selectors, descendant (` `) and child (`>`) combinators,
 `:not()`, `:first-child` and `:nth-child()` are accepted; sibling
 combinators (`+`, `~`) and `:has()` are errors, since `bruce` reads a page
 in one pass. Changing either key can change every page's hash, once.
+The database records which scope covered each page (`pages.hash_scope`:
+`root` for `hash_root`, `region` for the default, `whole` for the rest) and
+each run's `hash_root` and `hash_exclude` per root (`runs.hash_scopes`), so a
+report can tell an edit to the scope from an edit to the page.
 
 ## Allowlist
 

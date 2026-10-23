@@ -37,7 +37,7 @@ fn target(
 fn page(store: &Store, run: u64, id: u64, anchors: &[&str]) {
     let conn = store.connection();
     conn.execute(
-        "INSERT INTO pages VALUES (?, ?, NULL, NULL, NULL, NULL, 'generic', NULL, NULL, NULL, \
+        "INSERT INTO pages VALUES (?, ?, NULL, NULL, NULL, NULL, 'whole', 'generic', NULL, NULL, NULL, \
          NULL, false, true, NULL)",
         params![run, id],
     )

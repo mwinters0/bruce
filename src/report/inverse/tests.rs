@@ -24,7 +24,7 @@ fn put(store: &Store, run: u64, id: u64, path: &str, outcome: &str, by: &str, pa
     .unwrap();
     if page {
         conn.execute(
-            "INSERT INTO pages VALUES (?, ?, NULL, NULL, NULL, NULL, 'generic', NULL, ?, NULL, \
+            "INSERT INTO pages VALUES (?, ?, NULL, NULL, NULL, NULL, 'whole', 'generic', NULL, ?, NULL, \
              ?, false, true, ?)",
             params![run, id, format!("r/{id}"), format!("{id}.adoc"), ROOT],
         )
@@ -62,7 +62,7 @@ fn store() -> Store {
     let conn = store.connection();
     for (run, mode, baseline) in [(1, "crawl", None), (2, "local", Some(1))] {
         conn.execute(
-            "INSERT INTO runs VALUES (?, '2026-10-19 12:00:00+00', now(), ?, 'x', 'h', ?, [])",
+            "INSERT INTO runs VALUES (?, '2026-10-19 12:00:00+00', now(), ?, 'x', 'h', ?, [], [])",
             params![run, mode, baseline],
         )
         .unwrap();

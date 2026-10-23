@@ -141,7 +141,7 @@ impl Store {
             let select = if *table == "runs" {
                 format!(
                     "{} AS run_id, started_at, finished_at, mode, tool_version, \
-                     config_hash, NULL, roots",
+                     config_hash, NULL, roots, hash_scopes",
                     to_run.0
                 )
             } else {

@@ -5,6 +5,11 @@ use super::*;
 /// The hash of `html` under a root `root` and exclusions `exclude`, for a
 /// profile whose region is `main`.
 fn hash(html: &str, root: &[&str], exclude: &[&str]) -> u128 {
+    hashed(html, root, exclude).0
+}
+
+/// [`hash`] and the scope it covered.
+fn hashed(html: &str, root: &[&str], exclude: &[&str]) -> (u128, Covered) {
     let scope = HashScope {
         root: root.iter().map(|s| s.to_string()).collect(),
         exclude: exclude.iter().map(|s| s.to_string()).collect(),
@@ -116,5 +121,30 @@ fn a_text_node_split_across_chunks_hashes_as_one() {
         rewriter.write(byte).unwrap();
     }
     rewriter.end().unwrap();
-    assert_eq!(state.into_inner().finish(), hash(&html, &[], &[]));
+    assert_eq!(state.into_inner().finish().0, hash(&html, &[], &[]));
+}
+
+#[test]
+fn a_page_says_which_scope_it_hashed() {
+    let with_main = page(HEAD, "a", "built");
+    let covered = |html: &str, root: &[&str], exclude: &[&str]| hashed(html, root, exclude).1;
+    assert_eq!(covered(&with_main, &[], &[]), Covered::Region);
+    assert_eq!(covered(&with_main, &["nav"], &[]), Covered::Root);
+    assert_eq!(
+        covered(&with_main, &["nav"], &["footer"]),
+        Covered::Root,
+        "the exclusions leave a root a root"
+    );
+    assert_eq!(covered(&with_main, &[], &["footer"]), Covered::Whole);
+    let none = "<html><body><div>text</div>";
+    assert_eq!(
+        covered(none, &[], &[]),
+        Covered::Whole,
+        "no region on the page"
+    );
+    assert_eq!(
+        covered(none, &["article"], &[]),
+        Covered::Whole,
+        "a root matching nothing"
+    );
 }
