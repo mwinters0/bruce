@@ -695,6 +695,11 @@ async fn an_xref_no_page_has_the_coordinates_of_resolves_by_the_url_it_names() {
     let alias = r#"<title>r</title><meta http-equiv="refresh" content="0; url=../initiatives/">"#;
     let whole = [
         ("tools/index.html", page("tools", "", "tools")),
+        // A bare component's root page, which a sorted lookup lists first.
+        (
+            "project/index.html",
+            sourced("project", "", ("ROOT", "index.adoc"), "p"),
+        ),
         (
             "project/initiatives/index.html",
             sourced("project", "", ("ROOT", "initiatives.adoc"), "p"),

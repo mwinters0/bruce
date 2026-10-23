@@ -79,12 +79,6 @@ roadmap's phase index.
   linking without a version to a page a later version removed would promote
   it. Detail: `src/profile/antora/resolve.rs`
 
-- **KD19** — Into a component whose version is bare, an xref to a page the
-  baseline lacks stays `unresolved_xref` when the lookup's first page of the
-  component is its root page, by row order alone. **(c) unowned**: such an
-  xref in a content repo's CI would promote it.
-  Detail: `src/profile/antora/resolve.rs`
-
 - **KD20** — `report introduced` and `report inverse` with `--top N` count
   the breakage already in the baseline, the inverse links, and their inbound
   pages and components over the N rows they print. **(c) unowned**: anyone

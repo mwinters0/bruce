@@ -34,7 +34,7 @@ impl Pages {
 
 impl Lookup for Pages {
     fn pages_with_facts(&self, facts: &[(&str, &str)]) -> Result<Vec<Url>, BoxError> {
-        Ok(self
+        let mut urls: Vec<Url> = self
             .pages
             .iter()
             .filter(|(_, held)| {
@@ -43,7 +43,10 @@ impl Lookup for Pages {
                     .all(|(k, v)| held.iter().any(|(hk, hv)| hk == k && hv == v))
             })
             .map(|(u, _)| u.clone())
-            .collect())
+            .collect();
+        // As `BaselineIndex` orders them, so a component's root page leads.
+        urls.sort();
+        Ok(urls)
     }
 
     fn facts(&self, page: &Url) -> Result<Vec<(String, String)>, BoxError> {

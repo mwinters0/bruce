@@ -437,7 +437,7 @@ off a baseline page of the component-version, at the segment its pages sit at (I
 chain answers it: the baseline's rows, else a request. A URL answering `broken_url` makes the link `unresolved_xref`
 (`link_verdicts` rule 1); `error` and `unchecked` stay. Rejected: the baseline's redirect targets alone (an uncrawled alias is missed);
 live alone; any outcome but `ok` as unresolved, failing a PR on a timeout or refusal its author cannot fix (D16) and judging a derived
-URL more harshly than a page the facts found (D55). Reopens: I16 changing (the layout in three places). Code: `profile::antora::resolve`. Evidence: `crawl::baseline::tests::an_xref_no_page_has_the_coordinates_of_resolves_by_the_url_it_names`.
+URL more harshly than a page the facts found (D55). Reopens: I16 changing (the layout in three places). Code: `profile::antora::resolve`. Evidence: `crawl::baseline::tests::an_xref_no_page_has_the_coordinates_of_resolves_by_the_url_it_names` (a bare component's root page), `profile::antora::resolve::tests::a_refspec_no_page_has_the_coordinates_of_names_its_url` (a lookup ordered as `BaselineIndex` orders it).
 
 ### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
 `check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status

@@ -150,19 +150,20 @@ fn named(
 
 /// The URL of `page`, a page of `component` at `version`, cut after the
 /// component's segment and a named version's (I16); the placeholders
-/// Antora writes for a version its URLs omit, `""` and `master`, name none.
-/// With `elsewhere` (see [`Found`]) the segment after the component's is cut
-/// whatever it is, the version being served under another name (I5).
+/// Antora writes for a version its URLs omit, `""` and `master`, name none,
+/// so a bare version is cut at the component's segment, whatever follows it
+/// or nothing. With `elsewhere` (see [`Found`]) the segment after the
+/// component's is cut whatever it is, the version being served under another
+/// name (I5).
 fn prefix(page: &Url, component: &str, version: &str, elsewhere: bool) -> Option<Url> {
     let named = !matches!(version, "" | "master");
-    // deficiency: KD19 With a bare version and no `elsewhere`, the component's
-    // segment must be followed by a non-empty one, so a page at the
-    // component's root (`/ops/`) gives no prefix and `named` none, though
-    // `/ops/` is the prefix. Bare versions tie in `compare`, so the lookup's
-    // first page decides, and an xref to a page the baseline lacks stays
-    // `unresolved_xref` or not by row order.
     let raw: Vec<&str> = page.path_segments()?.collect();
-    let at = segment_after_component(&raw, component, (!elsewhere && named).then_some(version))?;
+    let after = match (named, elsewhere) {
+        (false, _) => After::Nothing,
+        (true, false) => After::Version(version),
+        (true, true) => After::Segment,
+    };
+    let at = segment_after_component(&raw, component, after)?;
     let mut url = page.clone();
     url.set_query(None);
     url.set_fragment(None);
@@ -170,16 +171,27 @@ fn prefix(page: &Url, component: &str, version: &str, elsewhere: bool) -> Option
     Some(url)
 }
 
-/// The index of the first segment of `raw` that is `component` and, given
-/// `version`, followed by it, else followed by a non-empty segment; decoded,
-/// as Antora writes them escaped.
-fn segment_after_component(raw: &[&str], component: &str, version: Option<&str>) -> Option<usize> {
+/// What [`segment_after_component`] wants after the component's segment.
+#[derive(Clone, Copy)]
+enum After<'a> {
+    /// Nothing: a bare version's page may be the component's root.
+    Nothing,
+    /// The version's own segment.
+    Version(&'a str),
+    /// Any non-empty segment.
+    Segment,
+}
+
+/// The index of the first segment of `raw` that is `component` and followed
+/// as `after` says; decoded, as Antora writes them escaped.
+fn segment_after_component(raw: &[&str], component: &str, after: After<'_>) -> Option<usize> {
     let decoded = |s: &str| percent_decode_str(s).decode_utf8_lossy().into_owned();
     (0..raw.len()).find(|&i| {
         decoded(raw[i]) == component
-            && match version {
-                Some(version) => raw.get(i + 1).is_some_and(|s| decoded(s) == version),
-                None => raw.get(i + 1).is_some_and(|s| !s.is_empty()),
+            && match after {
+                After::Nothing => true,
+                After::Version(version) => raw.get(i + 1).is_some_and(|s| decoded(s) == version),
+                After::Segment => raw.get(i + 1).is_some_and(|s| !s.is_empty()),
             }
     })
 }
@@ -225,8 +237,8 @@ fn newest(
         let version = version.unwrap_or_default();
         let elsewhere = !matches!(version.as_str(), "" | "master") && {
             let raw: Vec<&str> = page.path_segments().into_iter().flatten().collect();
-            segment_after_component(&raw, component, Some(&version)).is_none()
-                && segment_after_component(&raw, component, None).is_some()
+            segment_after_component(&raw, component, After::Version(&version)).is_none()
+                && segment_after_component(&raw, component, After::Segment).is_some()
         };
         all.push(Found {
             page,
