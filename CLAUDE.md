@@ -89,6 +89,12 @@ one. Run it after rewriting a heading.
 
 ## Standing rules
 
+- **Design decisions are never made on implementation cost.** Where one option
+  clearly maximizes what we deliver (features, code quality, performance), it is
+  the choice and the recommendation, however much work it takes, and a defect
+  found is fixed rather than deferred because fixing it is work. The
+  counter-example: a review of D61 recommending the schedule be left crowding a
+  build's reads, unmeasured, over fixing it.
 - **Document what _is_, not what _was_**, inside `docs/status/history/` too. A
   fact is stated once, in one place, and cited everywhere else.
 - **Claude Code's auto-memory (`~/.claude/projects/…/memory/`) is not used

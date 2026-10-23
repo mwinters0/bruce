@@ -52,12 +52,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **A local build's host shares the slots like any other (D61).** `check-dir`
-  over a build with a live host also in play (a baseline miss asked of
-  production, an allowlisted host) gives the build's reads 32 of the 64 slots,
-  where they had all 64. Built so because `schedule` keys by host name and
-  knows nothing of the local fetcher, and a build's reads are fast; not
-  measured, `check-dir`'s 236-page run (8.9 s) not having been re-timed.
-  Reconsidering means exempting the build's host from the share, which needs the
-  crawl to say which host that is.
