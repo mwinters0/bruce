@@ -54,9 +54,10 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   `format_version`, `bruce report digest --out --name --format`, the
   sections over one run, the manual.
   Notes: [`../wip/roadmap-P8.3-digest-json-notes.md`](../wip/roadmap-P8.3-digest-json-notes.md).
-- [ ] **8.3.1** The broken targets ranked by their links, then their pages,
+- [x] **8.3.1** The broken targets ranked by their links, then their pages,
   and the housekeeping's sitemap entries no page was fetched for, reusing
   `report sitemap`'s: `report/digest`, its tests, D64 and the manual.
+  Notes: [`../wip/roadmap-P8.3.1-digest-ranking-notes.md`](../wip/roadmap-P8.3.1-digest-ranking-notes.md).
 - [ ] **8.4** The digest's HTML: the rendering, the no-script test, the golden
   file over `mise run e2e`'s site.
 - [ ] **8.5** An unresolved xref's hint: the `antora` view, `broken`'s and the

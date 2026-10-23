@@ -5,7 +5,7 @@ bruce report digest --out DIR [--name STEM] [--db FILE] [--run N] [--format json
 ```
 
 Writes one **digest** of a crawl run: the run's figures, the broken links
-ranked so that the fix reaching the most pages comes first, and the housekeeping
+ranked so that the fix removing the most links comes first, and the housekeeping
 a maintainer tidies, in a file named for the day the run started. It is the
 report to keep: a crawl database is pruned ([`bruce prune`](prune.md)) and
 truncated, and the digests it leaves behind hold every broken and error row,
@@ -15,9 +15,9 @@ runs that knew are gone.
 The digest reads a database that [`bruce crawl`](crawl.md) wrote, as
 [`bruce report`](report.md) does, and counts the links on the pages a root
 covers, of every kind. A page fetched only because another page linked to it
-is read for its anchors and holds no links. An entry of a sitemap is in no
-section but the redirects; `bruce report sitemap` lists the entries no page
-was fetched for.
+is read for its anchors and holds no links. A sitemap's entry is in no section
+but the redirects, and the housekeeping's list of the entries no page was
+fetched for.
 
 ## Arguments
 
@@ -59,6 +59,7 @@ and a count or status a number.
     "redirects": [{"landing":"https://docs.example.org/en-US/b/","links":1,"urls":1,"chain":"301 https://docs.example.org/en-US/old/","pages":["https://docs.example.org/en-US/a/"]}],
     "orphans": [{"page":"https://docs.example.org/en-US/c/","title":"C","root":"https://docs.example.org/en-US/","source_repo":null,"source_path":null}],
     "unlisted": [{"page":"https://docs.example.org/en-US/d/","root":"https://docs.example.org/en-US/","title":"D","source_repo":null,"source_path":null}],
+    "sitemap_entries": [{"page":"https://docs.example.org/en-US/gone/","outcome":"broken_url","reason":null,"status":404}],
     "roots_without_sitemap": ["https://docs.example.net/"],
     "unchecked": [{"reason":"skipped","links":1,"targets":1}]
   }
@@ -77,7 +78,7 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 |---|---|
 | `run` | The run digested: its `id`, start and finish (`finished_at` and `duration_seconds` are `null` for a run that never finished) and the `roots` it crawled. |
 | `totals` | The pages the roots cover and the links on them, and the links by outcome, over every kind. `unchecked` links are not broken: `housekeeping.unchecked` says why. |
-| `broken_targets` | Each target a broken link names, with its `fragment` when the link names one, the target named by the most `pages` first, then by `links`. `outcome` is `broken_url` or `broken_anchor`, and `reason` and `status` are the target's answer. `source_repo`, `source_path` and `source_url` are those of the target page, where the run holds it: the repo that would restore a missing anchor. |
+| `broken_targets` | Each target a broken link names, with its `fragment` when the link names one, the target named by the most `links` first, then by `pages`: one anchor restored in the target's repo removes that many links. `outcome` is `broken_url` or `broken_anchor`, and `reason` and `status` are the target's answer. `source_repo`, `source_path` and `source_url` are those of the target page, where the run holds it: the repo that would restore a missing anchor. |
 | `pages` | The pages that hold a broken link, the most `broken_url` plus `broken_anchor` first. `links` counts every link on the page, `error` its links that could not be checked. `source_url` is the forge's view of the page's file. |
 | `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order. `page` joins to `pages`. |
 | `by_repo` | Each repo the pages were built from, the most broken links first, then by errors; `repo` is `null` for the pages that record none. `pages` counts the repo's pages, `broken_pages` those holding a broken link. |
@@ -86,6 +87,7 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `housekeeping.redirects` | The redirected links by landing URL, the most `links` first: `urls` distinct URLs reached it, `chain` is the hops the first took, and `pages` the pages whose links they are. |
 | `housekeeping.orphans` | The pages a sitemap lists that no other page links to. |
 | `housekeeping.unlisted` | The pages absent from the sitemap of a root that read one. |
+| `housekeeping.sitemap_entries` | The sitemap entries no page was fetched for, those whose `outcome` is not `ok` first: what the URL answered. Antora writes a sitemap from what it publishes, so such an entry is a build or deploy fault. |
 | `housekeeping.roots_without_sitemap` | The roots that read no sitemap, whose pages cannot be unlisted. |
 | `housekeeping.unchecked` | The `unchecked` links by `reason`, and the distinct `targets` they name. |
 

@@ -1,6 +1,7 @@
 //! The queries behind the digest's sections: each reads one run's crawled
 //! pages in every kind (D64), an allowlisted page holding no links (D3), so a
-//! sitemap file's entries are no row of any but the redirects'.
+//! sitemap file's entries are no row of any but the redirects' and the
+//! housekeeping's own list of them.
 
 use duckdb::Connection;
 
@@ -138,9 +139,9 @@ pub(super) fn broken(conn: &Connection, run: RunId) -> Result<Table, Error> {
     sql.fetch(conn)
 }
 
-/// The broken targets, the one named by the most pages first, each with the
-/// source of the page it names where the run holds it: the page a redirect
-/// landed on, for a link to a page that moved.
+/// The broken targets, the one named by the most links first and then by the
+/// most pages, each with the source of the page it names where the run holds
+/// it: the page a redirect landed on, for a link to a page that moved.
 pub(super) fn broken_targets(conn: &Connection, run: RunId) -> Result<Table, Error> {
     let mut sql = Sql::new(
         "SELECT b.target, b.fragment, max(b.outcome) AS outcome, max(b.reason) AS reason, \
@@ -157,7 +158,7 @@ pub(super) fn broken_targets(conn: &Connection, run: RunId) -> Result<Table, Err
          WHERE b.run_id = ",
     );
     sql.bind(run.0)
-        .push(" GROUP BY b.target, b.fragment ORDER BY 7 DESC, 6 DESC, 1, 2");
+        .push(" GROUP BY b.target, b.fragment ORDER BY 6 DESC, 7 DESC, 1, 2");
     sql.fetch(conn)
 }
 
@@ -255,6 +256,18 @@ pub(super) fn orphans(conn: &Connection, run: RunId) -> Result<Table, Error> {
 /// The pages absent from the sitemap of a root that read one.
 pub(super) fn unlisted(conn: &Connection, run: RunId) -> Result<Table, Error> {
     Ok(reach::unlisted(conn, run, &every(Report::Unlisted))?.0)
+}
+
+/// The sitemap's entries no page was fetched for, with what each answered,
+/// those that did not answer `ok` first (`report sitemap`'s rows without a
+/// page, `report_sitemap`).
+pub(super) fn sitemap_entries(conn: &Connection, run: RunId) -> Result<Table, Error> {
+    let mut sql = Sql::new(
+        "SELECT page, outcome, reason, status::INTEGER AS status FROM report_sitemap \
+         WHERE via_links IS NULL AND run_id = ",
+    );
+    sql.bind(run.0).push(" ORDER BY outcome = 'ok', page");
+    sql.fetch(conn)
 }
 
 /// The roots that read no sitemap, which have no unlisted pages for that.

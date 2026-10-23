@@ -14,7 +14,8 @@ const OTHER: &str = "https://other.test/";
 const START: i64 = 1_792_785_851;
 
 /// Run 1 is a finished crawl of two roots, `ROOT`, whose sitemap (101) lists
-/// pages 1, 2 and 3, and `OTHER`, which read none. Pages 1 (`r/one`,
+/// pages 1, 2 and 3 and two entries no page was fetched for, a 404 (20) and
+/// a URL robots.txt forbade (21), and `OTHER`, which read none. Pages 1 (`r/one`,
 /// component `handbook`), 2 (`r/two`, `other`), 3 (in the sitemap, linked from
 /// nowhere), 4 (`ROOT`, in no sitemap) and 5 (`OTHER`) are crawled; 6 is
 /// allowlisted. Page 1 links to a 404 (10), by image to another (11), to page
@@ -71,6 +72,8 @@ fn store() -> Store {
         (12, 503, "error", Some("server_error")),
         (13, 0, "unchecked", Some("skipped")),
         (15, 200, "ok", None),
+        (20, 404, "broken_url", None),
+        (21, 0, "unchecked", Some("robots")),
     ] {
         target(&store, 1, id, status, outcome, reason);
     }
@@ -103,6 +106,8 @@ fn store() -> Store {
         (101, 1, None, "sitemap"),
         (101, 2, None, "sitemap"),
         (101, 3, None, "sitemap"),
+        (101, 20, None, "sitemap"),
+        (101, 21, None, "sitemap"),
     ] {
         link(&store, 1, src, to, fragment, kind);
     }
@@ -175,7 +180,7 @@ fn pages_are_ranked_by_their_broken_links_and_their_links_follow_them() {
 }
 
 #[test]
-fn a_broken_target_is_ranked_by_the_pages_naming_it_and_carries_its_source() {
+fn a_broken_target_carries_the_source_of_the_page_it_names() {
     let d = of(&store());
     let t = &d.broken_targets;
     assert_eq!(column(t, "target"), [url(10), url(11), url(2)]);
@@ -185,6 +190,21 @@ fn a_broken_target_is_ranked_by_the_pages_naming_it_and_carries_its_source() {
     // A missing anchor is the target page's repo to restore.
     assert_eq!(column(t, "source_repo")[2], "r/two");
     assert_eq!(column(t, "source_repo")[0], "Null");
+}
+
+#[test]
+fn broken_targets_are_ranked_by_their_links_then_their_pages() {
+    let store = store();
+    // Target 11 now has four links on one page, and `2#nope` two on one.
+    for (to, fragment) in [(11, None), (11, None), (11, None), (2, Some("nope"))] {
+        link(&store, 1, 1, to, fragment, "anchor");
+    }
+    let t = of(&store).broken_targets;
+    assert_eq!(column(&t, "target"), [url(11), url(10), url(2)]);
+    assert_eq!(t.rows[0][5..7], [Cell::Int(4), Cell::Int(1)]);
+    // 10 has two links on two pages, `2#nope` two on one: the pages break the tie.
+    assert_eq!(t.rows[1][5..7], [Cell::Int(2), Cell::Int(2)]);
+    assert_eq!(t.rows[2][5..7], [Cell::Int(2), Cell::Int(1)]);
 }
 
 #[test]
@@ -229,6 +249,14 @@ fn housekeeping_holds_the_redirects_orphans_and_unlisted_pages() {
     );
     assert_eq!(column(&d.orphans, "page"), [url(3)]);
     assert_eq!(column(&d.unlisted, "page"), [url(4)]);
+    // The entries no page was fetched for, the one that failed first; the
+    // sitemap's pages are in no list of entries.
+    let entries = &d.sitemap_entries;
+    assert_eq!(entries.columns, ["page", "outcome", "reason", "status"]);
+    assert_eq!(column(entries, "page"), [url(20), url(21)]);
+    assert_eq!(column(entries, "outcome"), ["broken_url", "unchecked"]);
+    assert_eq!(column(entries, "reason")[1], "robots");
+    assert_eq!(entries.rows[0][3], Cell::Int(404));
     assert_eq!(d.roots_without_sitemap, [OTHER]);
 }
 
@@ -294,6 +322,7 @@ fn the_json_is_valid_and_carries_its_version_and_context() {
     assert_eq!(json["pages"][0]["page"], url(1));
     assert_eq!(json["broken"].as_array().unwrap().len(), 4);
     assert_eq!(json["housekeeping"]["unlisted"][0]["page"], url(4));
+    assert_eq!(json["housekeeping"]["sitemap_entries"][0]["page"], url(20));
 }
 
 #[test]

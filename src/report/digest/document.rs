@@ -35,8 +35,9 @@ pub struct Digest {
     pub totals: Totals,
     /// The `unchecked` links by reason: `reason`, `links`, `targets`.
     pub unchecked: Table,
-    /// The broken targets, the one the most pages name first: `target`,
-    /// `fragment`, `outcome`, `reason`, `status`, `links`, `pages`, and the
+    /// The broken targets, the one the most links name first and then the
+    /// most pages: `target`, `fragment`, `outcome`, `reason`, `status`,
+    /// `links`, `pages`, and the
     /// target page's `source_repo`, `source_path` and `source_url`.
     pub broken_targets: Table,
     /// The pages holding a broken link, the most first: `page`, `title`,
@@ -61,6 +62,9 @@ pub struct Digest {
     pub orphans: Table,
     /// The pages absent from their root's sitemap (`unlisted`' columns).
     pub unlisted: Table,
+    /// The sitemap's entries no page was fetched for, those that did not
+    /// answer `ok` first: `page`, `outcome`, `reason` and `status`.
+    pub sitemap_entries: Table,
     /// The roots that read no sitemap, which have no unlisted pages.
     pub roots_without_sitemap: Vec<String>,
     /// The run never finished, so the digest is incomplete.

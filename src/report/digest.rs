@@ -3,7 +3,7 @@
 //! crawl's own never has (D64).
 //!
 //! It composes what the reports hold into the sections of the P8 spec: the
-//! figures, the broken targets ranked by the pages naming them, the pages
+//! figures, the broken targets ranked by the links naming them, the pages
 //! ranked by their broken links, the repos and components, the errors apart
 //! from breakage (D16) and the housekeeping. Every section is a [`Table`] whose
 //! rows are already in the order a reader wants them, so a rendering walks
@@ -55,6 +55,7 @@ fn build(
         redirects: sections::redirects(conn, id)?,
         orphans: sections::orphans(conn, id)?,
         unlisted: sections::unlisted(conn, id)?,
+        sitemap_entries: sections::sitemap_entries(conn, id)?,
         roots_without_sitemap: sections::roots_without_sitemap(conn, id)?,
         unfinished,
         later_unfinished,

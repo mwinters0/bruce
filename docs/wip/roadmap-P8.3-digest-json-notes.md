@@ -12,7 +12,7 @@ test holds the JSON's fields to the manual's example. D64 says why.
 - **A `Digest` is `Table`s, already ranked**: `broken_targets`, `pages`,
   `broken` (a page's links together, the pages in `pages`' order), `by_repo`,
   `by_component`, `errors`, `redirects`, `orphans`, `unlisted` and `unchecked`,
-  with `run`, `totals` and `roots_without_sitemap` beside them. The columns are
+  `sitemap_entries` (the entries no page was fetched for, 8.3.1), with `run`, `totals` and `roots_without_sitemap` beside them. The columns are
   on the struct. A renderer walks them and ranks nothing; it groups `broken`
   by consecutive `page`.
 - **`Digest::date()` is the file name's date**, `utc` its formatter. The
@@ -44,10 +44,9 @@ DIR --name en-us` takes 6 s in a debug build (its statements each read
 are most of the difference. Its figures are P5.2's and 8.1's: 324 pages
 holding 828 broken links (217 `broken_url`, 610 `broken_anchor` and one broken
 image, which the digest counts for counting every kind), 2,320 pages, 586,175
-links and 187,470 `unchecked`. The 266-link anchor ranks third in
-`broken_targets`, below two targets named by 6 and 5 pages; 8.3.1 ranks by
-links (`../status/history/2026-10-23.md`, "The digest's sections
-reviewed").
+links and 187,470 `unchecked`. The 266-link anchor leads
+`broken_targets`, ranked by links (`../status/history/2026-10-23.md`, "The
+digest's sections reviewed").
 
 ## Negative results
 
@@ -60,7 +59,7 @@ reviewed").
   dependency would join `THIRD-PARTY-NOTICES.txt` for them.
 - **A sitemap's entries are in no section but the redirects**, which reuse
   `report redirects` over every kind: a link in a sitemap file is on no
-  crawled page. En-US has none broken (`report broken --kind all`); 8.3.1
-  lists them in the housekeeping.
+  crawled page. En-US has none (`sitemap_entries` is empty); the housekeeping
+  lists them.
 - **`Mode::as_str` is public** now, the digest refusing a `local` run by the
   word the table holds.
