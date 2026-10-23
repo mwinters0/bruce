@@ -114,6 +114,8 @@ The manual is in [`docs/manual/`](docs/manual/):
   how to stop one.
 - [`bruce report`](docs/manual/report.md): every report, its columns, and the
   views for querying the database yourself.
+- [`bruce report digest`](docs/manual/digest.md): a crawl run's dated JSON
+  report, to keep after the database is pruned.
 - [`bruce check-dir`](docs/manual/check-dir.md): the CI gate, how each link is
   answered, and what fails.
 - [`bruce export-baseline`](docs/manual/export-baseline.md): writing the

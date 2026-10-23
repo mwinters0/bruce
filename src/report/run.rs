@@ -58,7 +58,10 @@ pub(super) fn choose(conn: &Connection, request: &Request) -> Result<Chosen, Err
 /// **The default refuses a run a later unfinished run was checked against**
 /// (D59): that is a `check-dir` that stopped, and the report would read the
 /// baseline it imported as if it were the build.
-fn one(conn: &Connection, wanted: Option<RunId>) -> Result<(RunId, bool, Option<RunId>), Error> {
+pub(super) fn one(
+    conn: &Connection,
+    wanted: Option<RunId>,
+) -> Result<(RunId, bool, Option<RunId>), Error> {
     if let Some(run) = wanted {
         let (run, unfinished) = named(conn, run)?;
         return Ok((run, unfinished, None));

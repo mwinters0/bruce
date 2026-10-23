@@ -11,7 +11,7 @@ frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' 
 **Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
 phase index.
 
-<!-- decision-watermark: D63 -->
+<!-- decision-watermark: D64 -->
 
 ## Scope and modes
 
@@ -363,6 +363,10 @@ absent. GitHub's SIGTERM comes 7.5 s after its SIGINT and its kill 2.5 s after t
 30 s grace, so the second press must abandon. Rejected: one flat 130, which hides which signal ended the run
 from a runner's log; judging what was written. Code: `cli::interrupt`, `cli::check_dir::Checked`.
 Evidence: `tests/signals.rs`.
+
+### D64 The digest is one document over a crawl run's crawled pages in every kind, and its JSON holds every broken and error row
+The sections (figures, broken targets ranked by the pages naming them, pages, repos, components, errors, housekeeping) are tables built once from SQL, already ranked, and written with the run's context under a `format_version` apart from the schema's (D43), changed only by a change a loader would misread. It counts every kind (D13) on the pages a root covers: a sitemap's entries and an allowlisted page's links are in no section. Why: the CI database is truncated, and a loader dating a breakage needs the rows its runs no longer hold. Rejected: aggregates alone, which cannot date a breakage; an HTML per report, eleven pages with no ranking across them; a digest of a `check-dir` run, whose gate prints its sections. Reopens: an every-locale digest too large to open (P9), a consumer for the gate's page.
+Code: `report::digest`. Evidence: `report::digest::tests::the_json_has_the_fields_the_manual_documents`.
 
 ### D59 A bare `report` keeps the latest finished run, says of a later unfinished one, and refuses a baseline it imported
 Without `--run` a report reads the latest finished run (D2), says on stderr that a later run stopped before

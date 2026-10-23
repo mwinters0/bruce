@@ -115,7 +115,7 @@ fn args_for(db: &std::path::Path) -> Args {
 fn a_database_that_is_not_there_is_refused_and_not_created() {
     let dir = TempDir::new().unwrap();
     let db = dir.path().join("none.duckdb");
-    let code = run(&args_for(&db), crate::cli::registry());
+    let code = run(&Job::Report(args_for(&db)), crate::cli::registry());
     assert_eq!(code, ExitCode::FAILURE);
     assert!(!db.exists());
 }
@@ -127,7 +127,7 @@ fn a_database_with_no_finished_run_fails_and_one_with_a_run_succeeds() {
     let registry = crate::cli::registry();
     let store = crate::cli::db::open(&db, &registry).unwrap();
     assert_eq!(
-        run(&args_for(&db), crate::cli::registry()),
+        run(&Job::Report(args_for(&db)), crate::cli::registry()),
         ExitCode::FAILURE
     );
     let id = store
@@ -135,7 +135,10 @@ fn a_database_with_no_finished_run_fails_and_one_with_a_run_succeeds() {
         .unwrap();
     store.finish_run(id).unwrap();
     drop(store);
-    assert_eq!(run(&args_for(&db), registry), ExitCode::SUCCESS);
+    assert_eq!(
+        run(&Job::Report(args_for(&db)), registry),
+        ExitCode::SUCCESS
+    );
 }
 
 #[test]
@@ -163,4 +166,113 @@ fn opening_installs_the_reports_views_in_a_database_made_without_them() {
             })
             .unwrap_or_else(|e| panic!("{view}: {e}"));
     }
+}
+
+fn job(args: &[&str]) -> Result<Job, clap::Error> {
+    let m =
+        command().try_get_matches_from(std::iter::once("report").chain(args.iter().copied()))?;
+    check(&m)?;
+    Ok(Job::from(&m))
+}
+
+#[test]
+fn the_digest_takes_a_directory_a_name_and_a_run() {
+    let Job::Digest(d) = job(&["digest", "--out", "o", "--db", "d", "--run", "4"]).unwrap() else {
+        panic!("a digest")
+    };
+    assert_eq!(
+        d,
+        DigestArgs {
+            db: Some("d".into()),
+            run: Some(RunId(4)),
+            out: "o".into(),
+            name: "bruce".into()
+        }
+    );
+    let Job::Digest(d) = job(&[
+        "digest", "--out", "o", "--name", "en-us", "--format", "json",
+    ])
+    .unwrap() else {
+        panic!("a digest")
+    };
+    assert_eq!((d.name.as_str(), d.run), ("en-us", None));
+    assert!(matches!(job(&["broken"]).unwrap(), Job::Report(_)));
+}
+
+#[test]
+fn the_digest_refuses_what_is_not_its_own() {
+    assert!(job(&["digest"]).is_err(), "it needs --out");
+    for bad in [
+        ["--from", "1"],
+        ["--to", "1"],
+        ["--repo", "r"],
+        ["--fact", "a=b"],
+        ["--kind", "image"],
+        ["--top", "3"],
+        ["--format", "text"],
+        ["--name", ""],
+        ["--name", "a/b"],
+    ] {
+        assert!(
+            job(&["digest", "--out", "o", bad[0], bad[1]]).is_err(),
+            "{bad:?}"
+        );
+    }
+    for bad in [["--out", "o"], ["--name", "n"]] {
+        assert!(job(&["broken", bad[0], bad[1]]).is_err(), "{bad:?}");
+    }
+}
+
+#[test]
+fn a_digest_is_written_under_the_day_the_run_started() {
+    let dir = TempDir::new().unwrap();
+    let db = dir.path().join("a.duckdb");
+    let out = dir.path().join("archive").join("digests");
+    let registry = crate::cli::registry();
+    let store = crate::cli::db::open(&db, &registry).unwrap();
+    let id = store
+        .begin_run(crate::store::Mode::Crawl, "h", None, &[])
+        .unwrap();
+    store.finish_run(id).unwrap();
+    drop(store);
+    let args = DigestArgs {
+        db: Some(db),
+        run: None,
+        out: out.clone(),
+        name: "en-us".into(),
+    };
+    assert_eq!(
+        run(&Job::Digest(args.clone()), crate::cli::registry()),
+        ExitCode::SUCCESS
+    );
+    let files: Vec<_> = std::fs::read_dir(&out)
+        .unwrap()
+        .map(|e| e.unwrap().file_name().into_string().unwrap())
+        .collect();
+    assert_eq!(files.len(), 1);
+    assert!(
+        files[0].starts_with("en-us-20") && files[0].ends_with(".json"),
+        "{files:?}"
+    );
+    let text = std::fs::read_to_string(out.join(&files[0])).unwrap();
+    assert!(text.contains("\"format_version\": 1"));
+    // A second digest of the day replaces the first.
+    assert_eq!(run(&Job::Digest(args), registry), ExitCode::SUCCESS);
+    assert_eq!(std::fs::read_dir(&out).unwrap().count(), 1);
+}
+
+#[test]
+fn a_digest_of_a_database_that_is_not_there_is_refused() {
+    let dir = TempDir::new().unwrap();
+    let args = DigestArgs {
+        db: Some(dir.path().join("none.duckdb")),
+        run: None,
+        out: dir.path().join("out"),
+        name: "bruce".into(),
+    };
+    assert_eq!(
+        run(&Job::Digest(args), crate::cli::registry()),
+        ExitCode::FAILURE
+    );
+    assert!(!dir.path().join("out").exists());
 }

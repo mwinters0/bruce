@@ -1,15 +1,17 @@
 //! `bruce report <kind> [--db f] [--run n | --from n --to n] [--repo r]
 //! [--fact k=v] [--kind k] [--top n] [--format f]`: one report over one run,
 //! or `diff` over two (D6, D27): by default the latest finished run, and for
-//! `diff` the two latest.
+//! `diff` the two latest. `bruce report digest --out dir [--name s] [--db f]
+//! [--run n] [--format json]` writes a crawl run's dated digest instead (D64).
 //!
 //! A report reads a database a crawl wrote and never creates one; opening it
 //! installs the views, so a database from before them gains them here.
 //! Finding rows is not a failure: the exit status is 1 only where the report
 //! could not run.
 
+use std::fs;
 use std::io::{self, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use clap::builder::PossibleValuesParser;
@@ -18,8 +20,15 @@ use clap::{Arg, ArgAction, ArgMatches, Command, value_parser};
 use super::db;
 use crate::extract::Kind;
 use crate::profile::Registry;
-use crate::report::{self, Format, Report, Request};
-use crate::store::RunId;
+use crate::report::{self, Digest, Format, Report, Request};
+use crate::store::{RunId, Store};
+
+/// The value of `REPORT` that writes the digest, which is no `Report`: it
+/// makes files and not a table.
+const DIGEST: &str = "digest";
+
+/// The digest's file stem when `--name` gives none.
+const STEM: &str = "bruce";
 
 /// The value of `--kind` that stands for every kind.
 const ALL_KINDS: &str = "all";
@@ -32,13 +41,55 @@ pub struct Args {
     pub format: Format,
 }
 
+/// What the command line asked of `report`: a report, or the digest.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Job {
+    Report(Args),
+    Digest(DigestArgs),
+}
+
+impl From<&ArgMatches> for Job {
+    fn from(m: &ArgMatches) -> Job {
+        match m.get_one::<String>("report").map(String::as_str) {
+            Some(DIGEST) => Job::Digest(DigestArgs::from(m)),
+            _ => Job::Report(Args::from(m)),
+        }
+    }
+}
+
+/// What the command line asked of `report digest`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DigestArgs {
+    pub db: Option<PathBuf>,
+    pub run: Option<RunId>,
+    pub out: PathBuf,
+    pub name: String,
+}
+
+impl From<&ArgMatches> for DigestArgs {
+    fn from(m: &ArgMatches) -> DigestArgs {
+        DigestArgs {
+            db: m.get_one::<String>("db").map(PathBuf::from),
+            run: m.get_one::<u64>("run").map(|&n| RunId(n)),
+            out: m
+                .get_one::<String>("out")
+                .map(PathBuf::from)
+                .expect("`check` requires it"),
+            name: m
+                .get_one::<String>("name")
+                .cloned()
+                .unwrap_or_else(|| STEM.to_owned()),
+        }
+    }
+}
+
 impl From<&ArgMatches> for Args {
     fn from(m: &ArgMatches) -> Args {
         let name = m.get_one::<String>("report").expect("clap requires it");
         let report = Report::ALL
             .into_iter()
             .find(|r| r.name() == name)
-            .expect("clap checked the name");
+            .expect("`Job` sends a report here, and clap checked the name");
         let mut request = Request::new(report);
         let run = |name| m.get_one::<u64>(name).map(|&n| RunId(n));
         request.run = run("run");
@@ -107,9 +158,10 @@ fn kinds(m: &ArgMatches) -> Option<Vec<Kind>> {
 }
 
 pub fn command() -> Command {
-    let reports: Vec<&str> = Report::ALL.iter().map(|r| r.name()).collect();
+    let mut reports: Vec<&str> = Report::ALL.iter().map(|r| r.name()).collect();
+    reports.push(DIGEST);
     Command::new("report")
-        .about("Print a report over one run of a database")
+        .about("Print a report over one run of a database, or write its digest")
         .arg(
             Arg::new("report")
                 .value_name("REPORT")
@@ -129,6 +181,19 @@ pub fn command() -> Command {
                 .value_name("N")
                 .value_parser(value_parser!(u64))
                 .help("The run to read, finished or not [default: the latest finished]"),
+        )
+        .arg(
+            Arg::new("out")
+                .long("out")
+                .value_name("DIR")
+                .help("`digest` only: the directory the files are written to"),
+        )
+        .arg(
+            Arg::new("name")
+                .long("name")
+                .value_name("STEM")
+                .value_parser(stem)
+                .help("`digest` only: the file name's first part [default: bruce]"),
         )
         .arg(
             Arg::new("from")
@@ -171,35 +236,81 @@ pub fn command() -> Command {
                 .long("format")
                 .value_name("FORMAT")
                 .value_parser(PossibleValuesParser::new(["text", "json"]))
-                .default_value("text")
-                .help("A text table, or one JSON array of objects"),
+                .help(
+                    "A text table, or one JSON array of objects [default: text]; \
+                     `digest` writes JSON",
+                ),
         )
 }
 
-/// The options that name a run, which `diff` and the other reports take
-/// differently: `diff` reads `--from` and `--to`, the rest `--run`.
+/// The options a report or the digest does not take, and the ones that name
+/// a run, which `diff` and the other reports take differently: `diff` reads
+/// `--from` and `--to`, the rest `--run`.
 pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
-    let diff = m.get_one::<String>("report").map(String::as_str) == Some("diff");
+    let name = m.get_one::<String>("report").map(String::as_str);
     let given = |name| m.contains_id(name);
-    let misplaced = if diff {
-        given("run").then_some((
-            "--run",
-            "diff compares two runs; name them with --from and --to",
-        ))
-    } else {
-        ["from", "to"].into_iter().find(|&n| given(n)).map(|n| {
-            (
-                if n == "from" { "--from" } else { "--to" },
-                "only diff compares two runs; the other reports read --run",
-            )
-        })
-    };
-    match misplaced {
-        Some((arg, why)) => Err(command().error(
+    let refuse = |arg: &str, why: &str| {
+        Err(command().error(
             clap::error::ErrorKind::ArgumentConflict,
             format!("{arg}: {why}"),
-        )),
-        None => Ok(()),
+        ))
+    };
+    if name == Some(DIGEST) {
+        let whole = "the digest is of a whole run; it takes --run, --db, --out and --name";
+        for (id, flag) in [
+            ("from", "--from"),
+            ("to", "--to"),
+            ("repo", "--repo"),
+            ("fact", "--fact"),
+            ("kind", "--kind"),
+            ("top", "--top"),
+        ] {
+            if given(id) {
+                return refuse(flag, whole);
+            }
+        }
+        if m.get_one::<String>("format").map(String::as_str) == Some("text") {
+            return refuse("--format", "the digest is JSON");
+        }
+        return if given("out") {
+            Ok(())
+        } else {
+            Err(command().error(
+                clap::error::ErrorKind::MissingRequiredArgument,
+                "digest needs --out DIR, where its files are written",
+            ))
+        };
+    }
+    for (id, flag) in [("out", "--out"), ("name", "--name")] {
+        if given(id) {
+            return refuse(flag, "only digest writes files");
+        }
+    }
+    if name == Some("diff") {
+        if given("run") {
+            return refuse(
+                "--run",
+                "diff compares two runs; name them with --from and --to",
+            );
+        }
+    } else if let Some(flag) = [("from", "--from"), ("to", "--to")]
+        .into_iter()
+        .find_map(|(id, flag)| given(id).then_some(flag))
+    {
+        return refuse(
+            flag,
+            "only diff compares two runs; the other reports read --run",
+        );
+    }
+    Ok(())
+}
+
+/// `--name`'s value: a file name's first part, which holds no separator.
+fn stem(s: &str) -> Result<String, String> {
+    if s.is_empty() || s.contains(['/', '\\']) {
+        Err("expected a file name without a `/`, as in en-us".to_owned())
+    } else {
+        Ok(s.to_owned())
     }
 }
 
@@ -211,10 +322,14 @@ fn fact(s: &str) -> Result<String, String> {
     }
 }
 
-/// Runs `args` with the profiles `registry` holds, printing to stdout and
+/// Runs `job` with the profiles `registry` holds, printing to stdout and
 /// stderr.
-pub fn run(args: &Args, registry: Registry) -> ExitCode {
-    match report(args, &registry) {
+pub fn run(job: &Job, registry: Registry) -> ExitCode {
+    let done = match job {
+        Job::Report(args) => report(args, &registry),
+        Job::Digest(args) => digest(args, &registry),
+    };
+    match done {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("bruce report: {e}");
@@ -223,24 +338,30 @@ pub fn run(args: &Args, registry: Registry) -> ExitCode {
     }
 }
 
-fn report(args: &Args, registry: &Registry) -> Result<(), String> {
-    let db = db::path(args.db.as_deref());
+/// The database `db` names, which must exist, and its path as the messages
+/// name it.
+fn open(db: Option<&Path>, registry: &Registry) -> Result<(Store, PathBuf), String> {
+    let db = db::path(db);
     if !db.exists() {
         return Err(format!("{}: no such database", db.display()));
     }
-    let in_db = |e: &dyn std::fmt::Display| format!("{}: {e}", db.display());
-    let store = db::open(db, registry).map_err(|e| in_db(&e))?;
-    let output = report::run(&store, &args.request).map_err(|e| in_db(&e))?;
-    if let Some(later) = output.later_unfinished {
+    let store = db::open(db, registry).map_err(|e| format!("{}: {e}", db.display()))?;
+    Ok((store, db.to_owned()))
+}
+
+/// Says on stderr that a later run stopped before the end, and which of
+/// `runs` never finished, so what was read is incomplete.
+fn warn_incomplete(
+    reading: RunId,
+    later_unfinished: Option<RunId>,
+    runs: impl IntoIterator<Item = (RunId, bool)>,
+) {
+    if let Some(later) = later_unfinished {
         eprintln!(
             "bruce report: run {} stopped before the end; reporting run {}",
-            later.0, output.run.0
+            later.0, reading.0
         );
     }
-    let runs = output
-        .from
-        .into_iter()
-        .chain([(output.run, output.unfinished)]);
     for (run, unfinished) in runs {
         if unfinished {
             eprintln!(
@@ -249,6 +370,20 @@ fn report(args: &Args, registry: &Registry) -> Result<(), String> {
             );
         }
     }
+}
+
+fn report(args: &Args, registry: &Registry) -> Result<(), String> {
+    let (store, db) = open(args.db.as_deref(), registry)?;
+    let output =
+        report::run(&store, &args.request).map_err(|e| format!("{}: {e}", db.display()))?;
+    warn_incomplete(
+        output.run,
+        output.later_unfinished,
+        output
+            .from
+            .into_iter()
+            .chain([(output.run, output.unfinished)]),
+    );
     let mut text = output.table.render(args.format);
     if args.format == Format::Text {
         for note in &output.notes {
@@ -256,7 +391,32 @@ fn report(args: &Args, registry: &Registry) -> Result<(), String> {
             text.push_str(note);
         }
     }
-    // A reader that closes the pipe, as `head` does, has what it wanted.
+    say(&text)
+}
+
+/// Writes the digest of the run named, as `DIR/STEM-YYYY-MM-DD.json`, and
+/// prints the path (D64).
+fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
+    let (store, db) = open(args.db.as_deref(), registry)?;
+    let digest: Digest =
+        report::digest(&store, args.run).map_err(|e| format!("{}: {e}", db.display()))?;
+    warn_incomplete(
+        digest.run.id,
+        digest.later_unfinished,
+        [(digest.run.id, digest.unfinished)],
+    );
+    let io_error = |path: &Path, e: io::Error| format!("{}: {e}", path.display());
+    fs::create_dir_all(&args.out).map_err(|e| io_error(&args.out, e))?;
+    let path = args
+        .out
+        .join(format!("{}-{}.json", args.name, digest.date()));
+    fs::write(&path, digest.json()).map_err(|e| io_error(&path, e))?;
+    say(&path.display().to_string())
+}
+
+/// Prints `text` and a newline. A reader that closes the pipe, as `head`
+/// does, has what it wanted.
+fn say(text: &str) -> Result<(), String> {
     match writeln!(io::stdout().lock(), "{text}") {
         Err(e) if e.kind() != io::ErrorKind::BrokenPipe => Err(e.to_string()),
         _ => Ok(()),

@@ -329,6 +329,7 @@ dependencies = [
  "reqwest",
  "rustls",
  "serde",
+ "serde_json",
  "tempfile",
  "texting_robots",
  "tokio",

@@ -3,6 +3,7 @@
 ```sh
 bruce report REPORT [--db FILE] [--run N | --from N --to N] [--repo REPO]
                     [--fact KEY=VALUE] [--kind KIND] [--top N] [--format text|json]
+bruce report digest --out DIR [--name STEM] [--db FILE] [--run N]
 ```
 
 Prints one report over one **run** of a database that `bruce crawl` wrote
@@ -16,7 +17,7 @@ refused access (a timeout, a 5xx after retries, a 401, 403 or 429).
 
 | Argument | Default | Meaning |
 |---|---|---|
-| `REPORT` | required | `broken`, `errors`, `stats`, `inbound`, `sitemap`, `orphans`, `unlisted`, `redirects`, `diff`, `introduced` or `inverse`. |
+| `REPORT` | required | `broken`, `errors`, `stats`, `inbound`, `sitemap`, `orphans`, `unlisted`, `redirects`, `diff`, `introduced` or `inverse`; or `digest`, which writes files and takes its own options, so [`digest.md`](digest.md) documents it. |
 | `--db FILE` | `bruce.duckdb` | The database to read. It must exist; a report never creates one. |
 | `--run N` | the latest finished run | The run to read. See [Which run](#which-run). Not for `diff`. For `introduced` and `inverse`, a [`check-dir`](check-dir.md) run. |
 | `--from N` | the finished run before `--to` | `diff` only: the run to compare against. |

@@ -44,7 +44,8 @@ pub enum Mode {
 }
 
 impl Mode {
-    fn as_str(self) -> &'static str {
+    /// The word the `runs` table records.
+    pub fn as_str(self) -> &'static str {
         match self {
             Mode::Crawl => "crawl",
             Mode::Local => "local",

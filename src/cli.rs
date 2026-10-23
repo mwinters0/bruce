@@ -50,7 +50,7 @@ where
         }
         Some(("prune", m)) => prune::run(&prune::Args::from(m), registry()),
         Some(("report", m)) => match report::check(m) {
-            Ok(()) => report::run(&report::Args::from(m), registry()),
+            Ok(()) => report::run(&report::Job::from(m), registry()),
             Err(e) => refuse(&e),
         },
         _ => unreachable!("clap requires a subcommand"),

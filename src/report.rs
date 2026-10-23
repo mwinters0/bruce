@@ -15,6 +15,7 @@
 //! the change removed that pages outside the build link to.
 
 mod diff;
+mod digest;
 mod error;
 mod gate;
 mod inverse;
@@ -30,6 +31,7 @@ mod views;
 
 use crate::store::Store;
 
+pub use digest::{Digest, FORMAT_VERSION, digest};
 pub use error::Error;
 pub use gate::Gate;
 pub use request::{InverseMode, Output, Report, Request};
