@@ -14,9 +14,10 @@ runs that knew are gone.
 
 The digest reads a database that [`bruce crawl`](crawl.md) wrote, as
 [`bruce report`](report.md) does, and counts the links on the pages a root
-covers, of every kind. A link on a page fetched only because another page
-linked to it, and an entry of a sitemap, are in no section; `bruce report
-broken --kind sitemap` lists a sitemap's.
+covers, of every kind. A page fetched only because another page linked to it
+is read for its anchors and holds no links. An entry of a sitemap is in no
+section but the redirects; `bruce report sitemap` lists the entries no page
+was fetched for.
 
 ## Arguments
 

@@ -1,6 +1,6 @@
 //! The queries behind the digest's sections: each reads one run's crawled
-//! pages in every kind (D64), so a link on an allowlisted page or in a sitemap
-//! file is no row of any.
+//! pages in every kind (D64), an allowlisted page holding no links (D3), so a
+//! sitemap file's entries are no row of any but the redirects'.
 
 use duckdb::Connection;
 

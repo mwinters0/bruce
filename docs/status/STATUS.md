@@ -54,6 +54,9 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   `format_version`, `bruce report digest --out --name --format`, the
   sections over one run, the manual.
   Notes: [`../wip/roadmap-P8.3-digest-json-notes.md`](../wip/roadmap-P8.3-digest-json-notes.md).
+- [ ] **8.3.1** The broken targets ranked by their links, then their pages,
+  and the housekeeping's sitemap entries no page was fetched for, reusing
+  `report sitemap`'s: `report/digest`, its tests, D64 and the manual.
 - [ ] **8.4** The digest's HTML: the rendering, the no-script test, the golden
   file over `mise run e2e`'s site.
 - [ ] **8.5** An unresolved xref's hint: the `antora` view, `broken`'s and the
@@ -81,17 +84,3 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-- **The digest's broken targets are ranked by the pages naming them, as the
-  spec says, and the spec's example is not first.** P8's "What the document
-  holds" ranks section 4 by the pages linking to a target and says it leads
-  with the 266 links to `legal/license-review-process/#_what_is_licenseref`;
-  on en-US those 266 are on 3 pages, so they rank third, below targets named
-  by 6 and 5 pages (`runs/p8.1-en-us-20261023-2004/en-us.duckdb`). I kept the
-  written rule (`digest/sections.rs`, `broken_targets`). Ranking by `links`
-  puts the fix removing the most broken links first, a one-line change to
-  that statement; 8.6's review of a real digest is the place to choose.
-- **The digest counts the links on the pages a root covers alone.** A broken
-  entry in a sitemap file is on no page, so no section lists it, nor does one
-  on an allowlisted page; D64 records it. En-US has none of either broken.
-  Reconsidering adds a list to `housekeeping` and a field, which a loader
-  reading version 1 ignores.

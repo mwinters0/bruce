@@ -110,9 +110,12 @@ Settled 2026-10-23 (maintainer), in this order:
 3. **Since the last run**: the breakage new and fixed, each new row saying
    why: the linking page changed, the target lost the anchor, or the target
    page is gone or moved, with the source link of the page responsible.
-4. **Fix once, fix many**: the broken targets ranked by how many pages link
-   to them, each with the target page's own source where the site holds it,
-   the repo that would restore an anchor. On en-US it leads with the 266.
+4. **Fix once, fix many**: the broken targets ranked by the broken links
+   naming them, then by their pages, each with the target page's own source
+   where the site holds it, the repo that would restore an anchor. On en-US it
+   leads with the 266. The HTML lists the targets named by more than one
+   link and says how many the rest are, each in section 5's drill-downs; the
+   JSON holds every target.
 5. **The pages ranked by broken outbound links**: title, live page, source,
    counts, and a `<details>` of each broken link (raw href, the target as a
    link, fragment, reason, status).
@@ -120,7 +123,8 @@ Settled 2026-10-23 (maintainer), in this order:
    link to the repo and in-page links to its pages' rows in 5 (D17).
 7. **Anchors removed**: the pages that lost anchors links still name.
 8. **Errors**, apart from breakage (D16).
-9. **Housekeeping**, collapsed: redirected links to update, orphans,
+9. **Housekeeping**, collapsed: redirected links to update, the sitemap's
+   entries no page was fetched for, orphans,
    unlisted pages, and the unchecked counts by reason.
 
 **The digest counts every kind**, `kind` a column, where `report` counts
