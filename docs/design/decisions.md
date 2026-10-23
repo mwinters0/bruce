@@ -319,14 +319,14 @@ of the file) closes the host for the run. Rejected: one global rate, which throt
 slowest host's courtesy; `robots` on a root, where two roots on one host could disagree and a host an
 `include` reaches had no setting. Code: `fetch::http::host`. Evidence: `fetch::http::host::tests`.
 
-### D61 A run's slots are shared among the hosts with work, so a paced host's waiters cannot fill them
-Each host holds at most the 64 slots divided by the hosts with a target waiting or running, taken in
-turn, so the forge's waiters for its one-a-second pace leave docs.fp.o its half and the hosts overlap
-(the en-US crawl's 1:48 had them nearly in turn); a host alone has every slot. Rejected: a fixed cap
-per host, idle for one host and crowdable for a third; turn-taking alone, the slow host regrowing to
-all 64 on the fast one's completions; asking the fetcher whether a host's pace is free, a trait method.
-Reopens: a host whose concurrency (D8) exceeds its share. Code: `crawl::schedule`.
-Evidence: `crawl::schedule::tests::a_host_with_a_long_queue_leaves_the_other_its_share_of_the_slots`.
+### D61 Live slots are shared among the hosts with work, and a build's reads have a budget of their own
+Each host holds at most the 64 slots divided by the hosts with a target waiting or running, taken in turn,
+so the forge's waiters for its one-a-second pace leave docs.fp.o its half and the hosts overlap; a host
+alone has every slot. A URL the build holds runs in 64 slots of its own, so no waiter for production's pace
+(the prefix being its host) holds one a read wants. Rejected: a fixed cap per host; turn-taking alone;
+asking the fetcher whether a pace is free, a trait method; the build as a third lane of the 64, each cut to
+21; `available_parallelism`, differing by machine. Reopens: a host whose concurrency (D8) exceeds its share.
+Code: `crawl::schedule`. Evidence: `crawl::schedule::tests::the_builds_reads_run_whatever_waits_on_the_prefix_host`.
 
 ### D18 A host's `Crawl-delay` is obeyed unless a root's host overrides it with `per_second`
 The default (D40). A `per_second` written for a host a root starts on beats `Crawl-delay`: a faster

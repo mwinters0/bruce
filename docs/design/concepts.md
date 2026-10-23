@@ -33,8 +33,8 @@ decisions each carries are cited in its module's doc.
   write, and the landing of a redirect in the parent file; the frontier (a
   URL's class, its canonical form and the claim that dedups) in the `frontier`
   child; a target's redirect chain, its limit and where a hop leads in the
-  `hops` child; D16's classification in the `outcome` child; which target starts next, each host holding its share of
-  the run's slots, in the `schedule` child (D61); and reading one
+  `hops` child; D16's classification in the `outcome` child; which target starts next, a build's reads in a budget of their own and each live host holding its share of
+  the run's other slots, in the `schedule` child (D61); and reading one
   sitemap file, gzip and index included, in the `sitemap` child, discovery
   staying in the parent. A run over a local build begins from its seeds in the
   parent, which holds the build's site root for `extract` to resolve an href beginning `/` against (D53).
