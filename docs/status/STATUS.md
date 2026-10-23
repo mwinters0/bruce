@@ -36,7 +36,7 @@ three-component Antora site, the Fedora UI bundle and seven built pages, which
 `mise run e2e` rebuilds and then crawls, exports and runs `check-dir` over, asserting
 the gate's exit status and sections.
 The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball (D60).
-`.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
+`.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), its body naming a schema change from the latest release's (D43), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
 
 ## P8 progress
 
@@ -46,9 +46,10 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   the writer records it and a run its roots' `hash_root` and `hash_exclude`,
   schema 5. Closes on an en-US crawl launched detached under `runs/`.
   Notes: [`../wip/roadmap-P8.1-hash-scope-notes.md`](../wip/roadmap-P8.1-hash-scope-notes.md).
-- [ ] **8.2** A release names its schema change: `release.yml` compares
+- [x] **8.2** A release names its schema change: `release.yml` compares
   `SCHEMA_VERSION` with the latest published release's, rehearsed by
   `scripts/workflows.py`.
+  Notes: [`../wip/roadmap-P8.2-release-schema-notes.md`](../wip/roadmap-P8.2-release-schema-notes.md).
 - [ ] **8.3** The digest's document and JSON: `report/digest`, its
   `format_version`, `bruce report digest --out --name --format`, the
   sections over one run, the manual.

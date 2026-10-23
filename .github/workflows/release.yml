@@ -1,8 +1,8 @@
 # A release: the binary built from a `v*` tag in a Debian Trixie container, so
 # its glibc floor is Trixie's (D23), archived with the notices and licenses,
-# and published on GitHub. No step uses an action (`roadmap.md`, "Standing
-# rules"): each is a command in the container, and `scripts/workflows.py`
-# fails on a `uses:`. `uv run workflows.py script release.yml` prints the steps
+# and published on GitHub, its body naming a schema change (D43). No step uses
+# an action (`roadmap.md`, "Standing rules"): each is a command in the
+# container, and `scripts/workflows.py` fails on a `uses:`. `uv run workflows.py script release.yml` prints the steps
 # as one shell script, to run in a `debian:trixie` container by hand.
 name: release
 
@@ -100,6 +100,43 @@ jobs:
           cat "$name.tar.gz.sha256"
           tar -tzf "$name.tar.gz"
 
+      # D43: a 0.x release migrates no database, so the body says whether this
+      # release's schema is the latest published release's. `scripts/workflows.py`'s
+      # tests rehearse this step against a repo and a stand-in `gh`.
+      - name: Name the schema change
+        working-directory: src
+        run: |
+          ver() { sed -n 's/^pub const SCHEMA_VERSION: u32 = \([0-9][0-9]*\);.*/\1/p' | head -n 1; }
+          now=$(ver < src/store/schema.rs)
+          test -n "$now"
+          err=$(mktemp)
+          if prev=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name 2>"$err"); then
+            test -n "$prev"
+            auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+            git -c "http.extraheader=Authorization: Basic $auth" fetch --depth 1 origin \
+              "refs/tags/$prev:refs/tags/$prev"
+            before=$(git show "$prev:src/store/schema.rs" | ver)
+            test -n "$before"
+          elif grep -q 'HTTP 404' "$err"; then
+            prev=
+          else
+            cat "$err"
+            exit 1
+          fi
+          mkdir -p dist
+          {
+            echo "A 0.x release migrates no database: a schema change is named here, and the new binary starts a new one."
+            echo
+            if [ -z "$prev" ]; then
+              echo "Database schema $now. There is no earlier release."
+            elif [ "$now" = "$before" ]; then
+              echo "Database schema $now, as in $prev: a database made by either opens in the other."
+            else
+              echo "**Database schema $now, changed from $before in $prev.** This release refuses a database made by $prev, and $prev refuses one made by this: start a new database."
+            fi
+          } > dist/release-body.md
+          cat dist/release-body.md
+
       # Releases are immutable once published, so the draft carries both assets
       # before it is published. The draft is made, filled and published by the
       # id its create call returns; no release is listed to find it.
@@ -120,7 +157,7 @@ jobs:
             done
           id=$(gh api -X POST "$repo" --jq .id \
             -f tag_name="$GITHUB_REF_NAME" -f name="$GITHUB_REF_NAME" \
-            -f body="A 0.x release migrates no database: a schema change is named here, and the new binary starts a new one." \
+            -F body=@release-body.md \
             -F draft=true -F prerelease=$pre -F generate_release_notes=true)
           echo "draft $id"
           test -n "$id"

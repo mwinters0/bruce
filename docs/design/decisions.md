@@ -172,13 +172,13 @@ Rejected: deduplicated links with a count, which is smaller but loses the raw hr
 unresolvable href, no link row (reported nowhere) or a crawl-time `links.outcome` and no target.
 
 ### D43 A DB records its schema version, and `bruce` refuses a DB of another version
-A `meta` table holds `schema_version`, and the refusal names both versions. A 0.x release migrates no
-DB: a schema change is named in its release notes and the user starts a new DB, the old binary still
-reading the old one, so migrations wait for a release that promises them. Views are outside the
-version: `Store::install` replaces each at every open, so a changed view needs no bump and refuses no
-baseline. Rejected: recreating on mismatch, which silently destroys the history D2 keeps; migrations
-from day one, for no user; a one-off script rewriting an old DB, a migration in all but name, evidence
-needing the new schema being crawled afresh. Code: `store::schema`, `store::Store::install`.
+A `meta` table holds `schema_version`, and the refusal names both versions. A 0.x release migrates no DB: the release workflow names a
+schema change in the release's body, comparing the tag's `SCHEMA_VERSION` with the latest published release's, and the user starts a new
+DB, the old binary still reading the old one, so migrations wait for a release that promises them. Views are outside the version:
+`Store::install` replaces each at every open, so a changed view needs no bump and refuses no baseline. Rejected: recreating on mismatch,
+which destroys the history D2 keeps; migrations from day one, for no user; a one-off script rewriting an old DB, a migration in all but
+name; a notes file in the tag, or a hand edit after Publish, which an unattended Publish forgets. Code: `store::schema`, `store::Store::install`,
+`release.yml`'s "Name the schema change". Evidence: `scripts/test_workflows.py`, `SchemaStep`.
 
 ### D28 Fragment verdicts are computed in SQL after the crawl, not during it
 The crawler holds no anchor state and need not order fetches around targets. The verdict is a view, `link_verdicts`, computed at

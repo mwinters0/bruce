@@ -8,6 +8,7 @@ it; `ThisRepo` holds the real workflows to the rule and to the parser.
 from __future__ import annotations
 
 import io
+import os
 import subprocess
 import tempfile
 import unittest
@@ -153,6 +154,89 @@ class ThisRepo(unittest.TestCase):
         out = workflows.script(workflows.steps(release.read_text(), "release.yml"))
         done = subprocess.run(["bash", "-n"], input=out, text=True, capture_output=True)
         self.assertEqual(done.returncode, 0, done.stderr)
+
+
+class SchemaStep(unittest.TestCase):
+    """The release's "Name the schema change" step, run as `script` prints it
+    in a workspace whose `src` is a clone of a repo with a tag per release, and
+    a `gh` that answers the latest-release call."""
+
+    STEP = "Name the schema change"
+
+    def schema(self, n: int) -> str:
+        return f"pub const SCHEMA_VERSION: u32 = {n};\n"
+
+    def git(self, cwd: Path, *args: str) -> None:
+        env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+               "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
+        subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True)
+
+    def body(self, released: tuple[str, int] | None, now: int, gh_fails: str | None = None):
+        """The step's exit code, its output and the body file, for a repo
+        whose latest release is `(tag, schema)` and whose tree is at `now`."""
+        release = workflows.REPO / workflows.WORKFLOWS / "release.yml"
+        chosen = [s for s in workflows.steps(release.read_text(), "release.yml") if s.name == self.STEP]
+        self.assertEqual(len(chosen), 1)
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            origin = work / "server" / "owner" / "repo"
+            src = work / "src"
+            (origin / "src" / "store").mkdir(parents=True)
+            self.git(origin, "init", "-q")
+            if released:
+                (origin / "src" / "store" / "schema.rs").write_text(self.schema(released[1]))
+                self.git(origin, "add", ".")
+                self.git(origin, "commit", "-q", "-m", "release")
+                self.git(origin, "tag", released[0])
+            (origin / "src" / "store" / "schema.rs").write_text(self.schema(now))
+            self.git(origin, "add", ".")
+            self.git(origin, "commit", "-q", "--allow-empty", "-m", "tag")
+            self.git(work, "clone", "-q", f"file://{origin}", "src")
+            bin_ = work / "bin"
+            bin_.mkdir()
+            gh = bin_ / "gh"
+            if gh_fails:
+                answer = f"echo '{gh_fails}' >&2; exit 1"
+            elif released:
+                answer = f"echo {released[0]}"
+            else:
+                answer = "echo 'gh: Not Found (HTTP 404)' >&2; exit 1"
+            gh.write_text(f"#!/bin/sh\n{answer}\n")
+            gh.chmod(0o755)
+            env = {**os.environ, "PATH": f"{bin_}:{os.environ['PATH']}", "GITHUB_WORKSPACE": str(work),
+                   "GITHUB_REPOSITORY": "owner/repo", "GH_TOKEN": "x"}
+            done = subprocess.run(["bash"], input=workflows.script(chosen), text=True,
+                                  capture_output=True, env=env, cwd=work)
+            path = src / "dist" / "release-body.md"
+            return done.returncode, done.stdout + done.stderr, path.read_text() if path.exists() else None
+
+    def test_a_changed_schema_is_named_with_both_numbers(self):
+        code, out, body = self.body(("v0.1.0", 4), 5)
+        self.assertEqual(code, 0, out)
+        self.assertIn("**Database schema 5, changed from 4 in v0.1.0.**", body)
+        self.assertIn("refuses a database made by v0.1.0", body)
+
+    def test_an_unchanged_schema_says_so(self):
+        code, out, body = self.body(("v0.1.0", 5), 5)
+        self.assertEqual(code, 0, out)
+        self.assertIn("Database schema 5, as in v0.1.0", body)
+        self.assertNotIn("changed from", body)
+
+    def test_the_first_release_has_no_earlier_one(self):
+        code, out, body = self.body(None, 5)
+        self.assertEqual(code, 0, out)
+        self.assertIn("Database schema 5. There is no earlier release.", body)
+
+    def test_a_failed_lookup_that_is_no_404_fails_the_step(self):
+        code, out, body = self.body(("v0.1.0", 4), 5, gh_fails="gh: Bad gateway (HTTP 502)")
+        self.assertNotEqual(code, 0)
+        self.assertIn("HTTP 502", out)
+        self.assertIsNone(body)
+
+    def test_the_publish_step_sends_the_body_file(self):
+        release = workflows.REPO / workflows.WORKFLOWS / "release.yml"
+        publish = workflows.steps(release.read_text(), "release.yml")[-1]
+        self.assertIn("-F body=@release-body.md", publish.run)
 
 
 if __name__ == "__main__":
