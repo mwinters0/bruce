@@ -31,9 +31,10 @@ grilling, spec amendment and a numbered slice.
 **Ledger lines stay one line each.** The detail lives in the dated history
 entry each line points at.
 
-Allocated so far: M1–M14. <!-- out-of-band-watermark: M14 -->
+Allocated so far: M1–M15. <!-- out-of-band-watermark: M15 -->
 
 ## The ledger
 
 | Item | Date | What changed | Blocks | Why |
 |---|---|---|---|---|
+| M15 | | `export-baseline` installs the `report_*` views into the file it writes (D6, D21) | | [2026-10-23](../status/history/2026-10-23.md) |

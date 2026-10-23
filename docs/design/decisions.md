@@ -237,12 +237,12 @@ inverse check: pages outside the build linking to pages, files or anchors this c
 (slow and non-deterministic), and skipping cross-component links (the breakage this tool exists for).
 
 ### D9 CI fails only on breakage the change introduced
-A link is `(source URL, target URL, fragment)` of any kind (D13), with the build dir mapped to
-production URLs; only built pages' links count. It is introduced if it is broken here and the
-baseline's is not, or is absent. The inverse check fails by default; `--inverse=warn` turns it down (D27).
-Accepted noise: a renamed page's links all look new. `report introduced` judges every kind too, so
-re-reporting a CI run gives the rows that set its exit. Rejected: failing on all breakage, which keeps
-CI permanently red; `check-dir --kind`, narrowing the gate, D50's `skip` silencing a noisy URL instead.
+A link is `(source URL, target URL, fragment)` of any kind (D13), with the build dir mapped to production URLs; only built
+pages' links count. It is introduced if it is broken here and the baseline's is not, or is absent. The inverse check fails by
+default; `--inverse=warn` turns it down (D27). Accepted noise: a renamed page's links all look new. `report introduced` judges
+every kind too, so re-reporting a CI run gives the rows that set its exit under `--inverse=fail`, which `report` assumes: in text,
+or in JSON as `report inverse`'s beside its own (D6). Rejected: failing on all breakage, which keeps CI permanently red;
+`check-dir --kind`, narrowing the gate, D50's `skip` silencing a noisy URL instead.
 Code: `report::gate`. Evidence: `report::gate::tests::the_gate_reads_every_kind_unless_a_report_narrows_it`.
 
 ### D19 Pages carry Antora resource IDs, and unresolved refspecs resolve through them
@@ -302,13 +302,13 @@ from the first logins; `*` crossing `/` in a query, or the query unmatched, whic
 Code: `crawl::frontier::Frontier::hop_plan`. Evidence: `crawl::tests::a_redirect_onto_a_skipped_url_ends_the_chain`.
 
 ### D6 Reports are SQL views stored in the DB and run by `bruce report <kind>`
-Ad-hoc `duckdb` users see the same views as the CLI. Output is text, or `--format json`. A view
-takes no parameter, so each `report_*` view holds every run and `bruce report` names the run and the
-filters in its query; `cli` installs them at every open, `store` being below `report` (D39).
-Rejected: a view per run; installing them only when `bruce report` runs, which hides them from
-`duckdb` after a crawl; a JSON shape carrying `stats`' totals or `unlisted`'s roots with no sitemap,
-until a consumer needs one, a script reading `link_verdicts` or `report_roots` meanwhile. Code:
-`report`, `cli::db`.
+A one-run report is a `report_*` view, which ad-hoc `duckdb` users see as the CLI does; `diff`, `introduced` and `inverse`
+compare two runs, so `bruce report` composes them, `inverse` over base tables. A view takes no parameter, so each holds every
+run and `bruce report` names the run and filters; `cli` installs them at every open and into the file `export-baseline` writes
+(D21), `store` being below `report` (D39). Output is text, or `--format json`. Rejected: a view per run; installing them only
+when `bruce report` runs, hiding them from `duckdb` after a crawl; a view for `inverse`, its held set (D56) being I16's layout
+parsed in SQL; a JSON shape carrying `stats`' totals, `unlisted`'s bare roots or `introduced`'s other sections, until a
+consumer needs one, a script reading `link_verdicts` or `report_roots` meanwhile. Code: `report`, `cli::db`.
 
 ### D8 Rate limits, concurrency and robots.txt are per host; only a root's host may skip robots.txt
 Defaults in config (D40), with per-host settings in `[host]`. Back off on 429/503 and honour
