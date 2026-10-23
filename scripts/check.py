@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """The per-round checks, each run once, logged whole, summarized short.
 
-A round of work ends on the same eight commands every time -- `cargo fmt
+A round of work ends on the same nine commands every time -- `cargo fmt
 --check`, `cargo clippy`, the suite under `cargo nextest`, the doctests,
-`module_graph.py`, the scripts' own `unittest`, `repoint.py` and
+`e2e.py`, `module_graph.py`, the scripts' own `unittest`, `repoint.py` and
 `file_limits.py` -- and a session reading their raw
 output pipes it through `grep` and `head` to find the lines that matter, then
 re-runs the suite when the pipe cut what it needed. This runs each command
@@ -37,7 +37,13 @@ last blind read and a repoint is due, which is a round of its own
 meter** (`file_limits.py`): a file past a hard limit says a seams round is due
 (`docs/process.md`, "Seams"), and only a stale exemption fails the check.
 
-**No `Cargo.toml` at the root is no workspace yet**, and the four cargo checks
+**The end-to-end site runs whenever the `bruce` binary can have changed**
+(`e2e.py`, `mise run e2e`): it is the one check that runs the binary against a
+built Antora site, and nothing else ran it for the five slices in which its
+gate stood red unseen. A workspace holding no binary leaves it out; without
+`--affected` it runs with the rest.
+
+**No `Cargo.toml` at the root is no workspace yet**, and the five cargo checks
 are left out rather than failed: the summary says so beneath its header and in
 its verdict, and the module graph, the scripts' `unittest`, `repoint.py` and
 `file_limits.py` run as ever. Once a workspace appears they run again, with no
@@ -88,6 +94,12 @@ first of the other three rules it meets gives it:
   scripts' `unittest` runs already (`test_check` pins both).
 - **Anything else no test reads** -- the workspace manifest, the lockfile,
   `vendor/`, a tool's config -- runs every check, as without the flag.
+
+**`e2e` rides on those rules** (`E2E_READS`): it runs when a changed path
+puts a package with a binary target among those run whole, so a change to its
+tests or benches alone, or to a comment, does not; when a path is one the
+site's build reads (`fixtures/antora/`'s content, UI bundle and golden file);
+and wherever every check runs.
 
 A change touching only the third kind, and named by no target, runs no
 cargo check, `cargo metadata` aside; nor does any change before a workspace
@@ -311,7 +323,25 @@ def summarize_file_limits(text: str, exit_code: int) -> Outcome:
     return Outcome("FAILED", headline, problems or _tail(text))
 
 
-#: The round's eight commands. `every_check` is what a run without
+E2E_FAILURE_RE = re.compile(r"^e2e: ")
+E2E_VERDICT_RE = re.compile(r"^gate: ")
+
+
+def summarize_e2e(text: str, exit_code: int) -> Outcome:
+    """`e2e.py` prints a `gate:` line last when the planted changes gate as
+    promised, and `e2e: <step or finding>` with the findings beneath it when
+    not (`E2eError`)."""
+    lines = [line.rstrip() for line in text.splitlines() if line.strip()]
+    at = next((i for i, line in enumerate(lines) if E2E_FAILURE_RE.match(line)), None)
+    verdict = next((line for line in reversed(lines) if E2E_VERDICT_RE.match(line)), None)
+    if exit_code == 0 and at is None and verdict:
+        return Outcome("ok", verdict)
+    if at is not None:
+        return Outcome("FAILED", lines[at], tuple(line.strip() for line in lines[at + 1 :]))
+    return Outcome("FAILED", "e2e.py did not reach its gate", _tail(text))
+
+
+#: The round's nine commands. `every_check` is what a run without
 #: `--affected` runs: these, the doctests narrowed to the libraries holding one,
 #: and none of `CARGO` before a workspace exists.
 CHECKS: tuple[Check, ...] = (
@@ -329,6 +359,7 @@ CHECKS: tuple[Check, ...] = (
         ".",
         summarize_doctest,
     ),
+    Check("e2e", ("uv", "run", "e2e.py"), "scripts", summarize_e2e),
     Check("graph", ("uv", "run", "module_graph.py"), "scripts", summarize_module_graph),
     Check("unittest", ("uv", "run", "python", "-m", "unittest"), "scripts", summarize_unittest),
     Check("repoint", ("uv", "run", "repoint.py"), "scripts", summarize_repoint),
@@ -339,9 +370,19 @@ CHECKS: tuple[Check, ...] = (
 #: docs and the tree's shape rather than any one target.
 ALWAYS = ("unittest", "repoint", "seams")
 #: The checks that need a Cargo workspace, left out until one exists.
-CARGO = ("fmt", "clippy", "nextest", "doctest")
+CARGO = ("fmt", "clippy", "nextest", "doctest", "e2e")
 #: What the summary says when they are left out.
-NO_WORKSPACE = "cargo: no Cargo.toml at the root, so fmt, clippy, nextest and doctest are skipped"
+NO_WORKSPACE = (
+    "cargo: no Cargo.toml at the root, so fmt, clippy, nextest, doctest and e2e are skipped"
+)
+#: The paths, beside the binary itself, that `e2e.py` reads: the hand-written
+#: components, the UI bundle it builds them with and the digest's golden file.
+#: Its own source is in no crate and read by no test, so it runs every check.
+E2E_READS = (
+    "fixtures/antora/content/",
+    "fixtures/antora/ui-bundle.",
+    "fixtures/antora/digest.html",
+)
 
 
 def has_workspace(repo: Path) -> bool:
@@ -411,6 +452,10 @@ class Package:
     @property
     def has_lib(self) -> bool:
         return any(t.kind == "lib" for t in self.targets)
+
+    @property
+    def has_bin(self) -> bool:
+        return any(t.kind == "bin" for t in self.targets)
 
 
 _MOD_RE = re.compile(r"^\s*(?:pub(?:\([^)]*\))?\s+)?mod\s+(\w+)\s*;", re.M)
@@ -764,11 +809,13 @@ def every_check(repo: Path, load: Callable[[Path], list[Package]] = workspace) -
     without a workspace, none of the cargo checks."""
     if not has_workspace(repo):
         return tuple(c for c in CHECKS if c.name not in CARGO)
-    docs = doctest_packages(repo, load(repo))
+    packages = load(repo)
+    docs = doctest_packages(repo, packages)
+    binary = any(p.has_bin for p in packages)
     return tuple(
         doctest_check(docs) if c.name == "doctest" else c
         for c in CHECKS
-        if c.name != "doctest" or docs
+        if (c.name != "doctest" or docs) and (c.name != "e2e" or binary)
     )
 
 
@@ -807,6 +854,7 @@ def plan_changes(
     }
     whole, roots, local, linted = None, set(), set(), set()
     reader_ids: set[tuple[str, str]] = set()
+    site = any(path.startswith(E2E_READS) for path in changed)
     for path in changed:
         found = {
             (pkg, t.binary_id)
@@ -829,7 +877,7 @@ def plan_changes(
                 (local if rest.startswith(PACKAGE_LOCAL) else roots).add(home.name)
         elif not found and whole is None:
             whole = path
-    if not reader_ids and all(UNTESTED_RE.search(p) for p in changed):
+    if not reader_ids and not site and all(UNTESTED_RE.search(p) for p in changed):
         return Plan(
             always,
             f"affected: {_paths(len(changed))} changed since HEAD, none read by a test, "
@@ -870,6 +918,8 @@ def plan_changes(
         checks.append(Check("nextest", tuple(argv), ".", summarize_nextest))
     if doc_pkgs:
         checks.append(doctest_check(doc_pkgs))
+    if site or any(by_name[n].has_bin for n in closure):
+        checks.extend(c for c in CHECKS if c.name == "e2e")
     if whole_pkgs:
         checks.extend(c for c in CHECKS if c.name == "graph")
     parts = [f"{_paths(len(changed))} changed since HEAD"]

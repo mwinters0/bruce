@@ -32,7 +32,8 @@ dir = "{{config_root}}/scripts"
 run = "uv run sim.py"
 
 # The end-to-end Antora site, built whole and in part, and `check-dir` run on it (D24). It needs node and
-# the network on the first run and is slow, so `check` does not run it.
+# the network on the first run and is slow, so `check` runs it only when the
+# `bruce` binary is affected (`scripts/check.py`).
 [tasks.e2e]
 description = "Build the fixture Antora site whole and in part, and gate it"
 dir = "{{config_root}}/scripts"

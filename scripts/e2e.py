@@ -45,7 +45,8 @@ writes it anew, to be read in a diff before it is committed.
 `--save-pages` also copies a few of the builds' pages into
 `fixtures/antora/pages/`, recorded in a manifest, so tests read what a build
 writes rather than what one is remembered to write. The run is slow beside the
-rest of the checks, so it is not in `mise run check`.
+rest of the checks, so `mise run check` runs it only when the binary can have
+changed (`check.py`, `E2E_READS`).
 
 Usage:
 

@@ -40,5 +40,5 @@ Allocated so far: M1–M19. <!-- out-of-band-watermark: M19 -->
 | M15 | 2026-10-23 | `export-baseline` installs the `report_*` views into the file it writes (D6, D21) | | [2026-10-23](../status/history/2026-10-23.md) |
 | M16 | 2026-10-23 | A build's reads run under a cap of their own, apart from the live hosts' share of the slots (D61) | | [2026-10-23](../status/history/2026-10-23.md) |
 | M17 | 2026-10-23 | A bare component's root page gives `prefix` its prefix again, so D57's derived URL holds for every bare component and e2e's gate passes (KD19 struck) | | [2026-10-23](../status/history/2026-10-23.md) |
-| M18 | | `mise run check` runs `mise run e2e` whenever the `bruce` binary is affected | P8 | [2026-10-23](../status/history/2026-10-23.md) |
+| M18 | 2026-10-23 | `mise run check` runs `mise run e2e` whenever the `bruce` binary is affected | | [2026-10-23](../status/history/2026-10-23.md) |
 | M19 | | `mise run shot` renders an HTML page headless with Servo's servoshell, pinned by mise, to PNGs at a desktop's and a phone's width and with its print rules applied | P8 | [2026-10-23](../status/history/2026-10-23.md) |

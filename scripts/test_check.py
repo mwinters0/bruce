@@ -136,7 +136,35 @@ FAILED (failures=1, errors=1)
 """
 
 
+E2E_PASS = """\
+whole: 31 html files -> runs/e2e/whole
+digest: 9120 bytes of HTML, 4000 of JSON, as the golden file has it
+gate: unchanged build exit 0, planted build exit 1, as planted
+"""
+
+E2E_FAIL = """\
+whole: 31 html files -> runs/e2e/whole
+e2e: the gate is not what the planted changes promise:
+  planted: introduced rows differ
+  planted: exit 0, not 1
+"""
+
+
 class Summaries(unittest.TestCase):
+    def test_e2e_reads_its_gate_line_and_its_findings(self):
+        ok = check.summarize_e2e(E2E_PASS, 0)
+        self.assertEqual((ok.status, ok.headline[:5]), ("ok", "gate:"))
+        bad = check.summarize_e2e(E2E_FAIL, 1)
+        self.assertEqual(bad.status, "FAILED")
+        self.assertEqual(bad.headline, "e2e: the gate is not what the planted changes promise:")
+        self.assertEqual(bad.details, ("planted: introduced rows differ", "planted: exit 0, not 1"))
+
+    def test_e2e_never_passes_without_its_gate_line_or_with_a_bad_exit(self):
+        self.assertEqual(check.summarize_e2e("whole: 3 html files\n", 0).status, "FAILED")
+        self.assertEqual(check.summarize_e2e(E2E_PASS, 1).status, "FAILED")
+        crash = check.summarize_e2e("Traceback (most recent call last):\nValueError: x\n", 1)
+        self.assertEqual((crash.status, crash.headline), ("FAILED", "e2e.py did not reach its gate"))
+
     def test_nextest_passing_carries_its_summary_line(self):
         o = check.summarize_nextest(NEXTEST_PASS, 0)
         self.assertEqual(o.status, "ok")
@@ -419,10 +447,10 @@ class RunAndVerify(unittest.TestCase):
             check.verify(repo, edits, before)
             self.assertIn("did not pass; running the checks", before.getvalue())
 
-    def test_the_real_checks_are_the_rounds_eight_commands(self):
+    def test_the_real_checks_are_the_rounds_nine_commands(self):
         self.assertEqual(
             [c.name for c in check.CHECKS],
-            ["fmt", "clippy", "nextest", "doctest", "graph", "unittest", "repoint", "seams"],
+            ["fmt", "clippy", "nextest", "doctest", "e2e", "graph", "unittest", "repoint", "seams"],
         )
         for c in check.CHECKS:
             self.assertTrue((check.REPO / c.cwd).is_dir(), c.cwd)
@@ -663,6 +691,33 @@ class Affected(unittest.TestCase):
         self.assertNotIn("doctest", argv_of(plan))
         self.assertNotIn("doctest", [c.name for c in check.every_check(self.repo, lambda _: plain)])
 
+    def test_a_binary_change_runs_the_end_to_end_site_and_a_library_alone_does_not(self):
+        # `app` has the binary and depends on `base`, so a change to either
+        # puts it among the packages run whole.
+        for path in ("app/src/main.rs", "base/src/lib.rs"):
+            names = [c.name for c in self.plan(path).checks]
+            self.assertEqual(names[names.index("e2e") :][:2], ["e2e", "graph"], path)
+        self.assertEqual(argv_of(self.plan("app/src/main.rs"))["e2e"], ["uv", "run", "e2e.py"])
+        plain = [replace(p, targets=tuple(t for t in p.targets if t.kind != "bin")) for p in self.packages]
+        plan = check.plan_changes(self.repo, ["base/src/lib.rs"], lambda _: plain)
+        self.assertNotIn("e2e", argv_of(plan))
+        self.assertNotIn("e2e", [c.name for c in check.every_check(self.repo, lambda _: plain)])
+        self.assertIn("e2e", [c.name for c in check.every_check(self.repo, lambda _: self.packages)])
+
+    def test_a_test_or_a_comment_beside_the_binary_does_not_run_the_site(self):
+        self.assertNotIn("e2e", argv_of(self.plan("app/tests/cli.rs")))
+        plan = check.plan_changes(
+            self.repo, ["app/src/main.rs"], lambda _: self.packages, {"app/src/main.rs"}
+        )
+        self.assertNotIn("e2e", argv_of(plan))
+
+    def test_a_path_the_site_is_built_from_runs_it(self):
+        # `base::t` reads `fixtures/`, which holds the site's inputs.
+        plan = self.plan("fixtures/antora/digest.html")
+        self.assertEqual([c.name for c in plan.checks], ["nextest", "e2e", "unittest", "repoint", "seams"])
+        self.assertNotIn("e2e", argv_of(self.plan("fixtures/antora/pages/x.html")))
+        self.assertNotIn("e2e", argv_of(self.plan("fixtures/a.sql")))
+
     def test_a_comment_only_change_lints_its_package_and_runs_no_test(self):
         plan = check.plan_changes(
             self.repo, ["base/src/lib.rs"], lambda _: self.packages, {"base/src/lib.rs"}
@@ -745,7 +800,7 @@ class Affected(unittest.TestCase):
             )
             self.assertEqual(
                 check.plan_affected(repo, tree, None, lambda _: []).checks,
-                tuple(c for c in check.CHECKS if c.name != "doctest"),
+                tuple(c for c in check.CHECKS if c.name not in ("doctest", "e2e")),
             )
 
 
