@@ -62,6 +62,11 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   the no-script test, the golden file `fixtures/antora/digest.html` over
   `mise run e2e`'s site, the manual.
   Notes: [`../wip/roadmap-P8.4-digest-html-notes.md`](../wip/roadmap-P8.4-digest-html-notes.md).
+- [ ] **8.4.1** The digest's HTML at a phone's width and in print: tables
+  that scroll rather than crush their URL columns, a disclosure marker on
+  every `<summary>`, no heading stranded at a page's foot, and the minor
+  defects M19's trial found, checked with `mise run shot` and a spot check
+  in Chrome's headless shell, where Servo shows neither defect.
 - [ ] **8.5** An unresolved xref's hint: the `antora` view, `broken`'s and the
   digest's `hint`, measure and floor chosen on en-US's rows.
 - [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
@@ -71,6 +76,9 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
 - [ ] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,
   section 3's causes, section 7, the figures' changes; over a second en-US
   crawl against 8.1's.
+- [ ] **8.9** Servo's renders of the digest beside Chrome's headless shell's,
+  after 8.6's verdict: whether Servo alone is enough to check how the
+  digest renders, the verdict in the notes.
 
 ## Not started
 

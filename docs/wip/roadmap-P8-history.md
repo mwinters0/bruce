@@ -254,7 +254,11 @@ launches, under schema 5, is the evidence every later slice reads, `bruce`
 refusing the schema-4 databases `runs/` holds; **8.6 is the maintainer's
 review**, after everything over one run and before the two-run sections; and
 **8.8's evidence is a second en-US crawl** compared with 8.1's. No closing
-review: P9's 9.6 reviews the en-US reports, P8's among them.
+review: P9's 9.6 reviews the en-US reports, P8's among them. **8.9 closes the
+phase by comparing Servo's renders of the digest with Chrome's headless
+shell's** (maintainer, 2026-10-23): Servo checks the rendering because it
+keeps the dev dependencies light, and 8.9 says whether it is enough, a
+Chrome spot check being the maintainer's to request meanwhile.
 
 ## Facts the grilling found
 
