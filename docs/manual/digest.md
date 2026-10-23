@@ -43,8 +43,9 @@ it wrote.
 One page with no script and no outside file, so it reads the same opened from
 a disk, from an archive or from a web server. It is the JSON's data laid out
 for a reader, and is dark on a screen and light in print, where every
-`<details>` is opened. Its times are UTC and its links absolute, those into the
-page excepted. In this order:
+`<details>` is opened. At a phone's width its tables scroll sideways. Its
+times are UTC and its links absolute, those into the page excepted. In this
+order:
 
 1. **The header**: the roots, the run's id, start, finish and duration, the
    `bruce` that crawled it, and the run compared with.

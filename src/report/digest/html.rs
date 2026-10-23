@@ -119,6 +119,11 @@ fn num(n: i64) -> String {
     out
 }
 
+/// `n` of `noun`, pluralised.
+fn counted(n: i64, noun: &str) -> String {
+    format!("{} {noun}{}", num(n), if n == 1 { "" } else { "s" })
+}
+
 /// `url` without its scheme, to show.
 fn short(url: &str) -> &str {
     url.strip_prefix("https://")
@@ -200,8 +205,13 @@ fn status_cell(status: i64) -> String {
     }
 }
 
-/// A table of already-rendered cells; a header marked `true` is a number.
+/// A table of already-rendered cells; a header marked `true` is a number. A
+/// table with no row is the word for it, not a header over nothing.
 fn table(out: &mut String, head: &[(&str, bool)], body: &[Vec<String>]) {
+    if body.is_empty() {
+        out.push_str("<p class=\"muted\">None.</p>\n");
+        return;
+    }
     out.push_str("<div class=\"scroll\"><table>\n<thead><tr>");
     for (name, numeric) in head {
         let class = if *numeric { " class=\"num\"" } else { "" };
@@ -384,7 +394,7 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
         let id = format!("p{}", i + 1);
         ids.insert(url.to_owned(), id.clone());
         let (u, an, er) = (p.int("broken_url"), p.int("broken_anchor"), p.int("error"));
-        let mut counts = format!("{} URL, {} anchor", num(u), num(an));
+        let mut counts = format!("{}, {}", counted(u, "URL"), counted(an, "fragment"));
         if er > 0 {
             w!(counts, ", {} error", num(er));
         }
@@ -466,7 +476,7 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
             None => "<span class=\"muted\">No source recorded</span>".to_owned(),
         };
         let (u, an, er) = (r.int("broken_url"), r.int("broken_anchor"), r.int("error"));
-        let mut counts = format!("{} URL, {} anchor", num(u), num(an));
+        let mut counts = format!("{}, {}", counted(u, "URL"), counted(an, "fragment"));
         if er > 0 {
             w!(counts, ", {} error", num(er));
         }
@@ -540,12 +550,12 @@ fn errors(out: &mut String, d: &Digest) {
     out.push_str("</section>\n");
 }
 
-/// A nested `<details>` of `title` holding `inner`, collapsed.
-fn fold(out: &mut String, title: &str, count: usize, inner: impl FnOnce(&mut String)) {
+/// A nested `<details>` of `title` holding `inner`, collapsed, its summary
+/// carrying `count`, the size of what it holds in the unit the list is of.
+fn fold(out: &mut String, title: &str, count: &str, inner: impl FnOnce(&mut String)) {
     w!(
         out,
-        "<details>\n<summary><span class=\"ttl\">{title}</span><span class=\"cnt\">{}</span></summary>\n",
-        num(count as i64)
+        "<details>\n<summary><span class=\"ttl\">{title}</span><span class=\"cnt\">{count}</span></summary>\n"
     );
     inner(out);
     out.push_str("</details>\n");
@@ -556,7 +566,9 @@ fn housekeeping(out: &mut String, d: &Digest) {
         "<section id=\"housekeeping\">\n<h2>Housekeeping</h2>\n<details class=\"house\">\n\
          <summary>Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links</summary>\n",
     );
-    fold(out, "Redirected links", d.redirects.rows.len(), |out| {
+    let links = |t: &Table| format!("{} links", num(rows(t).map(|r| r.int("links")).sum()));
+    let entries = |t: &Table| num(t.rows.len() as i64);
+    fold(out, "Redirected links", &links(&d.redirects), |out| {
         out.push_str("<p>The links that reach their page through a redirect, by landing URL: update them to the landing.</p>\n");
         let body: Vec<Vec<String>> = rows(&d.redirects)
             .map(|r| {
@@ -586,7 +598,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
     fold(
         out,
         "Sitemap entries no page was fetched for",
-        d.sitemap_entries.rows.len(),
+        &entries(&d.sitemap_entries),
         |out| {
             out.push_str("<p>Antora writes a sitemap from what it publishes, so an entry that did not answer is a build or deploy fault.</p>\n");
             let body: Vec<Vec<String>> = rows(&d.sitemap_entries)
@@ -606,11 +618,11 @@ fn housekeeping(out: &mut String, d: &Digest) {
             );
         },
     );
-    fold(out, "Orphans", d.orphans.rows.len(), |out| {
+    fold(out, "Orphans", &entries(&d.orphans), |out| {
         out.push_str("<p>Pages the sitemap lists that no page links to.</p>\n");
         page_list(out, &d.orphans);
     });
-    fold(out, "Unlisted pages", d.unlisted.rows.len(), |out| {
+    fold(out, "Unlisted pages", &entries(&d.unlisted), |out| {
         out.push_str("<p>Pages missing from the sitemap of a root that read one.</p>\n");
         if !d.roots_without_sitemap.is_empty() {
             let roots: Vec<String> = d
@@ -626,7 +638,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
         }
         page_list(out, &d.unlisted);
     });
-    fold(out, "Unchecked links", d.unchecked.rows.len(), |out| {
+    fold(out, "Unchecked links", &links(&d.unchecked), |out| {
         out.push_str("<p>Links not checked, by why.</p>\n");
         let body: Vec<Vec<String>> = rows(&d.unchecked)
             .map(|r| {

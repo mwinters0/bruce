@@ -48,17 +48,31 @@ nav { margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
 .fig .l { color: var(--muted); }
 .fig.bad .n { color: var(--bad); }
 .fig.warn .n { color: var(--warn); }
-.scroll { overflow-x: auto; margin: 8px 0; }
+.scroll {
+  --cover: var(--bg);
+  --shade: rgba(81, 162, 218, .45);
+  overflow-x: auto; margin: 8px 0;
+  background:
+    linear-gradient(to right, var(--cover) 30%, transparent) 0 0 / 2.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--cover) 30%, transparent) 100% 0 / 2.5rem 100% no-repeat local,
+    linear-gradient(to right, var(--shade), transparent) 0 0 / .8rem 100% no-repeat scroll,
+    linear-gradient(to left, var(--shade), transparent) 100% 0 / .8rem 100% no-repeat scroll;
+}
+details .scroll { --cover: var(--surface); }
 table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
 th, td { padding: 5px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
 th { color: var(--muted); font-weight: 500; white-space: nowrap; background: var(--surface); }
 th.num, td.num { text-align: right; white-space: nowrap; }
+td a, td code { overflow-wrap: break-word; }
+tbody tr:last-child td { border-bottom: 0; }
 details { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; margin: 6px 0; }
 details details { background: transparent; }
 details > :not(summary) { margin-left: 12px; margin-right: 12px; }
-details > .scroll { margin-bottom: 10px; }
+details > .scroll { margin-bottom: 0; }
 summary { cursor: pointer; padding: 7px 12px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
 summary:hover { background: var(--raised); }
+summary::before { content: "\25b8"; flex: none; width: .9em; color: var(--accent); }
+details[open] > summary::before { content: "\25be"; }
 details:target { border-color: var(--accent); }
 summary .rank { min-width: 2.2rem; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
 summary .ttl { flex: 1 1 18rem; min-width: 0; font-weight: 550; overflow-wrap: anywhere; }
@@ -81,7 +95,15 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
   header { background: none; }
   details { break-inside: avoid-page; }
   details::details-content { content-visibility: visible; display: block; }
-  summary { list-style: none; }
+  summary { list-style: none; break-after: avoid; }
+  summary::before { display: none; }
+  .scroll { overflow: visible; background: none; }
+  td a, td code { overflow-wrap: anywhere; }
+  h2, h3 { break-after: avoid; }
+  h2 + p { break-after: avoid; }
+  .house { break-inside: auto; }
+  tr { break-inside: avoid; }
+  thead { display: table-header-group; }
   nav { display: none; }
 }
 </style>
@@ -125,7 +147,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <h2>Pages by broken links</h2>
 <p>The pages holding the most broken links first. Open one for its links.</p>
 <details id="p1">
-<summary><span class="rank">1</span><span class="ttl">Install Guide :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URL, 0 anchor; 36 links)</small></span></summary>
+<summary><span class="rank">1</span><span class="ttl">Install Guide :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 36 links)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/guide/1.0/">127.0.0.1:8099/en-US/guide/1.0/</a> · Source <a href="https://github.com/bruce-fixture/guide/edit/main/modules/ROOT/pages/index.adoc">modules/ROOT/pages/index.adoc</a></p>
 <div class="scroll"><table>
 <thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
@@ -136,7 +158,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </tbody></table></div>
 </details>
 <details id="p2">
-<summary><span class="rank">2</span><span class="ttl">Installing :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URL, 0 anchor; 39 links)</small></span></summary>
+<summary><span class="rank">2</span><span class="ttl">Installing :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 39 links)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/guide/1.0/install/">127.0.0.1:8099/en-US/guide/1.0/install/</a> · Source <a href="https://github.com/bruce-fixture/guide/edit/main/modules/ROOT/pages/install.adoc">modules/ROOT/pages/install.adoc</a></p>
 <div class="scroll"><table>
 <thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
@@ -147,7 +169,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </tbody></table></div>
 </details>
 <details id="p3">
-<summary><span class="rank">3</span><span class="ttl">Upgrading :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URL, 0 anchor; 37 links)</small></span></summary>
+<summary><span class="rank">3</span><span class="ttl">Upgrading :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 37 links)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/guide/1.0/upgrade/">127.0.0.1:8099/en-US/guide/1.0/upgrade/</a> · Source <a href="https://github.com/bruce-fixture/guide/edit/main/modules/ROOT/pages/upgrade.adoc">modules/ROOT/pages/upgrade.adoc</a></p>
 <div class="scroll"><table>
 <thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
@@ -158,7 +180,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </tbody></table></div>
 </details>
 <details id="p4">
-<summary><span class="rank">4</span><span class="ttl">Operations :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URL, 0 anchor; 35 links)</small></span></summary>
+<summary><span class="rank">4</span><span class="ttl">Operations :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 35 links)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/ops/">127.0.0.1:8099/en-US/ops/</a> · Source <a href="https://github.com/bruce-fixture/ops/edit/main/modules/ROOT/pages/index.adoc">modules/ROOT/pages/index.adoc</a></p>
 <div class="scroll"><table>
 <thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
@@ -169,7 +191,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </tbody></table></div>
 </details>
 <details id="p5">
-<summary><span class="rank">5</span><span class="ttl">Partitions :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URL, 0 anchor; 36 links)</small></span></summary>
+<summary><span class="rank">5</span><span class="ttl">Partitions :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 36 links)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/ops/admin/partitions/">127.0.0.1:8099/en-US/ops/admin/partitions/</a> · Source <a href="https://github.com/bruce-fixture/ops/edit/main/modules/admin/pages/partitions.adoc">modules/admin/pages/partitions.adoc</a></p>
 <div class="scroll"><table>
 <thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
@@ -180,7 +202,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </tbody></table></div>
 </details>
 <details id="p6">
-<summary><span class="rank">6</span><span class="ttl">Tools :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URL, 0 anchor; 35 links)</small></span></summary>
+<summary><span class="rank">6</span><span class="ttl">Tools :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 35 links)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/tools/">127.0.0.1:8099/en-US/tools/</a> · Source <a href="https://github.com/bruce-fixture/tools/edit/main/modules/ROOT/pages/index.adoc">modules/ROOT/pages/index.adoc</a></p>
 <div class="scroll"><table>
 <thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
@@ -191,7 +213,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </tbody></table></div>
 </details>
 <details id="p7">
-<summary><span class="rank">7</span><span class="ttl">Reference :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URL, 0 anchor; 36 links)</small></span></summary>
+<summary><span class="rank">7</span><span class="ttl">Reference :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 36 links)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/tools/reference/">127.0.0.1:8099/en-US/tools/reference/</a> · Source <a href="https://github.com/bruce-fixture/tools/edit/main/modules/ROOT/pages/reference.adoc">modules/ROOT/pages/reference.adoc</a></p>
 <div class="scroll"><table>
 <thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
@@ -202,7 +224,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </tbody></table></div>
 </details>
 <details id="p8">
-<summary><span class="rank">8</span><span class="ttl">Using the tools :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URL, 0 anchor; 40 links)</small></span></summary>
+<summary><span class="rank">8</span><span class="ttl">Using the tools :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 40 links)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/tools/usage/">127.0.0.1:8099/en-US/tools/usage/</a> · Source <a href="https://github.com/bruce-fixture/tools/edit/main/modules/ROOT/pages/usage.adoc">modules/ROOT/pages/usage.adoc</a></p>
 <div class="scroll"><table>
 <thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
@@ -217,7 +239,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <h2>By repo</h2>
 <p>The repos whose pages hold the most broken links first. Open one for its pages.</p>
 <details>
-<summary><span class="rank">1</span><span class="ttl"><a href="https://github.com/bruce-fixture/guide">github.com/bruce-fixture/guide</a></span><span class="cnt"><b>9</b> broken <small>(9 URL, 0 anchor; on 3 of 3 pages)</small></span></summary>
+<summary><span class="rank">1</span><span class="ttl"><a href="https://github.com/bruce-fixture/guide">github.com/bruce-fixture/guide</a></span><span class="cnt"><b>9</b> broken <small>(9 URLs, 0 fragments; on 3 of 3 pages)</small></span></summary>
 <ul>
 <li><a href="#p1">Install Guide :: Bruce fixture site</a></li>
 <li><a href="#p2">Installing :: Bruce fixture site</a></li>
@@ -225,7 +247,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </ul>
 </details>
 <details>
-<summary><span class="rank">2</span><span class="ttl"><a href="https://github.com/bruce-fixture/tools">github.com/bruce-fixture/tools</a></span><span class="cnt"><b>9</b> broken <small>(9 URL, 0 anchor; on 3 of 3 pages)</small></span></summary>
+<summary><span class="rank">2</span><span class="ttl"><a href="https://github.com/bruce-fixture/tools">github.com/bruce-fixture/tools</a></span><span class="cnt"><b>9</b> broken <small>(9 URLs, 0 fragments; on 3 of 3 pages)</small></span></summary>
 <ul>
 <li><a href="#p6">Tools :: Bruce fixture site</a></li>
 <li><a href="#p7">Reference :: Bruce fixture site</a></li>
@@ -233,7 +255,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </ul>
 </details>
 <details>
-<summary><span class="rank">3</span><span class="ttl"><a href="https://github.com/bruce-fixture/ops">github.com/bruce-fixture/ops</a></span><span class="cnt"><b>6</b> broken <small>(6 URL, 0 anchor; on 2 of 2 pages)</small></span></summary>
+<summary><span class="rank">3</span><span class="ttl"><a href="https://github.com/bruce-fixture/ops">github.com/bruce-fixture/ops</a></span><span class="cnt"><b>6</b> broken <small>(6 URLs, 0 fragments; on 2 of 2 pages)</small></span></summary>
 <ul>
 <li><a href="#p4">Operations :: Bruce fixture site</a></li>
 <li><a href="#p5">Partitions :: Bruce fixture site</a></li>
@@ -250,39 +272,27 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <details class="house">
 <summary>Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links</summary>
 <details>
-<summary><span class="ttl">Redirected links</span><span class="cnt">0</span></summary>
+<summary><span class="ttl">Redirected links</span><span class="cnt">0 links</span></summary>
 <p>The links that reach their page through a redirect, by landing URL: update them to the landing.</p>
-<div class="scroll"><table>
-<thead><tr><th>Landing</th><th class="num">Links</th><th class="num">URLs</th><th>First hops</th><th>On pages</th></tr></thead>
-<tbody>
-</tbody></table></div>
+<p class="muted">None.</p>
 </details>
 <details>
 <summary><span class="ttl">Sitemap entries no page was fetched for</span><span class="cnt">0</span></summary>
 <p>Antora writes a sitemap from what it publishes, so an entry that did not answer is a build or deploy fault.</p>
-<div class="scroll"><table>
-<thead><tr><th>Entry</th><th>Answer</th><th class="num">Status</th></tr></thead>
-<tbody>
-</tbody></table></div>
+<p class="muted">None.</p>
 </details>
 <details>
 <summary><span class="ttl">Orphans</span><span class="cnt">0</span></summary>
 <p>Pages the sitemap lists that no page links to.</p>
-<div class="scroll"><table>
-<thead><tr><th>Title</th><th>Page</th><th>Source</th></tr></thead>
-<tbody>
-</tbody></table></div>
+<p class="muted">None.</p>
 </details>
 <details>
 <summary><span class="ttl">Unlisted pages</span><span class="cnt">0</span></summary>
 <p>Pages missing from the sitemap of a root that read one.</p>
-<div class="scroll"><table>
-<thead><tr><th>Title</th><th>Page</th><th>Source</th></tr></thead>
-<tbody>
-</tbody></table></div>
+<p class="muted">None.</p>
 </details>
 <details>
-<summary><span class="ttl">Unchecked links</span><span class="cnt">2</span></summary>
+<summary><span class="ttl">Unchecked links</span><span class="cnt">81 links</span></summary>
 <p>Links not checked, by why.</p>
 <div class="scroll"><table>
 <thead><tr><th>Reason</th><th class="num">Links</th><th class="num">Targets</th></tr></thead>

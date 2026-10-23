@@ -214,3 +214,44 @@ fn numbers_have_thousands_separators() {
     assert_eq!(super::duration(59), "59 s");
     assert_eq!(super::duration(125), "2 min 5 s");
 }
+
+#[test]
+fn a_fold_counts_in_the_unit_of_its_title_and_an_empty_list_is_no_table() {
+    let html = html();
+    let house = section(&html, "housekeeping");
+    // The unchecked reasons are rows; the figures count their links.
+    let unchecked: i64 = rows_of(&of(&store()).unchecked, "links");
+    assert!(unchecked > 0);
+    assert!(house.contains(&format!(
+        "Unchecked links</span><span class=\"cnt\">{unchecked} links<"
+    )));
+    assert!(!html.contains("<tbody>\n</tbody>"));
+
+    let mut d = of(&store());
+    d.orphans.rows.clear();
+    let html = d.html();
+    let orphans = &html[html.find("Pages the sitemap lists").unwrap()..];
+    assert!(orphans.starts_with("Pages the sitemap lists that no page links to.</p>\n<p class=\"muted\">None.</p>"));
+}
+
+fn rows_of(t: &crate::report::table::Table, column: &str) -> i64 {
+    let at = t.columns.iter().position(|c| c == column).unwrap();
+    t.rows
+        .iter()
+        .map(|r| match r[at] {
+            Cell::Int(n) => n,
+            _ => 0,
+        })
+        .sum()
+}
+
+#[test]
+fn a_summary_names_its_counts_without_the_word_anchor() {
+    // `anchor` is a link's element to a reader of the page's markup; the
+    // table's column and these counts say fragment.
+    let html = html();
+    assert!(html.contains("(1 URL, 0 fragments;"));
+    assert_eq!(super::counted(2, "URL"), "2 URLs");
+    assert_eq!(super::counted(1_000, "fragment"), "1,000 fragments");
+    assert!(!html.contains(" anchor;"));
+}
