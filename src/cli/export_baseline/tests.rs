@@ -76,6 +76,30 @@ fn a_finished_run_is_written_and_an_existing_file_needs_force() {
 }
 
 #[test]
+fn the_file_carries_the_reports_views() {
+    let (dir, db) = dir_with_runs();
+    let out = dir.path().join("baseline.duckdb");
+    assert_eq!(
+        go(&db, &["--out", out.to_str().unwrap()]),
+        ExitCode::SUCCESS
+    );
+    // `Store::open` alone installs none of them, so a view found here was
+    // installed by the export.
+    let file = Store::open(&out, &registry()).unwrap();
+    for view in crate::report::VIEWS {
+        let n: i64 = file
+            .connection()
+            .query_row(
+                "SELECT count(*) FROM duckdb_views() WHERE view_name = ?",
+                [view.name],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(n, 1, "{}", view.name);
+    }
+}
+
+#[test]
 fn an_unfinished_run_is_refused_and_a_forced_out_survives_the_refusal() {
     let (dir, db) = dir_with_runs();
     let out = dir.path().join("baseline.duckdb");

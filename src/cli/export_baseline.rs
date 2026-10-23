@@ -1,6 +1,7 @@
 //! `bruce export-baseline --out f [--run n] [--db f] [--force]`: one finished
 //! run as a database file of its own, for CI to check a build against (D21,
-//! D27).
+//! D27). The file carries the store's, the profiles' and the reports' views
+//! (D6).
 //!
 //! The database must exist. `--out` must not, unless `--force` replaces it;
 //! it is never the database itself. The line printed gives the file's size
@@ -113,6 +114,10 @@ fn export(args: &Args, registry: &Registry) -> Result<String, String> {
         .export_baseline(args.run, &partial, registry)
         .map_err(|e| format!("{}: {e}", db.display()))?;
     drop(store);
+    // The reports' views go into the file here, `store` being below `report`
+    // (D6, D39): a `duckdb` user opening the file finds what a crawl's
+    // database offers.
+    drop(db::open(&partial, registry).map_err(|e| in_out(&e))?);
     fs::rename(&partial, out).map_err(|e| in_out(&e))?;
     let size = fs::metadata(out).map_err(|e| in_out(&e))?.len();
     let gzipped = gzipped_size(out).map_err(|e| in_out(&e))?;

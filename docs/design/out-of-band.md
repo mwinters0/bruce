@@ -37,4 +37,4 @@ Allocated so far: M1–M15. <!-- out-of-band-watermark: M15 -->
 
 | Item | Date | What changed | Blocks | Why |
 |---|---|---|---|---|
-| M15 | | `export-baseline` installs the `report_*` views into the file it writes (D6, D21) | | [2026-10-23](../status/history/2026-10-23.md) |
+| M15 | 2026-10-23 | `export-baseline` installs the `report_*` views into the file it writes (D6, D21) | | [2026-10-23](../status/history/2026-10-23.md) |
