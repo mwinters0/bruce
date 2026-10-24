@@ -130,6 +130,9 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
 - [ ] **8.9** Servo's renders of the digest beside Chrome's headless shell's,
   after 8.6's verdict: whether Servo alone is enough to check how the
   digest renders, the verdict in the notes.
+- [ ] **8.20** The maintainer's closing review of the finished digest, the
+  two-run sections included: no code, the verdict and what it spawns in the
+  notes.
 
 ## Not started
 

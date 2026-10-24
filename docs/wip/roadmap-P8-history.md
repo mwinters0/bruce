@@ -214,7 +214,8 @@ Settled 2026-10-23 (maintainer).
   `format_version`'s documented shape.
 - **A slice with no code: the maintainer reviews a digest of a real en-US
   crawl**, after the one-run digest and before the two-run sections, the
-  verdict and what it spawns in that slice's notes.
+  verdict and what it spawns in that slice's notes; **and again closing the
+  phase**, the two-run sections included.
 
 ## An unresolved xref carries a hint
 
@@ -378,12 +379,13 @@ mistakes. **8.1 lands the schema first** because the en-US crawl it
 launches, under schema 5, is the evidence every later slice reads, `bruce`
 refusing the schema-4 databases `runs/` holds; **8.6 is the maintainer's
 review**, after everything over one run and before the two-run sections; and
-**8.8's evidence is a second en-US crawl** compared with 8.1's. No closing
-review: P9's 9.6 reviews the en-US reports, P8's among them. **8.9 closes the
-phase by comparing Servo's renders of the digest with Chrome's headless
-shell's** (maintainer, 2026-10-23): Servo checks the rendering because it
+**8.8's evidence is a second en-US crawl** compared with 8.1's. **8.9
+compares Servo's renders of the digest with Chrome's headless shell's**
+(maintainer, 2026-10-23): Servo checks the rendering because it
 keeps the dev dependencies light, and 8.9 says whether it is enough, a
-Chrome spot check being the maintainer's to request meanwhile.
+Chrome spot check being the maintainer's to request meanwhile. **8.20 closes
+the phase with the maintainer's review of the finished digest**, the two-run
+sections included, which 8.6 comes before (maintainer, 2026-10-24).
 **8.6's review found 8.4.1 to 8.4.4 and 8.10 to 8.13** (2026-10-24), and
 **resumes on 8.14's second en-US crawl**, made after all of them, which 8.8
 then compares with 8.1's, its notes telling the rows they reclassify or
