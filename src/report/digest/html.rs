@@ -11,8 +11,11 @@
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
+use self::severity::{Level, highest, legend, mark};
 use super::document::{Digest, utc};
 use crate::report::table::{Cell, Table};
+
+mod severity;
 
 const STYLE: &str = include_str!("html/style.css");
 
@@ -220,8 +223,9 @@ fn status_cell(status: i64) -> String {
     }
 }
 
-/// A table of already-rendered cells; a header marked `true` is a number. A
-/// table with no row is the word for it, not a header over nothing.
+/// A table of already-rendered cells; a header marked `true` is a number, and
+/// one with no name is the severity dot's column. A table with no row is the
+/// word for it, not a header over nothing.
 fn table(out: &mut String, head: &[(&str, bool)], body: &[Vec<String>]) {
     if body.is_empty() {
         out.push_str("<p class=\"muted\">None.</p>\n");
@@ -229,29 +233,44 @@ fn table(out: &mut String, head: &[(&str, bool)], body: &[Vec<String>]) {
     }
     out.push_str("<div class=\"scroll\"><table>\n<thead><tr>");
     for (name, numeric) in head {
-        let class = if *numeric { " class=\"num\"" } else { "" };
-        w!(out, "<th{class}>{name}</th>");
+        w!(out, "<th{}>{name}</th>", column_class(name, *numeric));
     }
     out.push_str("</tr></thead>\n<tbody>\n");
     for row in body {
         out.push_str("<tr>");
-        for (cell, (_, numeric)) in row.iter().zip(head) {
-            let class = if *numeric { " class=\"num\"" } else { "" };
-            w!(out, "<td{class}>{cell}</td>");
+        for (cell, (name, numeric)) in row.iter().zip(head) {
+            w!(out, "<td{}>{cell}</td>", column_class(name, *numeric));
         }
         out.push_str("</tr>\n");
     }
     out.push_str("</tbody></table></div>\n");
 }
 
+/// The class of a column's cells.
+fn column_class(name: &str, numeric: bool) -> &'static str {
+    match (name.is_empty(), numeric) {
+        (true, _) => " class=\"dot\"",
+        (_, true) => " class=\"num\"",
+        _ => "",
+    }
+}
+
 /// Opens the section `id` under its `heading`, a `<details>` that starts
-/// collapsed, `note` beside the heading. The id is the `<section>`'s, outside
-/// the `<details>`, so a link to it lands on the heading in every browser, one
-/// that opens no closed `<details>` for a fragment included.
-fn open_section(out: &mut String, id: &str, heading: &str, note: Option<&str>) {
+/// collapsed, `note` beside the heading and the dot of the `highest` level of
+/// the rows it holds before it. The id is the `<section>`'s, outside the
+/// `<details>`, so a link to it lands on the heading in every browser, one that
+/// opens no closed `<details>` for a fragment included.
+fn open_section(
+    out: &mut String,
+    id: &str,
+    heading: &str,
+    note: Option<&str>,
+    highest: Option<Level>,
+) {
     w!(
         out,
-        "<section id=\"{id}\">\n<details class=\"sect\">\n<summary><h2>{heading}</h2>"
+        "<section id=\"{id}\">\n<details class=\"sect\">\n<summary>{}<h2>{heading}</h2>",
+        mark(highest)
     );
     if let Some(note) = note {
         w!(out, "<small>{note}</small>");
@@ -341,9 +360,10 @@ fn figures(out: &mut String, d: &Digest) {
         "</div>\n<p class=\"muted\">Every figure but the first counts links on the pages \
          checked. The {} broken links are those to a broken URL and those to a missing fragment. \
          {} links were not checked; the housekeeping says why. A link that errored could not be \
-         asked, which does not make it broken.</p>\n</section>\n",
+         asked, which does not make it broken.</p>\n{}</section>\n",
         num(t.broken_url + t.broken_anchor),
-        num(t.unchecked)
+        num(t.unchecked),
+        legend()
     );
 }
 
@@ -353,6 +373,9 @@ fn fix_once(out: &mut String, d: &Digest) {
         "fix-once",
         "Broken targets, by the links to them",
         None,
+        highest(
+            rows(&d.broken_targets).map(|r| Level::of_link(r.text("outcome"), r.text("reason"))),
+        ),
     );
     out.push_str(
         "<p>Fix once, fix many: each row is a target that more than one broken link names, \
@@ -377,6 +400,7 @@ fn fix_once(out: &mut String, d: &Digest) {
             .iter()
             .map(|r| {
                 vec![
+                    mark(Level::of_link(r.text("outcome"), r.text("reason"))),
                     num(r.int("links")),
                     num(r.int("pages")),
                     target_link(r.text("target").unwrap_or(""), r.text("fragment")),
@@ -393,6 +417,7 @@ fn fix_once(out: &mut String, d: &Digest) {
         table(
             out,
             &[
+                ("", false),
                 ("Links to it", true),
                 ("Linking pages", true),
                 ("Broken target", false),
@@ -418,7 +443,13 @@ fn fix_once(out: &mut String, d: &Digest) {
 type Ids = HashMap<String, String>;
 
 fn pages(out: &mut String, d: &Digest) -> Ids {
-    open_section(out, "pages", "Pages, by the broken links on them", None);
+    open_section(
+        out,
+        "pages",
+        "Pages, by the broken links on them",
+        None,
+        highest(rows(&d.broken).map(|r| Level::of_link(r.text("outcome"), r.text("reason")))),
+    );
     out.push_str(
         "<p>The pages holding the most broken links first, a link counted on the page it is \
          written on. Open one for its links: <i>Written as</i> is the link in the page, <i>Resolves to</i> the \
@@ -468,6 +499,7 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
             .iter()
             .map(|r| {
                 let mut cells = vec![
+                    mark(Level::of_link(r.text("outcome"), r.text("reason"))),
                     format!("<code>{}</code>", esc(r.text("raw_href").unwrap_or(""))),
                     target_link(r.text("target").unwrap_or(""), None),
                     r.text("fragment")
@@ -486,6 +518,7 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
             })
             .collect();
         let mut columns = vec![
+            ("", false),
             ("Written as", false),
             ("Resolves to", false),
             ("Fragment", false),
@@ -509,6 +542,9 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
         "repos",
         "Repos, by the broken links on their pages",
         None,
+        rows(&d.by_repo)
+            .any(|r| r.int("broken_pages") > 0)
+            .then_some(Level::Broken),
     );
     out.push_str(
         "<p>The repos whose pages hold the most broken links first, a link counted against the \
@@ -567,7 +603,13 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
 }
 
 fn errors(out: &mut String, d: &Digest) {
-    open_section(out, "errors", "Links that errored", None);
+    open_section(
+        out,
+        "errors",
+        "Links that errored",
+        None,
+        (!d.errors.rows.is_empty()).then_some(Level::Attention),
+    );
     out.push_str(
         "<p>Links whose target could not be asked, apart from the broken ones: the target did \
          not answer, which does not make it wrong.</p>\n",
@@ -579,6 +621,7 @@ fn errors(out: &mut String, d: &Digest) {
             .map(|r| {
                 let page = r.text("page").unwrap_or("");
                 vec![
+                    mark(Some(Level::Attention)),
                     a(page, short(page)),
                     r.text("source_url")
                         .map_or_else(|| "-".to_owned(), |s| a(s, "source")),
@@ -593,6 +636,7 @@ fn errors(out: &mut String, d: &Digest) {
         table(
             out,
             &[
+                ("", false),
                 ("On page", false),
                 ("Page's source", false),
                 ("Written as", false),
@@ -624,6 +668,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
         "housekeeping",
         "Housekeeping",
         Some("Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links"),
+        highest(rows(&d.redirects).map(|r| Some(Level::of_redirect(r.text("reason"))))),
     );
     let links = |t: &Table| format!("{} links", num(rows(t).map(|r| r.int("links")).sum()));
     let entries = |t: &Table| num(t.rows.len() as i64);
@@ -634,6 +679,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
                 let landing = r.text("landing").unwrap_or("");
                 let pages: Vec<String> = r.list("pages").iter().map(|p| a(p, short(p))).collect();
                 vec![
+                    mark(Some(Level::of_redirect(r.text("reason")))),
                     a(landing, short(landing)),
                     num(r.int("links")),
                     num(r.int("urls")),
@@ -646,6 +692,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
         table(
             out,
             &[
+                ("", false),
                 ("Landing", false),
                 ("Links to it", true),
                 ("Redirecting URLs", true),

@@ -42,6 +42,13 @@ nav { margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
 .fig .l { color: var(--muted); }
 .fig.bad .n { color: var(--bad); }
 .fig.warn .n { color: var(--warn); }
+.legend { color: var(--muted); }
+.sev { display: inline-block; flex: none; width: .75rem; height: .75rem; border: 2px solid currentColor; border-radius: 50%; vertical-align: -.05em; }
+.sev.broken { color: var(--bad); background: currentColor; }
+.sev.attention { color: var(--warn); background: currentColor; }
+.sev.pedantic { color: var(--muted); background: transparent; }
+summary > .sev { align-self: center; }
+th.dot, td.dot { width: 1%; padding-right: 0; }
 .scroll {
   --cover: var(--bg);
   --shade: rgba(81, 162, 218, .45);
