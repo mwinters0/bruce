@@ -178,16 +178,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **Only `http(s)` URLs can double a slash.** With a doubled-slash link
-  `doubled_slash` asked or not, the `unchecked` `data:` and `mailto:` targets
-  went red where a base64 body held `//`, so `store::views` reads the path of
-  a URL starting `http://` or `https://` alone (D71). Reconsidering it changes
-  what another scheme's URL with a `//` in its text is judged: an `ftp://` one
-  would be `doubled_slash` rather than judged by its scheme (D66).
-- **A link's copy on the twin is the same `raw_href` and kind.** `through`
-  leaves out a link on a doubled page when the twin holds a broken link
-  written and kinded the same (D71): 2 of 556 on 8.14's database. Reconsidering
-  it changes which links the twin's row owns; matching on the resolved target
-  would be exact, but a relative link resolves differently on each page, so the
-  two targets are never one.
