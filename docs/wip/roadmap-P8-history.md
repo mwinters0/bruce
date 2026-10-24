@@ -238,6 +238,28 @@ tests rehearse it. Rejected: a notes file in the tag's tree with a check
 that it mentions the change, a hand step a machine could do; a hand edit
 after Publish, which the unattended Publish forgets.
 
+## A link that cannot work is broken
+
+Settled 2026-10-24 (maintainer), reviewing the en-US digest (8.6's notes,
+"Finding 4"). **An unchecked link that cannot work is broken, and every
+report counts it so**, the gate included:
+
+- **A URL on a root's host in no root's scope is asked once, its links not
+  followed, as an allowlisted URL is (D22), unless it is another locale's
+  page**, which stays `unchecked`, `out_of_scope` (D10). Another locale is
+  learned from the `antora` profile's language menu (`a.language`, 68 a page
+  on docs.fp.o): the path prefix where a menu link's URL departs from its
+  page's. A site without the menu has every such URL asked. On en-US that is
+  11 URLs, among them `https:/kubernetes.io`, which resolves to a 404 on
+  docs.fp.o, and the slashless home link, a 301 the housekeeping's redirects
+  then list. Rejected: locales named by globs in the config, one more list to
+  keep as locales are added; judging an href malformed without asking, which
+  misses a well-formed link to a missing page.
+- **A scheme that works on a public web page stays `unchecked`, `scheme`**:
+  `mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`,
+  `magnet` and `sms`. **Any other is broken**, `file:` and a mistyped
+  `hhttps:` among them, no reader of the site being able to follow it.
+
 ## Where it lives
 
 Settled 2026-10-23 (maintainer), on the concept map's layering (D39):
@@ -255,6 +277,8 @@ Settled 2026-10-23 (maintainer), on the concept map's layering (D39):
 - **The hint**: `profile/antora`'s views.
 - **The release's schema line**: `release.yml`, rehearsed by
   `scripts/workflows.py`.
+- **A link that cannot work**: `crawl::frontier`'s plan, the locales
+  learned in `profile/antora`.
 
 ## The slices
 
@@ -269,6 +293,9 @@ phase by comparing Servo's renders of the digest with Chrome's headless
 shell's** (maintainer, 2026-10-23): Servo checks the rendering because it
 keeps the dev dependencies light, and 8.9 says whether it is enough, a
 Chrome spot check being the maintainer's to request meanwhile.
+**8.10 and 8.11 land before 8.8's second crawl** (2026-10-24), which
+then shows what they reclassify; 8.8's notes tell those rows from new
+breakage.
 
 ## Facts the grilling found
 

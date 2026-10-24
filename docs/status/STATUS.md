@@ -87,6 +87,11 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   verdict and what it spawns in the notes.
   In progress; findings so far in
   [`../wip/roadmap-P8.6-digest-review-notes.md`](../wip/roadmap-P8.6-digest-review-notes.md).
+- [ ] **8.10** A scheme that cannot work is broken: the schemes a public web
+  page uses stay `unchecked`, every other `broken_url`.
+- [ ] **8.11** A URL on a root's host outside every scope is asked once,
+  unless it is another locale's page, learned from the `antora` language menu;
+  an invariant for the menu, D10 amended.
 - [ ] **8.7** `changed` and `anchors-removed`: `report` children and kinds,
   the scope changed and the root missed flagged.
 - [ ] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,
