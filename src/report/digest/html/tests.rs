@@ -116,7 +116,7 @@ fn pages_follow_their_rank_each_with_its_links_and_sources() {
     assert!(pages[one..two].contains(
         "<span class=\"cn\"><span class=\"sev broken\" role=\"img\" aria-label=\"Broken\"></span> \
          3 broken links</span>, <span class=\"cn\"><span class=\"sev attention\" role=\"img\" \
-         aria-label=\"Attention\"></span> 1 missing fragment</span> <small>(4 issues total)</small>"
+         aria-label=\"Attention\"></span> 1 missing fragment</span></span></summary>"
     ));
 }
 
@@ -128,26 +128,14 @@ fn a_summary_counts_red_then_amber_and_leaves_out_a_level_with_no_links() {
     let amber = "<span class=\"cn\"><span class=\"sev attention\" role=\"img\" aria-label=\"Attention\"></span>";
     assert_eq!(
         tally(181, 0, 2),
-        format!(
-            "{red} 181 broken links</span>, {amber} 2 missing fragments</span> \
-             <small>(183 issues total)</small>"
-        )
+        format!("{red} 181 broken links</span>, {amber} 2 missing fragments</span>")
     );
-    assert_eq!(
-        tally(1, 0, 0),
-        format!("{red} 1 broken link</span> <small>(1 issue total)</small>")
-    );
-    assert_eq!(
-        tally(0, 0, 1),
-        format!("{amber} 1 missing fragment</span> <small>(1 issue total)</small>")
-    );
+    assert_eq!(tally(1, 0, 0), format!("{red} 1 broken link</span>"));
+    assert_eq!(tally(0, 0, 1), format!("{amber} 1 missing fragment</span>"));
     // The links broken through a link are red, between the two.
     assert_eq!(
         tally(1, 579, 0),
-        format!(
-            "{red} 1 broken link</span>, {red} 579 broken through it</span> \
-             <small>(580 issues total)</small>"
-        )
+        format!("{red} 1 broken link</span>, {red} 579 broken through it</span>")
     );
 }
 
@@ -164,7 +152,7 @@ fn a_page_lists_its_red_links_before_its_amber_ones_an_errored_link_among_the_re
         rows.matches("<td>error \u{b7} server_error</td>").count(),
         2
     );
-    assert!(rows.contains("2 broken links</span> <small>(2 issues total)"));
+    assert!(rows.contains("2 broken links</span></span></summary>"));
     // Page 4: a broken URL, then the fragment.
     let rows = &pages[four..];
     let url = rows.find("<td>URL broken</td>").unwrap();
@@ -358,7 +346,7 @@ fn anchor_names_only_the_element_and_every_count_says_which_way_it_points() {
     // `anchor` is the Kind column's `<a href>`; an absent fragment is a
     // fragment everywhere, and a count of links says to what or on what.
     let html = html();
-    assert!(html.contains("1 broken link</span> <small>(1 issue total)</small></span></summary>"));
+    assert!(html.contains("1 broken link</span></span></summary>"));
     assert!(html.contains("<td>fragment missing</td>"));
     assert!(html.contains("<td>URL broken</td>"));
     assert!(!html.contains("anchor missing") && !html.contains("Broken anchors"));

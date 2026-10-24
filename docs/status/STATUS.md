@@ -139,8 +139,9 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   twin too not; the digest's page counts computed once, 8.5 s back to 3.1 s;
   earned by the review of 8.18's calls.
   Notes: [`../wip/roadmap-P8.18.1-doubled-slash-asked-notes.md`](../wip/roadmap-P8.18.1-doubled-slash-asked-notes.md).
-- [ ] **8.4.7** The pages' and repos' summaries without their parenthetical
+- [x] **8.4.7** The pages' and repos' summaries without their parenthetical
   total; earned by 8.6's twelfth finding.
+  Notes: [`../wip/roadmap-P8.4.7-no-totals-notes.md`](../wip/roadmap-P8.4.7-no-totals-notes.md).
 - [ ] **8.18.2** A link whose redirect lands on a doubled-slash URL shows
   that landing under *Resolves to*, and the doubled slash is marked where it
   is shown; earned by 8.6's eleventh finding.

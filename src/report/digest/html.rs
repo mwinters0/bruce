@@ -129,7 +129,7 @@ fn counted(n: i64, noun: &str) -> String {
 
 /// A page's or a repo's summary count: its red links, those broken through a
 /// link to a URL that doubles a slash (D71) and its amber ones, each behind its
-/// dot and a level with none left out, then the issues in all. Red is
+/// dot and a level with none left out, and no total. Red is
 /// `broken_url` and `error`, amber `broken_anchor` (see
 /// [`severity::Level::of_link`]); the links broken through are red too.
 fn tally(red: i64, through: i64, amber: i64) -> String {
@@ -147,11 +147,7 @@ fn tally(red: i64, through: i64, amber: i64) -> String {
             parts.push(format!("<span class=\"cn\">{} {words}</span>", level.dot()));
         }
     }
-    format!(
-        "{} <small>({} total)</small>",
-        parts.join(", "),
-        counted(red + through + amber, "issue")
-    )
+    parts.join(", ")
 }
 
 /// `url` without its scheme, to show.

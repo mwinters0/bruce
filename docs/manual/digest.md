@@ -68,8 +68,7 @@ entries, the unchecked counts) have no dot. In this order:
    link that errored, as a drill-down of those links, with its live page and
    its source. Its summary reads, for a page of 181 links to a broken URL or
    that errored and 2 to a missing fragment, "● 181 broken links, ● 2 missing
-   fragments (183 issues total)", the dots red and amber, a level with no
-   links left out. The pages rank by their red links, then their amber ones,
+   fragments", the dots red and amber, a level with no links left out. The pages rank by their red links, then their amber ones,
    and the drill-down lists the red before the amber. A link is counted on the
    page it is written on. A link to a URL whose path doubles a slash is red,
    reason `doubled_slash`, whatever that URL answered and whether it was
@@ -77,7 +76,7 @@ entries, the unchecked counts) have no dot. In this order:
    it", the broken relative links (`../`, `committee/`, `?query`) on the
    doubled-slash pages the link reaches, which the doubled slash breaks, each
    page once and none that is broken on the page's twin too: "● 1 broken
-   link, ● 579 broken through it (580 issues total)", ranked with the red. A
+   link, ● 579 broken through it", ranked with the red. A
    page at such a URL counts none of its links where the URL with its
    slashes collapsed is a page of the run, and else all but its broken
    relative ones.
