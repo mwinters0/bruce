@@ -330,18 +330,23 @@ fragment.
   `doubled_slash`**, whatever it answered, as an unresolved xref is (D20),
   and whether the link names that URL or a redirect lands on it: the fault
   is the linking page's, never the page at that URL (maintainer, 2026-10-24;
-  8.6's notes, "Finding 10"). A `scheme://` inside a path or a query doubles
-  no slash.
+  8.6's notes, "Finding 10"). A link naming one is broken asked or not, off
+  the allowlist, behind `robots` or matching a `skip`, the URL itself being
+  the fault; a page's link to itself works for its reader and is judged as
+  any (maintainer, 2026-10-24, reviewing 8.18). A `scheme://` inside a path
+  or a query doubles no slash.
 - **A page at such a URL is a source of findings only where nothing else
   is**: where its twin, the URL with its slashes collapsed, is a page of the
   run, its links count nowhere; where it is reached only in its doubled form,
-  its broken links that are not path-relative count on its own row. Its
-  broken path-relative links (`../`, `committee/`), which the doubled slash
-  breaks, are the linking page's.
+  its broken links that do not keep its path count on its own row. Its
+  broken links that keep its path, path-relative (`../`, `committee/`) or a
+  `?query`, which the doubled slash breaks, are the linking page's.
 - **A row holding such a link counts that breakage apart**, "● 1 broken
   link, ● 579 broken through it (580 issues total)", the second count the
   broken path-relative links on every doubled-slash page the link reaches
-  through path-relative links, red, and ranked with the row's red. On 8.14's
+  through path-relative links, red, and ranked with the row's red. A link
+  whose copy on the twin page is broken too is not broken through it, the
+  twin's row counting it (maintainer, 2026-10-24, reviewing 8.18). On 8.14's
   crawl, `en-US/project/`'s link to `fedoraproject.org/code-of-conduct`, a
   302 to `code-of-conduct//`, reaches three such pages and 579 links.
   Rejected: a page reached only by a redirect from off a root not being that
@@ -433,7 +438,8 @@ newly check from new breakage. **8.15**, from the review of 8.13's call
 **8.16 to 8.18**, from the review of 8.14's crawl (2026-10-24), land "A
 trailing slash is pedantic": 8.16, the reason, before 8.6 resumes, the
 digest reading it off 8.14's database; 8.17 after 8.6, and 8.18, rewritten by
-8.6's tenth finding, before it goes on (maintainer, 2026-10-24). **8.19**
+8.6's tenth finding, before it goes on (maintainer, 2026-10-24), as does
+**8.18.1**, from the review of 8.18's calls. **8.19**
 lands "Severity is marked" after 8.16, whose level it shows, and before 8.6
 resumes.
 

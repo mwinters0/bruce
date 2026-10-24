@@ -78,7 +78,7 @@ entries, the unchecked counts) have no dot. In this order:
    which the doubled slash breaks, each page once: "● 1 broken link, ● 579
    broken through it (580 issues total)", ranked with the red. A page at
    such a URL counts none of its links where the URL with its slashes
-   collapsed is a page of the run, and else only those that are not relative.
+   collapsed is a page of the run, and else all but its broken relative ones.
    Its *Written
    as* is the link as the page has it, *Resolves to* the URL it names, *Kind*
    the element holding it (`anchor` is an `<a href>`, as [`bruce report`](report.md)'s `--kind` names it),
@@ -158,7 +158,7 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `run` | The run digested: its `id`, start and finish (`finished_at` and `duration_seconds` are `null` for a run that never finished) and the `roots` it crawled. |
 | `totals` | The pages the roots cover and the links on them, and the links by outcome, over every kind. `unchecked` links are not broken: `housekeeping.unchecked` says why. |
 | `broken_targets` | Each target a broken link names, with its `fragment` when the link names one, the target named by the most `links` first, then by `pages`: one anchor restored in the target's repo removes that many links. `outcome` is `broken_url` or `broken_anchor`, and `reason` and `status` are the target's answer. `source_repo`, `source_path` and `source_url` are those of the target page, where the run holds it: the repo that would restore a missing anchor. |
-| `pages` | The pages that hold a broken link or one that errored, the most `broken_url` plus `error` plus `through` first, then the most `broken_anchor`. `links` counts every link on the page that counts, `error` its links that could not be checked, and `through` the broken relative links on the pages at doubled-slash URLs that its `doubled_slash` links reach, each page once (zero for nearly every page). A page at a doubled-slash URL counts no link where the URL with its slashes collapsed is a page of the run, and else its absolute links alone. `source_url` is the forge's view of the page's file. |
+| `pages` | The pages that hold a broken link or one that errored, the most `broken_url` plus `error` plus `through` first, then the most `broken_anchor`. `links` counts every link on the page that counts, `error` its links that could not be checked, and `through` the broken relative links on the pages at doubled-slash URLs that its `doubled_slash` links reach, each page once (zero for nearly every page). A page at a doubled-slash URL counts no link where the URL with its slashes collapsed is a page of the run, and else all but its broken relative links. `source_url` is the forge's view of the page's file. |
 | `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order; a link that errored is in `errors`, where the HTML's drill-down finds it. `page` joins to `pages`. `hint` is, for an Antora `xref:` that names no page, the nearest page ID in the run, as `component:module:path` with an empty module for `ROOT`, where one is close enough to be a typo of it, else `null`. |
 | `by_repo` | Each repo the pages were built from, ranked as `pages` are, `through` the sum of its pages'; `repo` is `null` for the pages that record none. `pages` counts the repo's pages, `broken_pages` those holding a broken link or an error. |
 | `by_component` | The same by Antora component. A site with no Antora page has none. |

@@ -29,7 +29,14 @@ by destination").
   likely of most sites, not of every one.
 - **Why P7 cares.** Whether a root's rules can turn the reason off, for a
   site whose URLs carry a meaningful `//`, is a rule a site would write
-  without Rust.
+  without Rust. So is how far the digest's "broken through it" reaches:
+  `full`, every doubled page the linking page's link reaches by relative
+  links (554 on 8.14's crawl, P8's only mode); `immediate`, the landing page
+  alone (183); `off`, the link red and the doubled pages' broken relative
+  links counted nowhere. The depth costs nothing measurable, so the choice is
+  meaning, not speed.
 - **Origin.** 8.6's review of 8.14's digest, 2026-10-24 (8.6's notes,
-  "Finding 10"); it lands in 8.18. Contingent on P7 keeping its sketch's
-  scope.
+  "Finding 10"); it lands in 8.18; the modes from the review of 8.18's calls
+  (2026-10-24 history entry, "8.18's calls reviewed; 8.18.1 earned"), held
+  for P7 rather than made a config key. Contingent on P7 keeping its
+  sketch's scope.
