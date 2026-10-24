@@ -260,6 +260,21 @@ report counts it so**, the gate included:
   `magnet` and `sms`. **Any other is broken**, `file:` and a mistyped
   `hhttps:` among them, no reader of the site being able to follow it.
 
+## The allowlist names the Fedora and Red Hat sites
+
+Settled 2026-10-24 (maintainer), reviewing the en-US digest. **An
+`allowlist` entry `*.<domain>` names every host under the domain**, the
+domain itself being an entry of its own; **a root's own host is never matched
+by one**, keeping D10's other locales unasked under
+`"*.fedoraproject.org"`. **The deployment guide's allowlist names Fedora's
+and Red Hat's sites**: `fedoraproject.org`, `getfedora.org`,
+`fedorapeople.org`, `fedoramagazine.org`, `fedorainfracloud.org`,
+`fedorahosted.org`, `pagure.io`, `centos.org` and `redhat.com`, each with
+its subdomains. En-US links to about 150 hosts under `fedoraproject.org`
+alone; a link to a staging or internal one then shows as broken or an error,
+which is what it is to a reader. Rejected: the twenty hosts most linked,
+named one by one, a list gone stale as hosts come and go.
+
 ## Where it lives
 
 Settled 2026-10-23 (maintainer), on the concept map's layering (D39):
@@ -279,6 +294,8 @@ Settled 2026-10-23 (maintainer), on the concept map's layering (D39):
   `scripts/workflows.py`.
 - **A link that cannot work**: `crawl::frontier`'s plan, the locales
   learned in `profile/antora`.
+- **A domain in the allowlist**: `config`, where the allowlist is parsed and
+  matched; the guide's list in `docs/manual/deploy.md`.
 
 ## The slices
 
@@ -293,8 +310,8 @@ phase by comparing Servo's renders of the digest with Chrome's headless
 shell's** (maintainer, 2026-10-23): Servo checks the rendering because it
 keeps the dev dependencies light, and 8.9 says whether it is enough, a
 Chrome spot check being the maintainer's to request meanwhile.
-**8.10 and 8.11 land before 8.8's second crawl** (2026-10-24), which
-then shows what they reclassify; 8.8's notes tell those rows from new
+**8.10 to 8.12 land before 8.8's second crawl** (2026-10-24), which
+then shows what they reclassify and check; 8.8's notes tell those rows from new
 breakage.
 
 ## Facts the grilling found

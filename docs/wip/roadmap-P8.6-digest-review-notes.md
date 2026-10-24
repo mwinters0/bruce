@@ -110,3 +110,12 @@ work is broken". The slashless home link is not broken; the housekeeping's
 redirects list it once 8.11 asks for it. 8.10 rewrote 8.4.4's fold, which
 said "None of them counts as broken" and called a mistyped `https:` "worth
 fixing". The review reads it on a crawl made after both.
+
+## Finding 5: the allowlist names the Fedora and Red Hat sites
+
+Maintainer, 2026-10-24: add the Fedora and Red Hat sites to the allowlist,
+every subdomain included, and pagure.io, centos.org and the retired
+fedorahosted.org with them. The allowlist names hosts exactly, so **it spawns
+8.12**, P8's spec gaining "The allowlist names the Fedora and Red Hat sites".
+On run 1 those domains hold about 4,000 of the `host_not_allowlisted`
+targets, fedoraproject.org (the wiki) 986 of them.
