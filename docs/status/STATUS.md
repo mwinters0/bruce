@@ -96,7 +96,7 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   Notes: [`../wip/roadmap-P8.11-out-of-scope-notes.md`](../wip/roadmap-P8.11-out-of-scope-notes.md).
 - [ ] **8.12** An allowlist entry `*.<domain>` names its subdomains, never a
   root's own host; the deployment guide's allowlist names the Fedora and Red
-  Hat sites, D5 amended.
+  Hat sites, D5 amended; `data` and `javascript` join D66's working schemes.
 - [ ] **8.7** `changed` and `anchors-removed`: `report` children and kinds,
   the scope changed and the root missed flagged.
 - [ ] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,
