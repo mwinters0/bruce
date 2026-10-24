@@ -1125,6 +1125,75 @@ async fn robots_txt_keeps_a_request_from_being_made() {
     assert_eq!(done.pages(), ["/docs/", "/docs/ok"]);
 }
 
+/// A 404 whose URL with its final `/` toggled answers 2xx has the reason
+/// `wrong_trailing_slash`, the toggled URL asked for its status alone and
+/// recorded nowhere (D72).
+#[tokio::test]
+async fn a_404_whose_url_with_its_slash_toggled_answers_says_so() {
+    let server = MockServer::start().await;
+    page(
+        &server,
+        "/docs/",
+        r#"<a href="/docs/a">a</a><a href="/docs/b/">b</a><a href="/docs/c">c</a>
+        <a href="/docs/d/">d</a><a href="/docs/e">e</a><a href="/docs/f">f</a>
+        <a href="/docs/g?q=1">g</a>"#,
+    )
+    .await;
+    page(&server, "/docs/a/", "<title>a</title>").await;
+    page(&server, "/docs/b", "<title>b</title>").await;
+    redirect(&server, "/docs/c/", 301, "/docs/elsewhere").await;
+    status(&server, "/docs/e/", 200).await;
+    status(&server, "/docs/e", 403).await;
+    status(&server, "/docs/f/", 200).await;
+    status(&server, "/docs/g/", 200).await;
+    page(
+        &server,
+        "/robots.txt",
+        "User-agent: *\nDisallow: /docs/f/\n",
+    )
+    .await;
+
+    let done = crawl(&server, "", quick()).await;
+
+    let wrong = Some("wrong_trailing_slash");
+    assert_eq!(
+        done.target("/docs/a"),
+        t("/docs/a", "broken_url", wrong, Some(404))
+    );
+    assert_eq!(
+        done.target("/docs/b/"),
+        t("/docs/b/", "broken_url", wrong, Some(404))
+    );
+    assert_eq!(
+        done.target("/docs/g?q=1"),
+        t("/docs/g?q=1", "broken_url", wrong, Some(404))
+    );
+    for (url, outcome, status) in [
+        ("/docs/c", "broken_url", 404),
+        ("/docs/d/", "broken_url", 404),
+        ("/docs/e", "error", 403),
+        ("/docs/f", "broken_url", 404),
+    ] {
+        assert_eq!(
+            done.target(url),
+            t(url, outcome, None, Some(status)),
+            "{url}"
+        );
+    }
+    let targets = done.targets();
+    assert!(
+        !targets
+            .iter()
+            .any(|t| t.0 == "/docs/a/" || t.0 == "/docs/b")
+    );
+    let hits = requests(&server).await;
+    assert!(has_requested(&hits, "/docs/a/"));
+    assert!(has_requested(&hits, "/docs/b"));
+    assert!(has_requested(&hits, "/docs/g/"));
+    assert!(!has_requested(&hits, "/docs/e/"), "403 is not a 404");
+    assert!(!has_requested(&hits, "/docs/f/"), "robots.txt forbids it");
+}
+
 #[tokio::test]
 async fn a_robots_txt_that_cannot_be_read_closes_the_host() {
     let server = MockServer::start().await;

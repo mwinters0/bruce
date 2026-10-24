@@ -1,7 +1,7 @@
 use super::*;
 
 fn status(code: u16) -> Verdict {
-    answered(code, &Body::Unread)
+    answered(code, &Body::Unread, false)
 }
 
 #[test]
@@ -21,7 +21,7 @@ fn a_status_is_classified_by_d16() {
 #[test]
 fn a_page_over_the_cap_answered_so_it_is_ok() {
     assert_eq!(
-        answered(200, &Body::TooLarge),
+        answered(200, &Body::TooLarge, false),
         (Outcome::Ok, Some("too_large"))
     );
 }
@@ -47,5 +47,14 @@ fn only_a_missing_name_is_broken() {
             failed(&failure(kind)),
             (Outcome::Error, Some(kind.as_str()))
         );
+    }
+}
+
+#[test]
+fn a_toggled_slash_that_answers_names_a_broken_4xx_and_nothing_else() {
+    let slash = |code| answered(code, &Body::Unread, true);
+    assert_eq!(slash(404), (Outcome::BrokenUrl, Some(WRONG_TRAILING_SLASH)));
+    for other in [200, 302, 403, 429, 500] {
+        assert_eq!(slash(other), status(other), "{other}");
     }
 }

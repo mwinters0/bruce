@@ -60,6 +60,9 @@ not on the allowlist) stays `unchecked`:
 - **A link to a URL whose path doubles a slash** (`a//b`), or that redirects
   to one, is `broken_url`, reason `doubled_slash`, whatever the URL answered
   and whether it was asked, as in a crawl.
+- **A link to a URL that answers 404** where the same URL with its final `/`
+  added or dropped answers 2xx is `broken_url`, reason `wrong_trailing_slash`,
+  as in a crawl ([`bruce crawl`](crawl.md#output)).
 - **A link starting `/`** resolves against the prefix, the way a static server
   serving the directory at `/` shows it.
 - **A link to an allowlisted host**, or to a root's host outside every root's

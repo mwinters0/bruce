@@ -306,7 +306,7 @@ fn a_broken_target_carries_the_source_of_the_page_it_names() {
     let t = &d.broken_targets;
     assert_eq!(column(t, "target"), [url(10), url(11), url(2)]);
     assert_eq!(column(t, "fragment")[2], "nope");
-    assert_eq!(t.rows[0][6..8], [Cell::Int(2), Cell::Int(2)]);
+    assert_eq!(t.rows[0][7..9], [Cell::Int(2), Cell::Int(2)]);
     assert_eq!(column(t, "outcome")[2], "broken_anchor");
     // A missing anchor is the target page's repo to restore.
     assert_eq!(column(t, "source_repo")[2], "r/two");
@@ -322,10 +322,10 @@ fn broken_targets_are_ranked_by_their_links_then_their_pages() {
     }
     let t = of(&store).broken_targets;
     assert_eq!(column(&t, "target"), [url(11), url(10), url(2)]);
-    assert_eq!(t.rows[0][6..8], [Cell::Int(4), Cell::Int(1)]);
+    assert_eq!(t.rows[0][7..9], [Cell::Int(4), Cell::Int(1)]);
     // 10 has two links on two pages, `2#nope` two on one: the pages break the tie.
-    assert_eq!(t.rows[1][6..8], [Cell::Int(2), Cell::Int(2)]);
-    assert_eq!(t.rows[2][6..8], [Cell::Int(2), Cell::Int(1)]);
+    assert_eq!(t.rows[1][7..9], [Cell::Int(2), Cell::Int(2)]);
+    assert_eq!(t.rows[2][7..9], [Cell::Int(2), Cell::Int(1)]);
 }
 
 #[test]
@@ -491,6 +491,51 @@ fn a_doubled_slash_a_redirect_lands_on_is_the_links_landing() {
     );
     // A target broken for another reason has none.
     assert_eq!(landing(&d.broken, &url(54)), Cell::Null);
+}
+
+#[test]
+fn a_wrong_trailing_slash_names_the_url_that_answers_as_the_fix() {
+    let store = store();
+    store
+        .connection()
+        .execute(
+            "UPDATE targets SET reason = 'wrong_trailing_slash' WHERE url_id = 10",
+            [],
+        )
+        .unwrap();
+    store
+        .connection()
+        .execute(
+            "UPDATE targets SET url = ? || '/' WHERE url_id = 11",
+            [url(11)],
+        )
+        .unwrap();
+    store
+        .connection()
+        .execute(
+            "UPDATE targets SET reason = 'wrong_trailing_slash' WHERE url_id = 11",
+            [],
+        )
+        .unwrap();
+    let d = of(&store);
+    let fix = |t: &crate::report::table::Table, target: &str| {
+        let at = column(t, "target")
+            .iter()
+            .position(|u| u == target)
+            .unwrap_or_else(|| panic!("{target} in {:?}", column(t, "target")));
+        let columns = &t.columns;
+        let position = |name: &str| columns.iter().position(|c| c == name).unwrap();
+        assert_eq!(position("fix"), position("landing") + 1);
+        t.rows[at][position("fix")].clone()
+    };
+    let ten = Cell::Text(format!("{}/", url(10)));
+    let eleven = Cell::Text(url(11));
+    assert_eq!(fix(&d.broken, &url(10)), ten);
+    assert_eq!(fix(&d.broken_targets, &url(10)), ten);
+    assert_eq!(fix(&d.broken, &format!("{}/", url(11))), eleven);
+    assert_eq!(fix(&d.broken_targets, &format!("{}/", url(11))), eleven);
+    // A target broken for another reason has none.
+    assert_eq!(fix(&d.broken, &url(2)), Cell::Null);
 }
 
 /// The count in column `name` of `page`'s row of the pages section.

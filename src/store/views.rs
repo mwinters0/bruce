@@ -54,6 +54,11 @@ pub const PEDANTIC_TRAILING_SLASH: &str = "pedantic_trailing_slash";
 /// The reason of a link to a URL whose path doubles a slash (D71).
 pub const DOUBLED_SLASH: &str = "doubled_slash";
 
+/// The reason of a target that answered `broken_url` where its URL with its
+/// final `/` toggled answers 2xx, which the crawl asked (D72). The link keeps
+/// the target's outcome and reason, and the fix is read off the URL.
+pub const WRONG_TRAILING_SLASH: &str = "wrong_trailing_slash";
+
 /// Every view the store ships, `doubled_slash` before the view that joins it.
 pub(super) const ALL: &[View] = &[DOUBLED_SLASH_TARGETS, LINK_VERDICTS];
 

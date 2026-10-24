@@ -10,7 +10,8 @@
 //! blocking pool, extracts the page and sends its rows to the writer from
 //! there, so the writer's bounded channel pushes back on the pool and not on
 //! the runtime (D28). A URL is asked about by whoever claims its `url_id`
-//! first (`frontier`), a sitemap probe aside, though a redirect's hops are
+//! first (`frontier`), a sitemap probe and the ask of a 404's toggled slash
+//! (`slash`, D72) aside, though a redirect's hops are
 //! asked again wherever they lead (D46); a page a redirect lands on is recorded by whichever of the
 //! redirecting target and the landing URL's own discovery claims it first.
 //! The run writes every target's HTTP-level outcome and no verdict on a
@@ -55,6 +56,7 @@ mod hops;
 mod outcome;
 mod schedule;
 mod sitemap;
+mod slash;
 mod xref;
 
 use std::fmt;
@@ -256,6 +258,9 @@ struct Answer {
     page: Option<Page>,
     /// What a sitemap file listed.
     sitemap: Option<Sitemap>,
+    /// The URL with its final `/` toggled answers where this one is a 4xx
+    /// (D72).
+    slash_answers: bool,
 }
 
 /// How a target's hops ended.
@@ -748,12 +753,16 @@ where
                 }
                 unread => response.body = unread,
             }
+            let (fetcher, frontier, stop) = (&self.fetcher, &self.frontier, &self.stop);
+            let slash_answers = form == item.form
+                && slash::ask(fetcher, frontier, stop, &url, plan, response.status).await;
             break End::Answered(Box::new(Answer {
                 status: response.status,
                 content_type: response.content_type,
                 body: response.body,
                 page,
                 sitemap: listed,
+                slash_answers,
             }));
         };
         Ok(Some(Done {
@@ -811,7 +820,7 @@ where
             elapsed,
         } = done;
         let (outcome, reason) = match &end {
-            End::Answered(a) => outcome::answered(a.status, &a.body),
+            End::Answered(a) => outcome::answered(a.status, &a.body, a.slash_answers),
             End::Failed(failure) => outcome::failed(failure),
             End::Blocked(reason) => (Outcome::Unchecked, Some(*reason)),
             End::Stopped(stop) => (Outcome::BrokenUrl, Some(stop.as_str())),

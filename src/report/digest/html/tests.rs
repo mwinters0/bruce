@@ -607,3 +607,28 @@ fn a_doubled_slash_link_shows_where_its_slash_doubles() {
          <td><a href=\"https://e.test/x//y\">e.test/x<mark>//</mark>y</a></td>"
     ));
 }
+
+#[test]
+fn a_wrong_trailing_slash_link_names_the_url_that_answers() {
+    let store = store();
+    store
+        .connection()
+        .execute(
+            "UPDATE targets SET reason = 'wrong_trailing_slash' WHERE url_id = 10",
+            [],
+        )
+        .unwrap();
+    let html = of(&store).html();
+    // The drill-down and the fix-once table both put the fix under the target.
+    for id in ["pages", "fix-once"] {
+        assert!(
+            section(&html, id).contains(
+                "<a href=\"https://e.test/10\">e.test/10</a><br><small>\u{2192} try \
+                 <a href=\"https://e.test/10/\">e.test/10/</a></small>"
+            ),
+            "{id}"
+        );
+    }
+    // A target broken for another reason is shown as it is.
+    assert!(!section(&html, "pages").contains("e.test/11</a><br>"));
+}

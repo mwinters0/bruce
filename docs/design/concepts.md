@@ -35,9 +35,9 @@ decisions each carries are cited in its module's doc.
   locales the pages' profiles found with the URLs waiting on them, D67) in the `frontier`
   child; a target's redirect chain, its limit and where a hop leads in the
   `hops` child; D16's classification in the `outcome` child; which target starts next, a build's reads in a budget of their own and each live host holding its share of
-  the run's other slots, in the `schedule` child (D61); and reading one
+  the run's other slots, in the `schedule` child (D61); reading one
   sitemap file, gzip and index included, in the `sitemap` child, discovery
-  staying in the parent. A run over a local build begins from its seeds in the
+  staying in the parent, and asking the URL a 404's final slash toggled to, in the `slash` child (D72). A run over a local build begins from its seeds in the
   parent, which holds the build's site root for `extract` to resolve an href beginning `/` against (D53).
   What a run over a build leaves to the baseline, the component-versions its
   pages hold and the copies the parent sends last is in the `baseline` child (D54); the

@@ -14,7 +14,7 @@ use std::fmt::Write as _;
 use self::severity::{Level, legend, mark};
 use super::document::{Digest, utc};
 use crate::report::table::{Cell, Table};
-use crate::store::DOUBLED_SLASH;
+use crate::store::{DOUBLED_SLASH, WRONG_TRAILING_SLASH};
 
 mod severity;
 
@@ -208,9 +208,19 @@ fn target_link(target: &str, fragment: Option<&str>) -> String {
 
 /// A broken link's target, at `fragment` where there is one: for a
 /// `doubled_slash` one its doubled slash marked, and under it the `landing`
-/// that doubles one where the target does not (D71).
+/// that doubles one where the target does not (D71); for a
+/// `wrong_trailing_slash` one the `fix` under it (D72).
 fn target_cell(r: &Row, fragment: Option<&str>) -> String {
     let target = r.text("target").unwrap_or("");
+    if r.text("reason") == Some(WRONG_TRAILING_SLASH)
+        && let Some(fix) = r.text("fix")
+    {
+        return format!(
+            "{}<br><small>\u{2192} try {}</small>",
+            target_link(target, fragment),
+            a(fix, short(fix))
+        );
+    }
     if r.text("reason") != Some(DOUBLED_SLASH) {
         return target_link(target, fragment);
     }
@@ -518,7 +528,11 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
          row also counts the links <i>broken through it</i>, the relative links on the pages \
          such a link reaches, which the doubled slash breaks, and ranks by them; those pages \
          count only their absolute links, or none where a page at the URL without the doubled \
-         slash was checked.</p>\n",
+         slash was checked.</p>\n\
+         <p>A link to a URL that answered 404 where the same URL with its final \
+         <code>/</code> added or dropped answers is broken all the same, reason \
+         <code>wrong_trailing_slash</code>, and <i>Resolves to</i> names that URL to link to \
+         instead.</p>\n",
     );
     let mut links: HashMap<&str, Vec<Row>> = HashMap::new();
     for row in rows(&d.broken) {

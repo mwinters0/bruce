@@ -118,3 +118,22 @@ fn the_id_is_xxh3_of_the_form_and_stable() {
     // are in every stored table (D26).
     assert_eq!(c.id(), 1_187_806_132_242_855_503);
 }
+
+#[test]
+fn a_final_slash_is_toggled_and_the_query_kept() {
+    let toggled = |s: &str| toggle_slash(&Url::parse(s).unwrap()).map(String::from);
+    assert_eq!(
+        toggled("https://a.example/foo"),
+        Some("https://a.example/foo/".to_owned())
+    );
+    assert_eq!(
+        toggled("https://a.example/foo/?q=1"),
+        Some("https://a.example/foo?q=1".to_owned())
+    );
+    assert_eq!(
+        toggled("https://a.example/foo?q=1"),
+        Some("https://a.example/foo/?q=1".to_owned())
+    );
+    assert_eq!(toggled("https://a.example/"), None);
+    assert_eq!(toggled("https://a.example"), None);
+}

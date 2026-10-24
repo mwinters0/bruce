@@ -44,6 +44,20 @@ pub fn canonical(url: &Url, strip_query: bool) -> Canonical {
     Canonical(String::from_utf8(out).expect("escapes are replaced by ASCII"))
 }
 
+/// `url` with its path's final `/` dropped where it has one, else added, its
+/// query kept; `None` for a root's own `/`, which no URL lacks (D72).
+pub fn toggle_slash(url: &Url) -> Option<Url> {
+    let path = url.path();
+    let toggled = match path.strip_suffix('/') {
+        Some("") => return None,
+        Some(bare) => bare.to_owned(),
+        None => format!("{path}/"),
+    };
+    let mut out = url.clone();
+    out.set_path(&toggled);
+    Some(out)
+}
+
 fn normalise_escapes(s: &str, out: &mut Vec<u8>) {
     let b = s.as_bytes();
     let mut i = 0;

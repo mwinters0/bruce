@@ -44,6 +44,12 @@ one found unreadable, and every page was found by following links. A
 sitemap's pages outside every root, or matching `skip`, are counted and
 dropped; an index's sitemaps are followed wherever they are.
 
+A URL that answers 404 is asked about once more: the same URL with its final
+`/` added or dropped, for its status alone, under the host's robots.txt and
+pace. If that answers 2xx the link is still broken, reason
+`wrong_trailing_slash`, and the digest names the URL to link to instead; a redirect is not an answer, and nothing is written for the extra
+request.
+
 ## Stopping a crawl
 
 **Ctrl-C (SIGINT) or SIGTERM once** stops the crawl's requests within 30 seconds:

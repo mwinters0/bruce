@@ -4,6 +4,7 @@
 //! housekeeping's own list of them.
 
 use duckdb::Connection;
+use url::Url;
 
 use super::document::{Run, Totals};
 use crate::extract::Kind;
@@ -13,7 +14,8 @@ use crate::report::redirects;
 use crate::report::request::{Report, Request};
 use crate::report::sql::Sql;
 use crate::report::table::{Cell, Table};
-use crate::store::{DOUBLED_SLASH, Mode, RunId, TARGET_URL_DOUBLES};
+use crate::store::{DOUBLED_SLASH, Mode, RunId, TARGET_URL_DOUBLES, WRONG_TRAILING_SLASH};
+use crate::url::toggle_slash;
 
 /// A link of `view`, a `report_*` link view, on a crawled page.
 const ON_CRAWLED: &str = " JOIN report_pages pg ON pg.run_id = b.run_id \
@@ -257,9 +259,29 @@ fn landing_join() -> String {
     )
 }
 
+/// Puts the column `fix` after `landing`: for a row whose reason is
+/// [`WRONG_TRAILING_SLASH`] the target's URL with its final `/` toggled, which
+/// the crawl found answering (D72), else `null`.
+fn add_fix(table: &mut Table) {
+    let at = |name: &str| table.columns.iter().position(|c| c == name);
+    let (Some(target), Some(reason), Some(landing)) = (at("target"), at("reason"), at("landing"))
+    else {
+        return;
+    };
+    table.columns.insert(landing + 1, "fix".to_owned());
+    for row in &mut table.rows {
+        let fix = (row[reason].text() == Some(WRONG_TRAILING_SLASH))
+            .then(|| row[target].text())
+            .flatten()
+            .and_then(|url| toggle_slash(&Url::parse(url).ok()?))
+            .map_or(Cell::Null, |url| Cell::Text(url.into()));
+        row.insert(landing + 1, fix);
+    }
+}
+
 /// Every broken link on a crawled page, a page's together, an unresolved
-/// xref with its `hint` (D65) and a doubled slash its `landing`; the caller
-/// puts the pages in `pages`' order.
+/// xref with its `hint` (D65), a doubled slash its `landing` and a wrong final
+/// slash its `fix`; the caller puts the pages in `pages`' order.
 pub(super) fn broken(conn: &Connection, run: RunId) -> Result<Table, Error> {
     let mut sql = Sql::new(
         "SELECT b.page, b.raw_href, b.target, dl.final_url AS landing, b.fragment, b.kind, \
@@ -270,13 +292,16 @@ pub(super) fn broken(conn: &Connection, run: RunId) -> Result<Table, Error> {
         .push("WHERE b.run_id = ")
         .bind(run.0)
         .push(" ORDER BY b.page, b.outcome DESC, b.raw_href, b.fragment");
-    sql.fetch(conn)
+    let mut table = sql.fetch(conn)?;
+    add_fix(&mut table);
+    Ok(table)
 }
 
 /// The broken targets, the one named by the most links first and then by the
 /// most pages, each with the source of the page it names where the run holds
 /// it: the page a redirect landed on, for a link to a page that moved. A
-/// doubled slash has its `landing`, as in [`broken`].
+/// doubled slash has its `landing` and a wrong final slash its `fix`, as in
+/// [`broken`].
 pub(super) fn broken_targets(conn: &Connection, run: RunId) -> Result<Table, Error> {
     let mut sql = Sql::new(
         "SELECT b.target, max(dl.final_url) AS landing, b.fragment, max(b.outcome) AS outcome, \
@@ -294,7 +319,9 @@ pub(super) fn broken_targets(conn: &Connection, run: RunId) -> Result<Table, Err
     );
     sql.bind(run.0)
         .push(" GROUP BY b.target, b.fragment ORDER BY 7 DESC, 8 DESC, 1, 3");
-    sql.fetch(conn)
+    let mut table = sql.fetch(conn)?;
+    add_fix(&mut table);
+    Ok(table)
 }
 
 /// The groups of crawled pages by `group`, each with its link counts, ranked
