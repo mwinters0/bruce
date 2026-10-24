@@ -472,6 +472,79 @@ async fn externals_skip_copies_what_the_baseline_holds_and_asks_nothing_else() {
     }
 }
 
+/// A URL on the root's host outside its scope is answered as an allowlisted
+/// one is, `--externals` deciding, unless the built page's language menu
+/// names its locale (D10, D22).
+#[tokio::test]
+async fn an_out_of_scope_url_is_answered_as_an_external_unless_another_locales() {
+    let production = MockServer::start().await;
+    let base = production.uri();
+    let config = format!("[[root]]\nurl = \"{base}/docs/\"\n");
+    let prefix = format!("{base}/docs/");
+    ok(&production, "GET", "/old/").await;
+    ok(&production, "GET", "/new/").await;
+    let tools = |links: &str| {
+        let menu = r#"<div class="languages-menu"><a class="language" href="../../docs/tools/">en</a>
+            <a class="language" href="../../fr/docs/tools/">fr</a></div>"#;
+        [(
+            "tools/index.html",
+            page("tools", "", &format!("{menu}{links}")),
+        )]
+    };
+    let tmp = tempfile::tempdir().unwrap();
+    // Absolute, an href beginning `/` pointing into the build (D53).
+    let old = format!(r#"<a href="{base}/old/">o</a>"#);
+    let (local, seeds) = build(tmp.path(), &prefix, &tools(&old));
+    let live = Baseline {
+        run: RunId(0),
+        index: BaselineIndex::default(),
+        externals: Externals::Live,
+    };
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let first = check(store, &config, local, &seeds, live).await;
+    let index = first.store.baseline_index(first.run).unwrap();
+
+    let mut store = first.store;
+    let links = format!(r#"{old}<a href="{base}/new/">n</a><a href="{base}/fr/docs/x/">fr</a>"#);
+    for (externals, old, new) in [
+        (
+            Externals::Skip,
+            ("ok", None, "baseline"),
+            ("unchecked", Some("externals_skipped"), "live"),
+        ),
+        (
+            Externals::Baseline,
+            ("ok", None, "baseline"),
+            ("ok", None, "live"),
+        ),
+        (Externals::Live, ("ok", None, "live"), ("ok", None, "live")),
+    ] {
+        let dir = tempfile::tempdir().unwrap();
+        let (local, seeds) = build(dir.path(), &prefix, &tools(&links));
+        let baseline = Baseline {
+            run: first.run,
+            index: index.clone(),
+            externals,
+        };
+        let done = check(store, &config, local, &seeds, baseline).await;
+        let targets = done.targets(done.run, &base);
+        let of = |url: &str| {
+            let t = targets.iter().find(|t| t.0 == url).unwrap();
+            (t.1.as_str(), t.2.as_deref(), t.3.as_str())
+        };
+        assert_eq!(of("/old/"), old, "{externals:?}");
+        assert_eq!(of("/new/"), new, "{externals:?}");
+        assert_eq!(
+            of("/fr/docs/x/"),
+            ("unchecked", Some("out_of_scope"), "live"),
+            "{externals:?}"
+        );
+        store = done.store;
+    }
+    let requests = production.received_requests().await.unwrap();
+    assert!(requests.iter().all(|r| !r.url.path().starts_with("/fr/")));
+}
+
 #[tokio::test]
 async fn a_build_holding_no_component_version_trusts_the_baseline_and_asks_for_what_it_lacks() {
     let production = MockServer::start().await;

@@ -58,6 +58,12 @@ alone.
 The `url` must be in the root's own scope: a root whose `include` or `exclude`
 rules out its starting page is an error.
 
+**A link outside every root's scope** to a host a root starts on is checked
+as a link to an [allowlisted](#allowlist) host is: fetched once, and never
+crawled. One to another locale's page is recorded and not checked (reason
+`out_of_scope`): another locale is learned from the language menu of a root's
+`antora` pages, so a site without one has every such link checked.
+
 **The path prefix** is the root's URL in the form under "Writing globs",
 without its query, up to the last `/`.
 For `https://docs.example.org/en-US/` it is the URL itself. For

@@ -199,7 +199,7 @@ async fn every_target_gets_its_outcome_and_every_link_a_row() {
         r##"<title>Home</title>
         <a href="/docs/ok">ok</a><a href="/docs/ok#sec">sec</a><a href="ok">again</a>
         <a href="/docs/missing">m</a><a href="/docs/denied">d</a><a href="/docs/broken">b</a>
-        <a href="/fr/docs/">off-locale</a><a href="mailto:me@example.org">mail</a>
+        <a href="/fr/docs/">off-scope</a><a href="mailto:me@example.org">mail</a>
         <a href="http://other.invalid/x">elsewhere</a><a href="http://[bad">bad</a>"##,
     )
     .await;
@@ -223,7 +223,7 @@ async fn every_target_gets_its_outcome_and_every_link_a_row() {
             t("/docs/denied", "error", None, Some(403)),
             t("/docs/missing", "broken_url", None, Some(404)),
             t("/docs/ok", "ok", None, Some(200)),
-            t("/fr/docs/", "unchecked", Some("out_of_scope"), None),
+            t("/fr/docs/", "broken_url", None, Some(404)),
             t("http://[bad", "broken_url", Some("invalid_url"), None),
             t(
                 "http://other.invalid/x",
@@ -270,7 +270,64 @@ async fn every_target_gets_its_outcome_and_every_link_a_row() {
     // Checked once, whatever links to it.
     let hits = requests(&server).await;
     assert_eq!(hits.iter().filter(|(_, p)| p == "/docs/ok").count(), 1);
-    assert!(hits.iter().all(|(_, p)| p != "/fr/docs/"));
+}
+
+/// The root's page names `/fr/docs/x/` before any page has named a locale,
+/// and the Antora page whose language menu names `fr` is read after it: the
+/// URL waits, and is another locale's page all the same (D10).
+#[tokio::test]
+async fn an_out_of_scope_url_is_asked_unless_another_locales_page() {
+    let server = MockServer::start().await;
+    page(
+        &server,
+        "/docs/",
+        r#"<title>Home</title><a href="/fr/docs/x/">fr</a><a href="/docs/menu/">menu</a>
+        <a href="/kubernetes.io">typo</a><a href="/docs">home</a>"#,
+    )
+    .await;
+    page(
+        &server,
+        "/docs/menu/",
+        r#"<meta name="generator" content="Antora 3.1.15"><title>Menu</title>
+        <div class="languages-menu"><a class="language" href="../../docs/menu/">en</a>
+        <a class="language" href="../../fr/docs/menu/">fr</a></div>
+        <a href="/fr/docs/y/">fr too</a><a href="/old/">old</a>"#,
+    )
+    .await;
+    redirect(&server, "/docs", 301, "/docs/").await;
+    page(
+        &server,
+        "/old/",
+        "<title>Old</title><a href=/older/>older</a>",
+    )
+    .await;
+
+    let done = crawl(&server, "", quick()).await;
+
+    let base = &done.base;
+    for locale in ["/fr/docs/x/", "/fr/docs/y/", "/fr/docs/menu/"] {
+        assert_eq!(
+            done.target(locale),
+            t(locale, "unchecked", Some("out_of_scope"), None)
+        );
+    }
+    assert_eq!(
+        done.target("/kubernetes.io"),
+        t("/kubernetes.io", "broken_url", None, Some(404))
+    );
+    assert_eq!(done.target("/old/"), t("/old/", "ok", None, Some(200)));
+    assert_eq!(
+        done.chain(&format!("{base}/docs")),
+        [(format!("{base}/docs"), 301, false)]
+    );
+    let hits = requests(&server).await;
+    assert!(hits.iter().all(|(_, p)| !p.starts_with("/fr/")), "{hits:?}");
+    assert!(
+        hits.iter().all(|(_, p)| p != "/older/"),
+        "asked one hop deep, its links not followed"
+    );
+    assert_eq!(done.pages(), ["/docs/", "/docs/menu/", "/old/"]);
+    assert_eq!(done.summary.cut, 0);
 }
 
 #[tokio::test]
@@ -1070,12 +1127,13 @@ async fn a_saved_antora_page_yields_its_profile_facts_source_and_links() {
     let server = MockServer::start().await;
     page(
         &server,
-        "/docs/",
+        "/en-US/a11y/",
         include_str!("../../fixtures/docs-fp-o/en-US/a11y/index.html"),
     )
     .await;
 
-    let done = crawl(&server, "", quick()).await;
+    let config = format!("[[root]]\nurl = \"{}/en-US/a11y/\"\n", server.uri());
+    let done = crawl_config(&server, &config, quick()).await;
 
     let (profile, repo, source_ref, source_path, source_url): (
         String,
@@ -1122,13 +1180,20 @@ async fn a_saved_antora_page_yields_its_profile_facts_source_and_links() {
         ) > 10
     );
     assert_eq!(
-        requests(&server)
-            .await
-            .iter()
-            .filter(|(_, p)| p != "/robots.txt" && !p.ends_with("/sitemap.xml"))
-            .count(),
-        1,
-        "everything else the page names is out of scope or unlisted"
+        count(
+            &done.store,
+            "SELECT count(*) FROM targets WHERE reason = 'out_of_scope'"
+        ),
+        67,
+        "the page under each other locale its language menu names (I25)"
+    );
+    let hits = requests(&server).await;
+    let locale = |p: &str| !p.starts_with("/en-US/") && p.matches('/').count() > 1;
+    assert!(hits.iter().all(|(_, p)| !locale(p)), "{hits:?}");
+    assert!(
+        hits.iter()
+            .any(|(_, p)| p.starts_with("/en-US/") && !p.starts_with("/en-US/a11y/")),
+        "the rest of en-US is outside the root's scope and asked"
     );
 }
 

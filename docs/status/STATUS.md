@@ -20,11 +20,11 @@ code: `cli`, the command line, the five subcommands and the profile registry; `c
 `link_verdicts` view, the deleting of old runs, the baseline export and import, the index of a baseline's targets and its pages' facts, the copy of a target's rows between runs, which the writer also runs on request, and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views, Extract and Resolve; `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
-the profile's facts and the content hash with the scope it covered;
+the profile's facts, the other locales its language menu names and the content hash with the scope it covered;
 `forge`, the edit-URL shape parse;
 `url`, the canonical form and `url_id`;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, the body decoding, the local fetcher over a map of URLs to files and the router that sends a URL the build holds to it and any other to HTTP;
-`crawl`, the frontier, the hops of a redirect, D16's outcomes, the schedule that gives a build's reads a budget of their own and each live host its share of the run's other slots (D61), sitemaps, the run that writes a target's rows and its stop, and a run from seeds checked against a baseline: the component-versions the build holds, `not_built`, the baseline's rows copied for what it lacks, and the xrefs into a component the build lacks resolved to the baseline's pages or the URLs they name;
+`crawl`, the frontier with the other locales learned and the URLs outside every scope waiting on them, the hops of a redirect, D16's outcomes, the schedule that gives a build's reads a budget of their own and each live host its share of the run's other slots (D61), sitemaps, the run that writes a target's rows and its stop, and a run from seeds checked against a baseline: the component-versions the build holds, `not_built`, the baseline's rows copied for what it lacks, and the xrefs into a component the build lacks resolved to the baseline's pages or the URLs they name;
 `ci`, a build directory read as its production URLs; and
 `report`, the `report_*` views, the choice of run, the eight single-run reports, `diff`, and the gate (`introduced` with the inverse check, the redirected links, the errors and the breakage already in the baseline; `check-dir --inverse fail|warn`), as a text table or JSON, and the digest of a crawl run (D64), written as dated JSON and HTML by `bruce report digest`.
 `docs/manual/` holds the config reference, `bruce crawl`'s, `bruce check-dir`'s, `bruce report`'s, `bruce prune`'s, `bruce export-baseline`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
@@ -90,9 +90,10 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
 - [x] **8.10** A scheme that cannot work is broken: the schemes a public web
   page uses stay `unchecked`, every other `broken_url`.
   Notes: [`../wip/roadmap-P8.10-scheme-notes.md`](../wip/roadmap-P8.10-scheme-notes.md).
-- [ ] **8.11** A URL on a root's host outside every scope is asked once,
+- [x] **8.11** A URL on a root's host outside every scope is asked once,
   unless it is another locale's page, learned from the `antora` language menu;
   an invariant for the menu, D10 amended.
+  Notes: [`../wip/roadmap-P8.11-out-of-scope-notes.md`](../wip/roadmap-P8.11-out-of-scope-notes.md).
 - [ ] **8.12** An allowlist entry `*.<domain>` names its subdomains, never a
   root's own host; the deployment guide's allowlist names the Fedora and Red
   Hat sites, D5 amended.

@@ -15,10 +15,9 @@ manual's "The HTML", JSON table and "Why a link is unchecked", and D64's
 ## What the fold says
 
 - **Each reason is a heading** with its links and targets, a paragraph
-  saying in a reader's words what its links are (`out_of_scope`: "Links to
-  pages on a site this run checks, but outside the part of it the run was
-  set up to check, such as the other languages a language menu links to when
-  only one language is crawled."), with at most one more sentence naming the
+  saying in a reader's words what its links are (`out_of_scope`, as 8.11
+  reworded it: "Links to the site's pages in other languages, which the
+  language menu links every page to."), with at most one more sentence naming the
   setting that would check them (`[[root]]`, `allowlist`, a host's
   `robots`), and a table of the five groups its links point to most, then
   "And N more, holding M links, none more than K." On en-US the last clause
@@ -71,7 +70,7 @@ grows from 682 KB to 805 KB, 1,403 of its rows being groups.
 `https://docs.fedoraproject.org/kubernetes.io` and `/docker.io`, which are
 scheme-less hrefs that a browser resolves against the page. The fold showed
 them and no section counted them as broken; 8.10 makes the first broken
-(D66), and 8.11 is to ask for the other two.
+(D66), and 8.11 asks for the other two (D10).
 
 ## What 8.8 and P9 inherit
 

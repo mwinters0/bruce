@@ -16,6 +16,11 @@
 //! The run writes every target's HTTP-level outcome and no verdict on a
 //! link, which is SQL's after the crawl (D28).
 //!
+//! A page of a root teaches the frontier the other locales its language menu
+//! names before its links are planned, and a URL on a root's host outside
+//! every scope that no locale covered when it was met is judged once the
+//! pages are read, until none waits (`settle_outside`, D67).
+//!
 //! A sitemap is a target, and each of its entries a link from it, of kind
 //! `sitemap` for a page and `sitemap_file` for an index's sitemap (D13), but
 //! a page outside every root's scope or matching `skip`, which is only
@@ -71,7 +76,7 @@ use crate::store::{
     WriteHandle, WriterGone,
 };
 use crate::url::Canonical;
-use frontier::{EXTERNALS_SKIPPED, Frontier, Plan, SCHEME, SKIPPED};
+use frontier::{EXTERNALS_SKIPPED, Frontier, Outside, Plan, SCHEME, SKIPPED};
 use hops::{Chain, Stop};
 use schedule::{Route, Schedule, host_of};
 use sitemap::Sitemap;
@@ -364,6 +369,7 @@ where
             }
         }
         shared.drive(listed, None).await?;
+        shared.settle_outside().await?;
         Ok(shared.summary())
     }
 
@@ -379,6 +385,7 @@ where
         shared.drive(resolved, None).await?;
         let beyond = shared.settle_unbuilt().await?;
         shared.drive(beyond, None).await?;
+        shared.settle_outside().await?;
         shared.copy_from_baseline().await?;
         Ok(shared.summary())
     }
@@ -986,6 +993,8 @@ where
         if let Some(prefix) = self.frontier.prefix() {
             self.note_held(prefix, form, e.facts.pairs());
         }
+        // Before its links are planned, so none it names waits (D67).
+        self.frontier.learn(&e.other_locales);
         for (key, value) in e.facts.pairs() {
             self.rows.send(Row::Fact(FactRow {
                 run_id: self.run.0,
@@ -1071,6 +1080,7 @@ where
             }
             Plan::Baseline => self.pending.copy(form.id()),
             Plan::Unbuilt => self.pending.defer(baseline::Unbuilt { url, kind, form }),
+            Plan::Outside => self.frontier.wait(Outside { url, kind, form }),
             plan => {
                 return Ok(Some(Item {
                     url,
@@ -1178,6 +1188,30 @@ where
         })
         .await
         .map_err(|_| Error::Panicked)?
+    }
+
+    /// Judges the URLs planned [`Plan::Outside`], now that every page is read,
+    /// and asks about those no other locale covers, until none waits: a page
+    /// a redirect lands on is read, and may name more (D67).
+    pub(super) async fn settle_outside(self: &Arc<Self>) -> Result<(), Error> {
+        while self.frontier.is_waiting() {
+            let shared = Arc::clone(self);
+            let items = tokio::task::spawn_blocking(move || {
+                let judged = shared.frontier.judge_outside();
+                let mut items = Vec::new();
+                let Some(_writing) = shared.writes.begin() else {
+                    return Ok(items);
+                };
+                for (o, plan) in judged.into_iter().take_while(|_| !shared.stopping()) {
+                    items.extend(shared.dispatch(o.url, o.kind, true, plan, o.form)?);
+                }
+                Ok::<_, Error>(items)
+            })
+            .await
+            .map_err(|_| Error::Panicked)??;
+            self.drive(items, None).await?;
+        }
+        Ok(())
     }
 
     /// Sends the copies of the baseline's rows, last: every target the build

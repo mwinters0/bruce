@@ -371,7 +371,7 @@ fn each_unchecked_reason_is_explained_beside_where_its_links_point_most() {
     let house = section(&html, "housekeeping");
     let at = |needle: &str| house.find(needle).unwrap_or_else(|| panic!("no {needle}"));
     let oos = at(
-        "<h3><code>out_of_scope</code> <small>5 links, to 4 targets</small></h3>\n<p>Links to pages on a site this run checks",
+        "<h3><code>out_of_scope</code> <small>5 links, to 4 targets</small></h3>\n<p>Links to the site's pages in other languages",
     );
     assert!(house[..oos].contains("They are not counted as broken"));
     assert!(house[..oos].contains("a link it knows cannot work is listed as broken instead"));

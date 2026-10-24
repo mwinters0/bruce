@@ -3,17 +3,23 @@
 //! [`Frontier::plan`] sorts a URL into a [`Plan`] by the first test that
 //! applies: a scheme other than `http(s)`, `unchecked` where a public web
 //! page uses it and broken where none does (D66), a `skip` glob (D50), a root's
-//! scope, an allowlisted host (D3), a root's own host outside every scope
-//! (`out_of_scope`, D10), any other host (`host_not_allowlisted`); robots.txt
-//! is asked later, at each hop. It returns the URL's canonical form, the
+//! scope, an allowlisted host (D3), a root's own host outside every scope,
+//! any other host (`host_not_allowlisted`); robots.txt is asked later, at
+//! each hop. It returns the URL's canonical form, the
 //! string its `url_id` hashes. A URL in a root's scope, unless skipped, has that
 //! root's form; every other URL has the plain form, `canonical(url, false)`,
 //! since no root's `strip_query` governs it. [`Frontier::claim`] is the run's one
 //! deduplication: a target is written by whoever claims its `url_id` first
 //! (D13), and a claim is never given back.
+//!
+//! A URL on a root's own host outside every scope is another locale's page
+//! (`out_of_scope`) where a locale the roots' pages name covers it, and is
+//! else asked as an allowlisted URL is (D10). The locales are learned as the
+//! pages are read ([`Frontier::learn`]), so one that no locale covers yet
+//! waits until every page is read ([`Plan::Outside`], D67).
 
-use std::collections::HashSet;
-use std::sync::{Arc, Mutex};
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex, RwLock};
 
 use url::Url;
 
@@ -22,6 +28,10 @@ use crate::extract::Kind;
 use crate::fetch::local::Site;
 use crate::store::{AnsweredBy, BaselineIndex, RunId};
 use crate::url::{Canonical, canonical};
+
+/// The reason of a URL on a root's host, outside every root's scope, under
+/// another locale's prefix: nothing is fetched (D10).
+pub const OUT_OF_SCOPE: &str = "out_of_scope";
 
 /// The reason of a URL `skip` matched (D50).
 pub const SKIPPED: &str = "skipped";
@@ -79,6 +89,10 @@ pub enum Plan {
     /// once every built page is read, by the component-versions the build
     /// holds (D22). Only a run checked against a baseline plans one.
     Unbuilt,
+    /// On a root's host, in no root's scope, and under no other locale learned
+    /// yet: judged once every page is read, as another locale's page where a
+    /// locale learned by then covers it, else as an allowlisted URL (D10).
+    Outside,
     /// A sitemap, `depth` files below where discovery began (1 for the file
     /// discovered or set): GET, its body read for its entries (D14). Only
     /// the crawl plans one; [`Frontier::plan`] never does.
@@ -90,6 +104,18 @@ pub struct Frontier {
     config: Config,
     seen: Mutex<HashSet<u64>>,
     ci: Option<Ci>,
+    /// The other locales' path prefixes, by host as [`Frontier::plan`] reads it.
+    locales: RwLock<HashMap<String, HashSet<String>>>,
+    /// The URLs planned [`Plan::Outside`], claimed and not yet judged.
+    outside: Mutex<Vec<Outside>>,
+}
+
+/// A URL planned [`Plan::Outside`], claimed and not yet judged.
+pub struct Outside {
+    pub url: Url,
+    /// The kind of the first link to it, as KD4 has it for a URL asked live.
+    pub kind: Kind,
+    pub form: Canonical,
 }
 
 /// What `--externals` asks of a URL on an allowlisted host (D22).
@@ -125,6 +151,8 @@ impl Frontier {
             config,
             seen: Mutex::new(HashSet::new()),
             ci: None,
+            locales: RwLock::new(HashMap::new()),
+            outside: Mutex::new(Vec::new()),
         }
     }
 
@@ -186,9 +214,9 @@ impl Frontier {
     /// How `url` is treated when a link of `kind` names it, and its canonical
     /// form. The first root whose scope holds it is its root. Order is the
     /// spec's, after the scheme: `skip` (D50), matched on the plain form whatever the host,
-    /// then a root's scope, then an allowlisted host, then the rest, an
-    /// out-of-scope URL on a root's own host told apart from any other host
-    /// by its reason.
+    /// then a root's scope, then an allowlisted host, then an out-of-scope
+    /// URL on a root's own host, another locale's or [`Plan::Outside`], then
+    /// any other host.
     pub fn plan(&self, url: &Url, kind: Kind) -> (Plan, Canonical) {
         let scheme = url.scheme();
         if !matches!(scheme, "http" | "https") {
@@ -218,12 +246,81 @@ impl Frontier {
         let host = url.host().map(|h| h.to_string()).unwrap_or_default();
         let plan = if self.config.allowlist.contains(&host) {
             self.external(&form, kind)
+        } else if self.is_other_locale(url) {
+            Plan::Unchecked(OUT_OF_SCOPE)
         } else if self.config.is_root_host(&host) {
-            Plan::Unchecked("out_of_scope")
+            Plan::Outside
         } else {
             Plan::Unchecked("host_not_allowlisted")
         };
         (plan, form)
+    }
+
+    /// Learns the other locales a page of a root names (`extract`'s
+    /// `other_locales`).
+    pub fn learn(&self, prefixes: &[Url]) {
+        let host = |p: &Url| p.host().map(|h| h.to_string()).unwrap_or_default();
+        let known = |locales: &HashMap<String, HashSet<String>>| {
+            prefixes
+                .iter()
+                .all(|p| locales.get(&host(p)).is_some_and(|l| l.contains(p.path())))
+        };
+        if known(&self.locales.read().expect("no panic holds the lock")) {
+            return;
+        }
+        let mut locales = self.locales.write().expect("no panic holds the lock");
+        for p in prefixes {
+            let prefix = p.path().to_owned();
+            locales.entry(host(p)).or_default().insert(prefix);
+        }
+    }
+
+    /// Whether `url` is on a root's host, outside every root's scope, under a
+    /// locale learned so far.
+    fn is_other_locale(&self, url: &Url) -> bool {
+        let host = url.host().map(|h| h.to_string()).unwrap_or_default();
+        self.config.is_root_host(&host)
+            && self
+                .locales
+                .read()
+                .expect("no panic holds the lock")
+                .get(&host)
+                .is_some_and(|l| l.iter().any(|p| url.path().starts_with(p.as_str())))
+    }
+
+    /// Holds a URL planned [`Plan::Outside`] until [`Frontier::judge_outside`].
+    pub fn wait(&self, outside: Outside) {
+        self.outside
+            .lock()
+            .expect("no panic holds the lock")
+            .push(outside);
+    }
+
+    /// Whether a URL planned [`Plan::Outside`] waits to be judged.
+    pub fn is_waiting(&self) -> bool {
+        !self
+            .outside
+            .lock()
+            .expect("no panic holds the lock")
+            .is_empty()
+    }
+
+    /// Every URL waiting since it was planned [`Plan::Outside`], with its
+    /// plan by the locales learned now: another locale's page is
+    /// `out_of_scope`, and any other is asked as an allowlisted URL is (D10).
+    pub fn judge_outside(&self) -> Vec<(Outside, Plan)> {
+        let waiting = std::mem::take(&mut *self.outside.lock().expect("no panic holds the lock"));
+        waiting
+            .into_iter()
+            .map(|o| {
+                let plan = if self.is_other_locale(&o.url) {
+                    Plan::Unchecked(OUT_OF_SCOPE)
+                } else {
+                    self.external(&o.form, o.kind)
+                };
+                (o, plan)
+            })
+            .collect()
     }
 
     /// How a URL the build does not hold is answered: by copying the
@@ -242,8 +339,9 @@ impl Frontier {
         }
     }
 
-    /// How an allowlisted URL is answered: `--externals` decides in a run
-    /// against a baseline, and in any other it is asked.
+    /// How an allowlisted URL, or one on a root's host outside every scope
+    /// and every other locale (D10), is answered: `--externals` decides in a
+    /// run against a baseline, and in any other it is asked.
     fn external(&self, form: &Canonical, kind: Kind) -> Plan {
         match self.baseline().map(|b| b.externals) {
             Some(Externals::Skip) => self.copy_or(form, Plan::Unchecked(EXTERNALS_SKIPPED)),
@@ -267,9 +365,14 @@ impl Frontier {
             {
                 (Plan::Unchecked(EXTERNALS_SKIPPED), form)
             }
-            (Plan::Unchecked(_) | Plan::Broken(_) | Plan::Baseline | Plan::Unbuilt, form) => {
-                (Plan::Status, form)
-            }
+            (
+                Plan::Unchecked(_)
+                | Plan::Broken(_)
+                | Plan::Baseline
+                | Plan::Unbuilt
+                | Plan::Outside,
+                form,
+            ) => (Plan::Status, form),
             planned => planned,
         }
     }
@@ -292,8 +395,9 @@ impl Frontier {
 /// How a URL is asked about, by the kind of link that names it.
 fn live(kind: Kind) -> Plan {
     // deficiency: KD4 The first link to a URL asked live (an allowlisted
-    // one, or one the build lacks and the baseline does not hold) decides
-    // how it is asked: an anchor link gets a GET and its anchors are
+    // one, one on a root's host outside every scope and locale, or one the
+    // build lacks and the baseline does not hold) decides how it is asked:
+    // an anchor link gets a GET and its anchors are
     // stored, any other kind gets a HEAD. A URL named first by an
     // image and later by an anchor link with a fragment is never
     // read, so that fragment has no anchors to be checked against.

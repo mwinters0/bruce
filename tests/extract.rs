@@ -423,6 +423,34 @@ fn unresolved_xrefs_are_tagged_with_their_refspec() {
     )));
 }
 
+/// I25: every docs.fp.o page's language menu names the page under each of
+/// the 67 other locales, so each is a locale's prefix on the host (D10). The
+/// 404 has no generator meta, and its menu is not read.
+#[test]
+fn a_docs_fp_o_language_menu_names_every_other_locale() {
+    for f in fixtures()
+        .iter()
+        .filter(|f| f.path.starts_with("docs-fp-o/") && !f.path.ends_with("404.html"))
+    {
+        let x = run(f);
+        let locales: Vec<_> = x.other_locales.iter().map(|u| u.as_str()).collect();
+        assert_eq!(locales.len(), 67, "{}", f.path);
+        assert_eq!(
+            locales[0], "https://docs.fedoraproject.org/ar/",
+            "{}",
+            f.path
+        );
+        assert!(locales.contains(&"https://docs.fedoraproject.org/zh_TW/"));
+        assert!(!locales.iter().any(|l| l.contains("en-US")), "{}", f.path);
+    }
+    let generic = fixtures()
+        .into_iter()
+        .filter(|f| !f.path.starts_with("docs-fp-o/en-US/") || f.path.ends_with("404.html"));
+    for f in generic {
+        assert!(run(&f).other_locales.is_empty(), "{}", f.path);
+    }
+}
+
 /// D15: docs.fp.o's `Last build:` line changes every page's bytes at every
 /// build, and neither the default scope (`article.doc`) nor
 /// `hash_exclude = ["footer"]` sees it; the whole page does. A prose edit

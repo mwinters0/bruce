@@ -35,8 +35,8 @@ roadmap's phase index.
   **(a) deliberate tradeoff**: the right-to-left scan that avoids it misreads a
   file path holding such a directory, which is likelier. Detail: `src/forge.rs`
 
-- **KD4** — The first link to a URL asked live (an allowlisted one, or one a
-  build lacks) decides how it is asked, so a URL named by an image before an
+- **KD4** — The first link to a URL asked live (an allowlisted one, one on a
+  root's host outside every scope, or one a build lacks) decides how it is asked, so a URL named by an image before an
   anchor link has no anchors to check that link's fragment against.
   **(c) unowned**: a design holding every link's kind until the crawl ends
   would promote it. Detail: `src/crawl/frontier.rs`

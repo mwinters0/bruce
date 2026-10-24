@@ -118,7 +118,10 @@ sitemap = "https://docs.fedoraproject.org/en-US/sitemap.xml"
 
 The root is the English pages: every page whose address begins with the root's
 URL is fetched, and every link on it recorded. The site's other locales have
-other addresses, so they are not crawled.
+other addresses, so they are not crawled, and the links to them are not
+checked; a link to any other address on the site, such as the header's home
+link `https://docs.fedoraproject.org/en-US` without its slash, is checked
+once.
 
 The sitemap is an index of one sitemap per component. `bruce` would find it
 unaided, at `sitemap.xml` under the root; writing it down saves the probe and

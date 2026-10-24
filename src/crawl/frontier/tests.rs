@@ -63,8 +63,6 @@ fn everything_else_is_unchecked_and_says_which_case() {
         Plan::Unchecked(reason) => reason,
         other => panic!("{url} is {other:?}"),
     };
-    assert_eq!(reason("https://docs.example.org/fr/a/"), "out_of_scope");
-    assert_eq!(reason("https://docs.example.org/en-US/c/"), "out_of_scope");
     assert_eq!(reason("https://other.example.net/"), "host_not_allowlisted");
     assert_eq!(reason("mailto:me@example.org"), "scheme");
 }
@@ -146,12 +144,124 @@ fn a_skipped_url_is_skipped_before_scope_and_the_allowlist() {
     );
 }
 
+fn url(u: &str) -> Url {
+    Url::parse(u).unwrap()
+}
+
+/// What [`Frontier::judge_outside`] makes of the URLs given, each first
+/// planned as a link of `kind` would plan it and waiting.
+fn judged(f: &Frontier, urls: &[&str], kind: Kind) -> Vec<(String, Plan)> {
+    for u in urls {
+        let (plan, form) = f.plan(&url(u), kind);
+        assert_eq!(plan, Plan::Outside, "{u}");
+        f.wait(Outside {
+            url: url(u),
+            kind,
+            form,
+        });
+    }
+    assert!(f.is_waiting());
+    let judged = f.judge_outside();
+    assert!(!f.is_waiting(), "judging takes every URL waiting");
+    judged
+        .into_iter()
+        .map(|(o, plan)| (o.form.as_str().to_owned(), plan))
+        .collect()
+}
+
+#[test]
+fn a_url_on_a_roots_host_outside_every_scope_waits_unless_another_locales() {
+    let f = frontier();
+    let class = |u: &str| plan(&f, u, Kind::Anchor).0;
+    assert_eq!(class("https://docs.example.org/fr/a/"), Plan::Outside);
+    assert_eq!(class("https://docs.example.org/en-US/c/"), Plan::Outside);
+    f.learn(&[
+        url("https://docs.example.org/fr/"),
+        url("https://docs.example.org/pt_BR/"),
+        url("https://elsewhere.example.org/de/"),
+    ]);
+    f.learn(&[url("https://docs.example.org/fr/")]);
+    let other = Plan::Unchecked(OUT_OF_SCOPE);
+    assert_eq!(class("https://docs.example.org/fr/a/"), other);
+    assert_eq!(
+        class("http://docs.example.org/pt_BR/x/y"),
+        other,
+        "any scheme"
+    );
+    assert_eq!(
+        class("https://docs.example.org/fr"),
+        Plan::Outside,
+        "a prefix is a directory"
+    );
+    assert_eq!(class("https://docs.example.org/en-US/c/"), Plan::Outside);
+    assert_eq!(class("https://docs.example.org/"), Plan::Outside);
+    assert_eq!(
+        class("https://elsewhere.example.org/de/a/"),
+        Plan::Unchecked("host_not_allowlisted"),
+        "a locale names pages on a root's host only"
+    );
+    assert_eq!(
+        class("https://docs.example.org/en-US/a/fr/"),
+        Plan::Page { root: 0 },
+        "scope comes first"
+    );
+}
+
+/// A URL is judged by the locales learned by the time every page is read, so
+/// one met before the page naming its locale is that locale's all the same.
+#[test]
+fn a_waiting_url_is_judged_by_the_locales_learned_since() {
+    let f = frontier();
+    let (fr, typo) = (
+        "https://docs.example.org/fr/a/",
+        "https://docs.example.org/kubernetes.io",
+    );
+    for u in [fr, typo] {
+        let (plan, form) = f.plan(&url(u), Kind::Anchor);
+        assert_eq!(plan, Plan::Outside);
+        f.wait(Outside {
+            url: url(u),
+            kind: Kind::Anchor,
+            form,
+        });
+    }
+    f.learn(&[url("https://docs.example.org/fr/")]);
+    let judged: Vec<_> = f
+        .judge_outside()
+        .into_iter()
+        .map(|(o, plan)| (o.form.as_str().to_owned(), plan))
+        .collect();
+    assert_eq!(
+        judged,
+        [
+            (fr.to_owned(), Plan::Unchecked(OUT_OF_SCOPE)),
+            (typo.to_owned(), Plan::Anchors),
+        ],
+        "outside every locale, it is asked as an allowlisted URL is, one hop deep"
+    );
+    assert_eq!(
+        judged_one(&f, typo, Kind::Image),
+        Plan::Status,
+        "by the kind of its first link"
+    );
+}
+
+fn judged_one(f: &Frontier, u: &str, kind: Kind) -> Plan {
+    judged(f, &[u], kind).remove(0).1
+}
+
 #[test]
 fn a_hop_is_followed_wherever_it_goes() {
     let f = frontier();
     let hop = |url: &str| f.hop_plan(&Url::parse(url).unwrap(), Kind::Anchor).0;
     assert_eq!(hop("https://other.example.net/"), Plan::Status);
     assert_eq!(hop("https://docs.example.org/fr/a/"), Plan::Status);
+    f.learn(&[url("https://docs.example.org/fr/")]);
+    assert_eq!(
+        hop("https://docs.example.org/fr/a/"),
+        Plan::Status,
+        "another locale's too"
+    );
     assert_eq!(hop("https://forge.example.org/"), Plan::Anchors);
     assert_eq!(
         hop("https://docs.example.org/en-US/a/"),
@@ -283,6 +393,39 @@ fn externals_decides_an_allowlisted_url_and_no_other() {
         Plan::Anchors,
         "a URL of a root is not an external"
     );
+}
+
+/// In `check-dir` a URL on a root's host outside every scope and locale is
+/// answered as an allowlisted one is: by the baseline's rows or by asking, as
+/// `--externals` says (D22); another locale's stays `out_of_scope`.
+#[test]
+fn against_a_baseline_an_out_of_scope_url_is_answered_as_an_external() {
+    let known = "https://docs.example.org/old/";
+    let new = "https://docs.example.org/new/";
+    let fr = "https://docs.example.org/fr/a/";
+    let judge = |externals, u: &str| {
+        let f = against(externals, &[known, fr]);
+        f.learn(&[url("https://docs.example.org/fr/")]);
+        if u == fr {
+            return plan(&f, u, Kind::Anchor).0;
+        }
+        judged_one(&f, u, Kind::Anchor)
+    };
+    assert_eq!(judge(Externals::Baseline, known), Plan::Baseline);
+    assert_eq!(judge(Externals::Baseline, new), Plan::Anchors);
+    assert_eq!(judge(Externals::Live, known), Plan::Anchors);
+    assert_eq!(judge(Externals::Skip, known), Plan::Baseline);
+    assert_eq!(
+        judge(Externals::Skip, new),
+        Plan::Unchecked(EXTERNALS_SKIPPED)
+    );
+    for externals in [Externals::Skip, Externals::Baseline, Externals::Live] {
+        assert_eq!(
+            judge(externals, fr),
+            Plan::Unchecked(OUT_OF_SCOPE),
+            "another locale's page is never copied nor asked"
+        );
+    }
 }
 
 #[test]

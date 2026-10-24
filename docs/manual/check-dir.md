@@ -37,7 +37,7 @@ difference between the two reads as breakage.
 A link to a page in the build is read from the directory. Any other the
 configuration would have a crawl ask about is answered from the baseline where
 it holds the URL, else by a request to the live site, at the configuration's
-pace; one it would leave `unchecked` (`skip`, out of every root's scope, a host
+pace; one it would leave `unchecked` (`skip`, another locale's page, a host
 not on the allowlist) stays `unchecked`:
 
 - **A page of a component the build holds, but not built**, is `broken_url`,
@@ -59,10 +59,14 @@ not on the allowlist) stays `unchecked`:
   ([which schemes](digest.md#why-a-link-is-unchecked)).
 - **A link starting `/`** resolves against the prefix, the way a static server
   serving the directory at `/` shows it.
-- **A link to an allowlisted host** is answered by `--externals`: `baseline` takes
+- **A link to an allowlisted host**, or to a root's host outside every root's
+  scope, is answered by `--externals`: `baseline` takes
   the baseline's answer where it has one and asks otherwise, `live` always
   asks, and `skip` never asks: the baseline's answer where it has one, else
-  `unchecked`. `--externals` does not reach a URL on the site itself.
+  `unchecked`. `--externals` does not reach a URL in a root's scope. Another
+  locale's page stays `unchecked` ([Roots](config.md#roots)); the locales are
+  those the built pages' language menus name, and a build whose UI has none,
+  as a content repo's usually has not, answers its links to them this way.
 
 ## What fails
 

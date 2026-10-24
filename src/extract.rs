@@ -49,6 +49,10 @@ pub struct Extracted {
     pub edit_link: Option<EditLink>,
     /// The profile's facts about the page (D37).
     pub facts: Facts,
+    /// Where the page's other locales are, as its profile read them: each a
+    /// URL whose path, ending in `/`, is a locale's prefix on its host (D67).
+    /// Empty where the profile reads none.
+    pub other_locales: Vec<Url>,
     /// The xxh3-128 hash of the page's content, scoped by the root's
     /// `hash_root` and `hash_exclude` (D15).
     pub hash: u128,
@@ -155,10 +159,12 @@ pub fn extract_under(
     if let Some(finish) = finish {
         let settled = Settled {
             url,
+            resolve: &|href| links.resolve(href),
             edit_link: edit_link.as_ref(),
         };
         finish(&settled, &mut sink);
     }
+    let other_locales = sink.take_other_locales();
     let (hash, covered) = hash.into_inner().finish();
     Ok(Extracted {
         profile: profile.name(),
@@ -167,6 +173,7 @@ pub fn extract_under(
         links: links.finish(),
         edit_link,
         facts: sink.into_facts(),
+        other_locales,
         hash,
         covered,
     })

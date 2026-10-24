@@ -104,6 +104,11 @@ fn the_sink_hands_the_core_what_a_profile_wrote() {
         sink.preferred_edit_link(),
         Some("https://forge.example/edit")
     );
+    let fr = Url::parse("https://docs.example/fr/").unwrap();
+    sink.other_locale(fr.clone());
+    sink.other_locale(fr.clone());
+    assert_eq!(sink.take_other_locales(), [fr], "once each");
+    assert!(sink.take_other_locales().is_empty());
     assert_eq!(
         sink.into_facts().pairs(),
         [("antora.module".to_string(), "ROOT".to_string())]

@@ -137,23 +137,28 @@ impl Extract<'_> {
 /// The core's settled result for a page, which a profile's finish step reads
 /// where a handler could not: a value like the chosen edit link is known
 /// only when the page has ended (D38).
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct Settled<'a> {
     /// The page's URL.
     pub url: &'a Url,
+    /// Resolves an href as the core resolved the page's links: against its
+    /// `<base href>`, and in a local build an href beginning `/` against the
+    /// site root (D53). `None` where it names no URL.
+    pub resolve: &'a dyn Fn(&str) -> Option<Url>,
     /// The page's edit link, the core's ranked choice or the profile's own
     /// preference (D36); `None` where the page has none.
     pub edit_link: Option<&'a EditLink>,
 }
 
 /// What a profile's handlers and finish step write to (D38): the page's
-/// facts, a tag for the link being read, and a preferred edit link. The core
-/// reads the sink after the pass.
+/// facts, a tag for the link being read, a preferred edit link, and where
+/// the page's other locales are. The core reads the sink after the pass.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Sink {
     facts: Facts,
     link_tag: Option<String>,
     edit_link: Option<String>,
+    other_locales: Vec<Url>,
 }
 
 impl Sink {
@@ -163,6 +168,7 @@ impl Sink {
             facts: Facts::new(namespace),
             link_tag: None,
             edit_link: None,
+            other_locales: Vec::new(),
         }
     }
 
@@ -195,6 +201,21 @@ impl Sink {
     /// The edit link a profile preferred, if one did.
     pub fn preferred_edit_link(&self) -> Option<&str> {
         self.edit_link.as_deref()
+    }
+
+    /// Records `prefix` as another locale's: a URL whose path ends in `/`,
+    /// every URL on its host under that path being a page of that locale
+    /// (D67). One recorded already is not recorded again.
+    pub fn other_locale(&mut self, prefix: Url) {
+        if !self.other_locales.contains(&prefix) {
+            self.other_locales.push(prefix);
+        }
+    }
+
+    /// The other locales recorded, in the order first recorded, taken by the
+    /// core.
+    pub fn take_other_locales(&mut self) -> Vec<Url> {
+        std::mem::take(&mut self.other_locales)
     }
 
     /// The facts recorded.

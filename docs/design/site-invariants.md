@@ -6,7 +6,7 @@ discovery and never reused. Walk this file whenever Antora's version changes (I8
 names it), or when docs.fp.o's build or hosting moves: a change here surfaces as wrong verdicts,
 not as an error.
 
-<!-- invariant-watermark: I24 -->
+<!-- invariant-watermark: I25 -->
 
 ### I1 docs.fp.o's sitemap is an index at `/en-US/sitemap.xml`, and lists no translated page
 - **Claim.** `/sitemap.xml` is 404, and robots.txt names no `Sitemap:`. `/en-US/sitemap.xml` is
@@ -329,3 +329,17 @@ not as an error.
 - **Relied on by.** D58 (each signal is a press; GitHub's 10 s is shorter than the stop's 30 s grace, so its
   SIGTERM must abandon).
 - **Re-verify.** `curl -s https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-cancellation | grep -o '7500 ms\|2500 ms\|SIGINT\|SIGTERM' | sort -u; curl -s https://docs.gitlab.com/runner/executors/shell/ | grep -o 'SIGTERM[^.]*SIGKILL[^.]*'`
+
+### I25 A docs.fp.o page's language menu links the same page under every locale, one list site-wide
+- **Claim.** Every page docs.fp.o's build renders carries `<a class="language" href="{siteRootPath}/../<locale>{page.url}">`
+  for `en-US` and each translated locale, in one list the same on every page: the link leaves the page's own URL at
+  the locale segment alone (`../../ar/a11y/` on `/en-US/a11y/`), so that segment, as a directory, is the locale's
+  prefix on the host. The 404, which has no generator meta, writes the root-relative `/en-US/../ar`.
+- **Proof.** Upstream source: docs-fp-o `prod` `8b647a46e5` `build-scripts/rebuild-site.py`, `generate_lang_switch_ui`,
+  called with `["en-US"] + list(languages.keys())` and written over the UI's `partials/page-languages.hbs`, whose own
+  (ui-bundle `main`) links `en-US` alone as `language is-active`. Observed on all 30 docs.fp.o fixtures: 68 links each.
+- **Scope limit.** docs.fp.o's production build; a content repo's CI build uses the UI's partial, naming no other
+  locale. Another site's UI may name its locales otherwise, or not at all.
+- **Verified against.** docs-fp-o `prod` and the fixtures (fetched 2026-10-17), 2026-10-24.
+- **Relied on by.** D67.
+- **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/a11y/ | grep -o '<a[^>]*class="language"[^>]*>' | head -3; curl -s 'https://gitlab.com/api/v4/projects/fedora%2Fdocs%2Fdocs-website%2Fdocs-fp-o/repository/files/build-scripts%2Frebuild-site.py/raw?ref=prod' | grep -n 'class="language"\|lang_switch_ui('`

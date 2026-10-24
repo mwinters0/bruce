@@ -714,10 +714,8 @@ const MOST_HOSTS: usize = 10;
 fn unchecked_meaning(reason: &str) -> Option<&'static str> {
     Some(match reason {
         "out_of_scope" => {
-            "Links to pages on a site this run checks, but outside the part of it the run was \
-             set up to check, such as the other languages a language menu links to when only one \
-             language is crawled. To check them, add a <code>[[root]]</code> for them, or widen \
-             one."
+            "Links to the site's pages in other languages, which the language menu links every \
+             page to. To check them, add a <code>[[root]]</code> for those languages."
         }
         "host_not_allowlisted" => {
             "Links to other websites, which this run was not set up to check. To check a site's \
@@ -806,8 +804,9 @@ fn unchecked(out: &mut String, d: &Digest) {
     out.push_str(
         "<p>Links this run did not check, grouped by why. They are not counted as broken, as \
          the run does not know whether they work; a link it knows cannot work is listed as \
-         broken instead. A run checks the pages under the roots named at the top, and links \
-         to other websites only when its <code>allowlist</code> names them.</p>\n",
+         broken instead. A run reads the pages under the roots named at the top, checks the \
+         links to the rest of their websites but their other languages, and checks links to \
+         other websites only when its <code>allowlist</code> names them.</p>\n",
     );
     let mut groups: HashMap<&str, Vec<Row>> = HashMap::new();
     for row in rows(&d.unchecked_groups) {

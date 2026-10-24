@@ -48,6 +48,13 @@ class Playbook(unittest.TestCase):
         self.assertEqual(pb["urls"]["html_extension_style"], "indexify")
         self.assertEqual(pb["site"]["start_page"], "a::index.adoc")
 
+    def test_production_s_language_menu_is_the_whole_build_s_alone(self) -> None:
+        args = ([Path("/r/a")], "a::index.adoc", Path("/u.zip"), Path("/o"), Path("/c"))
+        self.assertNotIn("supplemental_files", json.loads(e2e.playbook(*args))["ui"])
+        files = json.loads(e2e.playbook(*args, languages=True))["ui"]["supplemental_files"]
+        self.assertEqual(files, [{"path": "partials/page-languages.hbs", "contents": e2e.LANGUAGES}])
+        self.assertIn('class="language" href="{{siteRootPath}}/../fr{{page.url}}"', e2e.LANGUAGES)
+
     def test_it_sets_no_site_url_so_a_partial_build_has_none(self) -> None:
         pb = json.loads(e2e.playbook([Path("/r/a")], "a::index.adoc", Path("/u.zip"), Path("/o"), Path("/c")))
         self.assertNotIn("url", pb["site"])

@@ -17,7 +17,9 @@ Builds, all with `CI=true` as Forgejo Actions sets it:
 - `runs/e2e/whole/`: all three components, `site.url`
   `http://127.0.0.1:<--port>/en-US` as production's is `/en-US`, so it has a
   sitemap, canonical links and the page-alias's redirect page, and its
-  footer and language links are production's, rooted at `/en-US/`. Its pages
+  footer and language links are production's, rooted at `/en-US/`, its
+  language menu naming a second locale, `fr`, which is never served, as
+  production's build names every locale (`LANGUAGES`). Its pages
   carry the edit link Antora makes from the hosted `origin`, as the pages of
   docs.fedoraproject.org do, so `antora`'s Resolve can find a page by its
   source path. A static server serves this directory under `/en-US/`.
@@ -100,6 +102,16 @@ SAVED = {
         "ops/admin/partitions/index.html",
     ],
 }
+#: The language menu production's build writes over the UI's
+#: (`docs/design/site-invariants.md`, "I25"), for `en-US` and one other locale.
+LANGUAGES = """<div class="page-languages">
+<button class="languages-menu-toggle" title="Show other languages of the site">en-US</button>
+<div class="languages-menu">
+<a class="language" href="{{siteRootPath}}/../en-US{{page.url}}">en-US</a>
+<a class="language" href="{{siteRootPath}}/../fr{{page.url}}">fr</a>
+</div>
+</div>
+"""
 PAGES = FIXTURES / "pages"
 #: The digest's HTML over the whole site's crawl, as `normalise_digest` leaves it.
 GOLDEN = FIXTURES / "digest.html"
@@ -180,12 +192,15 @@ def materialise(content: Path, repos: Path) -> dict[str, Path]:
     return made
 
 
-def playbook(repos: Sequence[Path], start: str, ui: Path, output: Path, cache: Path) -> str:
+def playbook(
+    repos: Sequence[Path], start: str, ui: Path, output: Path, cache: Path, languages: bool = False,
+) -> str:
     """An Antora playbook as YAML (JSON is YAML, so paths are quoted for free).
 
     `branches: HEAD` with the default worktree setting builds the repository's
     working tree, so an edit needs no commit. No `site.url`: the whole build
-    gets it from `--url`."""
+    gets it from `--url`. With `languages`, the UI's language menu is
+    `LANGUAGES`, as production's is; a content repo's CI build keeps the UI's."""
     doc = {
         "site": {"title": "Bruce fixture site", "start_page": start},
         "content": {"sources": [{"url": str(r), "branches": "HEAD"} for r in repos]},
@@ -194,17 +209,19 @@ def playbook(repos: Sequence[Path], start: str, ui: Path, output: Path, cache: P
         "output": {"clean": True, "dir": str(output)},
         "runtime": {"fetch": False, "cache_dir": str(cache)},
     }
+    if languages:
+        doc["ui"]["supplemental_files"] = [{"path": "partials/page-languages.hbs", "contents": LANGUAGES}]
     return json.dumps(doc, indent=1) + "\n"
 
 
 def build(
     antora: Path, name: str, repos: Sequence[Path], start: str, ui: Path, out: Path,
-    url: str | None = None,
+    url: str | None = None, languages: bool = False,
 ) -> Path:
     """Build one site into `out/<name>/`; returns that directory."""
     site = out / name
     pb = out / f"{name}.yml"
-    pb.write_text(playbook(repos, start, ui, site, out / "cache"))
+    pb.write_text(playbook(repos, start, ui, site, out / "cache", languages))
     cmd: list[str | Path] = [antora]
     if url:
         cmd += ["--url", url]
@@ -511,7 +528,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         repos = materialise(FIXTURES / "content", OUT / "repos")
         whole = build(
             antora, "whole", [repos[c] for c in COMPONENTS], "guide::index.adoc", ui, OUT,
-            f"http://127.0.0.1:{args.port}{SITE_PATH}",
+            f"http://127.0.0.1:{args.port}{SITE_PATH}", languages=True,
         )
         run(["git", "remote", "remove", "origin"], repos[PARTIAL], GIT_ENV)
         partial = build(antora, "partial", [repos[PARTIAL]], f"{PARTIAL}::index.adoc", ui, OUT)

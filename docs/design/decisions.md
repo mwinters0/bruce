@@ -11,7 +11,7 @@ frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' 
 **Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
 phase index.
 
-<!-- decision-watermark: D66 -->
+<!-- decision-watermark: D67 -->
 
 ## Scope and modes
 
@@ -24,16 +24,23 @@ Reopens: a published full-site build artifact. Code: `cli::check_dir`, `fetch::r
 
 ### D3 Allowlisted external hosts are checked one hop deep and never crawled
 An allowlisted target an anchor link names first gets a full GET, so its fragment can be checked; any other kind
-of link gets a HEAD (KD4). A link to any other host is stored as `unchecked` with no request, keeping the link graph whole. Rejected: crawling allowlisted
+of link gets a HEAD (KD4), and so does a URL on a root's host in no root's scope and no other locale (D10). A link to any other host is stored as `unchecked` with no request, keeping the link graph whole. Rejected: crawling allowlisted
 hosts, which would make them roots by another name (D5 holds roots).
 
 ### D10 Default scope: en-US, every fedora version; locales are a root that is off by default
 Frozen f26–f43 pages are cheap and current pages link into them, so their anchors must be known. Translated
-heading ids can break fragments, but the translation team owns that (I9). A URL on a root's host in no root's
-scope, unless allowlisted, is `unchecked`, reason `out_of_scope`, with no request. Rejected: latest-only, which
-leaves inbound links to frozen versions unverifiable; such a URL one hop deep, the language switcher's 67 other
-locales costing 67 requests a page (`grep -o 'class="language" href' fixtures/docs-fp-o/en-US/a11y/index.html`,
-less its own). Code: `crawl::frontier::Frontier::plan`.
+heading ids can break fragments, but the translation team owns that (I9). A URL on a root's host in no root's scope is
+asked as an allowlisted URL is (D3, `--externals` included, D22), unless it is another locale's page
+(D67), which is `unchecked`, reason `out_of_scope`, with no request (maintainer, 2026-10-24: P8's spec, "A link that cannot work is broken"). Why: such a link can be broken, `https:/kubernetes.io` resolving to a 404 on docs.fp.o; on en-US's 8.1 crawl 12 URLs are asked and 154,569 left unasked.
+Rejected: latest-only, which leaves inbound links to frozen versions unverifiable; another locale's page one hop deep, 67 requests a page (`grep -o 'class="language" href' fixtures/docs-fp-o/en-US/a11y/index.html`, less its own); every such URL unasked, which hid three broken ones on en-US.
+Code: `crawl::frontier::Frontier::plan`. Evidence: `crawl::tests::an_out_of_scope_url_is_asked_unless_another_locales_page`.
+
+### D67 Another locale is a prefix the roots' pages' language menus name, and a URL no locale covers yet waits for the last page
+The `antora` profile reads a page's menu (`a.language`, I25), a locale being the path where a menu link leaves the page's URL: `/ar/a11y/` on `/en-US/a11y/` gives `/ar/`. A root's page teaches the frontier its locales before its links are planned; an out-of-scope URL on a root's host that none covers yet is claimed and judged once every page is read, again while a hop's landing page names more.
+Why: the locales only grow, so a URL covered when met stays covered, and judging the rest last makes no verdict depend on which page was read first, which comparing two runs needs.
+Rejected: locales as config globs, one more list to keep as locales are added (P8's spec); judging every URL when met, which a page with no menu read before one with it turns into a request; every such URL waiting, 154,569 on en-US held to the end.
+Reopens: a site naming its locales otherwise, as `hreflang` alternates do; a menu naming some locales on some pages only (docs.fp.o's is one list, I25).
+Code: `profile::antora::other_locale`, `crawl::frontier::Frontier::judge_outside`. Evidence: `profile::antora::tests::a_locale_is_where_a_menu_link_departs_from_the_page`, `crawl::frontier::tests::a_waiting_url_is_judged_by_the_locales_learned_since`, `crawl::baseline::tests::an_out_of_scope_url_is_answered_as_an_external_unless_another_locales`.
 
 ### D13 Every reference kind is extracted, each target fetched once per run
 `<a>`, `<area>`, `<img>`/`srcset`, `<link>` (canonical included), `<script>`, `<iframe>`, media
