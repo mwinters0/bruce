@@ -277,6 +277,24 @@ alone; a link to a staging or internal one then shows as broken or an error,
 which is what it is to a reader. Rejected: the twenty hosts most linked,
 named one by one, a list gone stale as hosts come and go.
 
+## robots.txt is read per origin
+
+Settled 2026-10-24 (maintainer), reviewing 8.13's call. **A robots.txt
+verdict is an origin's**, its scheme, host and port, as RFC 9309 section 2.3
+scopes the file; pace, concurrency and D8's switch stay the name's. A name
+silent on one origin then fails only that origin's links, whichever link a
+crawl asked first. **A redirect that gets no response fails the asking
+origin's links when the silent hop is on its name**, where its links would
+redirect too, and leaves them `robots_unavailable` when it is on another
+name, a CDN's silence saying nothing of the pages. **A chain ending at another
+origin's own `/robots.txt` reads that origin's file**, found, absent or
+silent, so `http` and `https` cannot disagree by a flicker between two
+requests. **The slowest `Crawl-delay` among a name's origins read paces it**,
+as D18's slower rate wins, a root's `per_second` still beating each.
+Rejected: the name's first hop alone, or any hop on it, each leaving a verdict
+to the order a crawl asked a name's origins in; a pace per origin, asking one
+server at twice the rate it set.
+
 ## Where it lives
 
 Settled 2026-10-23 (maintainer), on the concept map's layering (D39):
@@ -315,7 +333,8 @@ Chrome spot check being the maintainer's to request meanwhile.
 **8.6's review found 8.4.1 to 8.4.4 and 8.10 to 8.13** (2026-10-24), and
 **resumes on 8.14's second en-US crawl**, made after all of them, which 8.8
 then compares with 8.1's, its notes telling the rows they reclassify or
-newly check from new breakage. The checklist lists 8.6 after them.
+newly check from new breakage. **8.15**, from the review of 8.13's call
+(2026-10-24), lands before 8.14 too. The checklist lists 8.6 after them.
 
 ## Facts the grilling found
 

@@ -279,9 +279,9 @@ impl Fetcher for HttpFetcher {
     /// is fetched the first time any URL of a host that reads it (`robots`) is asked about. RFC
     /// 9309 decides what its answer means: a 4xx allows everything; a 5xx, a
     /// 429 that outlasts the retries or redirects that lead nowhere make the
-    /// host [`Access::Unavailable`] for the run. A first request that gets no
-    /// response at all is the host's [`Access::Failed`], its failure settling
-    /// each of the host's targets (D8, D16).
+    /// host [`Access::Unavailable`] for the run. A request on the host's own
+    /// name that gets no response at all is the host's [`Access::Failed`], its
+    /// failure settling each of the host's targets (D8, D16).
     async fn access(&self, url: &Url) -> Access {
         self.hosts.host(url).access(url, self.robots_txt(url)).await
     }

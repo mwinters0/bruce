@@ -333,13 +333,13 @@ parsed in SQL; a JSON shape carrying `stats`' totals, `unlisted`'s bare roots or
 consumer needs one, a script reading `link_verdicts` or `report_roots` meanwhile. Code: `report`, `cli::db`.
 
 ### D8 Rate limits, concurrency and robots.txt are per host; only a root's host may skip robots.txt
-Defaults in config (D40), with per-host settings in `[host]`. Back off on 429/503 and honour `Retry-After`. robots.txt is
-always honoured for external hosts and switchable only for a host a root starts on, refused at load otherwise. Every run
-refetches every page (I3). A host's robots.txt follows RFC 9309: a 4xx allows all; a 5xx, a 429 outlasting the retries
-(which says nothing of the file) or redirects leading nowhere close the host for the run; no response on the host's own name
-is each of its targets' failure (D16). Rejected: one global rate, which throttles the root to the slowest host's courtesy;
-RFC 9309 closing a silent host, which hid a dead or internal one's links as `unchecked`; `robots` on a root, where two roots
-on one host could disagree and a host an `include` reaches had no setting. Code: `fetch::http::host`. Evidence: its tests.
+Defaults in config (D40), per-host settings in `[host]`. Back off on 429/503, honouring `Retry-After`. robots.txt is always
+honoured for external hosts and switchable only for a host a root starts on, refused at load otherwise. Every run refetches
+every page (I3). A host's robots.txt follows RFC 9309: a 4xx allows all; a 5xx, a 429 outlasting the retries (no word on the
+file) or redirects leading nowhere close the host for the run; no response on its own name fails its targets for the run
+(D16). Rejected: one global rate, throttling the root to the slowest host's courtesy; RFC 9309 closing a silent host, hiding
+a dead one's links as `unchecked`; asking a failed host again per link, a timeout a link where `error` fails no CI; `robots`
+on a root, two roots on a host disagreeing and an `include`'s host unset. Code: `fetch::http::host`. Evidence: its tests.
 
 ### D61 Live slots are shared among the hosts with work, and a build's reads have a budget of their own
 Each host holds at most the 64 slots divided by the hosts with a target waiting or running, taken in turn,
