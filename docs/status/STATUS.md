@@ -162,10 +162,3 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-- **A page with only errored links is a row of the pages section** (8.4.5).
-  Finding 9 counts a row's `error` links in its red, so a page whose only
-  findings are errors has red links to show; it joins the section and the JSON's
-  `pages`, and its errors join the HTML drill-down, rather than a summary
-  counting links no row lists. Reconsidering it: the summary's "broken links"
-  then counts one more kind than the figures' total, and the 35 error-only
-  pages on 8.14's database go back to the errors section alone.

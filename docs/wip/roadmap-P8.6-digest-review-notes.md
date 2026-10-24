@@ -179,7 +179,8 @@ Maintainer, 2026-10-24, on 8.14's digest after 8.19.1:
   broken links, ● 2 missing fragments (183 issues total)", the dots red and
   amber, a level with no links left out rather than reported as 0. Asked, the
   maintainer counted a row's `error` links in its red, as "Finding 8" makes
-  them, and dropped the rest of the old parenthetical ("of 644 links on the
+  them, a page whose only findings are errors so becoming a row (35 on 8.14's
+  database, the option chosen saying so), and dropped the rest of the old parenthetical ("of 644 links on the
   page", "on 15 of its 44 pages").
 - **The rows rank by their red, then their amber.**
 - **"Redirected links" renders columns so wide** that a phone scrolls across

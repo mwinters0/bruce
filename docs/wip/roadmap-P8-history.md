@@ -131,7 +131,8 @@ The JSON keeps its own order.
 **5 and 6 count and rank by severity** (maintainer, 2026-10-24, on 8.14's
 digest; 8.6's notes, "Finding 9"): a row holds a page's or a repo's red links
 (`broken_url` and `error`) and amber ones (`broken_anchor`), "Severity is
-marked", and ranks by its red, then its amber. In the HTML its summary reads
+marked", and ranks by its red, then its amber; a page whose only findings are
+errors is a row too, its errors in its drill-down. In the HTML its summary reads
 "● 181 broken links, ● 2 missing fragments (183 issues total)", the dots
 red and amber, a level with no links left out with its dot, and nothing more:
 not the links on the page, nor a repo's pages.
