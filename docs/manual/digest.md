@@ -49,21 +49,31 @@ order:
 
 1. **The header**: the roots, the run's id, start, finish and duration, the
    `bruce` that crawled it, and the run compared with.
-2. **Figures**: the pages and links checked, and the broken URLs, broken anchors
-   and errors among them.
-3. **Fix once, fix many**: the broken targets that more than one link names,
-   the most links first, each with the source of its page, the repo that would
-   restore a missing anchor. The targets one link names are not listed; their
-   links are in the next section.
-4. **Pages by broken links**: each page that holds one, the most first, as a
-   drill-down of its broken links, with its live page and its source. A page
-   with an unresolved `xref:` that looks like a typo has a Hint column,
-   the nearest page ID.
-5. **By repo**: the repos whose pages hold broken links, the most first, each
-   with links to its pages in section 4.
-6. **Errors**, apart from the breakage.
-7. **Housekeeping**, closed: the redirected links, the sitemap entries no page
-   was fetched for, the orphans, the unlisted pages and the unchecked links.
+2. **Figures**: the pages checked and the links on them, and among those
+   links the ones to a broken URL, to a missing fragment, and that errored.
+   The first two of those are the broken links.
+3. **Broken targets, by the links to them** ("fix once, fix many"): the
+   targets that more than one broken link names, from whatever pages, the
+   most links first, each with the pages linking to it and the target's own
+   source, where restoring a missing fragment mends every link in its row.
+   The targets one link names are not listed; their links are in the next
+   section.
+4. **Pages, by the broken links on them**: each page that holds one, the
+   most first, as a drill-down of its broken links, with its live page and
+   its source. A link is counted on the page it is written on. Its *Written
+   as* is the link as the page has it, *Resolves to* the URL it names, *Kind*
+   the element holding it (`anchor` is an `<a href>`, as [`bruce report`](report.md)'s `--kind` names it),
+   and *Problem* and *Status* what the target answered: `URL broken` or
+   `fragment missing`. A page with an unresolved `xref:` that looks like a
+   typo has a Hint column, the nearest page ID.
+5. **Repos, by the broken links on their pages**: the repos whose pages hold
+   broken links, the most first, each with links to its pages in section 4.
+   A link counts against the repo of the page it is written on, which may not
+   be the repo section 3 names for its target.
+6. **Links that errored**, apart from the breakage.
+7. **Housekeeping**, closed: the redirected links by where their targets
+   land, the sitemap entries no page was fetched for, the orphans, the
+   unlisted pages and the unchecked links.
 
 The JSON holds every row the HTML lists and the targets it leaves out, and
 the by-component counts it has no section for.

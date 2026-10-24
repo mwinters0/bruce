@@ -124,6 +124,20 @@ fn counted(n: i64, noun: &str) -> String {
     format!("{} {noun}{}", num(n), if n == 1 { "" } else { "s" })
 }
 
+/// A summary's broken links by what their targets answered, and its errors,
+/// each counted as links, in the words of the figures and the Problem column.
+fn broken_counts(url: i64, fragment: i64, error: i64) -> String {
+    let mut out = format!(
+        "{} to a broken URL, {} to a missing fragment",
+        num(url),
+        num(fragment)
+    );
+    if error > 0 {
+        w!(out, ", {} errored", num(error));
+    }
+    out
+}
+
 /// `url` without its scheme, to show.
 fn short(url: &str) -> &str {
     url.strip_prefix("https://")
@@ -182,12 +196,13 @@ fn duration(seconds: i64) -> String {
     }
 }
 
-/// What a link's outcome and reason say, in words.
+/// What a link's outcome and reason say, in words: a missing fragment is a
+/// fragment, `anchor` being the Kind column's `<a href>` as `--kind` names it.
 fn problem(outcome: Option<&str>, reason: Option<&str>) -> String {
     let mut parts: Vec<String> = Vec::new();
     match outcome {
-        Some("broken_anchor") => parts.push("anchor missing".to_owned()),
-        Some("broken_url") => parts.push("broken".to_owned()),
+        Some("broken_anchor") => parts.push("fragment missing".to_owned()),
+        Some("broken_url") => parts.push("URL broken".to_owned()),
         Some(other) => parts.push(other.replace('_', " ")),
         None => {}
     }
@@ -279,7 +294,7 @@ fn head(out: &mut String, d: &Digest) {
         );
     }
     out.push_str(
-        "<nav><a href=\"#figures\">Figures</a> <a href=\"#fix-once\">Fix once</a> \
+        "<nav><a href=\"#figures\">Figures</a> <a href=\"#fix-once\">Targets</a> \
          <a href=\"#pages\">Pages</a> <a href=\"#repos\">Repos</a> \
          <a href=\"#errors\">Errors</a> <a href=\"#housekeeping\">Housekeeping</a></nav>\n\
          </div></header>\n",
@@ -291,10 +306,10 @@ fn figures(out: &mut String, d: &Digest) {
     out.push_str("<section id=\"figures\">\n<h2>Figures</h2>\n<div class=\"figures\">\n");
     for (label, n, class) in [
         ("Pages checked", t.pages, ""),
-        ("Links checked", t.links, ""),
-        ("Broken URLs", t.broken_url, " bad"),
-        ("Broken anchors", t.broken_anchor, " bad"),
-        ("Errors", t.error, " warn"),
+        ("Links on them", t.links, ""),
+        ("Links to a broken URL", t.broken_url, " bad"),
+        ("Links to a missing fragment", t.broken_anchor, " bad"),
+        ("Links that errored", t.error, " warn"),
     ] {
         w!(
             out,
@@ -304,17 +319,21 @@ fn figures(out: &mut String, d: &Digest) {
     }
     w!(
         out,
-        "</div>\n<p class=\"muted\">{} links were not checked; the housekeeping says why. An \
-         error is a link that could not be asked, not necessarily a broken one.</p>\n</section>\n",
+        "</div>\n<p class=\"muted\">Every figure but the first counts links on the pages \
+         checked. The {} broken links are those to a broken URL and those to a missing fragment. \
+         {} links were not checked; the housekeeping says why. A link that errored could not be \
+         asked, which does not make it broken.</p>\n</section>\n",
+        num(t.broken_url + t.broken_anchor),
         num(t.unchecked)
     );
 }
 
 fn fix_once(out: &mut String, d: &Digest) {
     out.push_str(
-        "<section id=\"fix-once\">\n<h2>Fix once, fix many</h2>\n<p>The broken targets that more \
-         than one link names, the most links first. Restoring one in the repo of its page \
-         removes every link in its row.</p>\n",
+        "<section id=\"fix-once\">\n<h2>Broken targets, by the links to them</h2>\n<p>Fix once, \
+         fix many: each row is a target that more than one broken link names, from whatever \
+         pages, the most links first. Restoring the target in its own source, the last column, \
+         mends every link in its row.</p>\n",
     );
     let (many, single): (Vec<Row>, Vec<Row>) =
         rows(&d.broken_targets).partition(|r| r.int("links") > 1);
@@ -350,12 +369,12 @@ fn fix_once(out: &mut String, d: &Digest) {
         table(
             out,
             &[
-                ("Links", true),
-                ("Pages", true),
-                ("Target", false),
+                ("Links to it", true),
+                ("Linking pages", true),
+                ("Broken target", false),
                 ("Problem", false),
                 ("Status", true),
-                ("Fix in", false),
+                ("Target's source", false),
             ],
             &body,
         );
@@ -363,7 +382,8 @@ fn fix_once(out: &mut String, d: &Digest) {
     if !single.is_empty() {
         w!(
             out,
-            "<p>Targets named by one link each: {}. They are in the pages below.</p>\n",
+            "<p>Targets named by one link each: {}. Each is in the drill-down of the page its \
+             link is on, below.</p>\n",
             num(single.len() as i64)
         );
     }
@@ -375,8 +395,12 @@ type Ids = HashMap<String, String>;
 
 fn pages(out: &mut String, d: &Digest) -> Ids {
     out.push_str(
-        "<section id=\"pages\">\n<h2>Pages by broken links</h2>\n<p>The pages holding the most \
-         broken links first. Open one for its links.</p>\n",
+        "<section id=\"pages\">\n<h2>Pages, by the broken links on them</h2>\n<p>The pages \
+         holding the most broken links first, a link counted on the page it is written on. Open \
+         one for its links: <i>Written as</i> is the link in the page, <i>Resolves to</i> the \
+         URL it names, <i>Kind</i> the element holding it, <code>anchor</code> being an \
+         <code>&lt;a href&gt;</code>, and <i>Problem</i> and <i>Status</i> what the target \
+         answered.</p>\n",
     );
     let mut links: HashMap<&str, Vec<Row>> = HashMap::new();
     for row in rows(&d.broken) {
@@ -393,19 +417,16 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
         let url = p.text("page").unwrap_or("");
         let id = format!("p{}", i + 1);
         ids.insert(url.to_owned(), id.clone());
-        let (u, an, er) = (p.int("broken_url"), p.int("broken_anchor"), p.int("error"));
-        let mut counts = format!("{}, {}", counted(u, "URL"), counted(an, "fragment"));
-        if er > 0 {
-            w!(counts, ", {} error", num(er));
-        }
+        let (u, an) = (p.int("broken_url"), p.int("broken_anchor"));
         w!(
             out,
             "<details id=\"{id}\">\n<summary><span class=\"rank\">{}</span><span class=\"ttl\">{}</span>\
-             <span class=\"cnt\"><b>{}</b> broken <small>({counts}; {} links)</small></span></summary>\n",
+             <span class=\"cnt\"><b>{}</b> <small>({}; of {} on the page)</small></span></summary>\n",
             i + 1,
             esc(p.text("title").unwrap_or_else(|| short(url))),
-            num(u + an),
-            num(p.int("links"))
+            counted(u + an, "broken link"),
+            broken_counts(u, an, p.int("error")),
+            counted(p.int("links"), "link")
         );
         w!(
             out,
@@ -441,8 +462,8 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
             })
             .collect();
         let mut columns = vec![
-            ("Link", false),
-            ("Target", false),
+            ("Written as", false),
+            ("Resolves to", false),
             ("Fragment", false),
             ("Kind", false),
             ("Problem", false),
@@ -460,8 +481,10 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
 
 fn repos(out: &mut String, d: &Digest, ids: &Ids) {
     out.push_str(
-        "<section id=\"repos\">\n<h2>By repo</h2>\n<p>The repos whose pages hold the most broken \
-         links first. Open one for its pages.</p>\n",
+        "<section id=\"repos\">\n<h2>Repos, by the broken links on their pages</h2>\n<p>The \
+         repos whose pages hold the most broken links first, a link counted against the repo of \
+         the page it is written on, which may not be the repo of its target. Open one for its \
+         pages.</p>\n",
     );
     let mut of_repo: HashMap<Option<&str>, Vec<(&str, &str)>> = HashMap::new();
     for p in rows(&d.pages) {
@@ -482,17 +505,14 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
             Some(repo) => a(repo, short(repo)),
             None => "<span class=\"muted\">No source recorded</span>".to_owned(),
         };
-        let (u, an, er) = (r.int("broken_url"), r.int("broken_anchor"), r.int("error"));
-        let mut counts = format!("{}, {}", counted(u, "URL"), counted(an, "fragment"));
-        if er > 0 {
-            w!(counts, ", {} error", num(er));
-        }
+        let (u, an) = (r.int("broken_url"), r.int("broken_anchor"));
         w!(
             out,
             "<details>\n<summary><span class=\"rank\">{}</span><span class=\"ttl\">{name}</span>\
-             <span class=\"cnt\"><b>{}</b> broken <small>({counts}; on {} of {} pages)</small></span></summary>\n<ul>\n",
+             <span class=\"cnt\"><b>{}</b> <small>({}; on {} of its {} pages)</small></span></summary>\n<ul>\n",
             i + 1,
-            num(u + an),
+            counted(u + an, "broken link"),
+            broken_counts(u, an, r.int("error")),
             num(r.int("broken_pages")),
             num(r.int("pages"))
         );
@@ -506,11 +526,11 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
         out.push_str("</ul>\n</details>\n");
     }
     if d.by_repo.rows.len() == clean {
-        out.push_str("<p>No repo holds a broken link.</p>\n");
+        out.push_str("<p>No repo's pages hold a broken link.</p>\n");
     } else if clean > 0 {
         w!(
             out,
-            "<p class=\"muted\">{} more repos hold no broken link.</p>\n",
+            "<p class=\"muted\">{} more repos' pages hold no broken link.</p>\n",
             num(clean as i64)
         );
     }
@@ -519,8 +539,9 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
 
 fn errors(out: &mut String, d: &Digest) {
     out.push_str(
-        "<section id=\"errors\">\n<h2>Errors</h2>\n<p>Links that could not be asked, apart from \
-         the broken ones: the target did not answer, which does not make it wrong.</p>\n",
+        "<section id=\"errors\">\n<h2>Links that errored</h2>\n<p>Links whose target could not \
+         be asked, apart from the broken ones: the target did not answer, which does not make it \
+         wrong.</p>\n",
     );
     if d.errors.rows.is_empty() {
         out.push_str("<p>No link errored.</p>\n");
@@ -543,10 +564,10 @@ fn errors(out: &mut String, d: &Digest) {
         table(
             out,
             &[
-                ("Page", false),
-                ("Source", false),
-                ("Link", false),
-                ("Target", false),
+                ("On page", false),
+                ("Page's source", false),
+                ("Written as", false),
+                ("Resolves to", false),
                 ("Kind", false),
                 ("Reason", false),
                 ("Status", true),
@@ -576,7 +597,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
     let links = |t: &Table| format!("{} links", num(rows(t).map(|r| r.int("links")).sum()));
     let entries = |t: &Table| num(t.rows.len() as i64);
     fold(out, "Redirected links", &links(&d.redirects), |out| {
-        out.push_str("<p>The links that reach their page through a redirect, by landing URL: update them to the landing.</p>\n");
+        out.push_str("<p>The links whose target redirects, by where it lands, the most links first: update them to the landing. <i>Redirecting URLs</i> are the targets they name, and <i>Linking pages</i> the pages they are written on.</p>\n");
         let body: Vec<Vec<String>> = rows(&d.redirects)
             .map(|r| {
                 let landing = r.text("landing").unwrap_or("");
@@ -594,10 +615,10 @@ fn housekeeping(out: &mut String, d: &Digest) {
             out,
             &[
                 ("Landing", false),
-                ("Links", true),
-                ("URLs", true),
+                ("Links to it", true),
+                ("Redirecting URLs", true),
                 ("First hops", false),
-                ("On pages", false),
+                ("Linking pages", false),
             ],
             &body,
         );
@@ -658,7 +679,11 @@ fn housekeeping(out: &mut String, d: &Digest) {
             .collect();
         table(
             out,
-            &[("Reason", false), ("Links", true), ("Targets", true)],
+            &[
+                ("Reason", false),
+                ("Links", true),
+                ("Targets they name", true),
+            ],
             &body,
         );
     });

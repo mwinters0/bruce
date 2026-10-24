@@ -73,10 +73,10 @@ fn the_figures_are_the_totals() {
     let figures = section(&html(), "figures").to_owned();
     for (n, label) in [
         (5, "Pages checked"),
-        (10, "Links checked"),
-        (3, "Broken URLs"),
-        (1, "Broken anchors"),
-        (1, "Errors"),
+        (10, "Links on them"),
+        (3, "Links to a broken URL"),
+        (1, "Links to a missing fragment"),
+        (1, "Links that errored"),
     ] {
         assert!(
             figures.contains(&format!(
@@ -85,6 +85,7 @@ fn the_figures_are_the_totals() {
             "{label}"
         );
     }
+    assert!(figures.contains("The 4 broken links are those to a broken URL"));
 }
 
 #[test]
@@ -109,7 +110,7 @@ fn pages_follow_their_rank_each_with_its_links_and_sources() {
     assert!(pages[one..two].contains("<code>1&gt;2#nope</code>"));
     assert!(pages[one..two].contains("href=\"https://forge.test/r/one/1.adoc\""));
     assert!(pages[two..].contains("<code>2&gt;10#</code>"));
-    assert!(pages[one..two].contains("<b>3</b> broken"));
+    assert!(pages[one..two].contains("<b>3 broken links</b>"));
 }
 
 #[test]
@@ -123,7 +124,7 @@ fn a_repo_links_to_its_pages_rows() {
     assert!(repos.contains("<a href=\"#p1\">Page 1</a>"));
     assert!(repos.contains("<a href=\"#p2\">Page 2</a>"));
     // The pages with no source are the row with no repo, and hold no breakage.
-    assert!(repos.contains("more repos hold no broken link"));
+    assert!(repos.contains("more repos' pages hold no broken link"));
 }
 
 #[test]
@@ -195,7 +196,7 @@ fn a_run_with_nothing_to_report_says_so_in_each_section() {
     for said in [
         "No broken target is named by more than one link.",
         "No page holds a broken link.",
-        "No repo holds a broken link.",
+        "No repo's pages hold a broken link.",
         "No link errored.",
     ] {
         assert!(html.contains(said), "{said}");
@@ -246,14 +247,32 @@ fn rows_of(t: &crate::report::table::Table, column: &str) -> i64 {
 }
 
 #[test]
-fn a_summary_names_its_counts_without_the_word_anchor() {
-    // `anchor` is a link's element to a reader of the page's markup; the
-    // table's column and these counts say fragment.
+fn anchor_names_only_the_element_and_every_count_says_which_way_it_points() {
+    // `anchor` is the Kind column's `<a href>`; an absent fragment is a
+    // fragment everywhere, and a count of links says to what or on what.
     let html = html();
-    assert!(html.contains("(1 URL, 0 fragments;"));
-    assert_eq!(super::counted(2, "URL"), "2 URLs");
-    assert_eq!(super::counted(1_000, "fragment"), "1,000 fragments");
-    assert!(!html.contains(" anchor;"));
+    assert!(html.contains(
+        "<b>1 broken link</b> <small>(1 to a broken URL, 0 to a missing fragment; of 3 links on the page)"
+    ));
+    assert!(html.contains("<td>fragment missing</td>"));
+    assert!(html.contains("<td>URL broken</td>"));
+    assert!(!html.contains("anchor missing") && !html.contains("Broken anchors"));
+    assert_eq!(super::counted(1, "broken link"), "1 broken link");
+    assert_eq!(super::counted(1_000, "link"), "1,000 links");
+    assert_eq!(
+        super::broken_counts(1, 2, 3),
+        "1 to a broken URL, 2 to a missing fragment, 3 errored"
+    );
+    for header in [
+        "Links to it",
+        "Linking pages",
+        "Target's source",
+        "Written as",
+        "Resolves to",
+        "On page",
+    ] {
+        assert!(html.contains(&format!(">{header}</th>")), "{header}");
+    }
 }
 
 #[test]

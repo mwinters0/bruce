@@ -76,8 +76,8 @@ details[open] > summary::before { content: "\25be"; }
 details:target { border-color: var(--accent); }
 summary .rank { min-width: 2.2rem; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
 summary .ttl { flex: 1 1 18rem; min-width: 0; font-weight: 550; overflow-wrap: anywhere; }
-summary .cnt { font-variant-numeric: tabular-nums; white-space: nowrap; }
-summary .cnt b { color: var(--bad); }
+summary .cnt { font-variant-numeric: tabular-nums; }
+summary .cnt b { color: var(--bad); white-space: nowrap; }
 .house > summary { font-weight: 600; }
 footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(--muted); }
 @media (max-width: 40rem) {
@@ -117,129 +117,129 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <dt>Crawled by</dt><dd>bruce <span class="version">V</span></dd>
 <dt>Compared with</dt><dd>no earlier run</dd>
 </dl>
-<nav><a href="#figures">Figures</a> <a href="#fix-once">Fix once</a> <a href="#pages">Pages</a> <a href="#repos">Repos</a> <a href="#errors">Errors</a> <a href="#housekeeping">Housekeeping</a></nav>
+<nav><a href="#figures">Figures</a> <a href="#fix-once">Targets</a> <a href="#pages">Pages</a> <a href="#repos">Repos</a> <a href="#errors">Errors</a> <a href="#housekeeping">Housekeeping</a></nav>
 </div></header>
 <main>
 <section id="figures">
 <h2>Figures</h2>
 <div class="figures">
 <div class="fig"><span class="n">8</span><span class="l">Pages checked</span></div>
-<div class="fig"><span class="n">294</span><span class="l">Links checked</span></div>
-<div class="fig bad"><span class="n">24</span><span class="l">Broken URLs</span></div>
-<div class="fig bad"><span class="n">0</span><span class="l">Broken anchors</span></div>
-<div class="fig warn"><span class="n">0</span><span class="l">Errors</span></div>
+<div class="fig"><span class="n">294</span><span class="l">Links on them</span></div>
+<div class="fig bad"><span class="n">24</span><span class="l">Links to a broken URL</span></div>
+<div class="fig bad"><span class="n">0</span><span class="l">Links to a missing fragment</span></div>
+<div class="fig warn"><span class="n">0</span><span class="l">Links that errored</span></div>
 </div>
-<p class="muted">81 links were not checked; the housekeeping says why. An error is a link that could not be asked, not necessarily a broken one.</p>
+<p class="muted">Every figure but the first counts links on the pages checked. The 24 broken links are those to a broken URL and those to a missing fragment. 81 links were not checked; the housekeeping says why. A link that errored could not be asked, which does not make it broken.</p>
 </section>
 <section id="fix-once">
-<h2>Fix once, fix many</h2>
-<p>The broken targets that more than one link names, the most links first. Restoring one in the repo of its page removes every link in its row.</p>
+<h2>Broken targets, by the links to them</h2>
+<p>Fix once, fix many: each row is a target that more than one broken link names, from whatever pages, the most links first. Restoring the target in its own source, the last column, mends every link in its row.</p>
 <p class="muted">Targets named by more than one link: 3, holding 24 of the 24 broken links.</p>
 <div class="scroll"><table>
-<thead><tr><th class="num">Links</th><th class="num">Pages</th><th>Target</th><th>Problem</th><th class="num">Status</th><th>Fix in</th></tr></thead>
+<thead><tr><th class="num">Links to it</th><th class="num">Linking pages</th><th>Broken target</th><th>Problem</th><th class="num">Status</th><th>Target's source</th></tr></thead>
 <tbody>
-<tr><td class="num">8</td><td class="num">8</td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>broken</td><td class="num">404</td><td><span class="muted">-</span></td></tr>
-<tr><td class="num">8</td><td class="num">8</td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>broken</td><td class="num">404</td><td><span class="muted">-</span></td></tr>
-<tr><td class="num">8</td><td class="num">8</td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>broken</td><td class="num">404</td><td><span class="muted">-</span></td></tr>
+<tr><td class="num">8</td><td class="num">8</td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>URL broken</td><td class="num">404</td><td><span class="muted">-</span></td></tr>
+<tr><td class="num">8</td><td class="num">8</td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>URL broken</td><td class="num">404</td><td><span class="muted">-</span></td></tr>
+<tr><td class="num">8</td><td class="num">8</td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>URL broken</td><td class="num">404</td><td><span class="muted">-</span></td></tr>
 </tbody></table></div>
 </section>
 <section id="pages">
-<h2>Pages by broken links</h2>
-<p>The pages holding the most broken links first. Open one for its links.</p>
+<h2>Pages, by the broken links on them</h2>
+<p>The pages holding the most broken links first, a link counted on the page it is written on. Open one for its links: <i>Written as</i> is the link in the page, <i>Resolves to</i> the URL it names, <i>Kind</i> the element holding it, <code>anchor</code> being an <code>&lt;a href&gt;</code>, and <i>Problem</i> and <i>Status</i> what the target answered.</p>
 <details id="p1">
-<summary><span class="rank">1</span><span class="ttl">Install Guide :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 36 links)</small></span></summary>
+<summary><span class="rank">1</span><span class="ttl">Install Guide :: Bruce fixture site</span><span class="cnt"><b>3 broken links</b> <small>(3 to a broken URL, 0 to a missing fragment; of 36 links on the page)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/guide/1.0/">127.0.0.1:8099/en-US/guide/1.0/</a> · Source <a href="https://github.com/bruce-fixture/guide/edit/main/modules/ROOT/pages/index.adoc">modules/ROOT/pages/index.adoc</a></p>
 <div class="scroll"><table>
-<thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
+<thead><tr><th>Written as</th><th>Resolves to</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
 <tbody>
-<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
 </tbody></table></div>
 </details>
 <details id="p2">
-<summary><span class="rank">2</span><span class="ttl">Installing :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 39 links)</small></span></summary>
+<summary><span class="rank">2</span><span class="ttl">Installing :: Bruce fixture site</span><span class="cnt"><b>3 broken links</b> <small>(3 to a broken URL, 0 to a missing fragment; of 39 links on the page)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/guide/1.0/install/">127.0.0.1:8099/en-US/guide/1.0/install/</a> · Source <a href="https://github.com/bruce-fixture/guide/edit/main/modules/ROOT/pages/install.adoc">modules/ROOT/pages/install.adoc</a></p>
 <div class="scroll"><table>
-<thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
+<thead><tr><th>Written as</th><th>Resolves to</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
 <tbody>
-<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
 </tbody></table></div>
 </details>
 <details id="p3">
-<summary><span class="rank">3</span><span class="ttl">Upgrading :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 37 links)</small></span></summary>
+<summary><span class="rank">3</span><span class="ttl">Upgrading :: Bruce fixture site</span><span class="cnt"><b>3 broken links</b> <small>(3 to a broken URL, 0 to a missing fragment; of 37 links on the page)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/guide/1.0/upgrade/">127.0.0.1:8099/en-US/guide/1.0/upgrade/</a> · Source <a href="https://github.com/bruce-fixture/guide/edit/main/modules/ROOT/pages/upgrade.adoc">modules/ROOT/pages/upgrade.adoc</a></p>
 <div class="scroll"><table>
-<thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
+<thead><tr><th>Written as</th><th>Resolves to</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
 <tbody>
-<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
 </tbody></table></div>
 </details>
 <details id="p4">
-<summary><span class="rank">4</span><span class="ttl">Operations :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 35 links)</small></span></summary>
+<summary><span class="rank">4</span><span class="ttl">Operations :: Bruce fixture site</span><span class="cnt"><b>3 broken links</b> <small>(3 to a broken URL, 0 to a missing fragment; of 35 links on the page)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/ops/">127.0.0.1:8099/en-US/ops/</a> · Source <a href="https://github.com/bruce-fixture/ops/edit/main/modules/ROOT/pages/index.adoc">modules/ROOT/pages/index.adoc</a></p>
 <div class="scroll"><table>
-<thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
+<thead><tr><th>Written as</th><th>Resolves to</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
 <tbody>
-<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
 </tbody></table></div>
 </details>
 <details id="p5">
-<summary><span class="rank">5</span><span class="ttl">Partitions :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 36 links)</small></span></summary>
+<summary><span class="rank">5</span><span class="ttl">Partitions :: Bruce fixture site</span><span class="cnt"><b>3 broken links</b> <small>(3 to a broken URL, 0 to a missing fragment; of 36 links on the page)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/ops/admin/partitions/">127.0.0.1:8099/en-US/ops/admin/partitions/</a> · Source <a href="https://github.com/bruce-fixture/ops/edit/main/modules/admin/pages/partitions.adoc">modules/admin/pages/partitions.adoc</a></p>
 <div class="scroll"><table>
-<thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
+<thead><tr><th>Written as</th><th>Resolves to</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
 <tbody>
-<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
 </tbody></table></div>
 </details>
 <details id="p6">
-<summary><span class="rank">6</span><span class="ttl">Tools :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 35 links)</small></span></summary>
+<summary><span class="rank">6</span><span class="ttl">Tools :: Bruce fixture site</span><span class="cnt"><b>3 broken links</b> <small>(3 to a broken URL, 0 to a missing fragment; of 35 links on the page)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/tools/">127.0.0.1:8099/en-US/tools/</a> · Source <a href="https://github.com/bruce-fixture/tools/edit/main/modules/ROOT/pages/index.adoc">modules/ROOT/pages/index.adoc</a></p>
 <div class="scroll"><table>
-<thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
+<thead><tr><th>Written as</th><th>Resolves to</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
 <tbody>
-<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
 </tbody></table></div>
 </details>
 <details id="p7">
-<summary><span class="rank">7</span><span class="ttl">Reference :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 36 links)</small></span></summary>
+<summary><span class="rank">7</span><span class="ttl">Reference :: Bruce fixture site</span><span class="cnt"><b>3 broken links</b> <small>(3 to a broken URL, 0 to a missing fragment; of 36 links on the page)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/tools/reference/">127.0.0.1:8099/en-US/tools/reference/</a> · Source <a href="https://github.com/bruce-fixture/tools/edit/main/modules/ROOT/pages/reference.adoc">modules/ROOT/pages/reference.adoc</a></p>
 <div class="scroll"><table>
-<thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
+<thead><tr><th>Written as</th><th>Resolves to</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
 <tbody>
-<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
 </tbody></table></div>
 </details>
 <details id="p8">
-<summary><span class="rank">8</span><span class="ttl">Using the tools :: Bruce fixture site</span><span class="cnt"><b>3</b> broken <small>(3 URLs, 0 fragments; 40 links)</small></span></summary>
+<summary><span class="rank">8</span><span class="ttl">Using the tools :: Bruce fixture site</span><span class="cnt"><b>3 broken links</b> <small>(3 to a broken URL, 0 to a missing fragment; of 40 links on the page)</small></span></summary>
 <p>Page <a href="http://127.0.0.1:8099/en-US/tools/usage/">127.0.0.1:8099/en-US/tools/usage/</a> · Source <a href="https://github.com/bruce-fixture/tools/edit/main/modules/ROOT/pages/usage.adoc">modules/ROOT/pages/usage.adoc</a></p>
 <div class="scroll"><table>
-<thead><tr><th>Link</th><th>Target</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
+<thead><tr><th>Written as</th><th>Resolves to</th><th>Fragment</th><th>Kind</th><th>Problem</th><th class="num">Status</th></tr></thead>
 <tbody>
-<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
-<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
+<tr><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>URL broken</td><td class="num">404</td></tr>
 </tbody></table></div>
 </details>
 </section>
 <section id="repos">
-<h2>By repo</h2>
-<p>The repos whose pages hold the most broken links first. Open one for its pages.</p>
+<h2>Repos, by the broken links on their pages</h2>
+<p>The repos whose pages hold the most broken links first, a link counted against the repo of the page it is written on, which may not be the repo of its target. Open one for its pages.</p>
 <details>
-<summary><span class="rank">1</span><span class="ttl"><a href="https://github.com/bruce-fixture/guide">github.com/bruce-fixture/guide</a></span><span class="cnt"><b>9</b> broken <small>(9 URLs, 0 fragments; on 3 of 3 pages)</small></span></summary>
+<summary><span class="rank">1</span><span class="ttl"><a href="https://github.com/bruce-fixture/guide">github.com/bruce-fixture/guide</a></span><span class="cnt"><b>9 broken links</b> <small>(9 to a broken URL, 0 to a missing fragment; on 3 of its 3 pages)</small></span></summary>
 <ul>
 <li><a href="#p1">Install Guide :: Bruce fixture site</a></li>
 <li><a href="#p2">Installing :: Bruce fixture site</a></li>
@@ -247,7 +247,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </ul>
 </details>
 <details>
-<summary><span class="rank">2</span><span class="ttl"><a href="https://github.com/bruce-fixture/tools">github.com/bruce-fixture/tools</a></span><span class="cnt"><b>9</b> broken <small>(9 URLs, 0 fragments; on 3 of 3 pages)</small></span></summary>
+<summary><span class="rank">2</span><span class="ttl"><a href="https://github.com/bruce-fixture/tools">github.com/bruce-fixture/tools</a></span><span class="cnt"><b>9 broken links</b> <small>(9 to a broken URL, 0 to a missing fragment; on 3 of its 3 pages)</small></span></summary>
 <ul>
 <li><a href="#p6">Tools :: Bruce fixture site</a></li>
 <li><a href="#p7">Reference :: Bruce fixture site</a></li>
@@ -255,7 +255,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </ul>
 </details>
 <details>
-<summary><span class="rank">3</span><span class="ttl"><a href="https://github.com/bruce-fixture/ops">github.com/bruce-fixture/ops</a></span><span class="cnt"><b>6</b> broken <small>(6 URLs, 0 fragments; on 2 of 2 pages)</small></span></summary>
+<summary><span class="rank">3</span><span class="ttl"><a href="https://github.com/bruce-fixture/ops">github.com/bruce-fixture/ops</a></span><span class="cnt"><b>6 broken links</b> <small>(6 to a broken URL, 0 to a missing fragment; on 2 of its 2 pages)</small></span></summary>
 <ul>
 <li><a href="#p4">Operations :: Bruce fixture site</a></li>
 <li><a href="#p5">Partitions :: Bruce fixture site</a></li>
@@ -263,8 +263,8 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </details>
 </section>
 <section id="errors">
-<h2>Errors</h2>
-<p>Links that could not be asked, apart from the broken ones: the target did not answer, which does not make it wrong.</p>
+<h2>Links that errored</h2>
+<p>Links whose target could not be asked, apart from the broken ones: the target did not answer, which does not make it wrong.</p>
 <p>No link errored.</p>
 </section>
 <section id="housekeeping">
@@ -273,7 +273,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <summary>Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links</summary>
 <details>
 <summary><span class="ttl">Redirected links</span><span class="cnt">0 links</span></summary>
-<p>The links that reach their page through a redirect, by landing URL: update them to the landing.</p>
+<p>The links whose target redirects, by where it lands, the most links first: update them to the landing. <i>Redirecting URLs</i> are the targets they name, and <i>Linking pages</i> the pages they are written on.</p>
 <p class="muted">None.</p>
 </details>
 <details>
@@ -295,7 +295,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <summary><span class="ttl">Unchecked links</span><span class="cnt">81 links</span></summary>
 <p>Links not checked, by why.</p>
 <div class="scroll"><table>
-<thead><tr><th>Reason</th><th class="num">Links</th><th class="num">Targets</th></tr></thead>
+<thead><tr><th>Reason</th><th class="num">Links</th><th class="num">Targets they name</th></tr></thead>
 <tbody>
 <tr><td>host_not_allowlisted</td><td class="num">73</td><td class="num">31</td></tr>
 <tr><td>out_of_scope</td><td class="num">8</td><td class="num">1</td></tr>

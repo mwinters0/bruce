@@ -68,8 +68,8 @@ details[open] > summary::before { content: "\25be"; }
 details:target { border-color: var(--accent); }
 summary .rank { min-width: 2.2rem; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
 summary .ttl { flex: 1 1 18rem; min-width: 0; font-weight: 550; overflow-wrap: anywhere; }
-summary .cnt { font-variant-numeric: tabular-nums; white-space: nowrap; }
-summary .cnt b { color: var(--bad); }
+summary .cnt { font-variant-numeric: tabular-nums; }
+summary .cnt b { color: var(--bad); white-space: nowrap; }
 .house > summary { font-weight: 600; }
 footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(--muted); }
 @media (max-width: 40rem) {
