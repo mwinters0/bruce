@@ -94,9 +94,10 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   unless it is another locale's page, learned from the `antora` language menu;
   an invariant for the menu, D10 amended.
   Notes: [`../wip/roadmap-P8.11-out-of-scope-notes.md`](../wip/roadmap-P8.11-out-of-scope-notes.md).
-- [ ] **8.12** An allowlist entry `*.<domain>` names its subdomains, never a
+- [x] **8.12** An allowlist entry `*.<domain>` names its subdomains, never a
   root's own host; the deployment guide's allowlist names the Fedora and Red
   Hat sites, D5 amended; `data` and `javascript` join D66's working schemes.
+  Notes: [`../wip/roadmap-P8.12-allowlist-domains-notes.md`](../wip/roadmap-P8.12-allowlist-domains-notes.md).
 - [ ] **8.7** `changed` and `anchors-removed`: `report` children and kinds,
   the scope changed and the root missed flagged.
 - [ ] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,
@@ -120,3 +121,12 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **An `allowlist` entry naming a root's own host outright is refused at
+  load** (D68). 8.12 was asked to settle its precedence over the locale
+  rule; the entry's one effect was asking another locale's pages, D10's
+  rejected check, and testing the locale rule first would load it inert, so
+  I made it an error, as D5 already said in words. A file that loaded before
+  with such an entry now fails (`config.rs`, `check_allowlisted_roots`).
+  Reconsidering restores it as a way to ask the other locales one hop deep,
+  amends D68 and D10, and drops the check and its tests.

@@ -82,19 +82,20 @@ fn a_scheme_a_public_web_page_uses_is_unchecked_and_any_other_broken() {
         "news:comp.os.linux",
         "magnet:?xt=urn:btih:0123456789abcdef",
         "sms:+15551234",
+        "data:image/png;base64,iVBORw0KGgo=",
+        "javascript:void(0)",
     ] {
         let (planned, _) = plan(&f, url, Kind::Anchor);
         assert_eq!(planned, Plan::Unchecked(SCHEME), "{url}");
     }
-    assert_eq!(WORKING_SCHEMES.len(), 10, "each listed above");
+    assert_eq!(WORKING_SCHEMES.len(), 12, "each listed above");
     for url in [
         "file:///etc/hosts",
         "file://path/to/config.ign",
         "hhttps://forge.example.org/x",
         "htps://docs.example.org/en-US/a/",
-        "javascript:void(0)",
-        "data:text/plain,hi",
         "ssh://git@forge.example.org/r.git",
+        "vbscript:msgbox",
     ] {
         let (planned, form) = plan(&f, url, Kind::Image);
         assert_eq!(planned, Plan::Broken(BAD_SCHEME), "{url}");
@@ -204,6 +205,42 @@ fn a_url_on_a_roots_host_outside_every_scope_waits_unless_another_locales() {
         class("https://docs.example.org/en-US/a/fr/"),
         Plan::Page { root: 0 },
         "scope comes first"
+    );
+}
+
+/// `*.example.org` names the hosts below it, but never the root's own host,
+/// whose other locales stay unasked (D68).
+#[test]
+fn an_allowlisted_domain_names_its_hosts_but_never_a_roots() {
+    let config = Config::parse(
+        r#"
+        allowlist = ["*.example.org"]
+
+        [[root]]
+        url = "https://docs.example.org/en-US/"
+        "#,
+    )
+    .unwrap();
+    let f = Frontier::new(config);
+    let class = |u: &str| plan(&f, u, Kind::Anchor).0;
+    assert_eq!(class("https://forge.example.org/x"), Plan::Anchors);
+    assert_eq!(class("https://a.b.example.org/x"), Plan::Anchors);
+    assert_eq!(
+        class("https://example.org/x"),
+        Plan::Unchecked("host_not_allowlisted"),
+        "the domain is an entry of its own"
+    );
+    assert_eq!(class("https://docs.example.org/fr/x/"), Plan::Outside);
+    f.learn(&[url("https://docs.example.org/fr/")]);
+    assert_eq!(
+        class("https://docs.example.org/fr/x/"),
+        Plan::Unchecked(OUT_OF_SCOPE)
+    );
+    assert_eq!(
+        f.hop_plan(&url("https://docs.example.org/fr/x/"), Kind::Anchor)
+            .0,
+        Plan::Status,
+        "a hop is followed wherever it goes"
     );
 }
 

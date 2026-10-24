@@ -22,9 +22,9 @@ fn main() -> ExitCode {
     match configure(&args, &bruce::cli::registry()) {
         Ok((config, _)) => {
             println!(
-                "{} root(s), {} allowlisted host(s), {} skip glob(s)",
+                "{} root(s), {} allowlisted host(s) or domain(s), {} skip glob(s)",
                 config.roots.len(),
-                config.allowlist.len(),
+                config.allowlist.entries().len(),
                 config.skip.globs().len()
             );
             ExitCode::SUCCESS

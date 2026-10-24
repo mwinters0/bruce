@@ -242,6 +242,15 @@ impl HttpFetcher {
             return Listing::Unreachable;
         };
         for _ in 0..=ROBOTS_REDIRECTS {
+            // deficiency: KD21 A failure with no response closes the host
+            // whatever its cause, so a link to a host whose name does not
+            // resolve, such as an internal one, is `unchecked`,
+            // `robots_unavailable`, and never the `broken_url` D16 gives a
+            // name that does not exist, nor a refused connection's `error`.
+            // RFC 9309 disallows a host whose robots.txt is unreachable
+            // through a server or network error; a name with no address has
+            // no server to disallow anything, and the fix carries the
+            // failure's cause from here to the target's outcome.
             let Ok(attempt) = self.get(&at, Want::Robots).await else {
                 return Listing::Unreachable;
             };

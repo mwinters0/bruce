@@ -3,7 +3,7 @@
 //! [`Frontier::plan`] sorts a URL into a [`Plan`] by the first test that
 //! applies: a scheme other than `http(s)`, `unchecked` where a public web
 //! page uses it and broken where none does (D66), a `skip` glob (D50), a root's
-//! scope, an allowlisted host (D3), a root's own host outside every scope,
+//! scope, an allowlisted host (D3, D68), a root's own host outside every scope,
 //! any other host (`host_not_allowlisted`); robots.txt is asked later, at
 //! each hop. It returns the URL's canonical form, the
 //! string its `url_id` hashes. A URL in a root's scope, unless skipped, has that
@@ -49,7 +49,7 @@ pub const SCHEME: &str = "scheme";
 pub const BAD_SCHEME: &str = "bad_scheme";
 
 /// The schemes besides `http(s)` that work on a public web page (D66).
-pub const WORKING_SCHEMES: [&str; 10] = [
+pub const WORKING_SCHEMES: [&str; 12] = [
     "mailto",
     "tel",
     "irc",
@@ -60,6 +60,8 @@ pub const WORKING_SCHEMES: [&str; 10] = [
     "news",
     "magnet",
     "sms",
+    "data",
+    "javascript",
 ];
 
 /// What a run does about a URL.
@@ -244,7 +246,7 @@ impl Frontier {
         }
         let form = plain;
         let host = url.host().map(|h| h.to_string()).unwrap_or_default();
-        let plan = if self.config.allowlist.contains(&host) {
+        let plan = if self.config.is_allowlisted(&host) {
             self.external(&form, kind)
         } else if self.is_other_locale(url) {
             Plan::Unchecked(OUT_OF_SCOPE)
@@ -383,7 +385,7 @@ impl Frontier {
         let host = url.host().map(|h| h.to_string()).unwrap_or_default();
         self.baseline()
             .is_some_and(|b| b.externals == Externals::Skip)
-            && self.config.allowlist.contains(&host)
+            && self.config.is_allowlisted(&host)
             && !self
                 .config
                 .roots

@@ -99,7 +99,7 @@ code changed for it.
 - **For 8.12**: `Frontier::plan` tests the allowlist before a root's host, so
   an allowlist entry matching a root's host makes its other locales asked.
   8.12's rule that `*.<domain>` never matches a root's host keeps them
-  unasked; a root's host named outright still does, as it did before.
+  unasked; a root's host named outright is refused at load (D68).
 - **A baseline crawled before this rule** holds these URLs as `unchecked`,
   so a `check-dir` under `--externals=baseline` copies that row and the gate
   stays silent where the URL is broken, until the baseline is crawled anew.

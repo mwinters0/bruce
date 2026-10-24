@@ -86,7 +86,7 @@ fn every_key_is_read() {
         "#,
     )
     .unwrap();
-    assert_eq!(c.allowlist, ["github.com", "pagure.io"]);
+    assert_eq!(c.allowlist.entries(), ["github.com", "pagure.io"]);
     assert_eq!(c.skip.globs(), ["https://pagure.io/**/issues/new*"]);
     assert_eq!(c.rate.per_second, 5.0);
     assert_eq!(c.rate.concurrency, 8);
@@ -181,6 +181,14 @@ fn bad_values_name_their_key() {
             "root[0]: profile:",
         ),
         ("allowlist = [\"https://a.example/\"]", "allowlist:"),
+        (
+            "allowlist = [\"*.a.example/x\"]",
+            "allowlist: *.a.example/x is not a bare host",
+        ),
+        (
+            "[host.\"*.a.example\"]\nper_second = 1",
+            "host: *.a.example: a host name holds no *",
+        ),
         ("skip = [\"a[\"]", "skip:"),
         ("[rate]\nper_second = 0", "rate.per_second:"),
         ("[rate]\nconcurrency = 0", "rate.concurrency:"),
@@ -205,6 +213,88 @@ fn bad_values_name_their_key() {
         let msg = invalid_msg(text);
         assert!(msg.contains(want), "{text}: {msg}");
     }
+}
+
+#[test]
+fn an_allowlisted_domain_names_every_host_below_it_and_not_itself() {
+    let c = Config::parse(
+        r#"allowlist = ["*.Example.org", "example.org", "pagure.io", "*.redhat.com", "10.0.0.1"]"#,
+    )
+    .unwrap();
+    assert_eq!(
+        c.allowlist.entries(),
+        [
+            "*.example.org",
+            "example.org",
+            "pagure.io",
+            "*.redhat.com",
+            "10.0.0.1"
+        ]
+    );
+    for host in [
+        "example.org",
+        "forge.example.org",
+        "a.b.c.example.org",
+        "pagure.io",
+        "bugzilla.redhat.com",
+        "10.0.0.1",
+    ] {
+        assert!(c.is_allowlisted(host), "{host}");
+    }
+    for host in [
+        "redhat.com",
+        "www.pagure.io",
+        "xexample.org",
+        "example.org.evil.example",
+        "org",
+        "10.0.0.2",
+    ] {
+        assert!(!c.is_allowlisted(host), "{host}");
+    }
+}
+
+#[test]
+fn a_star_stands_only_before_a_domain_with_a_dot() {
+    for (entry, want) in [
+        ("*", "a * stands only at the start"),
+        ("*.*.example.org", "a * stands only at the start"),
+        ("**.example.org", "a * stands only at the start"),
+        ("a.*.example.org", "a * stands only at the start"),
+        ("fedora*.org", "a * stands only at the start"),
+        ("*.org", "org is a top-level domain"),
+        ("*.10.0.0.1", "10.0.0.1 is an address, not a domain"),
+        ("*.", "*.:"),
+    ] {
+        let msg = invalid_msg(&format!("allowlist = [\"{entry}\"]"));
+        assert!(
+            msg.starts_with(&format!("allowlist: {entry}")),
+            "{entry}: {msg}"
+        );
+        assert!(msg.contains(want), "{entry}: {msg}");
+    }
+}
+
+#[test]
+fn a_roots_host_is_never_matched_by_a_domain_nor_allowlisted_outright() {
+    let root = "[[root]]\nurl = \"https://docs.example.org/en-US/\"\n";
+    let c = Config::parse(&format!("allowlist = [\"*.example.org\"]\n{root}")).unwrap();
+    assert!(!c.is_allowlisted("docs.example.org"));
+    assert!(c.is_allowlisted("forge.example.org"));
+    assert!(c.is_allowlisted("x.docs.example.org"));
+
+    let msg = invalid_msg(&format!("allowlist = [\"Docs.example.org\"]\n{root}"));
+    assert!(
+        msg.starts_with("allowlist: docs.example.org is a host a root starts on"),
+        "{msg}"
+    );
+    // A file naming no root leaves the check to whoever adds one.
+    let c = Config::parse("allowlist = [\"docs.example.org\"]").unwrap();
+    assert!(c.check_allowlisted_roots().is_ok());
+    let c = Config {
+        roots: vec![Root::new("https://docs.example.org/").unwrap()],
+        ..c
+    };
+    assert!(c.check_allowlisted_roots().is_err());
 }
 
 #[test]
@@ -479,6 +569,25 @@ fn the_guides_skip_globs_match_every_shape_of_the_forges_issue_link() {
     ] {
         assert!(!skipped(s), "{s} is skipped");
     }
+}
+
+#[test]
+fn the_guides_allowlist_names_the_fedora_and_red_hat_sites_and_not_the_roots_host() {
+    let c = guide_config();
+    for host in [
+        "forge.fedoraproject.org",
+        "fedoraproject.org",
+        "lists.fedoraproject.org",
+        "bugzilla.redhat.com",
+        "redhat.com",
+        "pagure.io",
+        "copr.fedorainfracloud.org",
+        "wiki.centos.org",
+    ] {
+        assert!(c.is_allowlisted(host), "{host}");
+    }
+    assert!(!c.is_allowlisted("docs.fedoraproject.org"));
+    assert!(!c.is_allowlisted("github.com"));
 }
 
 #[test]

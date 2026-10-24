@@ -125,5 +125,6 @@ below `profile` (D39).
 
 ## Configuration
 
-- **bruce** — `config.rs`: the loader, its defaults and its validation, at
+- **bruce** — `config.rs`: the loader, its defaults and its validation, and
+  the allowlist's matching of a host (D68), at
   the bottom of the layering but for `url`, so every module may read a setting (D39).

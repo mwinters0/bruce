@@ -11,7 +11,7 @@ frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' 
 **Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
 phase index.
 
-<!-- decision-watermark: D67 -->
+<!-- decision-watermark: D68 -->
 
 ## Scope and modes
 
@@ -52,10 +52,10 @@ whose `rel` is empty or only `preconnect` or `dns-prefetch`, is skipped; the fir
 `<a href>` only (misses broken images, canonicals); ignoring `<base>` (resolves a site wrongly).
 
 ### D66 A scheme a public web page uses is `unchecked`; any other is `broken_url`, reason `bad_scheme`
-`mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`, `magnet` and `sms` take a reader somewhere no request can follow, so they stay `unchecked`, reason `scheme`. Any other scheme but `http(s)`, `file:` and a mistyped `hhttps:` among them, no reader of the site can follow, so it is broken in every report and the gate (maintainer, 2026-10-24: P8's spec, "A link that cannot work is broken"). On en-US's 8.1 crawl that is 2 of the 280 `scheme` links, one of each.
+`mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`, `magnet` and `sms` take a reader somewhere no request can follow, and `data` and `javascript` work in the page itself, an embedded image or a script's link (maintainer, 2026-10-24), so they stay `unchecked`, reason `scheme`. Any other scheme but `http(s)`, `file:` and a mistyped `hhttps:` among them, no reader of the site can follow, so it is broken in every report and the gate (maintainer, 2026-10-24: P8's spec, "A link that cannot work is broken"). On en-US's 8.1 crawl that is 2 of the 280 `scheme` links, one of each.
 Why its own reason: `reason = 'scheme'` keeps one outcome across runs, and the digest's Problem column says why, as `bad_redirect` does for a 3xx no browser could follow (D16).
 Rejected: every other scheme `unchecked`, which hid both links from every report; `scheme` under both outcomes, one name meaning two verdicts.
-Reopens: a listed scheme found broken, or an unlisted one found working, such as images a site embeds as `data:` URIs (Asciidoctor's `data-uri`), each of which this reads as broken.
+Reopens: a listed scheme found broken, or an unlisted one found working, which this reads as broken.
 Code: `crawl::frontier::WORKING_SCHEMES`. Evidence: `crawl::frontier::tests::a_scheme_a_public_web_page_uses_is_unchecked_and_any_other_broken`, `crawl::tests::a_scheme_no_reader_can_follow_is_reported_broken_and_a_working_one_unchecked`.
 
 ### D14 Discovery is sitemap and link-following both, and each page records which
@@ -291,12 +291,19 @@ the build lacks, a URL on the site new to the gate being the one most worth aski
 
 ### D5 Configuration is optional TOML, and no flag overrides a key; roots are separate from the allowlist
 `[[root]]` entries are crawled fully, each with include/exclude globs, its own sitemap URL and its
-profile (D35); `allowlist` lists hosts checked one hop deep, `[rate]` holds the default limit and
+profile (D35); `allowlist` lists hosts and domains (D68) checked one hop deep, `[rate]` holds the default limit and
 `[host."<h>"]` a host's own `per_second`, `concurrency` and `robots` (D8). Roots are configurable so the tool is not
 tied to Fedora, and every key but a root's `url` has a default (D40). `bruce crawl`'s URL stands in
 for a file's absent roots and nothing else; per-key flags wait for someone to ask (`cli::crawl`). Keys
 are snake_case and `[[root]]` singular, as Cargo's `[[bin]]`. Rejected: kebab-case, which lychee and
-mise do not use; `allowlist` inside `[host]`, a root's own host belonging there and in no allowlist.
+mise do not use; `allowlist` inside `[host]`, a root's own host belonging there and in no allowlist (D68).
+
+### D68 An `allowlist` entry `*.<domain>` names every host below the domain, and none names a root's own host
+A bare entry is one host; `*.<domain>` is every host below the domain at any depth, the domain itself an entry of its own, and a `*` anywhere else or a domain with no dot is refused at load. A `*.` entry never matches a root's own host, and an entry naming one outright is refused: its URLs outside every scope are asked already (D10), so the entry's one effect would be asking another locale's pages (maintainer, 2026-10-24: P8's spec, "The allowlist names the Fedora and Red Hat sites").
+Why: on en-US's 8.1 crawl, 3,521 `host_not_allowlisted` targets sit on 161 hosts below the guide's nine domains, a list named host by host going stale as hosts come and go; `"*.fedoraproject.org"` matching docs.fp.o would ask its 154,569 locale targets.
+Rejected: the hosts most linked, named one by one (P8's spec); a root's host named outright asking its other locales, D10's rejected one-hop check by the back door, as it did before; the locale rule tested first, leaving such an entry loaded and inert; host globs, whose cost per link grows with the list where a lookup per label of the host does not.
+Reopens: a deployer wanting another locale's pages asked one hop deep rather than crawled as a root.
+Code: `config::Config::is_allowlisted`, `config::Config::check_allowlisted_roots`. Evidence: `config::tests::a_roots_host_is_never_matched_by_a_domain_nor_allowlisted_outright`, `crawl::tests::an_allowlisted_domain_names_its_hosts_and_never_the_roots`.
 
 ### D44 A root's scope is its path prefix until `include` names globs, which match the whole canonical URL
 `include` replaces the prefix rather than narrowing it, so one root can span locales; `exclude` always

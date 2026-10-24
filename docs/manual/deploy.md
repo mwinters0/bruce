@@ -36,15 +36,48 @@ here `bruce-fedora-docs`
 ### Which links are checked on other hosts
 
 ```toml file=bruce.toml
-allowlist = ["forge.fedoraproject.org"]
+allowlist = [
+  "fedoraproject.org", "*.fedoraproject.org",
+  "getfedora.org", "*.getfedora.org",
+  "fedorapeople.org", "*.fedorapeople.org",
+  "fedoramagazine.org", "*.fedoramagazine.org",
+  "fedorainfracloud.org", "*.fedorainfracloud.org",
+  "fedorahosted.org", "*.fedorahosted.org",
+  "pagure.io", "*.pagure.io",
+  "centos.org", "*.centos.org",
+  "redhat.com", "*.redhat.com",
+]
 ```
 
-Pages on docs.fedoraproject.org link to the Fedora forge for every page's edit
-and history links, and a moved source file shows only if those links are
-checked. `allowlist` makes `bruce` fetch each such link's target once, so its
+`allowlist` makes `bruce` fetch each link's target on these hosts once, so its
 `#fragment` can be checked, without ever crawling the host. A link to any other
 host is recorded and not checked; add a host to the list to check its links
 too.
+
+The list is the Fedora and Red Hat sites, since those are the links the docs
+answer for: the Fedora forge, which every page links to for its edit and
+history links, the wiki, the mailing lists, Bugzilla, the package sources, the
+magazine, the retired fedorahosted.org and pagure.io, CentOS and Red Hat's
+documentation. The English pages link to about 160 hosts under these domains.
+Each domain is written twice, since `"*.fedoraproject.org"` names every host
+below `fedoraproject.org`, the forge among them, but not `fedoraproject.org`
+itself, the wiki. Naming domains rather than hosts keeps the list current as
+hosts come and go.
+
+A `*.` entry never names the host a root starts on, so the site's other
+locales on `docs.fedoraproject.org` stay unchecked
+([`config.md`](config.md#allowlist)).
+
+A link to a staging or internal host under these domains is then checked like
+any other, and reported as what it is to a reader: broken where the page is
+missing, an error where the host asks for a login or fails. A host that does
+not answer at all, or whose name does not resolve outside Red Hat's network, is
+reported as not checked instead, with the reason `robots_unavailable`: `bruce`
+reads a host's `robots.txt` before anything else on it, and asks nothing of a
+host whose file it cannot read. A host's
+`robots.txt` can also forbid a link: Bugzilla's allows only its bug pages, and
+fedorapeople.org's allows nothing, so those links are reported as not checked,
+with the reason `robots`.
 
 ### Which links are never asked about
 
@@ -104,6 +137,11 @@ The forge keeps its `robots.txt`: a host that no root starts on is always
 obeyed. It asks for the same second between requests. Writing the rate keeps
 the crawl that polite if its `robots.txt` ever drops the request, since there
 the slower of `per_second` and `Crawl-delay` applies.
+
+The other hosts on the allowlist need no section: each is asked at its own
+`robots.txt`'s `Crawl-delay`, five seconds for Bugzilla and ten for the mailing
+lists and www.redhat.com, and at the default two requests a second where there
+is none. They are asked alongside the crawl, each at its own pace.
 
 A rate faster than the site asked for needs its permission. The example asks
 no faster, and a crawl of the English pages takes about two hours.

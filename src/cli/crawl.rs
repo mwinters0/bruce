@@ -170,6 +170,7 @@ pub fn configure(args: &Args, registry: &Registry) -> Result<(Config, String), S
         config
             .check_robots_hosts()
             .and_then(|()| config.check_skipped_roots())
+            .and_then(|()| config.check_allowlisted_roots())
             .map_err(|e| format!("{}: {e}", path.display()))?;
     }
     if config.roots.is_empty() {

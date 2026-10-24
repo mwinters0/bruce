@@ -52,7 +52,7 @@ fn a_file_naming_no_root_takes_the_url_and_keeps_its_settings() {
     let f = file("allowlist = [\"gitlab.com\"]\n");
     let config = configured(Some(URL), Some(&f)).unwrap();
     assert_eq!(root_urls(&config), [URL]);
-    assert_eq!(config.allowlist, ["gitlab.com"]);
+    assert_eq!(config.allowlist.entries(), ["gitlab.com"]);
 }
 
 #[test]
@@ -79,6 +79,19 @@ fn the_urls_host_is_checked_for_robots_false() {
     configured(Some(URL), Some(&f)).unwrap();
     let e = configured(Some("https://other.example.org/"), Some(&f)).unwrap_err();
     assert!(e.contains("no root starts on docs.example.org"), "{e}");
+}
+
+#[test]
+fn the_urls_host_may_not_be_allowlisted_outright() {
+    let f = file("allowlist = [\"docs.example.org\", \"*.example.org\"]\n");
+    let e = configured(Some(URL), Some(&f)).unwrap_err();
+    assert!(
+        e.contains("docs.example.org is a host a root starts on"),
+        "{e}"
+    );
+    let config = configured(Some("https://other.example.org/"), Some(&f)).unwrap();
+    assert!(!config.is_allowlisted("other.example.org"));
+    assert!(config.is_allowlisted("docs.example.org"));
 }
 
 #[test]

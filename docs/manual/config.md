@@ -139,14 +139,32 @@ report can tell an edit to the scope from an edit to the page.
 
 ## Allowlist
 
-`allowlist` lists external hosts, as bare host names, whose links are checked.
-Each such link's target is fetched once, so its `#fragment` can be checked,
-but the host is never crawled. A link to any other host is recorded and not
-checked.
+`allowlist` lists the external hosts whose links are checked. Each such link's
+target is fetched once, so its `#fragment` can be checked, but the host is
+never crawled. A link to any other host is recorded and not checked.
+
+An entry is a bare host name, such as `"github.com"`, naming that host alone.
+An entry `"*.<domain>"`, such as `"*.fedoraproject.org"`, names every host
+below the domain at any depth: `wiki.fedoraproject.org` and
+`a.b.fedoraproject.org`, but not `fedoraproject.org` itself, which is an entry
+of its own. To check the domain and its hosts, write both:
+
+```toml
+allowlist = ["fedoraproject.org", "*.fedoraproject.org"]
+```
+
+A `*.` entry never names a host a root starts on, so
+`"*.fedoraproject.org"` beside a root on `docs.fedoraproject.org` leaves the
+site's other locales unchecked ([Roots](#roots)). Naming such a host outright
+is an error: a link to it outside every root's scope is checked already, and
+another locale's pages are checked by a root of their own.
+
+A `*` anywhere but at the start, as `*.`, is an error, and so is a `*.` entry
+whose domain holds no dot, such as `"*.org"`.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `allowlist` | `[]` | Host names such as `"github.com"`. No scheme, port or path. |
+| `allowlist` | `[]` | Host names such as `"github.com"`, or `"*.<domain>"` for every host below a domain. No scheme, port or path. |
 
 ## Skip
 
@@ -199,7 +217,8 @@ group written for `User-agent: docs-example-bot` is the one that applies.
 ## Hosts
 
 `[host."<host>"]` changes how one host is fetched, whether or not a root starts
-on it. The name is a bare host name, as in `allowlist`. A host that a root
+on it. The name is a bare host name, as in `allowlist`; a `*.` domain is
+`allowlist`'s alone, and each host below it takes its own rate. A host that a root
 starts on, and one that only a root's `include` or an `allowlist` reaches, are
 both fine. `allowlist` says whether a host's links are checked; `[host]` says
 how the host is fetched.

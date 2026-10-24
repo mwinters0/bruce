@@ -9,7 +9,7 @@
 //! it would have to check again, but a profile's name, which only `cli` can
 //! check against the registry (D39).
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::fmt;
 use std::path::{Path, PathBuf};
 
@@ -41,9 +41,9 @@ pub struct Config {
     /// The sites crawled fully. Empty only when the file named none, which
     /// leaves the URL on the command line to supply one (D40).
     pub roots: Vec<Root>,
-    /// Hosts whose links are checked one hop deep and never crawled (D3),
-    /// normalised as [`Host`] prints them. Empty by default.
-    pub allowlist: Vec<String>,
+    /// Hosts whose links are checked one hop deep and never crawled (D3).
+    /// Empty by default; [`Config::is_allowlisted`] matches it.
+    pub allowlist: Allowlist,
     /// URL globs, on any host, whose links are never asked about: the target
     /// is `unchecked`, reason `skipped` (D50). Empty by default.
     pub skip: Patterns,
@@ -56,6 +56,16 @@ pub struct Config {
     pub hosts: BTreeMap<String, HostSettings>,
     /// What robots.txt calls `user_agent`: its first product name, lowercased.
     token: String,
+}
+
+/// The `allowlist`: hosts named outright, and domains written `*.<domain>`
+/// whose every host below them, at any depth, is named (D68). Each entry is
+/// normalised as [`Host`] prints a host.
+#[derive(Debug, Clone, Default)]
+pub struct Allowlist {
+    entries: Vec<String>,
+    hosts: HashSet<String>,
+    domains: HashSet<String>,
 }
 
 /// One site crawled fully (D5).
@@ -200,7 +210,7 @@ impl Config {
     pub fn for_url(url: &str) -> Result<Config, Error> {
         Ok(Config {
             roots: vec![Root::new(url)?],
-            allowlist: Vec::new(),
+            allowlist: Allowlist::default(),
             skip: Patterns::default(),
             rate: Rate::default(),
             user_agent: DEFAULT_USER_AGENT.to_owned(),
@@ -235,11 +245,8 @@ impl Config {
             }
             roots.push(root);
         }
-        let allowlist = raw
-            .allowlist
-            .iter()
-            .map(|h| host(h).map_err(|e| invalid(format!("allowlist: {e}"))))
-            .collect::<Result<_, _>>()?;
+        let allowlist =
+            Allowlist::new(&raw.allowlist).map_err(|e| invalid(format!("allowlist: {e}")))?;
         let skip = Patterns::new(raw.skip).map_err(|e| invalid(format!("skip: {e}")))?;
         let user_agent = raw
             .user_agent
@@ -259,8 +266,18 @@ impl Config {
         if !config.roots.is_empty() {
             config.check_robots_hosts()?;
             config.check_skipped_roots()?;
+            config.check_allowlisted_roots()?;
         }
         Ok(config)
+    }
+
+    /// Whether `host`, as [`Host`] prints it, is on the allowlist: named
+    /// outright, or below a `*.` domain and no host a root starts on (D68).
+    /// It runs for every link off the roots' scopes, so it costs a hash
+    /// lookup a label of `host`, whatever the allowlist's length.
+    pub fn is_allowlisted(&self, host: &str) -> bool {
+        self.allowlist.hosts.contains(host)
+            || (self.allowlist.is_below_domain(host) && !self.is_root_host(host))
     }
 
     /// The name robots.txt knows this crawler by: the first product name of
@@ -271,9 +288,22 @@ impl Config {
 
     /// Whether a root starts on `host`, compared as [`Host`] prints it.
     pub fn is_root_host(&self, host: &str) -> bool {
-        self.roots
-            .iter()
-            .any(|r| r.url.host().is_some_and(|h| h.to_string() == host))
+        self.roots.iter().any(|r| r.url.host_str() == Some(host))
+    }
+
+    /// Refuses an `allowlist` entry naming outright a host a root starts on:
+    /// its URLs outside every scope are asked already, and another locale's
+    /// pages are a root's to check (D10, D68). Run where
+    /// [`Config::check_robots_hosts`] is.
+    pub fn check_allowlisted_roots(&self) -> Result<(), Error> {
+        match self.allowlist.entries.iter().find(|e| self.is_root_host(e)) {
+            Some(host) => Err(invalid(format!(
+                "allowlist: {host} is a host a root starts on, whose links outside every \
+                 root's scope are asked already; check another locale's pages with a \
+                 [[root]] of its own"
+            ))),
+            None => Ok(()),
+        }
     }
 
     /// Refuses a root whose `url` a `skip` glob matches, a crawl that could
@@ -438,6 +468,63 @@ fn host_settings(raw: BTreeMap<String, RawHost>) -> Result<BTreeMap<String, Host
     Ok(hosts)
 }
 
+impl Allowlist {
+    /// The entries as written in a file, each a bare host or `*.<domain>`, the
+    /// domain holding a dot.
+    fn new(written: &[String]) -> Result<Allowlist, String> {
+        let mut list = Allowlist::default();
+        for s in written {
+            let (wild, rest) = match s.strip_prefix("*.") {
+                Some(rest) => (true, rest),
+                None => (false, s.as_str()),
+            };
+            if rest.contains('*') {
+                return Err(format!("{s}: a * stands only at the start, as *.<domain>"));
+            }
+            if !wild {
+                let h = host(s)?;
+                list.entries.push(h.clone());
+                list.hosts.insert(h);
+                continue;
+            }
+            let domain = match Host::parse(rest) {
+                Ok(Host::Domain(d)) if d.contains('.') => d,
+                Ok(Host::Domain(d)) => {
+                    return Err(format!(
+                        "{s}: {d} is a top-level domain; *. takes a domain with a dot in it"
+                    ));
+                }
+                Ok(ip) => return Err(format!("{s}: {ip} is an address, not a domain")),
+                Err(_) if rest.contains(['/', ':']) => {
+                    return Err(format!("{s} is not a bare host"));
+                }
+                Err(e) => return Err(format!("{s}: {e}")),
+            };
+            list.entries.push(format!("*.{domain}"));
+            list.domains.insert(domain);
+        }
+        Ok(list)
+    }
+
+    /// The entries, normalised, in the order written; a domain as `*.<domain>`.
+    pub fn entries(&self) -> &[String] {
+        &self.entries
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
+    /// Whether `host` lies below a `*.` domain: some suffix of it after a
+    /// `.` is one.
+    fn is_below_domain(&self, host: &str) -> bool {
+        !self.domains.is_empty()
+            && host
+                .match_indices('.')
+                .any(|(i, _)| self.domains.contains(&host[i + 1..]))
+    }
+}
+
 impl Patterns {
     fn new(globs: Vec<String>) -> Result<Patterns, String> {
         let mut set = GlobSetBuilder::new();
@@ -523,10 +610,15 @@ fn http_url(s: &str) -> Result<Url, String> {
 }
 
 /// `Host::parse` refuses a URL or `host:port` only as an IDNA error, so a `/`
-/// or `:` is refused first, to say why.
+/// or `:` is refused first, to say why. It takes a `*`, which no host a link
+/// names holds, so that is refused too: only an `allowlist` entry may name a
+/// domain (D68).
 fn host(s: &str) -> Result<String, String> {
     if s.contains(['/', ':']) {
         return Err(format!("{s} is not a bare host"));
+    }
+    if s.contains('*') {
+        return Err(format!("{s}: a host name holds no *"));
     }
     Host::parse(s)
         .map(|h| h.to_string())

@@ -338,7 +338,8 @@ async fn a_scheme_no_reader_can_follow_is_reported_broken_and_a_working_one_unch
         "/docs/",
         r#"<title>Home</title><a href="mailto:me@example.org">mail</a>
         <a href="irc://irc.example.org/docs">irc</a><a href="file:///etc/tools.conf">file</a>
-        <a href="hhttps://forge.example.org/x">typo</a>"#,
+        <a href="hhttps://forge.example.org/x">typo</a>
+        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACw="><a href="javascript:void(0)">no-op</a>"#,
     )
     .await;
 
@@ -347,6 +348,12 @@ async fn a_scheme_no_reader_can_follow_is_reported_broken_and_a_working_one_unch
     assert_eq!(
         done.targets(),
         [
+            t(
+                "data:image/gif;base64,R0lGODlhAQABAAAAACw=",
+                "unchecked",
+                Some("scheme"),
+                None
+            ),
             t(
                 "file:///etc/tools.conf",
                 "broken_url",
@@ -366,6 +373,7 @@ async fn a_scheme_no_reader_can_follow_is_reported_broken_and_a_working_one_unch
                 Some("scheme"),
                 None
             ),
+            t("javascript:void(0)", "unchecked", Some("scheme"), None),
             t("mailto:me@example.org", "unchecked", Some("scheme"), None),
         ]
     );
@@ -385,7 +393,7 @@ async fn a_scheme_no_reader_can_follow_is_reported_broken_and_a_working_one_unch
     let digest = crate::report::digest(&done.store, run).unwrap();
     let json: serde_json::Value = serde_json::from_str(&digest.json()).unwrap();
     assert_eq!(json["totals"]["broken_url"], 2);
-    assert_eq!(json["totals"]["unchecked"], 2);
+    assert_eq!(json["totals"]["unchecked"], 4);
     let html = digest.html();
     assert!(html.contains("file:///etc/tools.conf"));
     assert!(html.contains("URL broken \u{b7} bad_scheme"));
@@ -619,6 +627,73 @@ async fn a_redirect_onto_a_skipped_url_ends_the_chain() {
     assert!(
         asked.iter().all(|p| !p.starts_with("/user/login")),
         "{asked:?}"
+    );
+}
+
+/// `*.app.localhost` names every host below it, and neither the domain nor
+/// the root's own host, `docs.app.localhost`, whose other locale's page
+/// stays unasked (D68). Every name under `localhost` is the loopback.
+#[tokio::test]
+async fn an_allowlisted_domain_names_its_hosts_and_never_the_roots() {
+    let server = MockServer::start().await;
+    let outer = MockServer::start().await;
+    let port = outer.address().port();
+    page(
+        &server,
+        "/docs/",
+        &format!(
+            r#"<meta name="generator" content="Antora 3.1.15"><title>Home</title>
+            <div class="languages-menu"><a class="language" href="../docs/">en</a>
+            <a class="language" href="../fr/docs/">fr</a></div>
+            <a href="http://forge.app.localhost:{port}/a">a</a>
+            <a href="http://deep.forge.app.localhost:{port}/b">b</a>
+            <a href="http://app.localhost:{port}/c">c</a>
+            <a href="/fr/docs/x/">fr</a>"#
+        ),
+    )
+    .await;
+    for at in ["/a", "/b", "/c"] {
+        page(&outer, at, "<title>Outer</title>").await;
+    }
+    let root = format!("http://docs.app.localhost:{}", server.address().port());
+    let config = format!("allowlist = [\"*.app.localhost\"]\n[[root]]\nurl = \"{root}/docs/\"\n");
+
+    let mut done = crawl_config(&server, &config, quick()).await;
+    done.base = root;
+
+    let outer_base = |host: &str| format!("http://{host}:{port}");
+    assert_eq!(
+        done.target(&format!("{}/a", outer_base("forge.app.localhost")))
+            .1,
+        "ok"
+    );
+    assert_eq!(
+        done.target(&format!("{}/b", outer_base("deep.forge.app.localhost")))
+            .1,
+        "ok"
+    );
+    let c = format!("{}/c", outer_base("app.localhost"));
+    assert_eq!(
+        done.target(&c),
+        t(&c, "unchecked", Some("host_not_allowlisted"), None)
+    );
+    assert_eq!(
+        done.target("/fr/docs/x/"),
+        t("/fr/docs/x/", "unchecked", Some("out_of_scope"), None)
+    );
+    let asked: Vec<String> = requests(&outer)
+        .await
+        .into_iter()
+        .map(|(_, p)| p)
+        .filter(|p| p != "/robots.txt")
+        .collect();
+    assert_eq!(asked.len(), 2, "{asked:?}");
+    assert!(
+        requests(&server)
+            .await
+            .iter()
+            .all(|(_, p)| !p.starts_with("/fr/")),
+        "the root's host is never allowlisted"
     );
 }
 

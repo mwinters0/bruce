@@ -56,11 +56,11 @@ runs shows the link moving from (`unchecked`, `scheme`) to (`broken_url`,
 
 ## Negative results
 
-- **`data:` and `javascript:` are now broken.** The maintainer's list leaves
-  them out, and 8.10 follows it. Both do something in a browser: a `data:`
-  image renders (Asciidoctor writes them under its `data-uri` attribute), and
-  `javascript:void(0)` is a common no-op link. Neither is on en-US, so nothing
-  reclassified depends on this, and D66's Reopens names it.
+- **`data:` and `javascript:` are working schemes, added by 8.12** (D66).
+  The maintainer's first list left them out; both do something in a
+  browser: a `data:` image renders (Asciidoctor writes them under its
+  `data-uri` attribute), and `javascript:void(0)` is a common no-op link.
+  Neither is on en-US, so nothing reclassified depends on it.
 - **Rejected: a configurable list.** Not asked for, and like the locale
   globs P8's spec rejected, it would be one more list to keep. A scheme found
   missing is added to `WORKING_SCHEMES`.
