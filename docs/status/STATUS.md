@@ -95,11 +95,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **`bruce report digest` writes both files unless `--format` names one.** The
-  spec says the flag chooses "one or both" and the grilling asked for HTML as an
-  option, so the default could as well be `json`, the 8.3 behaviour. I chose
-  `both`: a digest whose default leaves out the file a person reads is the one
-  nobody opens, and P9's script passes the flag either way
-  (`cli/report.rs`, `DigestFormat`). Reconsidering changes the default and
-  the manual's one line.
