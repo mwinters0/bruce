@@ -46,3 +46,15 @@ being a change a loader would misread (D64's `format_version`).
 links by the repo of their target, the repo "Fix in" names, beside the repo
 of their page. That changes what the section delivers, so 8.4.2 does not
 decide it.
+
+## Finding 2: the sections' order and folding
+
+Maintainer, 2026-10-24, on reading 8.4.2's wording: better. Every section
+should be collapsible as the housekeeping is, and start collapsed, and the
+order should be the pages, the repos, the targets, then the housekeeping.
+**It spawns 8.4.3**, and amends P8's spec, "What the document holds", to that
+order. The spec's numbers stay the sections' names, being cited by number.
+Placed by this session, the maintainer not having named them: the header and
+the figures stay open and first; "Since the last run" (3, 8.8) stays after the
+figures; "Anchors removed" (7, 8.7) follows the targets; the errors precede the
+housekeeping.

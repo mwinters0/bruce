@@ -72,6 +72,9 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   as links, the drill-down's two `anchor`s told apart; earned by 8.6's first
   finding.
   Notes: [`../wip/roadmap-P8.4.2-digest-direction-notes.md`](../wip/roadmap-P8.4.2-digest-direction-notes.md).
+- [ ] **8.4.3** The digest's sections folded and reordered: each after the
+  figures a `<details>` starting collapsed, the pages before the repos before
+  the targets; earned by 8.6's second finding.
 - [x] **8.5** An unresolved xref's hint: the `antora` view, `broken`'s and the
   digest's `hint`, measure and floor chosen on en-US's rows.
   Notes: [`../wip/roadmap-P8.5-xref-hint-notes.md`](../wip/roadmap-P8.5-xref-hint-notes.md).

@@ -101,7 +101,13 @@ earlier run and puts a report into the crawl, where D6 keeps none.
 
 ## What the document holds
 
-Settled 2026-10-23 (maintainer), in this order:
+Settled 2026-10-23 (maintainer), numbered as below. **The HTML shows them
+in the order 1, 2, 3, 5, 6, 4, 7, 8, 9**, the pages first, then the repos,
+then the targets, and **every section after the figures is a `<details>`
+that starts collapsed** (maintainer, 2026-10-24, reading the en-US digest:
+[`../status/history/2026-10-24.md`](../status/history/2026-10-24.md)).
+The JSON keeps its own order.
+
 
 1. **The header**: the roots, the run's start, finish and duration, its id,
    the tool version, and the run compared with, or that there was none.
