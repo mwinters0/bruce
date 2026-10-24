@@ -488,7 +488,7 @@ fn a_heading_carries_no_dot_and_each_dot_is_named() {
         .unwrap();
     d.redirects.rows[0][reason] = Cell::Text(crate::store::PEDANTIC_TRAILING_SLASH.into());
     assert!(section(&d.html(), "housekeeping").contains(
-        "<td class=\"dot\"><span class=\"sev pedantic\" role=\"img\" aria-label=\"Pedantic\"></span></td>"
+        "<summary><span class=\"sev pedantic\" role=\"img\" aria-label=\"Pedantic\"></span><span class=\"ttl\">"
     ));
 }
 
@@ -497,24 +497,21 @@ fn every_row_naming_a_link_or_a_target_opens_with_a_dot_under_no_heading() {
     let html = html();
     let dot = "<td class=\"dot\"><span class=\"sev ";
     // Targets (1 row), the page drill-downs (4, the errored link among them, and 1),
-    // errors (1), redirects (1).
-    for (id, rows) in [
-        ("fix-once", 1),
-        ("pages", 5),
-        ("errors", 1),
-        ("housekeeping", 1),
-    ] {
+    // errors (1). A redirected link's landing is a `<details>` whose summary
+    // opens with the dot.
+    for (id, rows) in [("fix-once", 1), ("pages", 5), ("errors", 1)] {
         let s = section(&html, id);
         assert_eq!(s.matches(dot).count(), rows, "{id}");
         assert!(s.contains("<th class=\"dot\"></th>"), "{id}");
     }
     assert!(section(&html, "fix-once").contains(&format!("{dot}broken\"")));
     assert!(section(&html, "errors").contains(&format!("{dot}broken\"")));
-    assert!(section(&html, "housekeeping").contains(&format!("{dot}attention\"")));
     // The lists that are not links have none: orphans, unlisted pages, sitemap
     // entries and the unchecked counts.
     let house = section(&html, "housekeeping");
-    assert_eq!(house.matches("<th class=\"dot\">").count(), 1);
+    assert!(house.contains("<summary><span class=\"sev attention\""));
+    assert_eq!(house.matches("<span class=\"sev ").count(), 1);
+    assert_eq!(house.matches("<th class=\"dot\">").count(), 0);
 }
 
 #[test]
@@ -534,4 +531,29 @@ fn one_legend_beside_the_figures_names_the_three_levels() {
     for name in ["<b>Broken</b>", "<b>Attention</b>", "<b>Pedantic</b>"] {
         assert!(figures.contains(name), "{name}");
     }
+}
+
+#[test]
+fn each_redirected_landing_is_a_details_with_its_hops_and_pages_inside() {
+    let d = of(&store());
+    let html = d.html();
+    let house = section(&html, "housekeeping");
+    let from = house
+        .find("<summary><span class=\"sev attention\"")
+        .unwrap()
+        - "<details>\n".len();
+    let landing = &house[from..from + house[from..].find("</details>").unwrap()];
+    let landing_url = crate::report::tests::url(2);
+    assert!(landing.starts_with("<details>\n<summary>"));
+    assert!(landing.contains("<span class=\"ttl\">e.test/2</span>"));
+    assert!(landing.contains("<span class=\"cnt\">1 link, 1 redirecting URL</span>"));
+    assert!(landing.contains(&format!("<p>Landing <a href=\"{landing_url}\">")));
+    assert!(landing.contains("<p>First hops <code>"));
+    assert!(landing.contains("<p>Linking pages: 1</p>\n<ul>\n<li><a href=\""));
+    // No table holds the landings, so no cell grows as wide as a list of pages.
+    assert!(
+        !house[..from + house[from..].find("</details>").unwrap()]
+            .contains("<th>Linking pages</th>")
+    );
+    assert!(!house.contains("First hops</th>"));
 }

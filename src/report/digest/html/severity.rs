@@ -65,7 +65,8 @@ impl Level {
     }
 }
 
-/// The dot of `level`, a table's first cell, nothing for none.
+/// The dot of `level`, a table's first cell or a drill-down summary's first
+/// child, nothing for none.
 pub(super) fn mark(level: Option<Level>) -> String {
     level.map(Level::dot).unwrap_or_default()
 }

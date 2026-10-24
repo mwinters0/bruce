@@ -47,7 +47,8 @@ for a reader, and is dark on a screen and light in print, where every
 times are UTC and its links absolute, those into the page excepted. The
 header and the figures are open; every section after them is closed under its
 heading, a click opening it. A dot marks each finding, a row that names a
-link or a target, in a column with no heading; a heading has none. It is red
+link or a target, in a column with no heading, or first in a drill-down's
+summary; a heading has none. It is red
 and filled for a link to a broken URL or one that errored, amber and filled for
 a link to a missing fragment or a redirect to update, and a grey ring for a
 redirect that differs from its landing only by a final `/`. The ring differs
@@ -88,7 +89,10 @@ entries, the unchecked counts) have no dot. In this order:
    source, where restoring a missing fragment mends every link in its row.
    The targets one link names are not listed; their links are in section 3.
 6. **Links that errored**, apart from the breakage.
-7. **Housekeeping**: the redirected links by where their targets land, those
+7. **Housekeeping**: the redirected links by where their targets land, each
+   landing a closed drill-down of its own (its dot, the landing, its links and
+   redirecting URLs, and inside the hops the first took and the pages the links are
+   written on, listed one to a line so a phone has no wide table to scroll), those
    differing from their landing only by a final `/` last, the sitemap entries no page was fetched for, the orphans, the unlisted pages
    and the unchecked links, each closed in its turn. The unchecked links are
    listed by reason, each with what its links are in plain words, the setting

@@ -668,6 +668,40 @@ fn fold(out: &mut String, title: &str, count: &str, inner: impl FnOnce(&mut Stri
     out.push_str("</details>\n");
 }
 
+/// One landing of the redirected links as a `<details>` of its own: its summary
+/// the dot, the landing and its counts, inside the first hops and the pages the
+/// links are on, a list so that no cell grows as wide as the longest.
+fn redirect(out: &mut String, r: &Row) {
+    let landing = r.text("landing").unwrap_or("");
+    w!(
+        out,
+        "<details>\n<summary>{}<span class=\"ttl\">{}</span><span class=\"cnt\">{}, {}</span></summary>\n",
+        mark(Some(Level::of_redirect(r.text("reason")))),
+        esc(short(landing)),
+        counted(r.int("links"), "link"),
+        counted(r.int("urls"), "redirecting URL")
+    );
+    w!(out, "<p>Landing {}", a(landing, short(landing)));
+    if let Some(reason) = r.text("reason") {
+        w!(out, " \u{b7} Reason <code>{}</code>", esc(reason));
+    }
+    w!(
+        out,
+        "</p>\n<p>First hops <code>{}</code></p>\n",
+        esc(r.text("chain").unwrap_or(""))
+    );
+    let pages = r.list("pages");
+    w!(
+        out,
+        "<p>Linking pages: {}</p>\n<ul>\n",
+        num(pages.len() as i64)
+    );
+    for page in pages {
+        w!(out, "<li>{}</li>\n", a(page, short(page)));
+    }
+    out.push_str("</ul>\n</details>\n");
+}
+
 fn housekeeping(out: &mut String, d: &Digest) {
     open_section(
         out,
@@ -678,35 +712,13 @@ fn housekeeping(out: &mut String, d: &Digest) {
     let links = |t: &Table| format!("{} links", num(rows(t).map(|r| r.int("links")).sum()));
     let entries = |t: &Table| num(t.rows.len() as i64);
     fold(out, "Redirected links", &links(&d.redirects), |out| {
-        out.push_str("<p>The links whose target redirects, by where it lands, the most links first: update them to the landing. <i>Redirecting URLs</i> are the targets they name, and <i>Linking pages</i> the pages they are written on. A row whose <i>Reason</i> is <code>pedantic_trailing_slash</code> lands on its URL with a final <code>/</code> added or removed, and comes last.</p>\n");
-        let body: Vec<Vec<String>> = rows(&d.redirects)
-            .map(|r| {
-                let landing = r.text("landing").unwrap_or("");
-                let pages: Vec<String> = r.list("pages").iter().map(|p| a(p, short(p))).collect();
-                vec![
-                    mark(Some(Level::of_redirect(r.text("reason")))),
-                    a(landing, short(landing)),
-                    num(r.int("links")),
-                    num(r.int("urls")),
-                    esc(r.text("chain").unwrap_or("")),
-                    esc(r.text("reason").unwrap_or("")),
-                    pages.join("<br>"),
-                ]
-            })
-            .collect();
-        table(
-            out,
-            &[
-                ("", false),
-                ("Landing", false),
-                ("Links to it", true),
-                ("Redirecting URLs", true),
-                ("First hops", false),
-                ("Reason", false),
-                ("Linking pages", false),
-            ],
-            &body,
-        );
+        out.push_str("<p>The links whose target redirects, by where it lands, the most links first: update them to the landing. Open one for the redirecting URLs, the hops the first took and the pages the links are written on. A landing marked as a ring is reached by a URL differing from it only by a final <code>/</code>, and comes last.</p>\n");
+        if d.redirects.rows.is_empty() {
+            out.push_str("<p class=\"muted\">None.</p>\n");
+        }
+        for r in rows(&d.redirects) {
+            redirect(out, &r);
+        }
     });
     fold(
         out,
