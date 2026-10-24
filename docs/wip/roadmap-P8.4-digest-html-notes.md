@@ -10,10 +10,12 @@ the digest of its crawl. D64 says why.
 
 ## What the sections are
 
-The header, the figures, "Fix once, fix many" (the targets with `links > 1`,
-and the count of the rest), the pages as `<details>` ranked as `pages` is, the
+The header, the figures, the pages as `<details>` ranked as `pages` is, the
 repos that hold breakage (each a `<details>` of in-page links to its pages),
-the errors, and the housekeeping closed. There are no section numbers: 3 and 7
+"Fix once, fix many" (the targets with `links > 1`, and the count of the
+rest), the errors, and the housekeeping, each after the figures closed
+([`roadmap-P8.4.3-digest-sections-notes.md`](roadmap-P8.4.3-digest-sections-notes.md)).
+There are no section numbers: 3 and 7
 are the two-run sections 8.7 and 8.8 add, and a number skipped reads as a
 fault. The header says `Compared with: no earlier run`, the figures carry no
 change; 8.8 fills both.

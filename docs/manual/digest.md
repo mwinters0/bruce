@@ -44,21 +44,17 @@ One page with no script and no outside file, so it reads the same opened from
 a disk, from an archive or from a web server. It is the JSON's data laid out
 for a reader, and is dark on a screen and light in print, where every
 `<details>` is opened. At a phone's width its tables scroll sideways. Its
-times are UTC and its links absolute, those into the page excepted. In this
-order:
+times are UTC and its links absolute, those into the page excepted. The
+header and the figures are open; every section after them is closed under its
+heading, a click opening it. In this order:
 
 1. **The header**: the roots, the run's id, start, finish and duration, the
-   `bruce` that crawled it, and the run compared with.
+   `bruce` that crawled it, and the run compared with. Its links go to each
+   section's heading.
 2. **Figures**: the pages checked and the links on them, and among those
    links the ones to a broken URL, to a missing fragment, and that errored.
    The first two of those are the broken links.
-3. **Broken targets, by the links to them** ("fix once, fix many"): the
-   targets that more than one broken link names, from whatever pages, the
-   most links first, each with the pages linking to it and the target's own
-   source, where restoring a missing fragment mends every link in its row.
-   The targets one link names are not listed; their links are in the next
-   section.
-4. **Pages, by the broken links on them**: each page that holds one, the
+3. **Pages, by the broken links on them**: each page that holds one, the
    most first, as a drill-down of its broken links, with its live page and
    its source. A link is counted on the page it is written on. Its *Written
    as* is the link as the page has it, *Resolves to* the URL it names, *Kind*
@@ -66,14 +62,21 @@ order:
    and *Problem* and *Status* what the target answered: `URL broken` or
    `fragment missing`. A page with an unresolved `xref:` that looks like a
    typo has a Hint column, the nearest page ID.
-5. **Repos, by the broken links on their pages**: the repos whose pages hold
-   broken links, the most first, each with links to its pages in section 4.
-   A link counts against the repo of the page it is written on, which may not
-   be the repo section 3 names for its target.
+4. **Repos, by the broken links on their pages**: the repos whose pages hold
+   broken links, the most first, each with links to its pages in section 3,
+   which open that section where the browser opens a closed section for a
+   link into it: Chrome 97, Firefox 139 and Safari 26.2 on. In an older one,
+   open the pages first. A link counts against the repo of the page it is
+   written on, which may not be the repo section 5 names for its target.
+5. **Broken targets, by the links to them** ("fix once, fix many"): the
+   targets that more than one broken link names, from whatever pages, the
+   most links first, each with the pages linking to it and the target's own
+   source, where restoring a missing fragment mends every link in its row.
+   The targets one link names are not listed; their links are in section 3.
 6. **Links that errored**, apart from the breakage.
-7. **Housekeeping**, closed: the redirected links by where their targets
-   land, the sitemap entries no page was fetched for, the orphans, the
-   unlisted pages and the unchecked links.
+7. **Housekeeping**: the redirected links by where their targets land, the
+   sitemap entries no page was fetched for, the orphans, the unlisted pages
+   and the unchecked links, each closed in its turn.
 
 The JSON holds every row the HTML lists and the targets it leaves out, and
 the by-component counts it has no section for.

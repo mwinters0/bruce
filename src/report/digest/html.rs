@@ -27,9 +27,9 @@ impl Digest {
         head(&mut out, self);
         out.push_str("<main>\n");
         figures(&mut out, self);
-        fix_once(&mut out, self);
         let ids = pages(&mut out, self);
         repos(&mut out, self, &ids);
+        fix_once(&mut out, self);
         errors(&mut out, self);
         housekeeping(&mut out, self);
         out.push_str("</main>\n");
@@ -244,6 +244,25 @@ fn table(out: &mut String, head: &[(&str, bool)], body: &[Vec<String>]) {
     out.push_str("</tbody></table></div>\n");
 }
 
+/// Opens the section `id` under its `heading`, a `<details>` that starts
+/// collapsed, `note` beside the heading. The id is the `<section>`'s, outside
+/// the `<details>`, so a link to it lands on the heading in every browser, one
+/// that opens no closed `<details>` for a fragment included.
+fn open_section(out: &mut String, id: &str, heading: &str, note: Option<&str>) {
+    w!(
+        out,
+        "<section id=\"{id}\">\n<details class=\"sect\">\n<summary><h2>{heading}</h2>"
+    );
+    if let Some(note) = note {
+        w!(out, "<small>{note}</small>");
+    }
+    out.push_str("</summary>\n");
+}
+
+fn close_section(out: &mut String) {
+    out.push_str("</details>\n</section>\n");
+}
+
 fn head(out: &mut String, d: &Digest) {
     let run = &d.run;
     let first = run.roots.first().map_or("", |r| short(r));
@@ -294,8 +313,8 @@ fn head(out: &mut String, d: &Digest) {
         );
     }
     out.push_str(
-        "<nav><a href=\"#figures\">Figures</a> <a href=\"#fix-once\">Targets</a> \
-         <a href=\"#pages\">Pages</a> <a href=\"#repos\">Repos</a> \
+        "<nav><a href=\"#figures\">Figures</a> <a href=\"#pages\">Pages</a> \
+         <a href=\"#repos\">Repos</a> <a href=\"#fix-once\">Targets</a> \
          <a href=\"#errors\">Errors</a> <a href=\"#housekeeping\">Housekeeping</a></nav>\n\
          </div></header>\n",
     );
@@ -329,11 +348,16 @@ fn figures(out: &mut String, d: &Digest) {
 }
 
 fn fix_once(out: &mut String, d: &Digest) {
+    open_section(
+        out,
+        "fix-once",
+        "Broken targets, by the links to them",
+        None,
+    );
     out.push_str(
-        "<section id=\"fix-once\">\n<h2>Broken targets, by the links to them</h2>\n<p>Fix once, \
-         fix many: each row is a target that more than one broken link names, from whatever \
-         pages, the most links first. Restoring the target in its own source, the last column, \
-         mends every link in its row.</p>\n",
+        "<p>Fix once, fix many: each row is a target that more than one broken link names, \
+         from whatever pages, the most links first. Restoring the target in its own source, the \
+         last column, mends every link in its row.</p>\n",
     );
     let (many, single): (Vec<Row>, Vec<Row>) =
         rows(&d.broken_targets).partition(|r| r.int("links") > 1);
@@ -383,21 +407,21 @@ fn fix_once(out: &mut String, d: &Digest) {
         w!(
             out,
             "<p>Targets named by one link each: {}. Each is in the drill-down of the page its \
-             link is on, below.</p>\n",
+             link is on, among the pages above.</p>\n",
             num(single.len() as i64)
         );
     }
-    out.push_str("</section>\n");
+    close_section(out);
 }
 
 /// The id of each page's drill-down, by the page's URL.
 type Ids = HashMap<String, String>;
 
 fn pages(out: &mut String, d: &Digest) -> Ids {
+    open_section(out, "pages", "Pages, by the broken links on them", None);
     out.push_str(
-        "<section id=\"pages\">\n<h2>Pages, by the broken links on them</h2>\n<p>The pages \
-         holding the most broken links first, a link counted on the page it is written on. Open \
-         one for its links: <i>Written as</i> is the link in the page, <i>Resolves to</i> the \
+        "<p>The pages holding the most broken links first, a link counted on the page it is \
+         written on. Open one for its links: <i>Written as</i> is the link in the page, <i>Resolves to</i> the \
          URL it names, <i>Kind</i> the element holding it, <code>anchor</code> being an \
          <code>&lt;a href&gt;</code>, and <i>Problem</i> and <i>Status</i> what the target \
          answered.</p>\n",
@@ -475,16 +499,21 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
         table(out, &columns, &body);
         out.push_str("</details>\n");
     }
-    out.push_str("</section>\n");
+    close_section(out);
     ids
 }
 
 fn repos(out: &mut String, d: &Digest, ids: &Ids) {
+    open_section(
+        out,
+        "repos",
+        "Repos, by the broken links on their pages",
+        None,
+    );
     out.push_str(
-        "<section id=\"repos\">\n<h2>Repos, by the broken links on their pages</h2>\n<p>The \
-         repos whose pages hold the most broken links first, a link counted against the repo of \
-         the page it is written on, which may not be the repo of its target. Open one for its \
-         pages.</p>\n",
+        "<p>The repos whose pages hold the most broken links first, a link counted against the \
+         repo of the page it is written on, which may not be the repo of its target. Open one for \
+         its pages.</p>\n",
     );
     let mut of_repo: HashMap<Option<&str>, Vec<(&str, &str)>> = HashMap::new();
     for p in rows(&d.pages) {
@@ -534,14 +563,14 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
             num(clean as i64)
         );
     }
-    out.push_str("</section>\n");
+    close_section(out);
 }
 
 fn errors(out: &mut String, d: &Digest) {
+    open_section(out, "errors", "Links that errored", None);
     out.push_str(
-        "<section id=\"errors\">\n<h2>Links that errored</h2>\n<p>Links whose target could not \
-         be asked, apart from the broken ones: the target did not answer, which does not make it \
-         wrong.</p>\n",
+        "<p>Links whose target could not be asked, apart from the broken ones: the target did \
+         not answer, which does not make it wrong.</p>\n",
     );
     if d.errors.rows.is_empty() {
         out.push_str("<p>No link errored.</p>\n");
@@ -575,7 +604,7 @@ fn errors(out: &mut String, d: &Digest) {
             &body,
         );
     }
-    out.push_str("</section>\n");
+    close_section(out);
 }
 
 /// A nested `<details>` of `title` holding `inner`, collapsed, its summary
@@ -590,9 +619,11 @@ fn fold(out: &mut String, title: &str, count: &str, inner: impl FnOnce(&mut Stri
 }
 
 fn housekeeping(out: &mut String, d: &Digest) {
-    out.push_str(
-        "<section id=\"housekeeping\">\n<h2>Housekeeping</h2>\n<details class=\"house\">\n\
-         <summary>Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links</summary>\n",
+    open_section(
+        out,
+        "housekeeping",
+        "Housekeeping",
+        Some("Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links"),
     );
     let links = |t: &Table| format!("{} links", num(rows(t).map(|r| r.int("links")).sum()));
     let entries = |t: &Table| num(t.rows.len() as i64);
@@ -687,7 +718,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
             &body,
         );
     });
-    out.push_str("</details>\n</section>\n");
+    close_section(out);
 }
 
 /// The pages of `orphans` or `unlisted`: `page`, `title` and the source.

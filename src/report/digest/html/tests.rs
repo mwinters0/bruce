@@ -95,7 +95,10 @@ fn fix_once_lists_the_targets_more_than_one_link_names_and_counts_the_rest() {
     assert!(fix.contains("https://e.test/10"));
     assert!(!fix.contains("https://e.test/11"), "named by one link");
     assert!(fix.contains("named by more than one link: 1, holding 2 of the 4 broken links."));
-    assert!(fix.contains("Targets named by one link each: 2."));
+    assert!(fix.contains(
+        "Targets named by one link each: 2. Each is in the drill-down of the page its link is on, \
+         among the pages above."
+    ));
 }
 
 #[test]
@@ -137,10 +140,54 @@ fn errors_are_apart_from_the_breakage() {
 }
 
 #[test]
+fn the_sections_after_the_figures_are_pages_repos_targets_errors_housekeeping() {
+    let html = html();
+    let order = [
+        "figures",
+        "pages",
+        "repos",
+        "fix-once",
+        "errors",
+        "housekeeping",
+    ];
+    let at: Vec<usize> = order
+        .iter()
+        .map(|id| html.find(&format!("<section id=\"{id}\">")).unwrap())
+        .collect();
+    assert!(at.is_sorted(), "{at:?}");
+    assert_eq!(html.matches("<section ").count(), order.len());
+    // The nav names the sections in the order they stand.
+    let nav = &html[html.find("<nav>").unwrap()..html.find("</nav>").unwrap()];
+    let hrefs: Vec<&str> = attributes(nav, "href");
+    let ids: Vec<String> = order.iter().map(|id| format!("#{id}")).collect();
+    assert_eq!(hrefs, ids);
+}
+
+#[test]
+fn every_section_after_the_figures_starts_collapsed_under_its_heading() {
+    let html = html();
+    let figures = section(&html, "figures");
+    assert!(figures.contains("<h2>Figures</h2>") && !figures.contains("<details"));
+    for id in ["pages", "repos", "fix-once", "errors", "housekeeping"] {
+        // The id is outside the `<details>`, so a link to it lands on the
+        // heading where a browser opens no closed `<details>` for a fragment.
+        let s = section(&html, id);
+        assert!(
+            s.starts_with(&format!(
+                "<section id=\"{id}\">\n<details class=\"sect\">\n<summary><h2>"
+            )),
+            "{id}"
+        );
+        assert!(s.ends_with("</details>\n"), "{id}");
+    }
+    assert!(!html.contains(" open"), "no `<details>` starts open");
+}
+
+#[test]
 fn the_housekeeping_is_collapsed_and_holds_each_list() {
     let html = html();
     let house = section(&html, "housekeeping");
-    assert!(house.contains("<details class=\"house\">") && !house.contains("open"));
+    assert!(house.contains("<summary><h2>Housekeeping</h2><small>Redirects to update"));
     for needle in [
         "https://e.test/2",
         "https://e.test/20",

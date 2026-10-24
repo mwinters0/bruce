@@ -15,8 +15,8 @@ file hold.
 - **Every `<summary>` shows a marker**: `summary::before`, a triangle that
   turns when the `<details>` is open, there being none left once `display: flex`
   removed the native one. It is hidden in print, where all are open.
-- **Print breaks**: `h2` and the paragraph after it keep with what follows,
-  `.house` (the housekeeping's outer `<details>`) may break, which
+- **Print breaks**: a heading and the paragraph after it keep with what
+  follows, `.sect` (a section's `<details>`) may break, which
   `avoid-page` on all `details` had made one unbreakable block, a table's header
   repeats and its rows stay whole.
 - **The minor defects**: a list with no row is `None.`, not a header over
