@@ -120,6 +120,37 @@ fedorahosted.org with them. The allowlist names hosts exactly, so **it spawns
 On run 1 those domains hold about 4,000 of the `host_not_allowlisted`
 targets, fedoraproject.org (the wiki) 986 of them.
 
+## Finding 6: a trailing slash is pedantic, not broken
+
+Maintainer, 2026-10-24, on reading 8.14's notes: a missing or extra final
+`/` is a pedantic error, to be corrected but below a 404 or a missing
+fragment. On 8.14's crawl (`runs/p8.14-en-us-20261024-1322/en-us.duckdb`):
+
+- **A slash the server supplies is `ok`, reason `pedantic_trailing_slash`**,
+  where D7 now says only `redirected`: a redirected link whose final URL
+  differs from the URL linked only by a final `/` added or removed, whatever
+  the hops between (I4's slashless docs.fp.o URL included). 496 links to 259
+  targets. **The class is named for one form** so that others can be added
+  beside it (a scheme upgrade, I5's version redirect, a moved page, the last
+  closer to breaking than any of these). It is not a sixth outcome: D16
+  refused one for `too_large`, every report and the gate having to place it,
+  and a reader reaches the page.
+- **A slash the server does not supply stays `broken_url`**, a reader landing
+  on a 404 (Finding 4's "a link that cannot work is broken"), but the digest
+  names the fix where the URL with its slash toggled answers. No such target
+  was found among 8.14's 826 `broken_url` targets, the toggled URL seldom
+  being one bruce asked.
+- **The 529 `broken_url` links on the three `code-of-conduct//` pages are one
+  redirect**: fedoraproject.org's 302 with a doubled slash in its `Location`
+  (8.14's notes, "The three double-slash pages"). It is reported once, as a
+  redirect landing on a malformed URL, and a page reached only by a redirect
+  from off a root is not that root's page, so its links are not counted.
+
+**It spawns 8.16 to 8.18**, P8's spec gaining "A trailing slash is
+pedantic". **Open, for the maintainer**: whether the gate (D9) warns, never
+failing, on a `pedantic_trailing_slash` link a change introduces. Today no
+redirect reaches the gate.
+
 ## Where the review stands
 
 Findings 1 to 5 are filed: 8.4.2 to 8.4.4 and 8.10 to 8.12 have landed, and
@@ -135,4 +166,6 @@ cd runs/p8.6-review/digest && setsid python3 -m http.server 8086 --bind 0.0.0.0
 ```
 
 **Still open for the maintainer**: Finding 1's question, whether "Repos"
-should also count broken links by their target's repo.
+should also count broken links by their target's repo; Finding 6's, whether
+the gate warns on a `pedantic_trailing_slash` link. 8.16 lands before the
+review resumes.

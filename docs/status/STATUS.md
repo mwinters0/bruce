@@ -107,10 +107,17 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   its database the evidence 8.6's review resumes on and 8.8 compares with
   8.1's; the guide's "about two hours" corrected from its time.
   Notes: [`../wip/roadmap-P8.14-second-crawl-notes.md`](../wip/roadmap-P8.14-second-crawl-notes.md).
+- [ ] **8.16** A redirected link whose final URL differs only by a final `/`:
+  `ok`, reason `pedantic_trailing_slash`, the housekeeping's redirects listing
+  it apart and last (D7, D16), shown on 8.14's database.
 - [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
   verdict and what it spawns in the notes.
   In progress; findings so far in
   [`../wip/roadmap-P8.6-digest-review-notes.md`](../wip/roadmap-P8.6-digest-review-notes.md).
+- [ ] **8.17** A `broken_url` link whose URL with its final `/` toggled
+  answers: still broken, the digest naming that URL as its fix.
+- [ ] **8.18** A redirect whose `Location` doubles a slash reported once, and
+  a page reached only by a redirect from off a root not that root's page.
 - [ ] **8.7** `changed` and `anchors-removed`: `report` children and kinds,
   the scope changed and the root missed flagged.
 - [ ] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,

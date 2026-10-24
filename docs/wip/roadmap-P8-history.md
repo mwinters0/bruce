@@ -295,6 +295,30 @@ Rejected: the name's first hop alone, or any hop on it, each leaving a verdict
 to the order a crawl asked a name's origins in; a pace per origin, asking one
 server at twice the rate it set.
 
+## A trailing slash is pedantic
+
+Settled 2026-10-24 (maintainer), on 8.14's crawl (8.6's notes, "Finding 6"):
+a missing or extra final `/` is to be corrected, below a 404 or a missing
+fragment.
+
+- **A redirected link whose final URL differs from the URL linked only by a
+  final `/` is `ok`, reason `pedantic_trailing_slash`**, whatever the hops
+  between, and the housekeeping's redirects list those links apart and last.
+  The name is one form's, so that other classes of redirect can stand beside
+  it. Rejected: a sixth outcome, every report and the gate having to place
+  it (D16) for a link a reader follows.
+- **A `broken_url` link whose URL with its final `/` toggled answers stays
+  broken**, a reader landing on the error, and the digest names that URL as
+  its fix.
+- **A redirect whose `Location` doubles a slash is reported once**, as a
+  redirect landing on a malformed URL, and **a page reached only by a redirect
+  from off a root is not that root's page**: its links are not counted. On
+  8.14's crawl, fedoraproject.org's `code-of-conduct` 302 put 529 `broken_url`
+  links on three such pages.
+
+**Open**: whether the gate warns, never failing, on a
+`pedantic_trailing_slash` link a change introduces.
+
 ## Where it lives
 
 Settled 2026-10-23 (maintainer), on the concept map's layering (D39):
@@ -316,6 +340,9 @@ Settled 2026-10-23 (maintainer), on the concept map's layering (D39):
   learned in `profile/antora`.
 - **A domain in the allowlist**: `config`, where the allowlist is parsed and
   matched; the guide's list in `docs/manual/deploy.md`.
+- **A trailing slash**: the reason in `store::views`' verdict (D28), its
+  listing in `report/digest/`; the toggled URL asked where `crawl` asks; a
+  redirect's landing page placed by `crawl::frontier`'s plan.
 
 ## The slices
 
@@ -335,6 +362,9 @@ Chrome spot check being the maintainer's to request meanwhile.
 then compares with 8.1's, its notes telling the rows they reclassify or
 newly check from new breakage. **8.15**, from the review of 8.13's call
 (2026-10-24), lands before 8.14 too. The checklist lists 8.6 after them.
+**8.16 to 8.18**, from the review of 8.14's crawl (2026-10-24), land "A
+trailing slash is pedantic": 8.16, the reason, before 8.6 resumes, the
+digest reading it off 8.14's database; 8.17 and 8.18 after 8.6.
 
 ## Facts the grilling found
 
