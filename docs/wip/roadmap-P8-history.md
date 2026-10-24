@@ -257,7 +257,9 @@ report counts it so**, the gate included:
   misses a well-formed link to a missing page.
 - **A scheme that works on a public web page stays `unchecked`, `scheme`**:
   `mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`,
-  `magnet` and `sms`. **Any other is broken**, `file:` and a mistyped
+  `magnet`, `sms`, and `data` and `javascript`, which work in the page
+  itself, an embedded image or a script's link (added 2026-10-24, maintainer;
+  8.12 lands it). **Any other is broken**, `file:` and a mistyped
   `hhttps:` among them, no reader of the site being able to follow it.
 
 ## The allowlist names the Fedora and Red Hat sites
