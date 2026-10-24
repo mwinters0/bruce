@@ -251,7 +251,12 @@ host's `robots.txt` is always obeyed.
 **What `robots.txt` does** is as RFC 9309 says. Each host's is read once a
 run, before any other request to it. A URL a rule forbids is not requested and
 is reported as not checked. If the file is absent (a 4xx answer), everything
-is allowed. If it cannot be read (a 5xx answer, no answer, more than five
-redirects, or a 429 that outlasts the retries), the whole host is not
-requested for the run, and its links are reported as not checked. A
-`Crawl-delay` of more than an hour is read as an hour.
+is allowed. If the host answers but the file cannot be read (a 5xx, a 429
+that outlasts the retries, or redirects that lead nowhere: more than five, one
+with no web address to follow, or one to another host that does not answer),
+the whole host is not requested for the run, and its links are reported as not
+checked. If the host itself does not answer, every link to it is reported as a
+request for it would have been, for the whole run: `broken_url` where its name
+does not exist, an `error` where it refuses, times out or fails the TLS
+handshake, the reason saying which. A `Crawl-delay` of more than an hour is
+read as an hour.

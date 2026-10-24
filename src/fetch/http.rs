@@ -35,13 +35,15 @@ use url::Url;
 use crate::config::DEFAULT_USER_AGENT;
 
 use super::charset::decode;
-use super::{Body, Failure, FailureKind, Fetcher, MAX_BODY, MAX_SITEMAP, Mode, Response, Stopper};
+use super::{
+    Access, Body, Failure, FailureKind, Fetcher, MAX_BODY, MAX_SITEMAP, Mode, Response, Stopper,
+};
 
 pub mod host;
 
 mod download;
 
-use host::{Access, Hosts, Listing};
+use host::{Hosts, Listing};
 
 /// Redirects followed to reach a robots.txt (RFC 9309 asks for five).
 const ROBOTS_REDIRECTS: usize = 5;
@@ -242,17 +244,15 @@ impl HttpFetcher {
             return Listing::Unreachable;
         };
         for _ in 0..=ROBOTS_REDIRECTS {
-            // deficiency: KD21 A failure with no response closes the host
-            // whatever its cause, so a link to a host whose name does not
-            // resolve, such as an internal one, is `unchecked`,
-            // `robots_unavailable`, and never the `broken_url` D16 gives a
-            // name that does not exist, nor a refused connection's `error`.
-            // RFC 9309 disallows a host whose robots.txt is unreachable
-            // through a server or network error; a name with no address has
-            // no server to disallow anything, and the fix carries the
-            // failure's cause from here to the target's outcome.
-            let Ok(attempt) = self.get(&at, Want::Robots).await else {
-                return Listing::Unreachable;
+            let attempt = match self.get(&at, Want::Robots).await {
+                Ok(attempt) => attempt,
+                // No response on the host's own name is its failure (D8), the
+                // first hop's or one a redirect kept on it; another host's
+                // silence, or a stop, says nothing of this one.
+                Err(failure) if at.host() == url.host() && failure.kind != FailureKind::Stopped => {
+                    return Listing::Failed(failure);
+                }
+                Err(_) => return Listing::Unreachable,
             };
             let response = attempt.response;
             match response.status {
@@ -278,8 +278,10 @@ impl Fetcher for HttpFetcher {
     /// Whether `url` may be requested, by its host's robots.txt (D8), which
     /// is fetched the first time any URL of a host that reads it (`robots`) is asked about. RFC
     /// 9309 decides what its answer means: a 4xx allows everything; a 5xx, a
-    /// failure, a 429 that outlasts the retries or too many redirects make
-    /// the host [`Access::Unavailable`] for the run.
+    /// 429 that outlasts the retries or redirects that lead nowhere make the
+    /// host [`Access::Unavailable`] for the run. A first request that gets no
+    /// response at all is the host's [`Access::Failed`], its failure settling
+    /// each of the host's targets (D8, D16).
     async fn access(&self, url: &Url) -> Access {
         self.hosts.host(url).access(url, self.robots_txt(url)).await
     }

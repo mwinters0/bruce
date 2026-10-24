@@ -28,8 +28,6 @@ pub mod http;
 pub mod local;
 pub mod routed;
 
-pub use http::host::Access;
-
 /// The most a sitemap file may come to, as fetched and again uncompressed:
 /// the sitemap protocol's own limit.
 pub const MAX_SITEMAP: usize = 50 * 1024 * 1024;
@@ -154,6 +152,20 @@ impl Failure {
             detail: "the crawl was stopped".to_owned(),
         }
     }
+}
+
+/// Whether a URL may be requested, by its host's robots.txt (D8).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Access {
+    Allowed,
+    /// A rule of the host's robots.txt forbids it: `unchecked`, `robots`.
+    Disallowed,
+    /// The host answered its robots.txt request with no file to read, or a
+    /// stop kept it unread: `unchecked`, `robots_unavailable`.
+    Unavailable,
+    /// The host's robots.txt request produced no response: every URL of the
+    /// host settles as that failure would (D8, D16).
+    Failed(Failure),
 }
 
 /// Ends a crawl early. Clones share one state, which records when the first

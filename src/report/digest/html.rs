@@ -740,8 +740,9 @@ fn unchecked_meaning(reason: &str) -> Option<&'static str> {
         }
         "robots_unavailable" => {
             "Links to a site whose <code>robots.txt</code>, which says what robots may fetch, \
-             could not be read, so the run left the whole site alone. Usually the site was down \
-             or failing at the time."
+             could not be read: the site answered with an error, or sent the robot somewhere it \
+             could not follow, so the run left the whole site alone. Usually the site was failing \
+             at the time."
         }
         "externals_skipped" => {
             "Links to other websites that a <code>check-dir</code> run was told not to check \

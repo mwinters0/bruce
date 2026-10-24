@@ -70,12 +70,12 @@ locales on `docs.fedoraproject.org` stay unchecked
 
 A link to a staging or internal host under these domains is then checked like
 any other, and reported as what it is to a reader: broken where the page is
-missing, an error where the host asks for a login or fails. A host that does
-not answer at all, or whose name does not resolve outside Red Hat's network, is
-reported as not checked instead, with the reason `robots_unavailable`: `bruce`
-reads a host's `robots.txt` before anything else on it, and asks nothing of a
-host whose file it cannot read. A host's
-`robots.txt` can also forbid a link: Bugzilla's allows only its bug pages, and
+missing, an error where the host asks for a login or fails. A host whose name
+does not resolve outside Red Hat's network is `broken_url`, and one that
+refuses or never answers is an `error`, the reason saying which (`nxdomain`,
+`connect`, `timeout`): `bruce` reads a host's `robots.txt` before anything else
+on it, and the host's silence there is the answer for every link to it. A
+host's `robots.txt` can also forbid a link: Bugzilla's allows only its bug pages, and
 fedorapeople.org's allows nothing, so those links are reported as not checked,
 with the reason `robots`.
 

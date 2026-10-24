@@ -279,7 +279,8 @@ struct Done {
     form: Canonical,
     end: End,
     started: SystemTime,
-    /// Whether any request left, robots.txt aside.
+    /// Whether a request answered for the target: one sent for it, or its
+    /// host's robots.txt request that got no response (D8).
     asked: bool,
     elapsed: std::time::Duration,
 }
@@ -692,6 +693,11 @@ where
                 Access::Allowed => {}
                 Access::Disallowed => break End::Blocked("robots"),
                 Access::Unavailable => break End::Blocked("robots_unavailable"),
+                Access::Failed(failure) => {
+                    // The host's robots.txt request stands for this one (D8).
+                    asked = true;
+                    break End::Failed(failure);
+                }
             }
             asked = true;
             let mode = match plan {

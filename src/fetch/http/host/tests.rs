@@ -147,21 +147,70 @@ async fn a_429_robots_txt_does_not_open_the_host() {
     assert_eq!(f.access(&url_of(&server, "/a")).await, Access::Unavailable);
 }
 
-#[tokio::test]
-async fn no_answer_closes_the_host() {
-    // A port nothing listens on: the listener is dropped at once.
-    let port = tokio::net::TcpListener::bind("127.0.0.1:0")
+/// A port nothing listens on: the listener is dropped at once.
+async fn dead_port() -> u16 {
+    tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
         .unwrap()
         .local_addr()
         .unwrap()
-        .port();
+        .port()
+}
+
+#[tokio::test]
+async fn a_host_that_gives_no_response_fails_with_its_cause() {
+    let port = dead_port().await;
     let config = Config::parse(&format!(
         "[rate]\nper_second = 1000\n[[root]]\nurl = \"http://127.0.0.1:{port}/\"\n"
     ))
     .unwrap();
+    let f = fetcher(&config);
     let url = Url::parse(&format!("http://127.0.0.1:{port}/a")).unwrap();
-    assert_eq!(fetcher(&config).access(&url).await, Access::Unavailable);
+    let Access::Failed(failure) = f.access(&url).await else {
+        panic!("a refused connection is the host's failure");
+    };
+    assert_eq!(failure.kind, FailureKind::Connect);
+}
+
+#[tokio::test]
+async fn a_failure_is_settled_once_for_every_url_of_the_host() {
+    let failure = Failure {
+        kind: FailureKind::NxDomain,
+        detail: "no such name".to_owned(),
+    };
+    let loads = std::sync::atomic::AtomicUsize::new(0);
+    let load = || async {
+        loads.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        Listing::Failed(failure.clone())
+    };
+    let hosts = Hosts::unlimited();
+    for at in ["/a", "/b"] {
+        let url = Url::parse(&format!("http://silent.invalid{at}")).unwrap();
+        let got = hosts.host(&url).access(&url, load()).await;
+        assert_eq!(got, Access::Failed(failure.clone()), "{at}");
+    }
+    assert_eq!(loads.into_inner(), 1, "robots.txt is asked for once");
+}
+
+#[tokio::test]
+async fn a_robots_txt_redirected_onto_a_silent_host_fails_only_its_own_name() {
+    let port = dead_port().await;
+    // The mock server is `127.0.0.1`: the same name on a dead port is the
+    // host's own silence, and `localhost` another host's.
+    for (to, failed) in [("127.0.0.1", true), ("localhost", false)] {
+        let server = MockServer::start().await;
+        Mock::given(path("/robots.txt"))
+            .respond_with(
+                ResponseTemplate::new(301)
+                    .insert_header("location", format!("http://{to}:{port}/robots.txt")),
+            )
+            .mount(&server)
+            .await;
+        let f = fetcher(&config(&server, "[rate]\nper_second = 1000"));
+        let got = f.access(&url_of(&server, "/a")).await;
+        assert_eq!(matches!(got, Access::Failed(_)), failed, "{to}: {got:?}");
+        assert_eq!(got == Access::Unavailable, !failed, "{to}: {got:?}");
+    }
 }
 
 #[tokio::test]

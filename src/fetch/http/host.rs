@@ -19,6 +19,7 @@ use tokio::time::{Instant, sleep_until};
 use url::Url;
 
 use crate::config::{Config, HostSettings, Rate};
+use crate::fetch::{Access, Failure};
 
 /// The longest wait between two requests to a host. A `Crawl-delay` past it
 /// is read as this, so an absurd one cannot stall the run for good.
@@ -31,20 +32,16 @@ pub enum Listing {
     Found(Vec<u8>),
     /// A 4xx answer but 429: no file, so everything is allowed (RFC 9309).
     Absent,
-    /// A 5xx, a 429, no answer, or anything else: the host is disallowed for the
-    /// run (RFC 9309), its targets `unchecked` with `robots_unavailable`.
+    /// The host answered, but with no file to read: a 5xx or a 429 that
+    /// outlasts the retries, or redirects that led nowhere, onto another host
+    /// that gave no response among them; or a stop. The host is disallowed
+    /// for the run (RFC 9309), its targets `unchecked`, `robots_unavailable`.
     Unreachable,
-}
-
-/// Whether a URL may be requested.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Access {
-    Allowed,
-    /// A rule of the host's robots.txt forbids it: `unchecked`, `robots`.
-    Disallowed,
-    /// The host's robots.txt could not be read: `unchecked`,
-    /// `robots_unavailable`.
-    Unavailable,
+    /// A request on the host's own name, the first or one a redirect kept
+    /// there, produced no response after its retries: the name does not
+    /// exist, the host refused, it never answered. Each of its targets
+    /// settles as that failure (D8, D16).
+    Failed(Failure),
 }
 
 /// A host's robots.txt, settled once per run.
@@ -54,6 +51,7 @@ enum Robots {
     Open,
     Rules(Robot),
     Unreachable,
+    Failed(Failure),
 }
 
 impl Robots {
@@ -192,6 +190,7 @@ impl Host {
                         },
                         Listing::Absent => Robots::Open,
                         Listing::Unreachable => Robots::Unreachable,
+                        Listing::Failed(failure) => Robots::Failed(failure),
                     }
                 } else {
                     Robots::Open
@@ -209,6 +208,7 @@ impl Host {
         match robots {
             Robots::Open => Access::Allowed,
             Robots::Unreachable => Access::Unavailable,
+            Robots::Failed(failure) => Access::Failed(failure.clone()),
             Robots::Rules(robot) if robot.allowed(url.as_str()) => Access::Allowed,
             Robots::Rules(_) => Access::Disallowed,
         }

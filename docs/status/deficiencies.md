@@ -85,12 +85,4 @@ roadmap's phase index.
   reading those counts under `--top` would promote it.
   Detail: `src/report/gate.rs`
 
-- **KD21** — A link to a host whose name does not resolve, or that never
-  answers, is `unchecked`, `robots_unavailable`, not `broken_url` or `error`:
-  the host's robots.txt is asked first, and failing to read it closes the host.
-  **(b) owned by P8**, slice 8.13 (maintainer, 2026-10-24: fixed before the
-  second en-US crawl): under the deployment guide's allowlist that is 29
-  en-US targets on 16 hosts.
-  Detail: `src/fetch/http.rs`
-
 <!-- deficiency-watermark: KD21 -->

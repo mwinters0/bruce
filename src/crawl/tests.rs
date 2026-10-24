@@ -1141,6 +1141,54 @@ async fn a_robots_txt_that_cannot_be_read_closes_the_host() {
 }
 
 #[tokio::test]
+async fn a_host_that_gives_no_response_to_its_robots_txt_fails_its_links() {
+    let dead = {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        listener.local_addr().unwrap().port()
+    };
+    let server = MockServer::start().await;
+    page(
+        &server,
+        "/docs/",
+        &format!(
+            r#"<a href="http://localhost:{dead}/x">x</a><a href="http://localhost:{dead}/y">y</a>
+            <a href="/docs/r">r</a>"#
+        ),
+    )
+    .await;
+    // A hop onto the silent host fails there, as a link to it does.
+    redirect(
+        &server,
+        "/docs/r",
+        301,
+        &format!("http://localhost:{dead}/z"),
+    )
+    .await;
+
+    let done = crawl(&server, "allowlist = [\"localhost\"]", quick()).await;
+
+    let r = format!("{}/docs/r", server.uri());
+    let silent = ["x", "y", "z"].map(|p| format!("http://localhost:{dead}/{p}"));
+    for url in silent.iter().map(String::as_str).chain(["/docs/r"]) {
+        let got = done.target(url);
+        assert_eq!(
+            (got.1.as_str(), got.2.as_deref(), got.3),
+            ("error", Some("connect"), None),
+            "{url}"
+        );
+    }
+    assert_eq!(done.chain(&r), [(r.clone(), 301, false)]);
+    assert_eq!(
+        count(
+            &done.store,
+            "SELECT count(*) FROM targets WHERE reason = 'connect' AND checked_at IS NOT NULL"
+        ),
+        4,
+        "the host's failed robots.txt request stands for each one's, so the time is kept"
+    );
+}
+
+#[tokio::test]
 async fn a_failure_with_no_response_is_classified_by_its_cause() {
     // A port nobody answers on: bind one and let it go.
     let dead = {

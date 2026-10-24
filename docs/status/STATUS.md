@@ -94,10 +94,10 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   root's own host; the deployment guide's allowlist names the Fedora and Red
   Hat sites, D5 amended; `data` and `javascript` join D66's working schemes.
   Notes: [`../wip/roadmap-P8.12-allowlist-domains-notes.md`](../wip/roadmap-P8.12-allowlist-domains-notes.md).
-- [ ] **8.13** A host that does not resolve or never answers: its links
-  `broken_url` or `error` (D16), not `unchecked`, `robots_unavailable`;
-  closes KD21. `src/crawl.rs` is at its soft limits, so a seams round
-  (`.claude/skills/seams/SKILL.md`) precedes it where the fix grows it.
+- [x] **8.13** A host that does not resolve or never answers: its links
+  `broken_url` or `error` (D16), not `unchecked`, `robots_unavailable`; KD21
+  struck.
+  Notes: [`../wip/roadmap-P8.13-robots-failure-notes.md`](../wip/roadmap-P8.13-robots-failure-notes.md).
 - [ ] **8.14** The second en-US crawl, under the deployment guide's config
   after 8.10 to 8.13: launched detached (`.claude/skills/gosub/handoff.md`),
   its database the evidence 8.6's review resumes on and 8.8 compares with
@@ -129,3 +129,13 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **A robots.txt hop that stays on the host's name and gets no response fails
+  the host's links** (8.13). `HttpFetcher::robots_txt` returns
+  `Listing::Failed` for a failure on any hop on the asked host's name, and
+  `Unreachable` (`robots_unavailable`) for one onto another name. Why: a
+  host's robots.txt state is keyed by its name (D8), so failing only the first
+  hop made a host silent on `https` `error` or `robots_unavailable` by which
+  scheme a link asked it on first. Reconsidering: first hop only keeps the
+  ruling's letter, the host having answered with a redirect, at the cost of
+  that order; any hop fails a host's links for a CDN's silence.

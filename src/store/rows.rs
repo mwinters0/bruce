@@ -153,7 +153,8 @@ pub struct TargetRow {
     pub redirect_chain: Vec<Hop>,
     pub outcome: Outcome,
     pub reason: Option<String>,
-    /// `None` where no request was made.
+    /// `None` where no request was made for the URL, its host's robots.txt
+    /// request that got no response counting as one (D8).
     pub checked_at: Option<SystemTime>,
     /// From the target's start to its last hop's end, robots.txt, the host's
     /// pace and the body's extraction included, so it is no response time.
