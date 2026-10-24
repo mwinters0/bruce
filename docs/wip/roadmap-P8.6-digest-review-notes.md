@@ -66,10 +66,11 @@ links need a legend: a reader may not know what `out_of_scope` means, or which
 hosts were allowlisted. On run 1 (`frontier.rs`, `plan`, against the rows):
 
 - **`out_of_scope`**, 157,827 links: on a root's own host and outside every
-  root's scope. Here they are docs.fedoraproject.org's other locales, about
-  2,307 links to each, every page's language menu.
-- **`host_not_allowlisted`**, 27,405 links to 1,315 hosts, github.com (1,196),
-  fedoraproject.org (986) and spdx.org (601) the most linked.
+  root's scope. Here they are docs.fedoraproject.org's other locales, 2,320
+  links to 2,307 targets in each, every page's language menu.
+- **`host_not_allowlisted`**, 27,405 links to 1,315 hosts, fedoraproject.org
+  (5,786 links, to 986 targets), getfedora.org (2,374) and creativecommons.org
+  (2,372) the most linked; github.com has the most targets, 1,196.
 - **`skipped`**, 1,958: a `skip` glob, here forge's "new issue" links.
 - **`scheme`**, 280: not http or https, `mailto:` mostly.
 - **The run records no allowlist, `skip` or scope**, only `config_hash`. The
@@ -79,3 +80,29 @@ hosts were allowlisted. On run 1 (`frontier.rs`, `plan`, against the rows):
   nothing the reader lacks.
 
 **It spawns 8.4.4**, and amends P8's spec, "What the document holds", item 9.
+
+## Finding 4: some unchecked links are broken
+
+Maintainer, 2026-10-24, on reading 8.4.4's first draft:
+
+- **Its definitions were confusing and technical**; a plain summary that names
+  what the links are ("the other languages", "forge's new-issue links") reads
+  far more clearly. 8.4.4 is being reworded in that register.
+- **Every unchecked link that cannot work is broken, and must be reported as
+  broken.** On run 1 they are: `hhttps://forge…` (a mistyped scheme);
+  `https:/kubernetes.io` and `https:/docker.io`, which resolve, as a browser
+  resolves them, to `docs.fedoraproject.org/kubernetes.io` and `/docker.io`,
+  both answering 404 live; and `…/infra/sysadmin_guide/…​..` (an
+  ellipsis and a zero-width space pasted into an href). All four are
+  `out_of_scope` or `scheme` today, so they were never fetched.
+- Of the 11 URLs on docs.fedoraproject.org outside en-US and outside every
+  other locale (2,371 links), the rest answer: the slashless home link
+  `https://docs.fedoraproject.org/en-US` (2,320 links, every page's header)
+  with a 301 to `http://docs.fedoraproject.org/en-US/`, and
+  `fedora-project/project/fedora-overview.html` and
+  `f28/release-notes/welcome/Welcome.html` with 200 (`curl -sI`, 2026-10-24).
+- **bruce has no notion of a locale**: D10's `out_of_scope` is every URL on
+  a root's host outside every root's scope, so the four broken links fall
+  under the rule meant for the language menu's other locales.
+
+How they become broken is being grilled.
