@@ -160,11 +160,22 @@ each row's severity, pedantic the lowest, as a small red, yellow or grey
 circle in the first column, the design left to this session. **It spawns
 8.19**, P8's spec gaining "Severity is marked".
 
+## Finding 8: a dot marks a finding, and a missing fragment is amber
+
+Maintainer, 2026-10-24, on 8.14's digest: 8.19 missed the point of the
+circles. They mark individual findings and do not belong in headings. A
+truly broken link, a 404 say, is red, and a missing fragment amber. Asked
+about the rows that rule did not place: an `error` is red, and a redirect
+that is not pedantic stays amber. **It earns 8.19.1**, 8.19 having shipped
+the wrong contract, and amends P8's spec, "Severity is marked". These levels
+are defaults: the maintainer placed each kind's classification in the
+profile, filed in P7's inbox.
+
 ## Where the review stands
 
-Findings 1 to 7 are filed, and every slice they spawned ahead of the review
-has landed: 8.4.2 to 8.4.4, 8.10 to 8.13, 8.15, 8.16 and 8.19. The review
-**resumes on 8.14's crawl**, no digest of 8.1's database showing what 8.10 to
+Findings 1 to 8 are filed. Every slice findings 1 to 7 spawned ahead of the
+review has landed (8.4.2 to 8.4.4, 8.10 to 8.13, 8.15, 8.16 and 8.19), and
+8.19.1 lands before the review goes on. The review **resumed on 8.14's crawl**, no digest of 8.1's database showing what 8.10 to
 8.13 reclassify. After a round of fixes, the digest is rewritten from the
 copy with a release build:
 

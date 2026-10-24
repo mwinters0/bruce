@@ -326,17 +326,22 @@ fragment.
 ## Severity is marked
 
 Settled 2026-10-24 (maintainer, the design delegated): the digest is
-skimmed by severity.
+skimmed by severity. Its levels and the dots' placement were amended the same
+day on 8.14's digest (8.6's notes, "Finding 8").
 
-- **Three levels, read off a link's outcome and reason**: *broken*
-  (`broken_url`, `broken_anchor`) in `--bad`'s red; *attention* (`error`, a
-  redirect that is not pedantic) in `--warn`'s amber; *pedantic*
+- **Three levels, read off a link's outcome and reason**: *broken*, a link
+  that gets the reader nothing (`broken_url`, `error`), in `--bad`'s red;
+  *attention*, one that lands but not where it says (`broken_anchor`, a
+  redirect that is not pedantic), in `--warn`'s amber; *pedantic*
   (`pedantic_trailing_slash`) in `--muted`'s grey. An `unchecked` link has
   none, and nor do the housekeeping's lists that are not links (orphans,
-  unlisted pages, sitemap entries, unchecked counts).
-- **A dot in the first column of every row naming a link or a target**, a
-  column with no heading, and **each section's `<summary>` carrying its
-  highest level's dot**, the collapsed digest being skimmed by its summaries.
+  unlisted pages, sitemap entries, unchecked counts). **These are defaults**:
+  the classification of each kind belongs to the profile, P7's to give it
+  (maintainer, 2026-10-24; `../design/roadmap-P7-rules-inbox.md`), so P8
+  states it in one place.
+- **A dot marks one finding: the first column of every row naming a link or
+  a target**, a column with no heading. Rejected: a dot on a section's
+  `<summary>` (8.19), a heading not being a finding.
   Broken and attention are filled; pedantic is a ring, apart from the two
   without its colour and in print's greys.
 - **The colour repeats the row's own text, never carrying it alone**: each
