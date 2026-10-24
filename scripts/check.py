@@ -80,7 +80,11 @@ first of the other three rules it meets gives it:
   `tests/`, `benches/` and `examples/` it runs every member depending on it,
   transitively, too. Those packages are the ones formatted and linted, and
   doc-tested where they have a library, as is a library whose own tests read
-  a changed path; and the module graph runs, whole, since its index is.
+  a changed path; and the module graph runs, whole, since its index is. A
+  member holds its directory, but for a member nested in it; one at the
+  workspace root, whose directory is the workspace's too, holds only the
+  top-level directories and files its targets' sources sit in, as `src/`,
+  `tests/` or `build.rs` (`Package.owns`).
 - **A comment, inside a workspace member** -- a `.rs` file in both trees
   whose `code_of` is unchanged, a doc comment's fenced doctest counting as
   code -- formats and lints that package alone and runs none of its tests,
@@ -119,6 +123,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -441,10 +446,15 @@ class Target:
 @dataclass(frozen=True)
 class Package:
     name: str
-    dir: str  # repo-relative, no trailing slash
+    dir: str  # repo-relative, no trailing slash; `.` at the workspace root
     #: Workspace members it depends on, of any dependency kind.
     deps: frozenset[str]
     targets: tuple[Target, ...]
+    #: What of the repository is its own, each a directory with its slash or a
+    #: file: its directory, or at the workspace root, whose directory is the
+    #: workspace's too, the top-level entry each of its targets' sources sits
+    #: in (`owned`).
+    owns: tuple[str, ...]
     #: Whether only dev-dependencies reach it: a test-support library, whose
     #: reads are its dependents' tests' too (`plan_changes`).
     support: bool = False
@@ -641,6 +651,35 @@ def reads(prefix: str, path: str) -> bool:
     return prefix == "." or path == prefix or path.startswith(prefix + "/")
 
 
+def owned(pdir: str, sources: Collection[str]) -> tuple[str, ...]:
+    """What a member at `pdir` owns (`Package.owns`), given every one of its
+    targets' sources, repo-relative: below the root, all of `pdir`; at the
+    root, the top-level directory or file each source is in, as `src/`,
+    `tests/` and `build.rs`, so the workspace manifest, the lockfile and the
+    rest of the root stay the workspace's."""
+    if pdir != ".":
+        return (f"{pdir}/",)
+    return tuple(sorted({s.split("/", 1)[0] + ("/" if "/" in s else "") for s in sources}))
+
+
+def home_of(packages: Sequence[Package], path: str) -> tuple[Package, str] | None:
+    """The member owning `path` (`Package.owns`), the most specific entry
+    winning so that a member nested in another's directory keeps its files,
+    and the path relative to that member's directory; `None` for a path no
+    member owns."""
+    best = max(
+        (
+            (len(own), p)
+            for p in packages
+            for own in p.owns
+            if path == own or (own.endswith("/") and path.startswith(own))
+        ),
+        key=lambda found: found[0],
+        default=None,
+    )
+    return None if best is None else (best[1], posixpath.relpath(path, best[1].dir))
+
+
 def workspace(repo: Path) -> list[Package]:
     """The workspace members and their test targets, from `cargo metadata`;
     none before a `Cargo.toml` exists."""
@@ -682,6 +721,7 @@ def workspace(repo: Path) -> list[Package]:
                 if rel in by_dir:
                     deps.add(by_dir[rel])
         targets = []
+        every_src = [Path(t["src_path"]).relative_to(root).as_posix() for t in p["targets"]]
         for t in p["targets"]:
             src = Path(t["src_path"]).relative_to(root).as_posix()
             kinds = set(t["kind"])
@@ -696,7 +736,11 @@ def workspace(repo: Path) -> list[Package]:
                 continue  # benches, examples and build scripts run no tests
             targets.append(Target(bid, kind, tuple(sources)))
         support = kinds_into[name] == {"dev"}
-        packages.append(Package(name, pdir, frozenset(deps - {name}), tuple(targets), support))
+        packages.append(
+            Package(
+                name, pdir, frozenset(deps - {name}), tuple(targets), owned(pdir, every_src), support
+            )
+        )
     return packages
 
 
@@ -868,9 +912,9 @@ def plan_changes(
         reader_ids |= found
         if UNTESTED_RE.search(path):
             continue
-        home = next((p for p in packages if path.startswith(p.dir + "/")), None)
-        if home is not None:
-            rest = path[len(home.dir) + 1 :]
+        owner = home_of(packages, path)
+        if owner is not None:
+            home, rest = owner
             if path in comment_only:
                 linted.add(home.name)
             else:

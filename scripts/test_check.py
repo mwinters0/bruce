@@ -804,6 +804,135 @@ class Affected(unittest.TestCase):
             )
 
 
+ROOT_PACKAGE = {
+    "Cargo.toml": (
+        '[workspace]\nresolver = "2"\nmembers = ["tests/support"]\n'
+        '[package]\nname = "solo"\nversion = "0.1.0"\nedition = "2021"\n'
+        '[dev-dependencies]\nsupport = { path = "tests/support" }\n'
+        '[[bench]]\nname = "b"\nharness = false\ntest = true\n'
+    ),
+    "src/lib.rs": 'mod inner;\npub const INNER: &str = include_str!("inner.rs");\n',
+    "src/inner.rs": "pub fn g() {}\n",
+    "src/main.rs": "fn main() {}\n",
+    "tests/t.rs": '#[test]\nfn t() { let _ = "fixtures/a.sql"; }\n',
+    "benches/b.rs": "fn main() {}\n",
+    "examples/e.rs": "fn main() {}\n",
+    "tests/support/Cargo.toml": '[package]\nname = "support"\nversion = "0.1.0"\nedition = "2021"\n',
+    "tests/support/src/lib.rs": 'pub fn root() -> &\'static str { "../../fixtures/support" }\n',
+    "fixtures/a.sql": "",
+    "fixtures/support/b.sql": "",
+}
+
+
+class RootPackage(unittest.TestCase):
+    """What `--affected` runs when a member's directory is the workspace root,
+    as this repository's `bruce` is: its own paths are its targets' top-level
+    directories, and the rest of the root is the workspace's."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.repo = Path(cls.tmp.name)
+        for rel, text in ROOT_PACKAGE.items():
+            write(cls.repo, rel, text)
+        cls.packages = check.workspace(cls.repo)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def plan(self, changed: list[str], comment_only: tuple[str, ...] = ()) -> check.Plan:
+        return check.plan_changes(self.repo, changed, lambda _: self.packages, comment_only)
+
+    def names(self, changed: list[str], comment_only: tuple[str, ...] = ()) -> list[str]:
+        return [c.name for c in self.plan(changed, comment_only).checks]
+
+    def test_the_root_member_owns_its_targets_top_level_entries(self):
+        by = {p.name: p for p in self.packages}
+        self.assertEqual(by["solo"].dir, ".")
+        self.assertEqual(by["solo"].owns, ("benches/", "examples/", "src/", "tests/"))
+        self.assertEqual(by["support"].owns, ("tests/support/",))
+        self.assertTrue(by["support"].support)
+        self.assertEqual(check.home_of(self.packages, "src/inner.rs"), (by["solo"], "src/inner.rs"))
+        self.assertEqual(
+            check.home_of(self.packages, "tests/support/src/lib.rs"), (by["support"], "src/lib.rs")
+        )
+        for path in ("Cargo.toml", "Cargo.lock", "fixtures/a.sql", "scripts/x.py", "srcx/y.rs"):
+            self.assertIsNone(check.home_of(self.packages, path), path)
+
+    def test_a_production_source_runs_the_package_whole_with_the_site_and_the_graph(self):
+        # `src/inner.rs` is read by the library's own `include_str!`, as
+        # `bruce`'s sources are by its targets, so it is not in "no crate".
+        plan = self.plan(["src/inner.rs"])
+        self.assertEqual(
+            [c.name for c in plan.checks],
+            ["fmt", "clippy", "nextest", "e2e", "graph", "unittest", "repoint", "seams"],
+        )
+        argv = argv_of(plan)
+        self.assertEqual(argv["fmt"], ["cargo", "fmt", "--check", "-p", "solo"])
+        self.assertEqual(argv["clippy"], ["cargo", "clippy", "--all-targets", "-p", "solo"])
+        self.assertEqual(argv["nextest"], ["cargo", "nextest", "run", "--no-fail-fast", "-p", "solo"])
+        self.assertIn("packages solo", plan.note)
+
+    def test_a_tests_or_benches_change_runs_the_package_whole_but_not_the_site(self):
+        for path in ("tests/t.rs", "benches/b.rs", "examples/e.rs"):
+            self.assertEqual(
+                self.names([path]),
+                ["fmt", "clippy", "nextest", "graph", "unittest", "repoint", "seams"],
+                path,
+            )
+            self.assertEqual(
+                argv_of(self.plan([path]))["nextest"],
+                ["cargo", "nextest", "run", "--no-fail-fast", "-p", "solo"],
+            )
+
+    def test_a_comment_lints_the_package_and_runs_only_a_target_reading_it(self):
+        self.assertEqual(
+            self.names(["src/main.rs"], ("src/main.rs",)),
+            ["fmt", "clippy", "unittest", "repoint", "seams"],
+        )
+        plan = self.plan(["src/inner.rs"], ("src/inner.rs",))
+        self.assertEqual(
+            [c.name for c in plan.checks], ["fmt", "clippy", "nextest", "unittest", "repoint", "seams"]
+        )
+        # The binary compiles the library's sources too, so it reads them.
+        self.assertEqual(
+            argv_of(plan)["nextest"][-2:], ["-E", "binary_id(=solo) | binary_id(=solo::bin/solo)"]
+        )
+        self.assertIn("linted only, their changes being comments, solo", plan.note)
+
+    def test_the_workspace_s_own_files_at_the_root_run_every_check(self):
+        for path in ("Cargo.toml", "Cargo.lock", "scripts/x.py"):
+            plan = self.plan(["src/main.rs", path])
+            self.assertEqual(plan.checks, check.every_check(self.repo, lambda _: self.packages), path)
+            self.assertIn(f"{path} is in no crate", plan.note)
+
+    def test_a_path_at_the_root_a_test_reads_runs_its_readers_alone(self):
+        plan = self.plan(["fixtures/a.sql"])
+        self.assertEqual([c.name for c in plan.checks], ["nextest", "unittest", "repoint", "seams"])
+        self.assertEqual(argv_of(plan)["nextest"][-2:], ["-E", "binary_id(=solo::t)"])
+
+    def test_a_nested_member_keeps_its_own_files_and_runs_its_dependents(self):
+        plan = self.plan(["tests/support/src/lib.rs"])
+        self.assertEqual(argv_of(plan)["nextest"][4:], ["-p", "solo", "-p", "support"])
+        self.assertIn("e2e", argv_of(plan))
+        # A path the support library reads runs every target depending on it.
+        plan = self.plan(["fixtures/support/b.sql"])
+        self.assertEqual(
+            argv_of(plan)["nextest"][-2:],
+            [
+                "-E",
+                "binary_id(=solo) | binary_id(=solo::bin/solo) | binary_id(=solo::t)"
+                " | binary_id(=support)",
+            ],
+        )
+
+    def test_a_root_member_s_literals_are_taken_from_the_root(self):
+        self.assertEqual(
+            check.read_prefixes(self.repo, ".", "tests/t.rs"), {"fixtures/a.sql", "tests/fixtures/a.sql"}
+        )
+
+
 class Support(unittest.TestCase):
     """A library only dev-dependencies reach reads for its dependents' tests."""
 
@@ -871,6 +1000,16 @@ class RealWorkspace(unittest.TestCase):
         }
         for module in named:
             self.assertTrue((check.REPO / "scripts" / f"{module}.py").is_file(), module)
+
+    def test_a_production_source_runs_its_package_s_lints_site_and_graph(self):
+        source = next(
+            (s for p in self.packages for t in p.targets if t.kind == "bin" for s in t.sources), None
+        )
+        if source is None:
+            self.skipTest("no binary target yet")
+        plan = check.plan_changes(check.REPO, [source], lambda _: self.packages)
+        for name in ("fmt", "clippy", "nextest", "e2e", "graph"):
+            self.assertIn(name, [c.name for c in plan.checks], (source, name))
 
 
 if __name__ == "__main__":
