@@ -181,7 +181,10 @@ async fn a_failure_is_settled_once_for_every_url_of_the_host() {
     let loads = std::sync::atomic::AtomicUsize::new(0);
     let load = || async {
         loads.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        Listing::Failed(failure.clone())
+        Listing::Failed {
+            failure: failure.clone(),
+            name: "silent.invalid".to_owned(),
+        }
     };
     let hosts = Hosts::unlimited();
     for at in ["/a", "/b"] {
@@ -369,4 +372,123 @@ async fn a_stop_ends_the_wait_for_a_hosts_place() {
     assert_eq!(got.unwrap_err().kind, FailureKind::Stopped);
     assert!(stopped.elapsed() < Duration::from_secs(1));
     assert_eq!(count(&server, "/second").await, 0);
+}
+
+fn listed(text: &str) -> Listing {
+    Listing::Found(text.as_bytes().to_vec())
+}
+
+/// A name silent on one origin fails that origin's links alone, whichever
+/// of its origins a crawl asked first (D69).
+#[tokio::test]
+async fn a_name_silent_on_one_origin_fails_only_that_origin() {
+    let port = dead_port().await;
+    let server = MockServer::start().await;
+    robots(&server, 200, "User-agent: *\nDisallow: /private\n").await;
+    let dead = Url::parse(&format!("http://127.0.0.1:{port}/a")).unwrap();
+    let live = url_of(&server, "/a");
+    for dead_first in [true, false] {
+        let f = fetcher(&config(&server, "[rate]\nper_second = 1000"));
+        let (first, second) = if dead_first {
+            (&dead, &live)
+        } else {
+            (&live, &dead)
+        };
+        f.access(first).await;
+        f.access(second).await;
+        assert!(matches!(f.access(&dead).await, Access::Failed(_)));
+        assert_eq!(f.access(&live).await, Access::Allowed);
+        assert_eq!(
+            f.access(&url_of(&server, "/private")).await,
+            Access::Disallowed,
+            "dead first: {dead_first}"
+        );
+    }
+}
+
+/// A robots.txt that redirects to another origin's reads that origin's
+/// file, once, and takes its silence as its own on the same name (D69).
+#[tokio::test]
+async fn a_redirect_ending_at_another_origins_robots_txt_shares_its_read() {
+    let target = MockServer::start().await;
+    robots(&target, 200, "User-agent: *\nDisallow: /x\n").await;
+    let source = MockServer::start().await;
+    Mock::given(path("/robots.txt"))
+        .respond_with(
+            ResponseTemplate::new(301)
+                .insert_header("location", format!("{}/robots.txt", target.uri())),
+        )
+        .mount(&source)
+        .await;
+    let f = fetcher(&config(&source, "[rate]\nper_second = 1000"));
+    assert_eq!(
+        f.access(&url_of(&source, "/x")).await,
+        Access::Disallowed,
+        "the target's rules govern the source"
+    );
+    assert_eq!(
+        f.access(&url_of(&target, "/x")).await,
+        Access::Disallowed,
+        "the target's own links"
+    );
+    assert_eq!(count(&target, "/robots.txt").await, 1, "read once");
+    assert_eq!(count(&source, "/robots.txt").await, 1);
+
+    let port = dead_port().await;
+    let silent = MockServer::start().await;
+    Mock::given(path("/robots.txt"))
+        .respond_with(
+            ResponseTemplate::new(301)
+                .insert_header("location", format!("http://127.0.0.1:{port}/robots.txt")),
+        )
+        .mount(&silent)
+        .await;
+    let f = fetcher(&config(&silent, "[rate]\nper_second = 1000"));
+    let dead = Url::parse(&format!("http://127.0.0.1:{port}/a")).unwrap();
+    assert!(matches!(f.access(&dead).await, Access::Failed(_)));
+    assert!(matches!(
+        f.access(&url_of(&silent, "/a")).await,
+        Access::Failed(_)
+    ));
+}
+
+/// Two origins redirecting to each other's robots.txt end as redirects that
+/// led nowhere, rather than each waiting on the other.
+#[tokio::test]
+async fn origins_redirecting_to_each_other_do_not_wait_for_ever() {
+    let (a, b) = (MockServer::start().await, MockServer::start().await);
+    for (from, to) in [(&a, &b), (&b, &a)] {
+        Mock::given(path("/robots.txt"))
+            .respond_with(
+                ResponseTemplate::new(301)
+                    .insert_header("location", format!("{}/robots.txt", to.uri())),
+            )
+            .mount(from)
+            .await;
+    }
+    let f = fetcher(&config(&a, "[rate]\nper_second = 1000"));
+    let (one, two) = (url_of(&a, "/x"), url_of(&b, "/x"));
+    let both = async { tokio::join!(f.access(&one), f.access(&two)) };
+    let got = tokio::time::timeout(Duration::from_secs(10), both)
+        .await
+        .expect("no read waits on one that waits on it");
+    assert_eq!(got, (Access::Unavailable, Access::Unavailable));
+}
+
+/// The slowest `Crawl-delay` among a name's origins read paces it, whichever
+/// was read first (D18, D69).
+#[tokio::test]
+async fn the_slowest_crawl_delay_among_a_names_origins_paces_it() {
+    for order in [[1.0, 3.0], [3.0, 1.0]] {
+        let hosts = Hosts::unlimited();
+        let url = |port: u16| Url::parse(&format!("http://delayed.invalid:{port}/a")).unwrap();
+        for (i, delay) in order.into_iter().enumerate() {
+            let at = url(80 + i as u16);
+            let text = format!("User-agent: *\nCrawl-delay: {delay}\n");
+            hosts.host(&at).access(&at, async { listed(&text) }).await;
+        }
+        let pace = hosts.host(&url(80));
+        let got = pace.pace.lock().unwrap().interval;
+        assert_eq!(got, secs(3.0), "{order:?}");
+    }
 }

@@ -11,7 +11,7 @@ frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' 
 **Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
 phase index.
 
-<!-- decision-watermark: D68 -->
+<!-- decision-watermark: D69 -->
 
 ## Scope and modes
 
@@ -336,10 +336,15 @@ consumer needs one, a script reading `link_verdicts` or `report_roots` meanwhile
 Defaults in config (D40), per-host settings in `[host]`. Back off on 429/503, honouring `Retry-After`. robots.txt is always
 honoured for external hosts and switchable only for a host a root starts on, refused at load otherwise. Every run refetches
 every page (I3). A host's robots.txt follows RFC 9309: a 4xx allows all; a 5xx, a 429 outlasting the retries (no word on the
-file) or redirects leading nowhere close the host for the run; no response on its own name fails its targets for the run
-(D16). Rejected: one global rate, throttling the root to the slowest host's courtesy; RFC 9309 closing a silent host, hiding
+file) or redirects leading nowhere close the origin for the run; no response on its own name fails the origin's targets for the run
+(D16); the file is an origin's (D69). Rejected: one global rate, throttling the root to the slowest host's courtesy; RFC 9309 closing a silent host, hiding
 a dead one's links as `unchecked`; asking a failed host again per link, a timeout a link where `error` fails no CI; `robots`
 on a root, two roots on a host disagreeing and an `include`'s host unset. Code: `fetch::http::host`. Evidence: its tests.
+
+### D69 A robots.txt is an origin's; pace, concurrency and D8's switch stay the name's
+RFC 9309, 2.3, scopes the file to scheme, host and port, so a name silent on one origin fails only that origin's links, whichever a crawl asked first. A redirect ending at another origin's own `/robots.txt` takes that origin's read, found, absent or silent, so `http` and `https` cannot disagree by a flicker between two requests; a silence fails the asking origin only when it is on the asking origin's name, and a loop between two origins is a redirect leading nowhere. A redirect that gets no response fails the asking origin's links when the silent hop is on its name, and leaves them `robots_unavailable` on another's. The slowest `Crawl-delay` among a name's origins read paces it (D18).
+Rejected: the name's first hop alone, or any hop on it, leaving a verdict to the order a name's origins were asked in; a pace per origin, asking one server at twice the rate it set.
+Reopens: a site whose origins disagree in a way that costs links. Code: `fetch::http::host`, `fetch::http`. Evidence: `fetch::http::host::tests::a_name_silent_on_one_origin_fails_only_that_origin`.
 
 ### D61 Live slots are shared among the hosts with work, and a build's reads have a budget of their own
 Each host holds at most the 64 slots divided by the hosts with a target waiting or running, taken in turn,

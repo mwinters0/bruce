@@ -24,6 +24,7 @@
 
 use std::error::Error as _;
 use std::io;
+use std::pin::Pin;
 use std::sync::Once;
 use std::time::{Duration, SystemTime};
 
@@ -44,6 +45,8 @@ pub mod host;
 mod download;
 
 use host::{Hosts, Listing};
+
+type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
 /// Redirects followed to reach a robots.txt (RFC 9309 asks for five).
 const ROBOTS_REDIRECTS: usize = 5;
@@ -237,8 +240,18 @@ impl HttpFetcher {
         }
     }
 
-    /// The host's robots.txt, from the origin of `url`, redirects followed by
-    /// hand so each hop is paced.
+    /// The robots.txt of `url`'s origin, read once and shared with any origin
+    /// whose own redirect ends at it (D69). `via` is the origin so asking.
+    fn listing<'a>(&'a self, url: &'a Url, via: Option<&'a Url>) -> BoxFuture<'a, Listing> {
+        Box::pin(async move {
+            let read = self.hosts.read(url, via, self.robots_txt(url)).await;
+            Listing::clone(&read)
+        })
+    }
+
+    /// The origin's robots.txt, from `url`, redirects followed by hand so
+    /// each hop is paced. A redirect that ends at another origin's own
+    /// `/robots.txt` is answered by that origin's read.
     async fn robots_txt(&self, url: &Url) -> Listing {
         let Ok(mut at) = url.join("/robots.txt") else {
             return Listing::Unreachable;
@@ -246,11 +259,12 @@ impl HttpFetcher {
         for _ in 0..=ROBOTS_REDIRECTS {
             let attempt = match self.get(&at, Want::Robots).await {
                 Ok(attempt) => attempt,
-                // No response on the host's own name is its failure (D8), the
-                // first hop's or one a redirect kept on it; another host's
+                // No response on the asking name is its failure (D8), the
+                // first hop's or one a redirect kept on it; another name's
                 // silence, or a stop, says nothing of this one.
                 Err(failure) if at.host() == url.host() && failure.kind != FailureKind::Stopped => {
-                    return Listing::Failed(failure);
+                    let name = url.host().map(|h| h.to_string()).unwrap_or_default();
+                    return Listing::Failed { failure, name };
                 }
                 Err(_) => return Listing::Unreachable,
             };
@@ -263,7 +277,12 @@ impl HttpFetcher {
                 300..=399 => {
                     let next = response.location.and_then(|l| at.join(&l).ok());
                     match next {
-                        Some(next) if matches!(next.scheme(), "http" | "https") => at = next,
+                        Some(next) if matches!(next.scheme(), "http" | "https") => {
+                            if is_robots_txt(&next) && next.origin() != url.origin() {
+                                return self.listing(&next, Some(url)).await;
+                            }
+                            at = next;
+                        }
                         _ => return Listing::Unreachable,
                     }
                 }
@@ -275,23 +294,27 @@ impl HttpFetcher {
 }
 
 impl Fetcher for HttpFetcher {
-    /// Whether `url` may be requested, by its host's robots.txt (D8), which
-    /// is fetched the first time any URL of a host that reads it (`robots`) is asked about. RFC
-    /// 9309 decides what its answer means: a 4xx allows everything; a 5xx, a
-    /// 429 that outlasts the retries or redirects that lead nowhere make the
-    /// host [`Access::Unavailable`] for the run. A request on the host's own
-    /// name that gets no response at all is the host's [`Access::Failed`], its
-    /// failure settling each of the host's targets (D8, D16).
+    /// Whether `url` may be requested, by its origin's robots.txt (D8, D69),
+    /// which is fetched the first time any URL of an origin whose host reads
+    /// it (`robots`) is asked about. RFC 9309 decides what its answer means: a
+    /// 4xx allows everything; a 5xx, a 429 that outlasts the retries or
+    /// redirects that lead nowhere make the origin [`Access::Unavailable`]
+    /// for the run. A request on the origin's own name that gets no response
+    /// at all is the origin's [`Access::Failed`], its failure settling each of
+    /// its targets (D8, D16).
     async fn access(&self, url: &Url) -> Access {
-        self.hosts.host(url).access(url, self.robots_txt(url)).await
+        self.hosts
+            .host(url)
+            .access(url, self.listing(url, None))
+            .await
     }
 
-    /// The `Sitemap:` lines of the robots.txt of `url`'s host, which is
+    /// The `Sitemap:` lines of the robots.txt of `url`'s origin, which is
     /// fetched first, for a host that reads it, if no one has asked yet.
     async fn sitemaps(&self, url: &Url) -> Vec<String> {
         let host = self.hosts.host(url);
-        host.access(url, self.robots_txt(url)).await;
-        host.sitemaps()
+        host.access(url, self.listing(url, None)).await;
+        host.sitemaps(url)
     }
 
     async fn fetch(&self, url: &Url, mode: Mode) -> Result<Response, Failure> {
@@ -350,6 +373,11 @@ fn retry_after(value: &str, now: SystemTime) -> Option<Duration> {
     }
     let at = httpdate::parse_http_date(value).ok()?;
     Some(at.duration_since(now).unwrap_or_default())
+}
+
+/// Whether `url` is an origin's own robots.txt.
+fn is_robots_txt(url: &Url) -> bool {
+    url.path() == "/robots.txt" && url.query().is_none()
 }
 
 /// Whether a `Content-Type` is one whose body the extractor reads.

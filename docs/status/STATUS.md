@@ -98,9 +98,10 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   `broken_url` or `error` (D16), not `unchecked`, `robots_unavailable`; KD21
   struck.
   Notes: [`../wip/roadmap-P8.13-robots-failure-notes.md`](../wip/roadmap-P8.13-robots-failure-notes.md).
-- [ ] **8.15** robots.txt read per origin (scheme, host and port), as RFC
-  9309 scopes it, pace and concurrency staying per name (D8): no link's
+- [x] **8.15** robots.txt read per origin (scheme, host and port), as RFC
+  9309 scopes it, pace and concurrency staying per name (D8, D69): no link's
   verdict depends on which of its name's origins a crawl asked first.
+  Notes: [`../wip/roadmap-P8.15-robots-origin-notes.md`](../wip/roadmap-P8.15-robots-origin-notes.md).
 - [ ] **8.14** The second en-US crawl, under the deployment guide's config
   after 8.10 to 8.13 and 8.15: launched detached (`.claude/skills/gosub/handoff.md`),
   its database the evidence 8.6's review resumes on and 8.8 compares with
