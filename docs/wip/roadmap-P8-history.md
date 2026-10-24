@@ -133,9 +133,9 @@ digest; 8.6's notes, "Finding 9"): a row holds a page's or a repo's red links
 (`broken_url` and `error`) and amber ones (`broken_anchor`), "Severity is
 marked", and ranks by its red, then its amber; a page whose only findings are
 errors is a row too, its errors in its drill-down. In the HTML its summary reads
-"● 181 broken links, ● 2 missing fragments (183 issues total)", the dots
-red and amber, a level with no links left out with its dot, and nothing more:
-not the links on the page, nor a repo's pages.
+"● 181 broken links, ● 2 missing fragments", the dots red and amber, a level
+with no links left out with its dot, and nothing more: no total (8.6's notes,
+"Finding 12"), nor the links on the page, nor a repo's pages.
 7. **Anchors removed**: the pages that lost anchors links still name.
 8. **Errors**, apart from breakage (D16).
 9. **Housekeeping**, collapsed: redirected links to update, the sitemap's
@@ -342,7 +342,7 @@ fragment.
   broken links that keep its path, path-relative (`../`, `committee/`) or a
   `?query`, which the doubled slash breaks, are the linking page's.
 - **A row holding such a link counts that breakage apart**, "● 1 broken
-  link, ● 579 broken through it (580 issues total)", the second count the
+  link, ● 579 broken through it", the second count the
   broken path-relative links on every doubled-slash page the link reaches
   through path-relative links, red, and ranked with the row's red. A link
   whose copy on the twin page is broken too is not broken through it, the
@@ -353,6 +353,11 @@ fragment.
   root's page (2026-10-24, superseded the same day), a page at a clean URL
   being the root's whatever reached it; the doubled slash pedantic or amber,
   the target's relative links then breaking for the reader.
+- **The doubled slash is shown where it is**: a link whose landing, not its
+  URL, doubles one shows that landing under *Resolves to*, "→ lands on …",
+  and the doubled slash is marked in the URL or the landing (maintainer,
+  2026-10-24; 8.6's notes, "Finding 11"). Rejected: a column of its own,
+  widening the table 8.4.6 narrowed.
 - **The gate's introduced redirected links show each row's reason**,
   `pedantic_trailing_slash` last, and fail nothing, as no redirect there
   does (D7); its rows are `report_redirects`', which the digest's are too.
@@ -439,7 +444,8 @@ newly check from new breakage. **8.15**, from the review of 8.13's call
 trailing slash is pedantic": 8.16, the reason, before 8.6 resumes, the
 digest reading it off 8.14's database; 8.17 after 8.6, and 8.18, rewritten by
 8.6's tenth finding, before it goes on (maintainer, 2026-10-24), as does
-**8.18.1**, from the review of 8.18's calls. **8.19**
+**8.18.1**, from the review of 8.18's calls, and **8.4.7 and 8.18.2**, from
+8.6's twelfth and eleventh findings. **8.19**
 lands "Severity is marked" after 8.16, whose level it shows, and before 8.6
 resumes.
 

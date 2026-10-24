@@ -222,11 +222,35 @@ by this session. **It rewrites 8.18** and P8's spec, "A trailing slash is
 pedantic"; the classification is a default a profile may change, filed in
 P7's inbox.
 
+## Finding 11: a doubled slash a redirect lands on is not shown
+
+Maintainer, 2026-10-24, on 8.14's digest after 8.18.1: the "broken through
+it" counts help immensely, but neither *Written as* nor *Resolves to* shows a
+doubled slash, so the source of the issue is unclear. On 8.14's database the
+two links on `en-US/project/` are `https://fedoraproject.org/code-of-conduct`,
+landing on `https://docs.fedoraproject.org/en-US/project/code-of-conduct//`,
+and `https://arm.fedoraproject.org/`, landing on `https://fedoraproject.org//`;
+of the run's 98 doubled-slash targets, 35 are so by their landing alone.
+Asked, the maintainer settled: where the landing, not the URL, doubles the
+slash, *Resolves to* shows it on a second line, "→ lands on …", and the
+doubled slash is marked wherever it is shown, in the URL or the landing. No
+column is added, the width being what 8.4.6 removed. **It earns 8.18.2**,
+8.18 having shipped those rows, and amends P8's spec, "A trailing slash is
+pedantic".
+
+## Finding 12: a row's summary carries no total
+
+Maintainer, 2026-10-24, on the same digest: the parenthetical totals go from
+every row, "● 1 broken link, ● 554 broken through it" reading as it is. **It
+earns 8.4.7**, reversing that part of "Finding 9" which 8.4.5 shipped, and
+amends P8's spec, "What the document holds" and "A trailing slash is
+pedantic".
+
 ## Where the review stands
 
-Findings 1 to 10 are filed. Every slice they spawned ahead of the
-review has landed (8.4.2 to 8.4.6, 8.10 to 8.13, 8.15, 8.16, 8.18, 8.18.1, 8.19 and
-8.19.1), and the review **resumes on 8.14's crawl**, no digest of 8.1's database showing what 8.10 to
+Findings 1 to 12 are filed. 8.4.7 and 8.18.2 land before the review goes
+on; every other slice the findings spawned ahead of it has landed (8.4.2 to
+8.4.6, 8.10 to 8.13, 8.15, 8.16, 8.18, 8.18.1, 8.19 and 8.19.1), and the review **resumes on 8.14's crawl**, no digest of 8.1's database showing what 8.10 to
 8.13 reclassify. After a round of fixes, the digest is rewritten from the
 copy with a release build:
 
