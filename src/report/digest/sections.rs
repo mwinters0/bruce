@@ -248,20 +248,23 @@ pub(super) fn pages(conn: &Connection, run: RunId, _: PageCounts) -> Result<Tabl
 }
 
 /// The redirected targets doubling no slash themselves, joined as `dl` to a
-/// `doubled_slash` link `b`: `dl.final_url` is its `landing`, which then
-/// doubles one (D71). Only the redirected targets are joined, a join of
-/// every target by URL taking several times as long.
+/// `doubled_slash` link `b`, whose `dl.final_url` is its `landing` and then
+/// doubles one (D71), or a `wrong_trailing_slash` one, whose landing is the
+/// URL the crawl toggled (D72). Only the redirected targets are joined, a join
+/// of every target by URL taking several times as long.
 fn landing_join() -> String {
     format!(
         "LEFT JOIN (SELECT t.run_id, t.url, t.final_url FROM targets t \
          WHERE t.final_url IS NOT NULL AND NOT {TARGET_URL_DOUBLES}) dl \
-         ON b.reason = '{DOUBLED_SLASH}' AND dl.run_id = b.run_id AND dl.url = b.target "
+         ON b.reason IN ('{DOUBLED_SLASH}', '{WRONG_TRAILING_SLASH}') \
+         AND dl.run_id = b.run_id AND dl.url = b.target "
     )
 }
 
 /// Puts the column `fix` after `landing`: for a row whose reason is
-/// [`WRONG_TRAILING_SLASH`] the target's URL with its final `/` toggled, which
-/// the crawl found answering (D72), else `null`.
+/// [`WRONG_TRAILING_SLASH`] the URL with its final `/` toggled that the crawl
+/// found answering (D72), the `landing`'s where the target redirected, else
+/// the target's; `null` for any other row.
 fn add_fix(table: &mut Table) {
     let at = |name: &str| table.columns.iter().position(|c| c == name);
     let (Some(target), Some(reason), Some(landing)) = (at("target"), at("reason"), at("landing"))
@@ -271,7 +274,7 @@ fn add_fix(table: &mut Table) {
     table.columns.insert(landing + 1, "fix".to_owned());
     for row in &mut table.rows {
         let fix = (row[reason].text() == Some(WRONG_TRAILING_SLASH))
-            .then(|| row[target].text())
+            .then(|| row[landing].text().or_else(|| row[target].text()))
             .flatten()
             .and_then(|url| toggle_slash(&Url::parse(url).ok()?))
             .map_or(Cell::Null, |url| Cell::Text(url.into()));
@@ -281,7 +284,7 @@ fn add_fix(table: &mut Table) {
 
 /// Every broken link on a crawled page, a page's together, an unresolved
 /// xref with its `hint` (D65), a doubled slash its `landing` and a wrong final
-/// slash its `fix`; the caller puts the pages in `pages`' order.
+/// slash its `fix`, and its `landing` where it redirected; the caller puts the pages in `pages`' order.
 pub(super) fn broken(conn: &Connection, run: RunId) -> Result<Table, Error> {
     let mut sql = Sql::new(
         "SELECT b.page, b.raw_href, b.target, dl.final_url AS landing, b.fragment, b.kind, \

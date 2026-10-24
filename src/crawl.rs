@@ -258,8 +258,8 @@ struct Answer {
     page: Option<Page>,
     /// What a sitemap file listed.
     sitemap: Option<Sitemap>,
-    /// The URL with its final `/` toggled answers where this one is a 4xx
-    /// (D72).
+    /// The URL with its final `/` toggled answers where the last one asked is
+    /// a 4xx (D72).
     slash_answers: bool,
 }
 
@@ -754,8 +754,8 @@ where
                 unread => response.body = unread,
             }
             let (fetcher, frontier, stop) = (&self.fetcher, &self.frontier, &self.stop);
-            let slash_answers = form == item.form
-                && slash::ask(fetcher, frontier, stop, &url, plan, response.status).await;
+            let slash_answers =
+                slash::ask(fetcher, frontier, stop, &url, plan, response.status).await;
             break End::Answered(Box::new(Answer {
                 status: response.status,
                 content_type: response.content_type,

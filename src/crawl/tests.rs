@@ -1194,6 +1194,47 @@ async fn a_404_whose_url_with_its_slash_toggled_answers_says_so() {
     assert!(!has_requested(&hits, "/docs/f/"), "robots.txt forbids it");
 }
 
+/// A target redirected onto a 4xx has the landing's URL toggled, and the
+/// reason is the landing's, which its target and the landing carry alike
+/// (D72).
+#[tokio::test]
+async fn a_redirect_onto_a_404_whose_url_toggled_answers_says_so() {
+    let server = MockServer::start().await;
+    page(
+        &server,
+        "/docs/",
+        r#"<a href="/docs/h">h</a><a href="/docs/i">i</a><a href="/docs/j">j</a>"#,
+    )
+    .await;
+    redirect(&server, "/docs/h", 301, "/docs/moved/").await;
+    redirect(&server, "/docs/i", 301, "/docs/moved/").await;
+    page(&server, "/docs/moved", "<title>moved</title>").await;
+    redirect(&server, "/docs/j", 301, "/docs/gone").await;
+    redirect(&server, "/docs/gone/", 301, "/docs/moved").await;
+
+    let done = crawl(&server, "", quick()).await;
+
+    let wrong = Some("wrong_trailing_slash");
+    for url in ["/docs/h", "/docs/i", "/docs/moved/"] {
+        assert_eq!(
+            done.target(url),
+            t(url, "broken_url", wrong, Some(404)),
+            "{url}"
+        );
+    }
+    for url in ["/docs/j", "/docs/gone"] {
+        assert_eq!(
+            done.target(url),
+            t(url, "broken_url", None, Some(404)),
+            "{url}: a redirecting toggle is no answer"
+        );
+    }
+    let hits = requests(&server).await;
+    assert!(has_requested(&hits, "/docs/moved"));
+    assert!(has_requested(&hits, "/docs/gone/"));
+    assert!(!done.targets().iter().any(|t| t.0 == "/docs/moved"));
+}
+
 #[tokio::test]
 async fn a_robots_txt_that_cannot_be_read_closes_the_host() {
     let server = MockServer::start().await;

@@ -56,7 +56,9 @@ pub struct Digest {
     /// Every broken link, a page's together and the pages in `pages`' order:
     /// `page`, `raw_href`, `target`, `landing`, `fragment`, `kind`, `outcome`,
     /// `reason`, `hint` and `status`. `landing` is the URL a `doubled_slash`
-    /// target redirected to where that, not the target, doubles a slash (D71).
+    /// target redirected to where that, not the target, doubles a slash (D71),
+    /// and the URL a `wrong_trailing_slash` target redirected to, which `fix`
+    /// toggles (D72).
     pub broken: Table,
     /// Each repo, ranked as `pages` are: `repo`, `pages`, `broken_pages`,
     /// `links`, `broken_url`, `broken_anchor`, `error` and `through`.

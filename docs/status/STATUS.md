@@ -24,7 +24,7 @@ the profile's facts, the other locales its language menu names and the content h
 `forge`, the edit-URL shape parse;
 `url`, the canonical form and `url_id`;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, the body decoding, the local fetcher over a map of URLs to files and the router that sends a URL the build holds to it and any other to HTTP;
-`crawl`, the frontier with the other locales learned and the URLs outside every scope waiting on them, the hops of a redirect, D16's outcomes, the ask of a 404's URL with its final `/` toggled (D72), the schedule that gives a build's reads a budget of their own and each live host its share of the run's other slots (D61), sitemaps, the run that writes a target's rows and its stop, and a run from seeds checked against a baseline: the component-versions the build holds, `not_built`, the baseline's rows copied for what it lacks, and the xrefs into a component the build lacks resolved to the baseline's pages or the URLs they name;
+`crawl`, the frontier with the other locales learned and the URLs outside every scope waiting on them, the hops of a redirect, D16's outcomes, the ask of a 404's URL, or of the 404 a redirect lands on, with its final `/` toggled (D72), the schedule that gives a build's reads a budget of their own and each live host its share of the run's other slots (D61), sitemaps, the run that writes a target's rows and its stop, and a run from seeds checked against a baseline: the component-versions the build holds, `not_built`, the baseline's rows copied for what it lacks, and the xrefs into a component the build lacks resolved to the baseline's pages or the URLs they name;
 `ci`, a build directory read as its production URLs; and
 `report`, the `report_*` views, the choice of run, the eight single-run reports, `diff`, and the gate (`introduced` with the inverse check, the redirected links, the errors and the breakage already in the baseline; `check-dir --inverse fail|warn`), as a text table or JSON, and the digest of a crawl run (D64), written as dated JSON and HTML by `bruce report digest`.
 `docs/manual/` holds the config reference, `bruce crawl`'s, `bruce check-dir`'s, `bruce report`'s, `bruce prune`'s, `bruce export-baseline`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
@@ -152,10 +152,11 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
 - [x] **8.17** A `broken_url` link whose URL with its final `/` toggled
   answers: still broken, the digest naming that URL as its fix.
   Notes: [`../wip/roadmap-P8.17-toggled-slash-notes.md`](../wip/roadmap-P8.17-toggled-slash-notes.md).
-- [ ] **8.17.1** A link redirected onto a `broken_url` landing whose URL
+- [x] **8.17.1** A link redirected onto a `broken_url` landing whose URL
   with its final `/` toggled answers: the landing toggled, the digest showing
   the landing, its `/` marked, and naming that URL as its fix; earned by the
   review of 8.17's call.
+  Notes: [`../wip/roadmap-P8.17.1-toggled-landing-notes.md`](../wip/roadmap-P8.17.1-toggled-landing-notes.md).
 - [ ] **8.7** `changed` and `anchors-removed`: `report` children and kinds,
   the scope changed and the root missed flagged.
 - [ ] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,

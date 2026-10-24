@@ -538,6 +538,31 @@ fn a_wrong_trailing_slash_names_the_url_that_answers_as_the_fix() {
     assert_eq!(fix(&d.broken, &url(2)), Cell::Null);
 }
 
+#[test]
+fn a_redirect_onto_a_wrong_trailing_slash_names_the_landing_toggled_as_the_fix() {
+    let store = store();
+    store
+        .connection()
+        .execute(
+            "UPDATE targets SET url = 'https://e.test/old', final_url = 'https://e.test/new/', \
+             reason = 'wrong_trailing_slash' WHERE url_id = 10",
+            [],
+        )
+        .unwrap();
+    let d = of(&store);
+    let cell = |t: &crate::report::table::Table, name: &str| {
+        let at = column(t, "target")
+            .iter()
+            .position(|u| u == "https://e.test/old")
+            .unwrap_or_else(|| panic!("in {:?}", column(t, "target")));
+        t.rows[at][t.columns.iter().position(|c| c == name).unwrap()].clone()
+    };
+    for t in [&d.broken, &d.broken_targets] {
+        assert_eq!(cell(t, "landing"), Cell::Text("https://e.test/new/".into()));
+        assert_eq!(cell(t, "fix"), Cell::Text("https://e.test/new".into()));
+    }
+}
+
 /// The count in column `name` of `page`'s row of the pages section.
 fn pages_count(d: &Digest, page: &str, name: &str) -> Cell {
     let at = column(&d.pages, "page")

@@ -206,20 +206,40 @@ fn target_link(target: &str, fragment: Option<&str>) -> String {
     }
 }
 
+/// `text` escaped, the final `/` of its path marked where it has one, as a
+/// `wrong_trailing_slash` landing's is.
+fn final_slash(text: &str) -> String {
+    let at = text.find(['?', '#']).unwrap_or(text.len());
+    match text[..at].strip_suffix('/') {
+        Some(bare) => format!("{}<mark>/</mark>{}", esc(bare), esc(&text[at..])),
+        None => esc(text),
+    }
+}
+
 /// A broken link's target, at `fragment` where there is one: for a
 /// `doubled_slash` one its doubled slash marked, and under it the `landing`
 /// that doubles one where the target does not (D71); for a
-/// `wrong_trailing_slash` one the `fix` under it (D72).
+/// `wrong_trailing_slash` one the `landing` it redirected to with its final
+/// `/` marked, and the `fix` under it (D72).
 fn target_cell(r: &Row, fragment: Option<&str>) -> String {
     let target = r.text("target").unwrap_or("");
     if r.text("reason") == Some(WRONG_TRAILING_SLASH)
         && let Some(fix) = r.text("fix")
     {
-        return format!(
-            "{}<br><small>\u{2192} try {}</small>",
-            target_link(target, fragment),
+        let mut cell = target_link(target, fragment);
+        if let Some(landing) = r.text("landing") {
+            w!(
+                cell,
+                "<br><small>\u{2192} lands on {}</small>",
+                a_html(landing, &final_slash(short(landing)))
+            );
+        }
+        w!(
+            cell,
+            "<br><small>\u{2192} try {}</small>",
             a(fix, short(fix))
         );
+        return cell;
     }
     if r.text("reason") != Some(DOUBLED_SLASH) {
         return target_link(target, fragment);
@@ -532,7 +552,8 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
          <p>A link to a URL that answered 404 where the same URL with its final \
          <code>/</code> added or dropped answers is broken all the same, reason \
          <code>wrong_trailing_slash</code>, and <i>Resolves to</i> names that URL to link to \
-         instead.</p>\n",
+         instead. Where a redirect lands on the 404, the landing is shown with its final \
+         <code>/</code> marked, and the URL named is the landing's with it toggled.</p>\n",
     );
     let mut links: HashMap<&str, Vec<Row>> = HashMap::new();
     for row in rows(&d.broken) {

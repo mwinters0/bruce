@@ -609,6 +609,30 @@ fn a_doubled_slash_link_shows_where_its_slash_doubles() {
 }
 
 #[test]
+fn a_redirect_onto_a_wrong_trailing_slash_shows_the_landing_with_its_slash_marked() {
+    let store = store();
+    store
+        .connection()
+        .execute(
+            "UPDATE targets SET url = 'https://e.test/old', final_url = 'https://e.test/new/', \
+             reason = 'wrong_trailing_slash' WHERE url_id = 10",
+            [],
+        )
+        .unwrap();
+    let html = of(&store).html();
+    for id in ["pages", "fix-once"] {
+        assert!(
+            section(&html, id).contains(
+                "<a href=\"https://e.test/old\">e.test/old</a>\
+                 <br><small>\u{2192} lands on <a href=\"https://e.test/new/\">e.test/new<mark>/</mark></a></small>\
+                 <br><small>\u{2192} try <a href=\"https://e.test/new\">e.test/new</a></small>"
+            ),
+            "{id}"
+        );
+    }
+}
+
+#[test]
 fn a_wrong_trailing_slash_link_names_the_url_that_answers() {
     let store = store();
     store

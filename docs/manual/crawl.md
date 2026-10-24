@@ -48,7 +48,8 @@ A URL that answers 404 is asked about once more: the same URL with its final
 `/` added or dropped, for its status alone, under the host's robots.txt and
 pace. If that answers 2xx the link is still broken, reason
 `wrong_trailing_slash`, and the digest names the URL to link to instead; a redirect is not an answer, and nothing is written for the extra
-request.
+request. A URL that redirects onto a 404 is asked about the same way for the 404's
+URL, the one the redirect lands on.
 
 ## Stopping a crawl
 
