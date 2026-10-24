@@ -63,16 +63,21 @@ entries, the unchecked counts) have no dot. In this order:
 2. **Figures**: the pages checked and the links on them, and among those
    links the ones to a broken URL, to a missing fragment, and that errored.
    The first two of those are the broken links.
-3. **Pages, by the broken links on them**: each page that holds one, the
-   most first, as a drill-down of its broken links, with its live page and
-   its source. A link is counted on the page it is written on. Its *Written
+3. **Pages, by the broken links on them**: each page that holds one, or a
+   link that errored, as a drill-down of those links, with its live page and
+   its source. Its summary reads, for a page of 181 links to a broken URL or
+   that errored and 2 to a missing fragment, "● 181 broken links, ● 2 missing
+   fragments (183 issues total)", the dots red and amber, a level with no
+   links left out. The pages rank by their red links, then their amber ones,
+   and the drill-down lists the red before the amber. A link is counted on the
+   page it is written on. Its *Written
    as* is the link as the page has it, *Resolves to* the URL it names, *Kind*
    the element holding it (`anchor` is an `<a href>`, as [`bruce report`](report.md)'s `--kind` names it),
    and *Problem* and *Status* what the target answered: `URL broken` or
    `fragment missing`. A page with an unresolved `xref:` that looks like a
    typo has a Hint column, the nearest page ID.
 4. **Repos, by the broken links on their pages**: the repos whose pages hold
-   broken links, the most first, each with links to its pages in section 3,
+   broken links, ranked and counted as the pages are, each with links to its pages in section 3,
    which open that section where the browser opens a closed section for a
    link into it: Chrome 97, Firefox 139 and Safari 26.2 on. In an older one,
    open the pages first. A link counts against the repo of the page it is
@@ -141,9 +146,9 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `run` | The run digested: its `id`, start and finish (`finished_at` and `duration_seconds` are `null` for a run that never finished) and the `roots` it crawled. |
 | `totals` | The pages the roots cover and the links on them, and the links by outcome, over every kind. `unchecked` links are not broken: `housekeeping.unchecked` says why. |
 | `broken_targets` | Each target a broken link names, with its `fragment` when the link names one, the target named by the most `links` first, then by `pages`: one anchor restored in the target's repo removes that many links. `outcome` is `broken_url` or `broken_anchor`, and `reason` and `status` are the target's answer. `source_repo`, `source_path` and `source_url` are those of the target page, where the run holds it: the repo that would restore a missing anchor. |
-| `pages` | The pages that hold a broken link, the most `broken_url` plus `broken_anchor` first. `links` counts every link on the page, `error` its links that could not be checked. `source_url` is the forge's view of the page's file. |
-| `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order. `page` joins to `pages`. `hint` is, for an Antora `xref:` that names no page, the nearest page ID in the run, as `component:module:path` with an empty module for `ROOT`, where one is close enough to be a typo of it, else `null`. |
-| `by_repo` | Each repo the pages were built from, the most broken links first, then by errors; `repo` is `null` for the pages that record none. `pages` counts the repo's pages, `broken_pages` those holding a broken link. |
+| `pages` | The pages that hold a broken link or one that errored, the most `broken_url` plus `error` first, then the most `broken_anchor`. `links` counts every link on the page, `error` its links that could not be checked. `source_url` is the forge's view of the page's file. |
+| `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order; a link that errored is in `errors`, where the HTML's drill-down finds it. `page` joins to `pages`. `hint` is, for an Antora `xref:` that names no page, the nearest page ID in the run, as `component:module:path` with an empty module for `ROOT`, where one is close enough to be a typo of it, else `null`. |
+| `by_repo` | Each repo the pages were built from, ranked as `pages` are; `repo` is `null` for the pages that record none. `pages` counts the repo's pages, `broken_pages` those holding a broken link or an error. |
 | `by_component` | The same by Antora component. A site with no Antora page has none. |
 | `errors` | Every link whose outcome is `error`, apart from breakage: the target could not be asked, not necessarily wrong. `source_url` is the linking page's. |
 | `housekeeping.redirects` | The redirected links by landing URL, the most `links` first: `urls` distinct URLs reached it, `chain` is the hops the first took, and `pages` the pages whose links they are. `reason` is `pedantic_trailing_slash` on a landing whose links name a URL that differs from it only by a final `/`, which comes after every other row, else `null`: such a landing has two rows where other links reach it too. |

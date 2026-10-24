@@ -47,7 +47,8 @@ pub struct Digest {
     /// `links`, `pages`, and the
     /// target page's `source_repo`, `source_path` and `source_url`.
     pub broken_targets: Table,
-    /// The pages holding a broken link, the most first: `page`, `title`,
+    /// The pages holding a broken link or one that errored, ranked by
+    /// `broken_url` plus `error`, then `broken_anchor`: `page`, `title`,
     /// `source_repo`, `source_path`, `source_url`, `links`, `broken_url`,
     /// `broken_anchor` and `error`.
     pub pages: Table,
@@ -55,7 +56,7 @@ pub struct Digest {
     /// `page`, `raw_href`, `target`, `fragment`, `kind`, `outcome`, `reason`
     /// and `status`.
     pub broken: Table,
-    /// Each repo, the most broken first: `repo`, `pages`, `broken_pages`,
+    /// Each repo, ranked as `pages` are: `repo`, `pages`, `broken_pages`,
     /// `links`, `broken_url`, `broken_anchor` and `error`.
     pub by_repo: Table,
     /// `by_repo`'s columns for each Antora component, as `component`.

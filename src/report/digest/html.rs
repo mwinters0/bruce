@@ -127,18 +127,28 @@ fn counted(n: i64, noun: &str) -> String {
     format!("{} {noun}{}", num(n), if n == 1 { "" } else { "s" })
 }
 
-/// A summary's broken links by what their targets answered, and its errors,
-/// each counted as links, in the words of the figures and the Problem column.
-fn broken_counts(url: i64, fragment: i64, error: i64) -> String {
-    let mut out = format!(
-        "{} to a broken URL, {} to a missing fragment",
-        num(url),
-        num(fragment)
-    );
-    if error > 0 {
-        w!(out, ", {} errored", num(error));
+/// A page's or a repo's summary count: its red links and its amber ones, each
+/// behind its dot and a level with none left out, then the issues in all. Red
+/// is `broken_url` and `error`, amber `broken_anchor` (see [`severity::Level::of_link`]).
+fn tally(red: i64, amber: i64) -> String {
+    let mut parts = Vec::new();
+    for (level, n, noun) in [
+        (Level::Broken, red, "broken link"),
+        (Level::Attention, amber, "missing fragment"),
+    ] {
+        if n > 0 {
+            parts.push(format!(
+                "<span class=\"cn\">{} {}</span>",
+                level.dot(),
+                counted(n, noun)
+            ));
+        }
     }
-    out
+    format!(
+        "{} <small>({} total)</small>",
+        parts.join(", "),
+        counted(red + amber, "issue")
+    )
 }
 
 /// `url` without its scheme, to show.
@@ -434,7 +444,8 @@ type Ids = HashMap<String, String>;
 fn pages(out: &mut String, d: &Digest) -> Ids {
     open_section(out, "pages", "Pages, by the broken links on them", None);
     out.push_str(
-        "<p>The pages holding the most broken links first, a link counted on the page it is \
+        "<p>The pages holding the most broken links first, those to a broken URL or that errored \
+         (red) before those to a missing fragment (amber), a link counted on the page it is \
          written on. Open one for its links: <i>Written as</i> is the link in the page, <i>Resolves to</i> the \
          URL it names, <i>Kind</i> the element holding it, <code>anchor</code> being an \
          <code>&lt;a href&gt;</code>, and <i>Problem</i> and <i>Status</i> what the target \
@@ -447,6 +458,13 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
             .or_default()
             .push(row);
     }
+    let mut errored: HashMap<&str, Vec<Row>> = HashMap::new();
+    for row in rows(&d.errors) {
+        errored
+            .entry(row.text("page").unwrap_or(""))
+            .or_default()
+            .push(row);
+    }
     let mut ids = Ids::new();
     if d.pages.rows.is_empty() {
         out.push_str("<p>No page holds a broken link.</p>\n");
@@ -455,16 +473,13 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
         let url = p.text("page").unwrap_or("");
         let id = format!("p{}", i + 1);
         ids.insert(url.to_owned(), id.clone());
-        let (u, an) = (p.int("broken_url"), p.int("broken_anchor"));
         w!(
             out,
             "<details id=\"{id}\">\n<summary><span class=\"rank\">{}</span><span class=\"ttl\">{}</span>\
-             <span class=\"cnt\"><b>{}</b> <small>({}; of {} on the page)</small></span></summary>\n",
+             <span class=\"cnt\">{}</span></summary>\n",
             i + 1,
             esc(p.text("title").unwrap_or_else(|| short(url))),
-            counted(u + an, "broken link"),
-            broken_counts(u, an, p.int("error")),
-            counted(p.int("links"), "link")
+            tally(p.int("broken_url") + p.int("error"), p.int("broken_anchor"))
         );
         w!(
             out,
@@ -477,8 +492,11 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
             )
         );
         let page_links = links.get(url).map_or(&[][..], Vec::as_slice);
+        let page_errors = errored.get(url).map_or(&[][..], Vec::as_slice);
         let hinted = page_links.iter().any(|r| r.text("hint").is_some());
-        let body: Vec<Vec<String>> = page_links
+        // The red links together, a link that errored after the broken URLs,
+        // then the amber ones.
+        let mut found: Vec<(Option<Level>, Vec<String>)> = page_links
             .iter()
             .map(|r| {
                 let mut cells = vec![
@@ -497,9 +515,27 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
                     ));
                 }
                 cells.push(status_cell(r.int("status")));
-                cells
+                (Level::of_link(r.text("outcome"), r.text("reason")), cells)
             })
             .collect();
+        found.extend(page_errors.iter().map(|r| {
+            let mut cells = vec![
+                mark(Some(Level::Broken)),
+                format!("<code>{}</code>", esc(r.text("raw_href").unwrap_or(""))),
+                target_link(r.text("target").unwrap_or(""), None),
+                r.text("fragment")
+                    .map_or_else(|| "-".to_owned(), |f| format!("<code>{}</code>", esc(f))),
+                esc(r.text("kind").unwrap_or("")),
+                problem(Some("error"), r.text("reason")),
+            ];
+            if hinted {
+                cells.push("-".to_owned());
+            }
+            cells.push(status_cell(r.int("status")));
+            (Some(Level::Broken), cells)
+        }));
+        found.sort_by_key(|(level, _)| std::cmp::Reverse(*level));
+        let body: Vec<Vec<String>> = found.into_iter().map(|(_, cells)| cells).collect();
         let mut columns = vec![
             ("", false),
             ("Written as", false),
@@ -527,9 +563,9 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
         None,
     );
     out.push_str(
-        "<p>The repos whose pages hold the most broken links first, a link counted against the \
-         repo of the page it is written on, which may not be the repo of its target. Open one for \
-         its pages.</p>\n",
+        "<p>The repos whose pages hold the most broken links first, ranked as the pages are, a \
+         link counted against the repo of the page it is written on, which may not be the repo of \
+         its target. Open one for its pages.</p>\n",
     );
     let mut of_repo: HashMap<Option<&str>, Vec<(&str, &str)>> = HashMap::new();
     for p in rows(&d.pages) {
@@ -550,16 +586,12 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
             Some(repo) => a(repo, short(repo)),
             None => "<span class=\"muted\">No source recorded</span>".to_owned(),
         };
-        let (u, an) = (r.int("broken_url"), r.int("broken_anchor"));
         w!(
             out,
             "<details>\n<summary><span class=\"rank\">{}</span><span class=\"ttl\">{name}</span>\
-             <span class=\"cnt\"><b>{}</b> <small>({}; on {} of its {} pages)</small></span></summary>\n<ul>\n",
+             <span class=\"cnt\">{}</span></summary>\n<ul>\n",
             i + 1,
-            counted(u + an, "broken link"),
-            broken_counts(u, an, r.int("error")),
-            num(r.int("broken_pages")),
-            num(r.int("pages"))
+            tally(r.int("broken_url") + r.int("error"), r.int("broken_anchor"))
         );
         for (url, title) in of_repo.get(&repo).into_iter().flatten() {
             let label = esc(title);

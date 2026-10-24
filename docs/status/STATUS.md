@@ -119,10 +119,11 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   a section's summary; `broken_url` and `error` red, `broken_anchor` and a
   redirect that is not pedantic amber, pedantic a grey ring.
   Notes: [`../wip/roadmap-P8.19.1-severity-findings-notes.md`](../wip/roadmap-P8.19.1-severity-findings-notes.md).
-- [ ] **8.4.5** The pages' and repos' rows counted and ranked by severity:
+- [x] **8.4.5** The pages' and repos' rows counted and ranked by severity:
   red (`broken_url`, `error`) then amber (`broken_anchor`), each summary
   "● N broken links, ● M missing fragments (T issues total)", a level with
   no links left out; earned by 8.6's ninth finding.
+  Notes: [`../wip/roadmap-P8.4.5-severity-counts-notes.md`](../wip/roadmap-P8.4.5-severity-counts-notes.md).
 - [ ] **8.4.6** The redirected links one `<details>` per landing, its hops
   and linking pages inside, so a phone need not scroll across the table;
   earned by 8.6's ninth finding.
@@ -160,3 +161,11 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **A page with only errored links is a row of the pages section** (8.4.5).
+  Finding 9 counts a row's `error` links in its red, so a page whose only
+  findings are errors has red links to show; it joins the section and the JSON's
+  `pages`, and its errors join the HTML drill-down, rather than a summary
+  counting links no row lists. Reconsidering it: the summary's "broken links"
+  then counts one more kind than the figures' total, and the 35 error-only
+  pages on 8.14's database go back to the errors section alone.

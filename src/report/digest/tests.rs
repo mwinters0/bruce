@@ -122,6 +122,18 @@ pub(super) fn store() -> Store {
     store
 }
 
+/// [`store`] with pages 2, 3 and 4 ranked by severity: page 3 holds two links
+/// that errored, page 4 a broken URL and a missing fragment, page 2 a broken
+/// URL; page 1 holds three red links and one amber.
+pub(super) fn ranked() -> Store {
+    let store = store();
+    link(&store, 1, 3, 12, None, "anchor");
+    link(&store, 1, 3, 12, None, "image");
+    link(&store, 1, 4, 10, None, "anchor");
+    link(&store, 1, 4, 2, Some("nope"), "anchor");
+    store
+}
+
 pub(super) fn of(store: &Store) -> Digest {
     digest(store, Some(RunId(1))).unwrap()
 }
@@ -268,6 +280,18 @@ fn pages_are_ranked_by_their_broken_links_and_their_links_follow_them() {
         column(&d.broken, "kind"),
         ["anchor", "image", "anchor", "anchor"]
     );
+}
+
+#[test]
+fn pages_and_repos_are_ranked_by_their_red_links_then_their_amber_ones() {
+    let d = of(&ranked());
+    // Red is `broken_url` and `error`: page 3's two errors outrank page 4, whose
+    // amber link outranks page 2 though its URL sorts after.
+    assert_eq!(column(&d.pages, "page"), [url(1), url(3), url(4), url(2)]);
+    // Pages 3 and 4 hold no repo: 3 red and 1 amber, as r/one's page 1 does, and
+    // the row of no repo sorts last on the name.
+    assert_eq!(column(&d.by_repo, "repo"), ["r/one", "Null", "r/two"]);
+    assert_eq!(d.by_repo.rows[1][2], Cell::Int(2));
 }
 
 #[test]

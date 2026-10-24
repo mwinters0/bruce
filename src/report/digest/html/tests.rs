@@ -1,4 +1,4 @@
-use super::super::tests::{of, store, with_unchecked};
+use super::super::tests::{of, ranked, store, with_unchecked};
 use crate::report::table::Cell;
 use crate::report::tests::{registry, xrefs};
 use crate::store::RunId;
@@ -113,7 +113,59 @@ fn pages_follow_their_rank_each_with_its_links_and_sources() {
     assert!(pages[one..two].contains("<code>1&gt;2#nope</code>"));
     assert!(pages[one..two].contains("href=\"https://forge.test/r/one/1.adoc\""));
     assert!(pages[two..].contains("<code>2&gt;10#</code>"));
-    assert!(pages[one..two].contains("<b>3 broken links</b>"));
+    assert!(pages[one..two].contains(
+        "<span class=\"cn\"><span class=\"sev broken\" role=\"img\" aria-label=\"Broken\"></span> \
+         3 broken links</span>, <span class=\"cn\"><span class=\"sev attention\" role=\"img\" \
+         aria-label=\"Attention\"></span> 1 missing fragment</span> <small>(4 issues total)</small>"
+    ));
+}
+
+#[test]
+fn a_summary_counts_red_then_amber_and_leaves_out_a_level_with_no_links() {
+    let tally = super::tally;
+    let red =
+        "<span class=\"cn\"><span class=\"sev broken\" role=\"img\" aria-label=\"Broken\"></span>";
+    let amber = "<span class=\"cn\"><span class=\"sev attention\" role=\"img\" aria-label=\"Attention\"></span>";
+    assert_eq!(
+        tally(181, 2),
+        format!(
+            "{red} 181 broken links</span>, {amber} 2 missing fragments</span> \
+             <small>(183 issues total)</small>"
+        )
+    );
+    assert_eq!(
+        tally(1, 0),
+        format!("{red} 1 broken link</span> <small>(1 issue total)</small>")
+    );
+    assert_eq!(
+        tally(0, 1),
+        format!("{amber} 1 missing fragment</span> <small>(1 issue total)</small>")
+    );
+}
+
+#[test]
+fn a_page_lists_its_red_links_before_its_amber_ones_an_errored_link_among_the_red() {
+    let store = ranked();
+    let html = of(&store).html();
+    let pages = section(&html, "pages");
+    let three = pages.find("<details id=\"p2\">").unwrap();
+    let four = pages.find("<details id=\"p3\">").unwrap();
+    // Page 3 holds two errors and nothing broken: its rows are errors.
+    let rows = &pages[three..four];
+    assert_eq!(
+        rows.matches("<td>error \u{b7} server_error</td>").count(),
+        2
+    );
+    assert!(rows.contains("2 broken links</span> <small>(2 issues total)"));
+    // Page 4: a broken URL, then the fragment.
+    let rows = &pages[four..];
+    let url = rows.find("<td>URL broken</td>").unwrap();
+    let fragment = rows.find("<td>fragment missing</td>").unwrap();
+    assert!(url < fragment);
+    // The repo of page 3 and 4 (none) counts both, errors among its red.
+    let repos = section(&html, "repos");
+    assert!(repos.contains("No source recorded"));
+    assert!(repos.contains("3 broken links</span>, "), "{repos}");
 }
 
 #[test]
@@ -298,18 +350,12 @@ fn anchor_names_only_the_element_and_every_count_says_which_way_it_points() {
     // `anchor` is the Kind column's `<a href>`; an absent fragment is a
     // fragment everywhere, and a count of links says to what or on what.
     let html = html();
-    assert!(html.contains(
-        "<b>1 broken link</b> <small>(1 to a broken URL, 0 to a missing fragment; of 3 links on the page)"
-    ));
+    assert!(html.contains("1 broken link</span> <small>(1 issue total)</small></span></summary>"));
     assert!(html.contains("<td>fragment missing</td>"));
     assert!(html.contains("<td>URL broken</td>"));
     assert!(!html.contains("anchor missing") && !html.contains("Broken anchors"));
     assert_eq!(super::counted(1, "broken link"), "1 broken link");
     assert_eq!(super::counted(1_000, "link"), "1,000 links");
-    assert_eq!(
-        super::broken_counts(1, 2, 3),
-        "1 to a broken URL, 2 to a missing fragment, 3 errored"
-    );
     for header in [
         "Links to it",
         "Linking pages",
@@ -450,10 +496,11 @@ fn a_heading_carries_no_dot_and_each_dot_is_named() {
 fn every_row_naming_a_link_or_a_target_opens_with_a_dot_under_no_heading() {
     let html = html();
     let dot = "<td class=\"dot\"><span class=\"sev ";
-    // Targets (1 row), the page drill-downs (3 and 1), errors (1), redirects (1).
+    // Targets (1 row), the page drill-downs (4, the errored link among them, and 1),
+    // errors (1), redirects (1).
     for (id, rows) in [
         ("fix-once", 1),
-        ("pages", 4),
+        ("pages", 5),
         ("errors", 1),
         ("housekeeping", 1),
     ] {

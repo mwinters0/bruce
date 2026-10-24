@@ -181,7 +181,9 @@ pub(super) fn checked_hosts(conn: &Connection, run: RunId) -> Result<Table, Erro
     sql.fetch(conn)
 }
 
-/// The crawled pages holding a broken link, the most first.
+/// The crawled pages holding a broken link or one that errored, ranked by
+/// their red links (`broken_url` and `error`) and then their amber ones
+/// (`broken_anchor`), the severity of the HTML's dots.
 pub(super) fn pages(conn: &Connection, run: RunId) -> Result<Table, Error> {
     let mut sql = Sql::new(PAGE_COUNTS);
     sql.bind(run.0).push(
@@ -190,10 +192,10 @@ pub(super) fn pages(conn: &Connection, run: RunId) -> Result<Table, Error> {
          s.links, s.broken_url, s.broken_anchor, s.error \
          FROM report_pages pg JOIN pages p ON p.run_id = pg.run_id AND p.url_id = pg.url_id \
          JOIN s ON s.url_id = pg.url_id \
-         WHERE pg.crawled AND s.broken_url + s.broken_anchor > 0 AND pg.run_id = ",
+         WHERE pg.crawled AND s.broken_url + s.broken_anchor + s.error > 0 AND pg.run_id = ",
     );
     sql.bind(run.0)
-        .push(" ORDER BY s.broken_url + s.broken_anchor DESC, pg.url");
+        .push(" ORDER BY s.broken_url + s.error DESC, s.broken_anchor DESC, pg.url");
     sql.fetch(conn)
 }
 
@@ -234,8 +236,8 @@ pub(super) fn broken_targets(conn: &Connection, run: RunId) -> Result<Table, Err
     sql.fetch(conn)
 }
 
-/// The groups of crawled pages by `group`, each with its link counts, the
-/// most broken first. `join` may end in a key `key` binds.
+/// The groups of crawled pages by `group`, each with its link counts, ranked
+/// as [`pages`] ranks a page. `join` may end in a key `key` binds.
 fn grouped(
     conn: &Connection,
     run: RunId,
@@ -252,7 +254,8 @@ fn grouped(
         .push(column)
         .push(
             ", count(*)::BIGINT AS pages, \
-             (count(*) FILTER (WHERE s.broken_url + s.broken_anchor > 0))::BIGINT AS broken_pages, \
+             (count(*) FILTER (WHERE s.broken_url + s.broken_anchor + s.error > 0))::BIGINT \
+             AS broken_pages, \
              coalesce(sum(s.links), 0)::BIGINT AS links, \
              coalesce(sum(s.broken_url), 0)::BIGINT AS broken_url, \
              coalesce(sum(s.broken_anchor), 0)::BIGINT AS broken_anchor, \
@@ -265,17 +268,18 @@ fn grouped(
     }
     sql.push(" WHERE pg.crawled AND pg.run_id = ")
         .bind(run.0)
-        .push(" GROUP BY 1) ORDER BY broken_url + broken_anchor DESC, error DESC, 1");
+        .push(" GROUP BY 1) ORDER BY broken_url + error DESC, broken_anchor DESC, 1");
     sql.fetch(conn)
 }
 
-/// The repos the crawled pages were built from, the most broken first; a
-/// page with no source is the row with no repo.
+/// The repos the crawled pages were built from, ranked as [`pages`] ranks a
+/// page; a page with no source is the row with no repo.
 pub(super) fn by_repo(conn: &Connection, run: RunId) -> Result<Table, Error> {
     grouped(conn, run, "pg.source_repo", "repo", "", None)
 }
 
-/// The Antora components of the crawled pages, the most broken first. A site
+/// The Antora components of the crawled pages, ranked as [`pages`] ranks a
+/// page. A site
 /// of no Antora pages has none.
 pub(super) fn by_component(conn: &Connection, run: RunId) -> Result<Table, Error> {
     grouped(
