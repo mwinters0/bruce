@@ -4,22 +4,18 @@ What landed, for P8's spec ([`roadmap-P8-history.md`](roadmap-P8-history.md),
 "Severity is marked"): `report/digest/html/severity.rs` (the `Level`, read
 off a link's outcome and reason, the dot, the legend), a dot column with no
 heading opening the table of the broken targets, each page's links, the errors
-and the redirected links, a dot opening each section's `<summary>` where the
-section holds a level, one legend after the figures, the stylesheet's `.sev`,
+and the redirected links, one legend after the figures, the stylesheet's `.sev`,
 the golden file, the manual's "The HTML". No `D<k>` entry: the levels and the
 rows that carry them are the spec's.
 
 ## What the next slices inherit
 
 - **A row's level is `Level::of_link(outcome, reason)`**, a redirected link's
-  row (outcome-less) `Level::of_redirect(reason)`; a section's is `highest`
-  over its rows. 8.7's `changed` and `anchors-removed` sections and 8.8's
-  two-run sections take a dot from the same two functions, and a section built
-  from rows that are not links passes `None` to `open_section`.
+  row (outcome-less) `Level::of_redirect(reason)`. 8.7's `changed` and
+  `anchors-removed` sections and 8.8's two-run sections take a dot from the
+  same two functions (8.19.1 moved the levels).
 - **A table's header named `""` is the dot's column** (`column_class`), so a
   new table with a dot passes `("", false)` first and `mark(level)` first.
-- **A `<summary>` inside a section (a page's or a repo's drill-down) carries
-  no dot**: the spec places them on rows and section summaries.
 
 ## Negative results
 

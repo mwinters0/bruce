@@ -113,11 +113,12 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   (D7, D16), shown on 8.14's database.
   Notes: [`../wip/roadmap-P8.16-pedantic-slash-notes.md`](../wip/roadmap-P8.16-pedantic-slash-notes.md).
 - [x] **8.19** Severity marked in the digest: a dot per link or target row
-  and per section summary, broken red, attention amber, pedantic a grey ring.
+  and per section summary; 8.19.1 corrected its levels and placement.
   Notes: [`../wip/roadmap-P8.19-severity-notes.md`](../wip/roadmap-P8.19-severity-notes.md).
-- [ ] **8.19.1** A dot marks a finding: on link and target rows only, none on
+- [x] **8.19.1** A dot marks a finding: on link and target rows only, none on
   a section's summary; `broken_url` and `error` red, `broken_anchor` and a
   redirect that is not pedantic amber, pedantic a grey ring.
+  Notes: [`../wip/roadmap-P8.19.1-severity-findings-notes.md`](../wip/roadmap-P8.19.1-severity-findings-notes.md).
 - [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
   verdict and what it spawns in the notes.
   In progress; findings so far in

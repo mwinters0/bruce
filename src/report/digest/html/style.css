@@ -47,7 +47,6 @@ nav { margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
 .sev.broken { color: var(--bad); background: currentColor; }
 .sev.attention { color: var(--warn); background: currentColor; }
 .sev.pedantic { color: var(--muted); background: transparent; }
-summary > .sev { align-self: center; }
 th.dot, td.dot { width: 1%; padding-right: 0; }
 .scroll {
   --cover: var(--bg);

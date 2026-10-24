@@ -1,20 +1,20 @@
 //! The severity of a row, read off a link's outcome and reason, and the dot
 //! that marks it. HTML only: the JSON's outcome and reason decide the level,
-//! and it gains no field. A dot is filled for broken and attention and a ring
+//! and it gains no field. A dot marks a finding, a row naming a link or a
+//! target, and never a heading. A dot is filled for broken and attention and a ring
 //! for pedantic, so the three read apart without their colours; each is named
 //! for a screen reader, the colour repeating the row's own text.
 
 use crate::store::PEDANTIC_TRAILING_SLASH;
 
-/// How much a link matters to whoever fixes the site, the least first so that
-/// the highest of several is their `max`.
+/// How much a link matters to whoever fixes the site, the least first.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) enum Level {
     /// A redirect differing from its landing only by a final `/`.
     Pedantic,
-    /// An `error`, or a redirect that is not pedantic.
+    /// `broken_anchor`, or a redirect that is not pedantic.
     Attention,
-    /// `broken_url` and `broken_anchor`.
+    /// `broken_url` and `error`.
     Broken,
 }
 
@@ -23,8 +23,8 @@ impl Level {
     /// one and for an `ok` link that is not a pedantic redirect.
     pub(super) fn of_link(outcome: Option<&str>, reason: Option<&str>) -> Option<Level> {
         match (outcome, reason) {
-            (Some("broken_url" | "broken_anchor"), _) => Some(Level::Broken),
-            (Some("error"), _) => Some(Level::Attention),
+            (Some("broken_url" | "error"), _) => Some(Level::Broken),
+            (Some("broken_anchor"), _) => Some(Level::Attention),
             (Some("ok"), Some(PEDANTIC_TRAILING_SLASH)) => Some(Level::Pedantic),
             _ => None,
         }
@@ -65,15 +65,9 @@ impl Level {
     }
 }
 
-/// The dot of `level`, a table's first cell or the start of a section's
-/// summary, nothing for none.
+/// The dot of `level`, a table's first cell, nothing for none.
 pub(super) fn mark(level: Option<Level>) -> String {
     level.map(Level::dot).unwrap_or_default()
-}
-
-/// The highest of `levels`.
-pub(super) fn highest(levels: impl IntoIterator<Item = Option<Level>>) -> Option<Level> {
-    levels.into_iter().flatten().max()
 }
 
 /// The legend, one line naming the three, its dots hidden from a screen reader
@@ -88,13 +82,10 @@ pub(super) fn legend() -> String {
     };
     format!(
         "<p class=\"legend\">A dot marks the severity of a link or a target: {}; {}; {}.</p>\n",
-        item(
-            Level::Broken,
-            "a link to a broken URL or a missing fragment"
-        ),
+        item(Level::Broken, "a link to a broken URL, or one that errored"),
         item(
             Level::Attention,
-            "a link that errored, or a redirect to update"
+            "a link to a missing fragment, or a redirect to update"
         ),
         item(
             Level::Pedantic,

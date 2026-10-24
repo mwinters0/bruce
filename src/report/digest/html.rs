@@ -11,7 +11,7 @@
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
-use self::severity::{Level, highest, legend, mark};
+use self::severity::{Level, legend, mark};
 use super::document::{Digest, utc};
 use crate::report::table::{Cell, Table};
 
@@ -256,21 +256,13 @@ fn column_class(name: &str, numeric: bool) -> &'static str {
 }
 
 /// Opens the section `id` under its `heading`, a `<details>` that starts
-/// collapsed, `note` beside the heading and the dot of the `highest` level of
-/// the rows it holds before it. The id is the `<section>`'s, outside the
+/// collapsed, `note` beside the heading. The id is the `<section>`'s, outside the
 /// `<details>`, so a link to it lands on the heading in every browser, one that
 /// opens no closed `<details>` for a fragment included.
-fn open_section(
-    out: &mut String,
-    id: &str,
-    heading: &str,
-    note: Option<&str>,
-    highest: Option<Level>,
-) {
+fn open_section(out: &mut String, id: &str, heading: &str, note: Option<&str>) {
     w!(
         out,
-        "<section id=\"{id}\">\n<details class=\"sect\">\n<summary>{}<h2>{heading}</h2>",
-        mark(highest)
+        "<section id=\"{id}\">\n<details class=\"sect\">\n<summary><h2>{heading}</h2>"
     );
     if let Some(note) = note {
         w!(out, "<small>{note}</small>");
@@ -373,9 +365,6 @@ fn fix_once(out: &mut String, d: &Digest) {
         "fix-once",
         "Broken targets, by the links to them",
         None,
-        highest(
-            rows(&d.broken_targets).map(|r| Level::of_link(r.text("outcome"), r.text("reason"))),
-        ),
     );
     out.push_str(
         "<p>Fix once, fix many: each row is a target that more than one broken link names, \
@@ -443,13 +432,7 @@ fn fix_once(out: &mut String, d: &Digest) {
 type Ids = HashMap<String, String>;
 
 fn pages(out: &mut String, d: &Digest) -> Ids {
-    open_section(
-        out,
-        "pages",
-        "Pages, by the broken links on them",
-        None,
-        highest(rows(&d.broken).map(|r| Level::of_link(r.text("outcome"), r.text("reason")))),
-    );
+    open_section(out, "pages", "Pages, by the broken links on them", None);
     out.push_str(
         "<p>The pages holding the most broken links first, a link counted on the page it is \
          written on. Open one for its links: <i>Written as</i> is the link in the page, <i>Resolves to</i> the \
@@ -542,9 +525,6 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
         "repos",
         "Repos, by the broken links on their pages",
         None,
-        rows(&d.by_repo)
-            .any(|r| r.int("broken_pages") > 0)
-            .then_some(Level::Broken),
     );
     out.push_str(
         "<p>The repos whose pages hold the most broken links first, a link counted against the \
@@ -603,13 +583,7 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
 }
 
 fn errors(out: &mut String, d: &Digest) {
-    open_section(
-        out,
-        "errors",
-        "Links that errored",
-        None,
-        (!d.errors.rows.is_empty()).then_some(Level::Attention),
-    );
+    open_section(out, "errors", "Links that errored", None);
     out.push_str(
         "<p>Links whose target could not be asked, apart from the broken ones: the target did \
          not answer, which does not make it wrong.</p>\n",
@@ -621,7 +595,7 @@ fn errors(out: &mut String, d: &Digest) {
             .map(|r| {
                 let page = r.text("page").unwrap_or("");
                 vec![
-                    mark(Some(Level::Attention)),
+                    mark(Some(Level::Broken)),
                     a(page, short(page)),
                     r.text("source_url")
                         .map_or_else(|| "-".to_owned(), |s| a(s, "source")),
@@ -668,7 +642,6 @@ fn housekeeping(out: &mut String, d: &Digest) {
         "housekeeping",
         "Housekeeping",
         Some("Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links"),
-        highest(rows(&d.redirects).map(|r| Some(Level::of_redirect(r.text("reason"))))),
     );
     let links = |t: &Table| format!("{} links", num(rows(t).map(|r| r.int("links")).sum()));
     let entries = |t: &Table| num(t.rows.len() as i64);

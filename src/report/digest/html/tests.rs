@@ -397,18 +397,18 @@ fn each_unchecked_reason_is_explained_beside_where_its_links_point_most() {
 
 #[test]
 fn a_level_is_read_off_a_links_outcome_and_reason() {
-    use super::severity::{Level, highest};
+    use super::severity::Level;
     let pedantic = Some(crate::store::PEDANTIC_TRAILING_SLASH);
     assert_eq!(
         Level::of_link(Some("broken_url"), None),
         Some(Level::Broken)
     );
     assert_eq!(
-        Level::of_link(Some("broken_anchor"), pedantic),
+        Level::of_link(Some("error"), Some("timeout")),
         Some(Level::Broken)
     );
     assert_eq!(
-        Level::of_link(Some("error"), Some("timeout")),
+        Level::of_link(Some("broken_anchor"), pedantic),
         Some(Level::Attention)
     );
     assert_eq!(Level::of_link(Some("ok"), pedantic), Some(Level::Pedantic));
@@ -416,41 +416,16 @@ fn a_level_is_read_off_a_links_outcome_and_reason() {
     assert_eq!(Level::of_link(Some("unchecked"), Some("robots")), None);
     assert_eq!(Level::of_redirect(pedantic), Level::Pedantic);
     assert_eq!(Level::of_redirect(None), Level::Attention);
-    assert_eq!(
-        highest([
-            None,
-            Some(Level::Pedantic),
-            Some(Level::Broken),
-            Some(Level::Attention)
-        ]),
-        Some(Level::Broken)
-    );
-    assert_eq!(
-        highest([None, Some(Level::Pedantic)]),
-        Some(Level::Pedantic)
-    );
-    assert_eq!(highest([None, None]), None);
-}
-
-/// The class of the dot opening `section`'s summary, if it has one.
-fn summary_level<'a>(html: &'a str, id: &str) -> Option<&'a str> {
-    let s = section(html, id);
-    let summary = &s[s.find("<summary>").unwrap()..s.find("<h2>").unwrap()];
-    summary
-        .split("class=\"sev ")
-        .nth(1)
-        .map(|rest| &rest[..rest.find('"').unwrap()])
 }
 
 #[test]
-fn a_summary_carries_the_highest_level_of_its_rows_and_each_dot_is_named() {
+fn a_heading_carries_no_dot_and_each_dot_is_named() {
     let html = html();
-    assert_eq!(summary_level(&html, "pages"), Some("broken"));
-    assert_eq!(summary_level(&html, "repos"), Some("broken"));
-    assert_eq!(summary_level(&html, "fix-once"), Some("broken"));
-    assert_eq!(summary_level(&html, "errors"), Some("attention"));
-    // The fixture's one redirect is not a final slash's.
-    assert_eq!(summary_level(&html, "housekeeping"), Some("attention"));
+    for id in ["pages", "repos", "fix-once", "errors", "housekeeping"] {
+        let s = section(&html, id);
+        let summary = &s[s.find("<summary>").unwrap()..s.find("</summary>").unwrap()];
+        assert!(!summary.contains("sev"), "{id}");
+    }
     assert!(html.contains("<span class=\"sev broken\" role=\"img\" aria-label=\"Broken\"></span>"));
     assert!(
         html.contains(
@@ -466,13 +441,9 @@ fn a_summary_carries_the_highest_level_of_its_rows_and_each_dot_is_named() {
         .position(|c| c == "reason")
         .unwrap();
     d.redirects.rows[0][reason] = Cell::Text(crate::store::PEDANTIC_TRAILING_SLASH.into());
-    let html = d.html();
-    assert_eq!(summary_level(&html, "housekeeping"), Some("pedantic"));
-    assert!(section(&html, "housekeeping").contains(
+    assert!(section(&d.html(), "housekeeping").contains(
         "<td class=\"dot\"><span class=\"sev pedantic\" role=\"img\" aria-label=\"Pedantic\"></span></td>"
     ));
-    d.redirects.rows.clear();
-    assert_eq!(summary_level(&d.html(), "housekeeping"), None);
 }
 
 #[test]
@@ -491,7 +462,8 @@ fn every_row_naming_a_link_or_a_target_opens_with_a_dot_under_no_heading() {
         assert!(s.contains("<th class=\"dot\"></th>"), "{id}");
     }
     assert!(section(&html, "fix-once").contains(&format!("{dot}broken\"")));
-    assert!(section(&html, "errors").contains(&format!("{dot}attention\"")));
+    assert!(section(&html, "errors").contains(&format!("{dot}broken\"")));
+    assert!(section(&html, "housekeeping").contains(&format!("{dot}attention\"")));
     // The lists that are not links have none: orphans, unlisted pages, sitemap
     // entries and the unchecked counts.
     let house = section(&html, "housekeeping");
@@ -514,19 +486,5 @@ fn one_legend_beside_the_figures_names_the_three_levels() {
     }
     for name in ["<b>Broken</b>", "<b>Attention</b>", "<b>Pedantic</b>"] {
         assert!(figures.contains(name), "{name}");
-    }
-}
-
-#[test]
-fn a_run_with_nothing_to_report_carries_no_dot_in_a_summary() {
-    let store = crate::store::Store::open_in_memory(&registry()).unwrap();
-    store.install(crate::report::VIEWS).unwrap();
-    let id = store
-        .begin_run(crate::store::Mode::Crawl, "h", None, &[])
-        .unwrap();
-    store.finish_run(id).unwrap();
-    let html = crate::report::digest(&store, None).unwrap().html();
-    for id in ["pages", "repos", "fix-once", "errors", "housekeeping"] {
-        assert_eq!(summary_level(&html, id), None, "{id}");
     }
 }

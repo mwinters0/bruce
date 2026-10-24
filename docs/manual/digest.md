@@ -46,13 +46,12 @@ for a reader, and is dark on a screen and light in print, where every
 `<details>` is opened. At a phone's width its tables scroll sideways. Its
 times are UTC and its links absolute, those into the page excepted. The
 header and the figures are open; every section after them is closed under its
-heading, a click opening it. A dot marks the severity of each row that names a
-link or a target, in a column with no heading, and each section's heading
-carries the dot of the highest severity it holds, so a closed digest can be
-skimmed: red and filled for a link to a broken URL or a missing fragment,
-amber and filled for a link that errored or a redirect to update, a grey ring
-for a redirect that differs from its landing only by a final `/`. The ring
-differs from the others in shape, so the three read apart in print and without
+heading, a click opening it. A dot marks each finding, a row that names a
+link or a target, in a column with no heading; a heading has none. It is red
+and filled for a link to a broken URL or one that errored, amber and filled for
+a link to a missing fragment or a redirect to update, and a grey ring for a
+redirect that differs from its landing only by a final `/`. The ring differs
+from the others in shape, so the three read apart in print and without
 colour, and every dot is named for a screen reader. The figures' legend names
 the three. Only the JSON's `outcome` and `reason` decide a level; it has no
 field for it. The lists that are not links (orphans, unlisted pages, sitemap

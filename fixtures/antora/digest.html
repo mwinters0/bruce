@@ -55,7 +55,6 @@ nav { margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
 .sev.broken { color: var(--bad); background: currentColor; }
 .sev.attention { color: var(--warn); background: currentColor; }
 .sev.pedantic { color: var(--muted); background: transparent; }
-summary > .sev { align-self: center; }
 th.dot, td.dot { width: 1%; padding-right: 0; }
 .scroll {
   --cover: var(--bg);
@@ -145,11 +144,11 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <div class="fig warn"><span class="n">0</span><span class="l">Links that errored</span></div>
 </div>
 <p class="muted">Every figure but the first counts links on the pages checked. The 25 broken links are those to a broken URL and those to a missing fragment. 82 links were not checked; the housekeeping says why. A link that errored could not be asked, which does not make it broken.</p>
-<p class="legend">A dot marks the severity of a link or a target: <span class="sev broken" aria-hidden="true"></span> <b>Broken</b>, a link to a broken URL or a missing fragment; <span class="sev attention" aria-hidden="true"></span> <b>Attention</b>, a link that errored, or a redirect to update; <span class="sev pedantic" aria-hidden="true"></span> <b>Pedantic</b>, a redirect differing from its landing only by a final <code>/</code>.</p>
+<p class="legend">A dot marks the severity of a link or a target: <span class="sev broken" aria-hidden="true"></span> <b>Broken</b>, a link to a broken URL, or one that errored; <span class="sev attention" aria-hidden="true"></span> <b>Attention</b>, a link to a missing fragment, or a redirect to update; <span class="sev pedantic" aria-hidden="true"></span> <b>Pedantic</b>, a redirect differing from its landing only by a final <code>/</code>.</p>
 </section>
 <section id="pages">
 <details class="sect">
-<summary><span class="sev broken" role="img" aria-label="Broken"></span><h2>Pages, by the broken links on them</h2></summary>
+<summary><h2>Pages, by the broken links on them</h2></summary>
 <p>The pages holding the most broken links first, a link counted on the page it is written on. Open one for its links: <i>Written as</i> is the link in the page, <i>Resolves to</i> the URL it names, <i>Kind</i> the element holding it, <code>anchor</code> being an <code>&lt;a href&gt;</code>, and <i>Problem</i> and <i>Status</i> what the target answered.</p>
 <details id="p1">
 <summary><span class="rank">1</span><span class="ttl">Using the tools :: Bruce fixture site</span><span class="cnt"><b>4 broken links</b> <small>(4 to a broken URL, 0 to a missing fragment; of 43 links on the page)</small></span></summary>
@@ -244,7 +243,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </section>
 <section id="repos">
 <details class="sect">
-<summary><span class="sev broken" role="img" aria-label="Broken"></span><h2>Repos, by the broken links on their pages</h2></summary>
+<summary><h2>Repos, by the broken links on their pages</h2></summary>
 <p>The repos whose pages hold the most broken links first, a link counted against the repo of the page it is written on, which may not be the repo of its target. Open one for its pages.</p>
 <details>
 <summary><span class="rank">1</span><span class="ttl"><a href="https://github.com/bruce-fixture/tools">github.com/bruce-fixture/tools</a></span><span class="cnt"><b>10 broken links</b> <small>(10 to a broken URL, 0 to a missing fragment; on 3 of its 3 pages)</small></span></summary>
@@ -273,7 +272,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </section>
 <section id="fix-once">
 <details class="sect">
-<summary><span class="sev broken" role="img" aria-label="Broken"></span><h2>Broken targets, by the links to them</h2></summary>
+<summary><h2>Broken targets, by the links to them</h2></summary>
 <p>Fix once, fix many: each row is a target that more than one broken link names, from whatever pages, the most links first. Restoring the target in its own source, the last column, mends every link in its row.</p>
 <p class="muted">Targets named by more than one link: 3, holding 24 of the 25 broken links.</p>
 <div class="scroll"><table>
@@ -295,7 +294,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </section>
 <section id="housekeeping">
 <details class="sect">
-<summary><span class="sev attention" role="img" aria-label="Attention"></span><h2>Housekeeping</h2><small>Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links</small></summary>
+<summary><h2>Housekeeping</h2><small>Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links</small></summary>
 <details>
 <summary><span class="ttl">Redirected links</span><span class="cnt">8 links</span></summary>
 <p>The links whose target redirects, by where it lands, the most links first: update them to the landing. <i>Redirecting URLs</i> are the targets they name, and <i>Linking pages</i> the pages they are written on. A row whose <i>Reason</i> is <code>pedantic_trailing_slash</code> lands on its URL with a final <code>/</code> added or removed, and comes last.</p>
