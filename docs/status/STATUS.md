@@ -146,10 +146,9 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   that landing under *Resolves to*, and the doubled slash is marked where it
   is shown; earned by 8.6's eleventh finding.
   Notes: [`../wip/roadmap-P8.18.2-doubled-slash-shown-notes.md`](../wip/roadmap-P8.18.2-doubled-slash-shown-notes.md).
-- [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
+- [x] **8.6** The maintainer's review of a real en-US digest: no code, the
   verdict and what it spawns in the notes.
-  In progress; findings so far in
-  [`../wip/roadmap-P8.6-digest-review-notes.md`](../wip/roadmap-P8.6-digest-review-notes.md).
+  Notes: [`../wip/roadmap-P8.6-digest-review-notes.md`](../wip/roadmap-P8.6-digest-review-notes.md).
 - [ ] **8.17** A `broken_url` link whose URL with its final `/` toggled
   answers: still broken, the digest naming that URL as its fix.
 - [ ] **8.7** `changed` and `anchors-removed`: `report` children and kinds,

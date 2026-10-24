@@ -1,14 +1,11 @@
 # P8.6 — The maintainer's review of a real en-US digest: notes
 
-The review is in progress and is expected to take several rounds, so this doc
-holds the findings so far, not a verdict. Findings 1 to 7 were read off run 1
-of 8.1's crawl (`runs/p8.6-review/digest/en-us-2026-10-23.{html,json}`). The
-digest under review is now run 1 of 8.14's crawl, written at `0d3ae4c` from a
-copy of its database, `runs/p8.6-review/en-us-p8.14.duckdb`:
-`runs/p8.6-review/digest/en-us-2026-10-24.{html,json}`, served by
-`python3 -m http.server 8086` from that directory (its PID in
-`runs/p8.6-review/server.pid`). It is rewritten in place after each round of
-fixes, so the URL stays the same.
+The review ran in rounds, each finding filed below with the slices it
+spawned, and ends in the verdict at the foot. Findings 1 to 7 were read off
+run 1 of 8.1's crawl (`runs/p8.6-review/digest/en-us-2026-10-23.{html,json}`);
+the rest, and the verdict, off run 1 of 8.14's crawl, written from a copy of
+its database, `runs/p8.6-review/en-us-p8.14.duckdb`:
+`runs/p8.6-review/digest/en-us-2026-10-24.{html,json}`.
 
 ## Finding 1: a count does not say which way it points
 
@@ -246,13 +243,15 @@ earns 8.4.7**, reversing that part of "Finding 9" which 8.4.5 shipped, and
 amends P8's spec, "What the document holds" and "A trailing slash is
 pedantic".
 
-## Where the review stands
+## Verdict
 
-Findings 1 to 12 are filed. Every slice they spawned ahead of the review
-has landed (8.4.2 to 8.4.7, 8.10 to 8.13, 8.15, 8.16, 8.18 to 8.18.2, 8.19
-and 8.19.1), and the review **resumes on 8.14's crawl**, no digest of 8.1's database showing what 8.10 to
-8.13 reclassify. After a round of fixes, the digest is rewritten from the
-copy with a release build:
+**Approved** (maintainer, 2026-10-24), on 8.14's digest as 8.18.2's code
+writes it (`131225c`), after findings 1 to 12. Every slice they spawned has
+landed (8.4.2 to 8.4.7, 8.10 to 8.13, 8.15, 8.16, 8.18 to 8.18.2, 8.19 and
+8.19.1), and the verdict spawns nothing further.
+
+The digest is rewritten from the copy with a release build, and served for
+reading:
 
 ```sh
 target/release/bruce report digest --db runs/p8.6-review/en-us-p8.14.duckdb \
