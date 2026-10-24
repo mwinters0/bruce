@@ -404,7 +404,7 @@ fn housekeeping_holds_the_redirects_orphans_and_unlisted_pages() {
     let d = of(&store());
     assert_eq!(column(&d.redirects, "landing"), [url(2)]);
     assert_eq!(
-        d.redirects.rows[0][4],
+        d.redirects.rows[0][5],
         Cell::List(vec![url(2)]),
         "the pages whose links they are"
     );

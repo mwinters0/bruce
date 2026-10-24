@@ -281,3 +281,79 @@ fn every_open_installs_the_view() {
     let store = Store::open(&path, &registry).unwrap();
     assert!(verdicts(&store).is_empty());
 }
+
+/// A target whose URL is `url` and that landed on `final_url`.
+fn slash_target(store: &Store, id: u64, url: &str, final_url: &str) {
+    store
+        .connection()
+        .execute(
+            "INSERT INTO targets (answered_by, run_id, url_id, url, outcome, final_url) \
+             VALUES ('live', 1, ?, ?, 'ok', ?)",
+            params![id, url, final_url],
+        )
+        .unwrap();
+}
+
+#[test]
+fn a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic() {
+    let store = open();
+    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    let base = "https://e.test/a";
+    slash_target(&store, 2, base, "https://e.test/a/");
+    slash_target(&store, 3, "https://e.test/b/", "https://e.test/b");
+    slash_target(&store, 4, "https://e.test/c?x=1", "https://e.test/c/?x=1");
+    slash_target(&store, 5, "https://e.test/d", "https://e.test/d//");
+    slash_target(&store, 6, "https://e.test/e", "https://e.test/e/f");
+    slash_target(&store, 7, "https://other.test/g", "https://e.test/g/");
+    // 8 lands on a page that lacks the fragment, 9 on one that has it.
+    slash_target(&store, 8, "https://e.test/h", "https://e.test/h/");
+    slash_target(&store, 9, "https://e.test/i", "https://e.test/i/");
+    store
+        .connection()
+        .execute_batch(
+            "INSERT INTO targets (answered_by, run_id, url_id, url, outcome) \
+                 VALUES ('live', 1, 20, 'https://e.test/h/', 'ok'), \
+                        ('live', 1, 21, 'https://e.test/i/', 'ok');
+             INSERT INTO pages VALUES (1, 20, NULL, NULL, NULL, NULL, 'whole', 'generic', NULL, NULL, \
+                 NULL, NULL, false, true, NULL), (1, 21, NULL, NULL, NULL, NULL, 'whole', 'generic', \
+                 NULL, NULL, NULL, NULL, false, true, NULL);
+             INSERT INTO anchors VALUES (1, 21, 'here', 'h2', 'content');",
+        )
+        .unwrap();
+    slash_target(&store, 10, "https://e.test/j", "https://e.test/j/");
+    store
+        .connection()
+        .execute(
+            "UPDATE targets SET outcome = 'broken_url' WHERE url_id = 10",
+            [],
+        )
+        .unwrap();
+    for (label, id, fragment) in [
+        ("added", 2, None),
+        ("dropped", 3, None),
+        ("query", 4, None),
+        ("doubled", 5, None),
+        ("deeper", 6, None),
+        ("host", 7, None),
+        ("no-anchor", 8, Some("here")),
+        ("anchor", 9, Some("here")),
+        ("broken", 10, None),
+    ] {
+        link(&store, label, id, fragment, None);
+    }
+    let got = verdicts(&store);
+    let pedantic = Some("pedantic_trailing_slash");
+    for (label, outcome, reason) in [
+        ("added", "ok", pedantic),
+        ("dropped", "ok", pedantic),
+        ("query", "ok", pedantic),
+        ("doubled", "ok", None),
+        ("deeper", "ok", None),
+        ("host", "ok", None),
+        ("no-anchor", "broken_anchor", None),
+        ("anchor", "ok", pedantic),
+        ("broken", "broken_url", None),
+    ] {
+        expect(&got, label, outcome, reason);
+    }
+}

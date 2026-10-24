@@ -628,7 +628,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
     let links = |t: &Table| format!("{} links", num(rows(t).map(|r| r.int("links")).sum()));
     let entries = |t: &Table| num(t.rows.len() as i64);
     fold(out, "Redirected links", &links(&d.redirects), |out| {
-        out.push_str("<p>The links whose target redirects, by where it lands, the most links first: update them to the landing. <i>Redirecting URLs</i> are the targets they name, and <i>Linking pages</i> the pages they are written on.</p>\n");
+        out.push_str("<p>The links whose target redirects, by where it lands, the most links first: update them to the landing. <i>Redirecting URLs</i> are the targets they name, and <i>Linking pages</i> the pages they are written on. A row whose <i>Reason</i> is <code>pedantic_trailing_slash</code> lands on its URL with a final <code>/</code> added or removed, and comes last.</p>\n");
         let body: Vec<Vec<String>> = rows(&d.redirects)
             .map(|r| {
                 let landing = r.text("landing").unwrap_or("");
@@ -638,6 +638,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
                     num(r.int("links")),
                     num(r.int("urls")),
                     esc(r.text("chain").unwrap_or("")),
+                    esc(r.text("reason").unwrap_or("")),
                     pages.join("<br>"),
                 ]
             })
@@ -649,6 +650,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
                 ("Links to it", true),
                 ("Redirecting URLs", true),
                 ("First hops", false),
+                ("Reason", false),
                 ("Linking pages", false),
             ],
             &body,

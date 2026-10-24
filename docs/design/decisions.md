@@ -210,7 +210,7 @@ Lowercase the scheme and host, drop default ports, percent-decode only unreserve
 must not move the path), keep the query (per root it may be stripped), and keep `/foo` and `/foo/`
 distinct. Follow up to 10 hops, a 2xx page's delay-0 refresh one of them (I14); a loop or more hops
 is `broken_url`. The fragment is checked against the final page, and `redirected` is a non-failing
-modifier (I4, I5). `crawl` follows hops, not `fetch`: a refresh is found only by reading the page.
+modifier (I4, I5), a final `/` alone pedantic (D70). `crawl` follows hops, not `fetch`: a refresh is found only by reading the page.
 Rejected: normalising the trailing slash, which servers do not; a delayed refresh as a hop, its page
 having content of its own. Code: `url::canonical`, `crawl::hops`. Evidence: `url::tests`.
 
@@ -345,6 +345,11 @@ on a root, two roots on a host disagreeing and an `include`'s host unset. Code: 
 RFC 9309, 2.3, scopes the file to scheme, host and port, so a name silent on one origin fails only that origin's links, whichever a crawl asked first. A redirect ending at another origin's own `/robots.txt` takes that origin's read, found, absent or silent, so `http` and `https` cannot disagree by a flicker between two requests; a silence fails the asking origin only when it is on the asking origin's name, and a loop between two origins is a redirect leading nowhere. A redirect that gets no response fails the asking origin's links when the silent hop is on its name, and leaves them `robots_unavailable` on another's. The slowest `Crawl-delay` among a name's origins read paces it (D18).
 Rejected: the name's first hop alone, or any hop on it, leaving a verdict to the order a name's origins were asked in; a pace per origin, asking one server at twice the rate it set.
 Reopens: a site whose origins disagree in a way that costs links. Code: `fetch::http::host`, `fetch::http`. Evidence: `fetch::http::host::tests::a_name_silent_on_one_origin_fails_only_that_origin`.
+
+### D70 A redirect that only adds or drops a final `/` is `ok`, reason `pedantic_trailing_slash`
+A link through a redirect whose final URL differs from the URL linked only by a final `/` (before a query, if any), whatever the hops between, has the reason in `link_verdicts` where its verdict is `ok`; a missing fragment still makes it `broken_anchor`. The redirects report groups by landing and reason and lists the pedantic rows last, and the gate's introduced redirected links show each row's reason, the pedantic ones last, failing nothing as no redirect does (D7). Maintainer, 2026-10-24: a slash is to be corrected, below a 404 or a missing fragment; the class is named for one form so that others (a scheme upgrade, a moved page) can stand beside it.
+Rejected: a sixth outcome, which every report and the gate would have to place (D16) for a link a reader follows; leaving the slash with `redirected` alone, which hid 496 links to 259 targets among the rest of 8.14's redirects.
+Reopens: a second class of pedantic redirect, which would make the reason a list or the view a table. Code: `store::views`, `report::redirects`, `report::gate`. Evidence: `store::views::tests::a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic`.
 
 ### D61 Live slots are shared among the hosts with work, and a build's reads have a budget of their own
 Each host holds at most the 64 slots divided by the hosts with a target waiting or running, taken in turn,

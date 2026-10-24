@@ -2,24 +2,28 @@
 //! where they landed (D7), so the forge's login page, which a thousand links
 //! reach, is one row. Nothing is filtered by host: a same-host filter would
 //! drop a cross-host move (pagure.io to the forge), the likeliest fix, and an
-//! auth-wall heuristic would surprise.
+//! auth-wall heuristic would surprise. A landing's pedantic links are a row of
+//! their own, last (D70).
 
 use duckdb::Connection;
 
 use super::error::Error;
 use super::request::Request;
-use super::sql::{Cols, Sql};
+use super::sql::{Cols, Sql, pedantic};
 use super::table::Table;
 use crate::store::RunId;
 
-/// A row for each landing URL: the links and the distinct URLs that reached
-/// it, and the chain of the first of them. With `linking_pages`, the pages
-/// the links are on.
+/// A row for each landing URL, and for its pedantic links (D70) a row of their
+/// own, `reason` being only that one: the links and the distinct URLs that
+/// reached it, and the chain of the first of them. With `linking_pages`, the
+/// pages the links are on. The pedantic rows are last.
 pub(super) fn redirects(conn: &Connection, run: RunId, request: &Request) -> Result<Table, Error> {
+    let reason = format!("CASE WHEN {} THEN reason END", pedantic("reason"));
     let mut sql = Sql::new(
         "SELECT landing, count(*)::BIGINT AS links, count(DISTINCT target)::BIGINT AS urls, \
-         arg_min(chain, target) AS chain",
+         arg_min(chain, target) AS chain, ",
     );
+    sql.push(&reason).push(" AS reason");
     if request.linking_pages {
         sql.push(", list(DISTINCT page ORDER BY page) AS pages");
     }
@@ -35,7 +39,11 @@ pub(super) fn redirects(conn: &Connection, run: RunId, request: &Request) -> Res
             page: "src_url_id",
         },
     )
-    .push(" GROUP BY landing ORDER BY 2 DESC, 1")
+    .push(" GROUP BY landing, ")
+    .push(&reason)
+    .push(" ORDER BY ")
+    .push(&reason)
+    .push(" IS NOT NULL, 2 DESC, 1")
     .limit(request);
     sql.fetch(conn)
 }

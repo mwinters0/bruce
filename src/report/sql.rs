@@ -8,7 +8,13 @@ use duckdb::{Connection, params_from_iter};
 use super::error::Error;
 use super::request::Request;
 use super::table::{Cell, Table};
-use crate::store::RunId;
+use crate::store::{PEDANTIC_TRAILING_SLASH, RunId};
+
+/// An expression true of a link whose verdict `column` is the pedantic reason
+/// (D70), to order those last (`false` sorts first).
+pub(super) fn pedantic(column: &str) -> String {
+    format!("coalesce({column} = '{PEDANTIC_TRAILING_SLASH}', false)")
+}
 
 /// A statement and its arguments, kept in the order the text names them.
 pub(super) struct Sql {

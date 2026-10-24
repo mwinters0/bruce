@@ -143,6 +143,30 @@ fn a_redirect_is_introduced_where_the_baseline_did_not_have_it() {
 }
 
 #[test]
+fn a_pedantic_redirect_shows_its_reason_and_comes_last_and_fails_nothing() {
+    let store = store();
+    // 19 redirects to itself with a final slash: its link sorts before 20's.
+    target(&store, 2, 19, 200, "ok", None);
+    store
+        .connection()
+        .execute(
+            "UPDATE targets SET final_url = ?, redirect_chain = [] WHERE run_id = 2 AND url_id = 19",
+            params![format!("{}/", url(19))],
+        )
+        .unwrap();
+    link(&store, 2, 1, 19, None, "anchor");
+    let g = gate_of(&store, |_| {});
+    assert_eq!(column(&g.redirected, "raw_href"), ["1>20#", "1>19#"]);
+    assert_eq!(g.redirected.columns[6], "reason");
+    assert_eq!(column(&g.redirected, "reason")[0], "Null");
+    assert_eq!(
+        column(&g.redirected, "reason")[1],
+        "pedantic_trailing_slash"
+    );
+    assert_eq!(column(&g.introduced, "raw_href").len(), 5);
+}
+
+#[test]
 fn a_filter_that_keeps_nothing_leaves_a_gate_that_does_not_fail() {
     let g = gate_of(&store(), |r| r.repo = Some("r/none".into()));
     assert!(!g.fails());

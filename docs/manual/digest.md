@@ -74,8 +74,8 @@ heading, a click opening it. In this order:
    source, where restoring a missing fragment mends every link in its row.
    The targets one link names are not listed; their links are in section 3.
 6. **Links that errored**, apart from the breakage.
-7. **Housekeeping**: the redirected links by where their targets land, the
-   sitemap entries no page was fetched for, the orphans, the unlisted pages
+7. **Housekeeping**: the redirected links by where their targets land, those
+   differing from their landing only by a final `/` last, the sitemap entries no page was fetched for, the orphans, the unlisted pages
    and the unchecked links, each closed in its turn. The unchecked links are
    listed by reason, each with what its links are in plain words, the setting
    in the [configuration](config.md) that would check them where there is
@@ -107,7 +107,7 @@ and a count or status a number.
   "by_component": [{"component":"handbook","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1}],
   "errors": [{"page":"https://docs.example.org/en-US/a/","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","raw_href":"https://slow.example.net/","target":"https://slow.example.net/","fragment":null,"kind":"anchor","reason":"server_error","status":503}],
   "housekeeping": {
-    "redirects": [{"landing":"https://docs.example.org/en-US/b/","links":1,"urls":1,"chain":"301 https://docs.example.org/en-US/old/","pages":["https://docs.example.org/en-US/a/"]}],
+    "redirects": [{"landing":"https://docs.example.org/en-US/b/","links":1,"urls":1,"chain":"301 https://docs.example.org/en-US/old/","reason":null,"pages":["https://docs.example.org/en-US/a/"]}],
     "orphans": [{"page":"https://docs.example.org/en-US/c/","title":"C","root":"https://docs.example.org/en-US/","source_repo":null,"source_path":null}],
     "unlisted": [{"page":"https://docs.example.org/en-US/d/","root":"https://docs.example.org/en-US/","title":"D","source_repo":null,"source_path":null}],
     "sitemap_entries": [{"page":"https://docs.example.org/en-US/gone/","outcome":"broken_url","reason":null,"status":404}],
@@ -137,7 +137,7 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `by_repo` | Each repo the pages were built from, the most broken links first, then by errors; `repo` is `null` for the pages that record none. `pages` counts the repo's pages, `broken_pages` those holding a broken link. |
 | `by_component` | The same by Antora component. A site with no Antora page has none. |
 | `errors` | Every link whose outcome is `error`, apart from breakage: the target could not be asked, not necessarily wrong. `source_url` is the linking page's. |
-| `housekeeping.redirects` | The redirected links by landing URL, the most `links` first: `urls` distinct URLs reached it, `chain` is the hops the first took, and `pages` the pages whose links they are. |
+| `housekeeping.redirects` | The redirected links by landing URL, the most `links` first: `urls` distinct URLs reached it, `chain` is the hops the first took, and `pages` the pages whose links they are. `reason` is `pedantic_trailing_slash` on a landing whose links name a URL that differs from it only by a final `/`, which comes after every other row, else `null`: such a landing has two rows where other links reach it too. |
 | `housekeeping.orphans` | The pages a sitemap lists that no other page links to. |
 | `housekeeping.unlisted` | The pages absent from the sitemap of a root that read one. |
 | `housekeeping.sitemap_entries` | The sitemap entries no page was fetched for, those whose `outcome` is not `ok` first: what the URL answered. Antora writes a sitemap from what it publishes, so such an entry is a build or deploy fault. |

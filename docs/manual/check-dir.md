@@ -107,8 +107,10 @@ Text lists, in order:
    `inverse` has. They fail the check unless `--inverse=warn`.
 3. **Introduced redirected links**: links through a redirect that the
    baseline did not have redirected: `page`, `raw_href`, `target`,
-   `fragment`, `kind`, `landing`, `chain` and the source columns. They never
-   fail the check.
+   `fragment`, `kind`, `landing`, `reason`, `chain` and the source columns. They
+   never fail the check. `reason` is `pedantic_trailing_slash` where the
+   landing differs from the target only by a final `/` added or removed, and
+   those links are listed last.
 4. **Errors**: the links whose outcome is `error` in this run, with `broken`'s
    columns.
 5. **Breakage already in the baseline**: a count, and with `--all` the links,

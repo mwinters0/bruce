@@ -126,7 +126,11 @@ redirect, the one with the most links first: `landing`, `links` (how many
 links reached it), `urls` (how many distinct URLs they named) and `chain`,
 the hops the first of those URLs took, each a status (`refresh` for a page's
 own redirect) and the URL asked, joined by `>`. No link is left out for
-being on another host. With `--format json` each row also has `pages`, an
+being on another host. `reason` is `pedantic_trailing_slash` for the links
+whose landing differs from the URL they name only by a final `/` added or
+removed, whatever the hops between: the server supplies the slash, the link
+works, and writing it is a tidiness. Those links are a row of their own, after
+all the others, and are otherwise none. With `--format json` each row also has `pages`, an
 array of the pages whose links they are.
 
 **`diff`** has a row for each link that is broken (as `broken` has it) in
@@ -191,7 +195,8 @@ Opening a database with `bruce` installs the views the reports read, so
 `report_errors`, `report_stats` (counts by page and kind) and
 `report_pages`, `report_inbound`, `report_roots`, `report_sitemap` and
 `report_redirects`, and beneath them `link_verdicts`, every link with its
-outcome. Each holds every run, so filter on `run_id`.
+outcome and reason (`ok`, reason `pedantic_trailing_slash`, for a link through
+a redirect that only adds or drops a final `/`). Each holds every run, so filter on `run_id`.
 
 ## Exit status
 

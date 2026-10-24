@@ -27,8 +27,16 @@
 //! 7. Otherwise the fragment is checked against the anchors of the page the
 //!    target landed on (D46): `ok` where an anchor is the fragment as written
 //!    or percent-decoded, as a browser looks (D12), else `broken_anchor`.
+//!
+//! An `ok` link whose target was redirected to its own URL with a final `/`
+//! added or removed has the reason [`PEDANTIC_TRAILING_SLASH`], whatever the
+//! hops between (D70). It is not an outcome of its own.
 
 use crate::profile::View;
+
+/// The reason of an `ok` link whose redirect differs from its URL only by a
+/// final `/` (D70).
+pub const PEDANTIC_TRAILING_SLASH: &str = "pedantic_trailing_slash";
 
 /// Every view the store ships.
 pub(super) const ALL: &[View] = &[LINK_VERDICTS];
@@ -45,6 +53,9 @@ WITH joined AS (
         t.outcome AS target_outcome,
         t.reason AS target_reason,
         t.final_url IS NOT NULL AS redirected,
+        coalesce(t.final_url <> t.url
+            AND regexp_replace(t.final_url, '/([?].*)?$', '\\1')
+                = regexp_replace(t.url, '/([?].*)?$', '\\1'), false) AS slash_only,
         p.url_id AS page_id,
         coalesce(try(url_decode(l.fragment)), l.fragment) AS decoded
     FROM links l
@@ -71,7 +82,10 @@ WITH joined AS (
     FROM joined
 )
 SELECT run_id, src_url_id, target_url_id, fragment, raw_href, kind, xref_refspec,
-    verdict[1] AS outcome, verdict[2] AS reason, redirected
+    verdict[1] AS outcome,
+    CASE WHEN verdict[1] = 'ok' AND slash_only THEN 'pedantic_trailing_slash'
+        ELSE verdict[2] END AS reason,
+    redirected
 FROM judged",
 };
 

@@ -19,7 +19,7 @@ use super::error::Error;
 use super::inverse::{counts, inverse};
 use super::links::errors;
 use super::request::{InverseMode, Request};
-use super::sql::{Cols, Sql};
+use super::sql::{Cols, Sql, pedantic};
 use super::table::{Format, Table, quoted};
 use crate::store::RunId;
 
@@ -255,7 +255,8 @@ fn broken(
     sql.fetch(conn)
 }
 
-/// The redirected links of `run` that the baseline has not redirected.
+/// The redirected links of `run` that the baseline has not redirected, the
+/// pedantic ones (D70) last.
 fn redirected(
     conn: &Connection,
     run: RunId,
@@ -266,7 +267,7 @@ fn redirected(
     base_links(&mut sql, base, request);
     sql.push(
         "SELECT * FROM (SELECT b.page, b.raw_href, b.target, b.fragment, b.kind, b.landing, \
-         b.chain, b.source_repo, b.source_path FROM report_redirects b WHERE ",
+         b.reason, b.chain, b.source_repo, b.source_path FROM report_redirects b WHERE ",
     )
     .kinds("b.kind", request)
     .push(" AND ");
@@ -275,9 +276,10 @@ fn redirected(
         .push(SAME_KEY)
         .push(
             " AND o.redirected) QUALIFY row_number() OVER (PARTITION BY b.src_url_id, b.target, \
-             coalesce(b.fragment, '') ORDER BY b.raw_href, b.kind) = 1) \
-             ORDER BY page, raw_href, fragment",
+             coalesce(b.fragment, '') ORDER BY b.raw_href, b.kind) = 1) ORDER BY ",
         )
+        .push(&pedantic("reason"))
+        .push(", page, raw_href, fragment")
         .limit(request);
     sql.fetch(conn)
 }

@@ -66,7 +66,10 @@ fn report(store: &Store, edit: impl FnOnce(&mut Request)) -> Output {
 #[test]
 fn redirects_group_the_links_by_where_they_landed() {
     let out = report(&store(), |_| {});
-    assert_eq!(out.table.columns, ["landing", "links", "urls", "chain"]);
+    assert_eq!(
+        out.table.columns,
+        ["landing", "links", "urls", "chain", "reason"]
+    );
     assert_eq!(column(&out.table, "landing"), [LOGIN, &url(3)[..]]);
     assert_eq!(out.table.rows[0][1..3], [Cell::Int(3), Cell::Int(1)]);
     assert_eq!(out.table.rows[1][1..3], [Cell::Int(2), Cell::Int(2)]);
@@ -97,11 +100,67 @@ fn redirects_count_the_kinds_they_are_given() {
 #[test]
 fn the_linking_pages_are_added_on_request_and_are_an_array_in_json() {
     let out = report(&store(), |r| r.linking_pages = true);
-    assert_eq!(out.table.columns[4], "pages");
-    assert_eq!(out.table.rows[1][4], Cell::List(vec![url(1), url(4)]));
+    assert_eq!(out.table.columns[5], "pages");
+    assert_eq!(out.table.rows[1][5], Cell::List(vec![url(1), url(4)]));
     let json = out.table.render(Format::Json);
     assert!(
         json.contains(&format!("\"pages\":[\"{}\",\"{}\"]", url(1), url(4))),
         "{json}"
+    );
+}
+
+/// 23 lands on its URL with a final slash added, 24 on its URL (which ends
+/// in one) without, and 25 on a URL with a second one.
+#[test]
+fn a_landing_that_differs_by_a_final_slash_is_a_pedantic_row_and_last() {
+    let store = store();
+    moved(
+        &store,
+        23,
+        &format!("{}/", url(23)),
+        &hop(url(23), 301, false),
+    );
+    moved(
+        &store,
+        24,
+        &url(24),
+        &hop(format!("{}/", url(24)), 301, false),
+    );
+    store
+        .connection()
+        .execute(
+            "UPDATE targets SET url = ? WHERE url_id = 24",
+            params![format!("{}/", url(24))],
+        )
+        .unwrap();
+    moved(
+        &store,
+        25,
+        &format!("{}//", url(25)),
+        &hop(url(25), 301, false),
+    );
+    for to in [23, 24, 25] {
+        link(&store, 1, 3, to, None, "anchor");
+    }
+    let out = report(&store, |_| {});
+    assert_eq!(
+        column(&out.table, "landing"),
+        [
+            LOGIN.to_owned(),
+            url(3),
+            format!("{}//", url(25)),
+            format!("{}/", url(23)),
+            url(24)
+        ]
+    );
+    assert_eq!(
+        column(&out.table, "reason"),
+        [
+            "Null",
+            "Null",
+            "Null",
+            "pedantic_trailing_slash",
+            "pedantic_trailing_slash"
+        ]
     );
 }
