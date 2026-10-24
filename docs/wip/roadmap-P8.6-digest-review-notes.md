@@ -119,3 +119,20 @@ fedorahosted.org with them. The allowlist names hosts exactly, so **it spawns
 8.12**, P8's spec gaining "The allowlist names the Fedora and Red Hat sites".
 On run 1 those domains hold about 4,000 of the `host_not_allowlisted`
 targets, fedoraproject.org (the wiki) 986 of them.
+
+## Where the review stands
+
+Findings 1 to 5 are filed: 8.4.2 to 8.4.4 and 8.10 to 8.12 have landed, and
+**8.13 (KD21) lands before 8.14's crawl** (maintainer, 2026-10-24: a host
+that does not resolve or never answers must not hide its links as
+unchecked). The review **resumes on 8.14's crawl**, no digest of 8.1's
+database showing what 8.10 to 8.13 reclassify:
+
+```sh
+target/release/bruce report digest --db <8.14's database> \
+  --out runs/p8.6-review/digest --name en-us
+cd runs/p8.6-review/digest && setsid python3 -m http.server 8086 --bind 0.0.0.0
+```
+
+**Still open for the maintainer**: Finding 1's question, whether "Repos"
+should also count broken links by their target's repo.

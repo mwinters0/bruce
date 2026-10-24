@@ -83,10 +83,6 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
 - [x] **8.5** An unresolved xref's hint: the `antora` view, `broken`'s and the
   digest's `hint`, measure and floor chosen on en-US's rows.
   Notes: [`../wip/roadmap-P8.5-xref-hint-notes.md`](../wip/roadmap-P8.5-xref-hint-notes.md).
-- [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
-  verdict and what it spawns in the notes.
-  In progress; findings so far in
-  [`../wip/roadmap-P8.6-digest-review-notes.md`](../wip/roadmap-P8.6-digest-review-notes.md).
 - [x] **8.10** A scheme that cannot work is broken: the schemes a public web
   page uses stay `unchecked`, every other `broken_url`.
   Notes: [`../wip/roadmap-P8.10-scheme-notes.md`](../wip/roadmap-P8.10-scheme-notes.md).
@@ -98,10 +94,22 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   root's own host; the deployment guide's allowlist names the Fedora and Red
   Hat sites, D5 amended; `data` and `javascript` join D66's working schemes.
   Notes: [`../wip/roadmap-P8.12-allowlist-domains-notes.md`](../wip/roadmap-P8.12-allowlist-domains-notes.md).
+- [ ] **8.13** A host that does not resolve or never answers: its links
+  `broken_url` or `error` (D16), not `unchecked`, `robots_unavailable`;
+  closes KD21. `src/crawl.rs` is at its soft limits, so a seams round
+  (`.claude/skills/seams/SKILL.md`) precedes it where the fix grows it.
+- [ ] **8.14** The second en-US crawl, under the deployment guide's config
+  after 8.10 to 8.13: launched detached (`.claude/skills/gosub/handoff.md`),
+  its database the evidence 8.6's review resumes on and 8.8 compares with
+  8.1's; the guide's "about two hours" corrected from its time.
+- [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
+  verdict and what it spawns in the notes.
+  In progress; findings so far in
+  [`../wip/roadmap-P8.6-digest-review-notes.md`](../wip/roadmap-P8.6-digest-review-notes.md).
 - [ ] **8.7** `changed` and `anchors-removed`: `report` children and kinds,
   the scope changed and the root missed flagged.
 - [ ] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,
-  section 3's causes, section 7, the figures' changes; over a second en-US
+  section 3's causes, section 7, the figures' changes; over 8.14's en-US
   crawl against 8.1's.
 - [ ] **8.9** Servo's renders of the digest beside Chrome's headless shell's,
   after 8.6's verdict: whether Servo alone is enough to check how the
@@ -121,12 +129,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **An `allowlist` entry naming a root's own host outright is refused at
-  load** (D68). 8.12 was asked to settle its precedence over the locale
-  rule; the entry's one effect was asking another locale's pages, D10's
-  rejected check, and testing the locale rule first would load it inert, so
-  I made it an error, as D5 already said in words. A file that loaded before
-  with such an entry now fails (`config.rs`, `check_allowlisted_roots`).
-  Reconsidering restores it as a way to ask the other locales one hop deep,
-  amends D68 and D10, and drops the check and its tests.

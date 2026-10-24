@@ -312,9 +312,10 @@ phase by comparing Servo's renders of the digest with Chrome's headless
 shell's** (maintainer, 2026-10-23): Servo checks the rendering because it
 keeps the dev dependencies light, and 8.9 says whether it is enough, a
 Chrome spot check being the maintainer's to request meanwhile.
-**8.10 to 8.12 land before 8.8's second crawl** (2026-10-24), which
-then shows what they reclassify and check; 8.8's notes tell those rows from new
-breakage.
+**8.6's review found 8.4.1 to 8.4.4 and 8.10 to 8.13** (2026-10-24), and
+**resumes on 8.14's second en-US crawl**, made after all of them, which 8.8
+then compares with 8.1's, its notes telling the rows they reclassify or
+newly check from new breakage. The checklist lists 8.6 after them.
 
 ## Facts the grilling found
 

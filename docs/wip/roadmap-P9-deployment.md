@@ -166,7 +166,7 @@ second file the guide tags and `sim` loads, has one root at
 `https://docs.fedoraproject.org/`** with `sitemap` set to en-US's index: the
 locales are found by the language menu's links, a locale added later is
 crawled unasked, and the stray first segments (`infra`, `f28`, …) are
-checked, real breakage `out_of_scope` today. CI's config stays the nightly
+crawled, where en-US's config asks each once (D10, D67). CI's config stays the nightly
 en-US one. Rejected: 69 roots, a list kept by hand.
 
 ## Prereleases while the deployment is stood up
@@ -268,4 +268,4 @@ Found 2026-10-21, for the decisions above.
 - **docs.fp.o's `/` is a 200 meta refresh to `./en-US/`.** The en-US run's
   docs.fp.o targets begin with 72 distinct first segments: the locales,
   2,307 targets apiece, and a few others (`infra`, `f28`, `fedora-project`),
-  `out_of_scope` today.
+  each asked once since P8.11 (D10, D67).
