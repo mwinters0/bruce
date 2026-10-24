@@ -108,8 +108,11 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   8.1's; the guide's "about two hours" corrected from its time.
   Notes: [`../wip/roadmap-P8.14-second-crawl-notes.md`](../wip/roadmap-P8.14-second-crawl-notes.md).
 - [ ] **8.16** A redirected link whose final URL differs only by a final `/`:
-  `ok`, reason `pedantic_trailing_slash`, the housekeeping's redirects listing
-  it apart and last (D7, D16), shown on 8.14's database.
+  `ok`, reason `pedantic_trailing_slash`, the housekeeping's redirects and the
+  gate's introduced redirected links showing the reason and listing it last
+  (D7, D16), shown on 8.14's database.
+- [ ] **8.19** Severity marked in the digest: a dot per link or target row
+  and per section summary, broken red, attention amber, pedantic a grey ring.
 - [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
   verdict and what it spawns in the notes.
   In progress; findings so far in

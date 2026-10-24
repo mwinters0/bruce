@@ -146,10 +146,19 @@ fragment. On 8.14's crawl (`runs/p8.14-en-us-20261024-1322/en-us.duckdb`):
   redirect landing on a malformed URL, and a page reached only by a redirect
   from off a root is not that root's page, so its links are not counted.
 
+- **The gate already lists introduced redirects**, never failing (D7,
+  `Gate::redirected` in `src/report/gate.rs`), and a local build answers a
+  slashless URL with a 301 as the server does. Its rows show the reason too.
+
 **It spawns 8.16 to 8.18**, P8's spec gaining "A trailing slash is
-pedantic". **Open, for the maintainer**: whether the gate (D9) warns, never
-failing, on a `pedantic_trailing_slash` link a change introduces. Today no
-redirect reaches the gate.
+pedantic".
+
+## Finding 7: severity is marked
+
+Maintainer, 2026-10-24: the digest would be easier to skim with a mark of
+each row's severity, pedantic the lowest, as a small red, yellow or grey
+circle in the first column, the design left to this session. **It spawns
+8.19**, P8's spec gaining "Severity is marked".
 
 ## Where the review stands
 
@@ -166,6 +175,5 @@ cd runs/p8.6-review/digest && setsid python3 -m http.server 8086 --bind 0.0.0.0
 ```
 
 **Still open for the maintainer**: Finding 1's question, whether "Repos"
-should also count broken links by their target's repo; Finding 6's, whether
-the gate warns on a `pedantic_trailing_slash` link. 8.16 lands before the
-review resumes.
+should also count broken links by their target's repo. 8.16 and 8.19 land
+before the review resumes.

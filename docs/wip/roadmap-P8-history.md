@@ -315,9 +315,35 @@ fragment.
   from off a root is not that root's page**: its links are not counted. On
   8.14's crawl, fedoraproject.org's `code-of-conduct` 302 put 529 `broken_url`
   links on three such pages.
+- **The gate's introduced redirected links show each row's reason**,
+  `pedantic_trailing_slash` last, and fail nothing, as no redirect there
+  does (D7); its rows are `report_redirects`', which the digest's are too.
+  Rejected: a gate section of their own, which the digest's one list would
+  contradict; leaving them out, a writer then never hearing of a slash in
+  the file being edited.
 
-**Open**: whether the gate warns, never failing, on a
-`pedantic_trailing_slash` link a change introduces.
+## Severity is marked
+
+Settled 2026-10-24 (maintainer, the design delegated): the digest is
+skimmed by severity.
+
+- **Three levels, read off a link's outcome and reason**: *broken*
+  (`broken_url`, `broken_anchor`) in `--bad`'s red; *attention* (`error`, a
+  redirect that is not pedantic) in `--warn`'s amber; *pedantic*
+  (`pedantic_trailing_slash`) in `--muted`'s grey. An `unchecked` link has
+  none, and nor do the housekeeping's lists that are not links (orphans,
+  unlisted pages, sitemap entries, unchecked counts).
+- **A dot in the first column of every row naming a link or a target**, a
+  column with no heading, and **each section's `<summary>` carrying its
+  highest level's dot**, the collapsed digest being skimmed by its summaries.
+  Broken and attention are filled; pedantic is a ring, apart from the two
+  without its colour and in print's greys.
+- **The colour repeats the row's own text, never carrying it alone**: each
+  dot is named by its level for a screen reader, and one legend beside the
+  figures names the three.
+- **HTML only**: the JSON's outcome and reason decide the level, and it gains
+  no field. Rejected: a `severity` field, a second statement of them; a
+  column of words, which a skimmer reads rather than sees.
 
 ## Where it lives
 
@@ -341,8 +367,9 @@ Settled 2026-10-23 (maintainer), on the concept map's layering (D39):
 - **A domain in the allowlist**: `config`, where the allowlist is parsed and
   matched; the guide's list in `docs/manual/deploy.md`.
 - **A trailing slash**: the reason in `store::views`' verdict (D28), its
-  listing in `report/digest/`; the toggled URL asked where `crawl` asks; a
-  redirect's landing page placed by `crawl::frontier`'s plan.
+  listing in `report/digest/` and `report::gate`; the toggled URL asked where
+  `crawl` asks; a redirect's landing page placed by `crawl::frontier`'s plan.
+- **Severity**: `report/digest/html` and its stylesheet.
 
 ## The slices
 
@@ -364,7 +391,9 @@ newly check from new breakage. **8.15**, from the review of 8.13's call
 (2026-10-24), lands before 8.14 too. The checklist lists 8.6 after them.
 **8.16 to 8.18**, from the review of 8.14's crawl (2026-10-24), land "A
 trailing slash is pedantic": 8.16, the reason, before 8.6 resumes, the
-digest reading it off 8.14's database; 8.17 and 8.18 after 8.6.
+digest reading it off 8.14's database; 8.17 and 8.18 after 8.6. **8.19**
+lands "Severity is marked" after 8.16, whose level it shows, and before 8.6
+resumes.
 
 ## Facts the grilling found
 
