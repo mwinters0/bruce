@@ -233,5 +233,10 @@ copy with a release build:
 ```sh
 target/release/bruce report digest --db runs/p8.6-review/en-us-p8.14.duckdb \
   --out runs/p8.6-review/digest --name en-us
-cd runs/p8.6-review/digest && setsid python3 -m http.server 8086 --bind 0.0.0.0
+setsid python3 -m http.server 8086 --bind 0.0.0.0 --directory runs/p8.6-review/digest
 ```
+
+The server is started on its own, in a call holding nothing else: the
+maintainer's allow rule is the prefix `setsid python3 -m http.server`, and a
+compound command (a `cd` ahead of it, a subshell, `&`, a `curl` after it) is
+not matched by it, so it goes to the auto-mode classifier, which refuses it.
