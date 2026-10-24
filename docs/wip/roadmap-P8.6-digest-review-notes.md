@@ -192,9 +192,39 @@ Maintainer, 2026-10-24, on 8.14's digest after 8.19.1:
 **It earns 8.4.5 and 8.4.6**, 8.4 having shipped those summaries, that
 ranking and that table, and amends P8's spec, "What the document holds".
 
+## Finding 10: a doubled slash is the linking page's fault
+
+Maintainer, 2026-10-24, on 8.14's digest after 8.4.6: the top pages are those
+with a doubled slash in the middle of their URL, broken through their
+relative links, and the page linking to such a URL is the issue. For Fedora,
+and likely most sites, a URL with several slashes in its path is always the
+linking page's fault; the point is to find the pages that link to it, there
+being nothing to correct on the page itself.
+
+On 8.14's database (`runs/p8.6-review/en-us-p8.14.duckdb`): the three
+`code-of-conduct//` pages hold 579 broken path-relative links and 4 absolute
+ones, and are reached only from `en-US/project/`'s one link to
+`fedoraproject.org/code-of-conduct`, a 302 to `code-of-conduct//`. About 40
+links on some 25 pages name a doubled-slash URL themselves (`bootc.dev/bootc//`,
+`gitlab.com/…/blob/main//`, `qa.fedoraproject.org/blockerbugs/milestone//`),
+most answering. Of the 13 doubled-slash pages, 11 have their twin among the
+run's pages.
+
+Asked, the maintainer settled: such a link is red, and the breakage the
+doubled slash causes on the pages it reaches counts on the linking page's
+row, apart and ranked with its red, all of the chain (579, not the landing's
+187); a doubled-slash page counts nowhere where its twin was reached, and
+where it was not, its broken absolute links count on its own row; and 8.18's
+"a page reached only by a redirect from off a root is not that root's page"
+is dropped, a page at a clean URL being the root's. A `scheme://` inside a
+path (`web.archive.org/web/…/https://…`) or a query doubles no slash, placed
+by this session. **It rewrites 8.18** and P8's spec, "A trailing slash is
+pedantic"; the classification is a default a profile may change, filed in
+P7's inbox.
+
 ## Where the review stands
 
-Findings 1 to 9 are filed. Every slice findings 1 to 8 spawned ahead of the
+Findings 1 to 10 are filed, 10 rewriting 8.18. Every slice findings 1 to 8 spawned ahead of the
 review has landed (8.4.2 to 8.4.4, 8.10 to 8.13, 8.15, 8.16, 8.19 and 8.19.1),
 and 8.4.5 and 8.4.6 land before the review goes on. The review **resumed on 8.14's crawl**, no digest of 8.1's database showing what 8.10 to
 8.13 reclassify. After a round of fixes, the digest is rewritten from the

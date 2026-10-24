@@ -134,8 +134,10 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   [`../wip/roadmap-P8.6-digest-review-notes.md`](../wip/roadmap-P8.6-digest-review-notes.md).
 - [ ] **8.17** A `broken_url` link whose URL with its final `/` toggled
   answers: still broken, the digest naming that URL as its fix.
-- [ ] **8.18** A redirect whose `Location` doubles a slash reported once, and
-  a page reached only by a redirect from off a root not that root's page.
+- [ ] **8.18** A link into a URL whose path doubles a slash: `broken_url`,
+  reason `doubled_slash`; the page there counted only where it has no twin,
+  its broken path-relative links the linking page's, shown as a count
+  "broken through it" and ranked with red.
 - [ ] **8.7** `changed` and `anchors-removed`: `report` children and kinds,
   the scope changed and the root missed flagged.
 - [ ] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,

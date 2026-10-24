@@ -326,11 +326,28 @@ fragment.
 - **A `broken_url` link whose URL with its final `/` toggled answers stays
   broken**, a reader landing on the error, and the digest names that URL as
   its fix.
-- **A redirect whose `Location` doubles a slash is reported once**, as a
-  redirect landing on a malformed URL, and **a page reached only by a redirect
-  from off a root is not that root's page**: its links are not counted. On
-  8.14's crawl, fedoraproject.org's `code-of-conduct` 302 put 529 `broken_url`
-  links on three such pages.
+- **A link to a URL whose path doubles a slash is `broken_url`, reason
+  `doubled_slash`**, whatever it answered, as an unresolved xref is (D20),
+  and whether the link names that URL or a redirect lands on it: the fault
+  is the linking page's, never the page at that URL (maintainer, 2026-10-24;
+  8.6's notes, "Finding 10"). A `scheme://` inside a path or a query doubles
+  no slash.
+- **A page at such a URL is a source of findings only where nothing else
+  is**: where its twin, the URL with its slashes collapsed, is a page of the
+  run, its links count nowhere; where it is reached only in its doubled form,
+  its broken links that are not path-relative count on its own row. Its
+  broken path-relative links (`../`, `committee/`), which the doubled slash
+  breaks, are the linking page's.
+- **A row holding such a link counts that breakage apart**, "● 1 broken
+  link, ● 579 broken through it (580 issues total)", the second count the
+  broken path-relative links on every doubled-slash page the link reaches
+  through path-relative links, red, and ranked with the row's red. On 8.14's
+  crawl, `en-US/project/`'s link to `fedoraproject.org/code-of-conduct`, a
+  302 to `code-of-conduct//`, reaches three such pages and 579 links.
+  Rejected: a page reached only by a redirect from off a root not being that
+  root's page (2026-10-24, superseded the same day), a page at a clean URL
+  being the root's whatever reached it; the doubled slash pedantic or amber,
+  the target's relative links then breaking for the reader.
 - **The gate's introduced redirected links show each row's reason**,
   `pedantic_trailing_slash` last, and fail nothing, as no redirect there
   does (D7); its rows are `report_redirects`', which the digest's are too.
@@ -389,7 +406,9 @@ Settled 2026-10-23 (maintainer), on the concept map's layering (D39):
   matched; the guide's list in `docs/manual/deploy.md`.
 - **A trailing slash**: the reason in `store::views`' verdict (D28), its
   listing in `report/digest/` and `report::gate`; the toggled URL asked where
-  `crawl` asks; a redirect's landing page placed by `crawl::frontier`'s plan.
+  `crawl` asks.
+- **A doubled slash**: the reason, and which pages' links count, in
+  `store::views`; the count broken through a link in `report/digest/`.
 - **Severity**: `report/digest/html` and its stylesheet.
 
 ## The slices
