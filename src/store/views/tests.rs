@@ -347,7 +347,7 @@ fn a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic() {
         ("added", "ok", pedantic),
         ("dropped", "ok", pedantic),
         ("query", "ok", pedantic),
-        ("doubled", "ok", None),
+        ("doubled", "broken_url", Some("doubled_slash")),
         ("deeper", "ok", None),
         ("host", "ok", None),
         ("no-anchor", "broken_anchor", None),
@@ -356,4 +356,186 @@ fn a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic() {
     ] {
         expect(&got, label, outcome, reason);
     }
+}
+
+/// A target of any outcome whose URL is `url`, that landed on `final_url` if
+/// it did.
+fn raw_target(store: &Store, id: u64, url: &str, outcome: &str, final_url: Option<&str>) {
+    store
+        .connection()
+        .execute(
+            "INSERT INTO targets (answered_by, run_id, url_id, url, outcome, final_url) \
+             VALUES ('live', 1, ?, ?, ?, ?)",
+            params![id, url, outcome, final_url],
+        )
+        .unwrap();
+}
+
+#[test]
+fn a_link_to_a_url_with_a_doubled_slash_is_broken_whatever_it_answered() {
+    let store = open();
+    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    raw_target(&store, 2, "https://e.test/a//b", "ok", None);
+    raw_target(
+        &store,
+        3,
+        "https://e.test/c",
+        "ok",
+        Some("https://e.test/c//"),
+    );
+    raw_target(&store, 4, "https://e.test/d//e", "error", None);
+    raw_target(&store, 5, "https://e.test/f///", "broken_url", None);
+    raw_target(&store, 6, "https://e.test//", "ok", None);
+    // Never asked: nothing is known of what it answers.
+    raw_target(&store, 7, "https://e.test/g//h", "unchecked", None);
+    store
+        .connection()
+        .execute("UPDATE targets SET reason = 'skipped' WHERE url_id = 7", [])
+        .unwrap();
+    // A `scheme://` in the path, a doubled slash in a query or a fragment,
+    // and a single slash double nothing.
+    raw_target(
+        &store,
+        8,
+        "https://web.archive.org/web/2020/https://e.test/z",
+        "ok",
+        None,
+    );
+    raw_target(&store, 9, "https://e.test/q?next=a//b", "ok", None);
+    raw_target(&store, 10, "https://e.test/p/", "ok", None);
+    raw_target(
+        &store,
+        11,
+        "https://e.test/r/",
+        "ok",
+        Some("https://e.test/r/s?u=http://x"),
+    );
+    for (label, id) in [
+        ("named", 2),
+        ("landed", 3),
+        ("error", 4),
+        ("broken", 5),
+        ("root", 6),
+        ("unchecked", 7),
+        ("archive", 8),
+        ("query", 9),
+        ("single", 10),
+        ("landed-query", 11),
+    ] {
+        link(&store, label, id, None, None);
+    }
+    let got = verdicts(&store);
+    let doubled = Some("doubled_slash");
+    for (label, outcome, reason) in [
+        ("named", "broken_url", doubled),
+        ("landed", "broken_url", doubled),
+        ("error", "broken_url", doubled),
+        ("broken", "broken_url", doubled),
+        ("root", "broken_url", doubled),
+        ("unchecked", "unchecked", Some("skipped")),
+        ("archive", "ok", None),
+        ("query", "ok", None),
+        ("single", "ok", None),
+        ("landed-query", "ok", None),
+    ] {
+        expect(&got, label, outcome, reason);
+    }
+}
+
+/// A link of page `src` in run 1.
+fn link_from(store: &Store, src: u64, href: &str, target: u64) {
+    store
+        .connection()
+        .execute(
+            "INSERT INTO links VALUES (1, ?, ?, NULL, ?, 'anchor', NULL)",
+            params![src, target, href],
+        )
+        .unwrap();
+}
+
+fn counted(store: &Store, src: u64) -> BTreeMap<String, (bool, bool)> {
+    let mut stmt = store
+        .connection()
+        .prepare("SELECT raw_href, counted, relative FROM link_verdicts WHERE src_url_id = ?")
+        .unwrap();
+    stmt.query_map([src], |r| Ok((r.get(0)?, (r.get(1)?, r.get(2)?))))
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap()
+}
+
+#[test]
+fn a_doubled_slash_page_counts_nothing_with_a_twin_and_its_absolute_links_without_one() {
+    let store = open();
+    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    // 1 is a clean page. 30 doubles a slash and 31, its twin, is a page; 32
+    // doubles one and its twin is not.
+    for (id, url) in [
+        (1, "https://e.test/one"),
+        (30, "https://e.test/d//x"),
+        (31, "https://e.test/d/x"),
+        (32, "https://e.test/f//g"),
+    ] {
+        raw_target(&store, id, url, "ok", None);
+        page(&store, 1, id, &[]);
+    }
+    raw_target(&store, 40, "https://e.test/gone", "broken_url", None);
+    raw_target(&store, 41, "https://e.test/fine", "ok", None);
+    for src in [1, 30, 32] {
+        link_from(&store, src, "../gone/", 40);
+        link_from(&store, src, "../fine/", 41);
+        link_from(&store, src, "https://e.test/gone", 40);
+        link_from(&store, src, "/gone", 40);
+        link_from(&store, src, "#gone", 40);
+    }
+    let all = |src| counted(&store, src);
+    // A relative href is neither absolute, rooted, a fragment nor a query.
+    let relative: Vec<_> = all(1)
+        .into_iter()
+        .filter(|(_, (_, relative))| *relative)
+        .map(|(href, _)| href)
+        .collect();
+    assert_eq!(relative, ["../fine/", "../gone/"]);
+    assert!(all(1).values().all(|(counted, _)| *counted));
+    assert!(
+        all(30).values().all(|(counted, _)| !*counted),
+        "the twin has them"
+    );
+    let no_twin = all(32);
+    let uncounted: Vec<_> = no_twin
+        .iter()
+        .filter(|(_, (counted, _))| !*counted)
+        .map(|(href, _)| href.as_str())
+        .collect();
+    assert_eq!(uncounted, ["../gone/"], "only its broken relative link");
+}
+
+#[test]
+fn a_doubled_slash_page_linking_to_itself_is_judged_as_any_link() {
+    let store = open();
+    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    raw_target(&store, 32, "https://e.test/f//g", "ok", None);
+    page(&store, 1, 32, &["here"]);
+    link_from(&store, 32, "#here", 32);
+    link_from(&store, 32, "#nope", 32);
+    store
+        .connection()
+        .execute("UPDATE links SET fragment = substr(raw_href, 2)", [])
+        .unwrap();
+    let mut stmt = store
+        .connection()
+        .prepare("SELECT raw_href, outcome, reason, counted FROM link_verdicts ORDER BY 1")
+        .unwrap();
+    let got: Vec<(String, String, Option<String>, bool)> = stmt
+        .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap();
+    assert_eq!(
+        got,
+        [
+            ("#here".to_owned(), "ok".to_owned(), None, true),
+            ("#nope".to_owned(), "broken_anchor".to_owned(), None, true),
+        ]
+    );
 }

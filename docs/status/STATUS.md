@@ -128,10 +128,11 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   and linking pages inside, so a phone need not scroll across the table;
   earned by 8.6's ninth finding.
   Notes: [`../wip/roadmap-P8.4.6-redirect-details-notes.md`](../wip/roadmap-P8.4.6-redirect-details-notes.md).
-- [ ] **8.18** A link into a URL whose path doubles a slash: `broken_url`,
+- [x] **8.18** A link into a URL whose path doubles a slash: `broken_url`,
   reason `doubled_slash`; the page there counted only where it has no twin,
   its broken path-relative links the linking page's, shown as a count
   "broken through it" and ranked with red.
+  Notes: [`../wip/roadmap-P8.18-doubled-slash-notes.md`](../wip/roadmap-P8.18-doubled-slash-notes.md).
 - [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
   verdict and what it spawns in the notes.
   In progress; findings so far in
@@ -164,4 +165,23 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **A doubled-slash URL nobody asked, and a page's link to itself, are not
+  `doubled_slash` (8.18).** A target `unchecked` (a `skip` glob, a host off the
+  allowlist, `robots`) keeps its own verdict, and a link from a page to itself,
+  such as the `#legal` on a `code-of-conduct//` page, is judged by its
+  fragment, though the spec says "whatever it answered" of a link to such a
+  URL. Why: an unasked URL is no verdict on the page that names it, a `skip`
+  being the maintainer's own silence, and the 25 same-page links on each of
+  8.14's three doubled pages would otherwise be 75 false reds counted on rows
+  that have no twin. Reconsidering it for unasked URLs would make a
+  `host_not_allowlisted` link with `//` broken, in the gate too.
+- **What is "broken through it" (8.18).** A relative link is one whose
+  `raw_href` starts with no scheme, `/`, `#` or `?`; the count takes its
+  `broken_url`, `broken_anchor` and `error` outcomes alike, on every doubled
+  page a row's `doubled_slash` links reach, each page once per row however many
+  links reach it. Why: the spec names `../` and `committee/`; a root-relative
+  link is unaffected by the path, and a page reached twice breaks no more
+  links. Reconsidering it moves the 556 on `en-US/project/`: counting a page
+  once per link multiplies it by the links reaching it.
 

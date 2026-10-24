@@ -21,8 +21,8 @@ FROM pages p
 JOIN targets t ON t.run_id = p.run_id AND t.url_id = p.url_id",
 };
 
-/// The links of one outcome set, with the page they are on and what their
-/// target answered. `$outcomes` is the `IN` list; `$columns` and `$joins` add
+/// The links of one outcome set that count (D71), with the page they are on and
+/// what their target answered. `$outcomes` is the `IN` list; `$columns` and `$joins` add
 /// to the select list and the `FROM`.
 macro_rules! link_rows {
     ($columns:literal, $joins:literal, $outcomes:literal) => {
@@ -38,7 +38,7 @@ LEFT JOIN targets t ON t.run_id = v.run_id AND t.url_id = v.target_url_id
 LEFT JOIN pages p ON p.run_id = v.run_id AND p.url_id = v.src_url_id",
             $joins,
             "
-WHERE v.outcome IN ",
+WHERE v.counted AND v.outcome IN ",
             $outcomes
         )
     };
@@ -62,8 +62,8 @@ const ERRORS: View = View {
     select: link_rows!("", "", "('error')"),
 };
 
-/// A page's link counts by kind, one row for each kind it links by. A page
-/// with no links has no row; `bruce report stats` joins this to
+/// A page's counted links (D71) by kind, one row for each kind it links by. A
+/// page with no links has no row; `bruce report stats` joins this to
 /// `report_pages` to keep it.
 const STATS: View = View {
     name: "report_stats",
@@ -75,6 +75,7 @@ SELECT run_id, src_url_id AS url_id, kind,
     (count(*) FILTER (WHERE outcome = 'error'))::BIGINT AS error,
     (count(*) FILTER (WHERE outcome = 'unchecked'))::BIGINT AS unchecked
 FROM link_verdicts
+WHERE counted
 GROUP BY run_id, src_url_id, kind",
 };
 
@@ -157,5 +158,5 @@ FROM link_verdicts v
 JOIN targets t ON t.run_id = v.run_id AND t.url_id = v.target_url_id
 LEFT JOIN targets s ON s.run_id = v.run_id AND s.url_id = v.src_url_id
 LEFT JOIN pages p ON p.run_id = v.run_id AND p.url_id = v.src_url_id
-WHERE t.final_url IS NOT NULL",
+WHERE v.counted AND t.final_url IS NOT NULL",
 };

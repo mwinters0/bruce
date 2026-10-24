@@ -28,7 +28,7 @@ pub use rows::{
     AnchorRow, AnsweredBy, FactRow, Hop, LinkRow, Outcome, PageRow, Row, RunRoot, TargetRow,
 };
 pub use schema::SCHEMA_VERSION;
-pub use views::PEDANTIC_TRAILING_SLASH;
+pub use views::{DOUBLED_SLASH, PEDANTIC_TRAILING_SLASH};
 pub use writer::{WriteHandle, Writer, WriterGone};
 
 /// A run's number: allocated in order from 1 (D2).

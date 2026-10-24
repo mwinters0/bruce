@@ -112,7 +112,7 @@ fn totals(
          count(DISTINCT v.target_url_id)::BIGINT AS targets \
          FROM link_verdicts v JOIN report_pages pg \
          ON pg.run_id = v.run_id AND pg.url_id = v.src_url_id \
-         WHERE pg.crawled AND v.outcome = 'unchecked' AND ",
+         WHERE pg.crawled AND v.counted AND v.outcome = 'unchecked' AND ",
     );
     sql.kinds("v.kind", request).push(" AND ");
     sql.scope(run, request, PAGE)

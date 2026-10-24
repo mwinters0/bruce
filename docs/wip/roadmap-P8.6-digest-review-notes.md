@@ -224,10 +224,9 @@ P7's inbox.
 
 ## Where the review stands
 
-Findings 1 to 10 are filed, 10 rewriting 8.18, which lands before the review
-goes on. Every slice findings 1 to 8 spawned ahead of the
-review has landed (8.4.2 to 8.4.4, 8.10 to 8.13, 8.15, 8.16, 8.19 and 8.19.1),
-and 8.4.5 and 8.4.6 land before the review goes on. The review **resumed on 8.14's crawl**, no digest of 8.1's database showing what 8.10 to
+Findings 1 to 10 are filed. Every slice they spawned ahead of the
+review has landed (8.4.2 to 8.4.6, 8.10 to 8.13, 8.15, 8.16, 8.18, 8.19 and
+8.19.1), and the review **resumes on 8.14's crawl**, no digest of 8.1's database showing what 8.10 to
 8.13 reclassify. After a round of fixes, the digest is rewritten from the
 copy with a release build:
 

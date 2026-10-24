@@ -11,7 +11,7 @@ frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' 
 **Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
 phase index.
 
-<!-- decision-watermark: D69 -->
+<!-- decision-watermark: D71 -->
 
 ## Scope and modes
 
@@ -221,7 +221,7 @@ template chrome are reportable (I9). Text fragments are `unchecked`.
 Rejected: every `name` attribute, which makes `#viewport` and `#generator` pass on every page.
 
 ### D16 Five outcomes; `error` is separate from broken and never fails CI alone
-`ok`, `broken_url` (4xx except below, NXDOMAIN, a redirect loop, a 3xx that led nowhere, a scheme no reader can follow, D66), `broken_anchor`, `error` (timeouts,
+`ok`, `broken_url` (4xx except below, NXDOMAIN, a redirect loop, a 3xx that led nowhere, a scheme no reader can follow, D66, a doubled slash in the path, D71), `broken_anchor`, `error` (timeouts,
 TLS, 5xx after 3 retries with backoff, and 401/403/429 with status kept), `unchecked`. A `Retry-After`
 over 60 s is `error` at once rather than stalling the run. A 2xx body over 16 MiB is `ok`, reason
 `too_large`, and not extracted, half a page's anchors giving false `broken_anchor`s. Rejected: `error`
@@ -350,6 +350,13 @@ Reopens: a site whose origins disagree in a way that costs links. Code: `fetch::
 A link through a redirect whose final URL differs from the URL linked only by a final `/` (before a query, if any), whatever the hops between, has the reason in `link_verdicts` where its verdict is `ok`; a missing fragment still makes it `broken_anchor`. The redirects report groups by landing and reason and lists the pedantic rows last, and the gate's introduced redirected links show each row's reason, the pedantic ones last, failing nothing as no redirect does (D7). Maintainer, 2026-10-24: a slash is to be corrected, below a 404 or a missing fragment; the class is named for one form so that others (a scheme upgrade, a moved page) can stand beside it.
 Rejected: a sixth outcome, which every report and the gate would have to place (D16) for a link a reader follows; leaving the slash with `redirected` alone, which hid 496 links to 259 targets among the rest of 8.14's redirects.
 Reopens: a second class of pedantic redirect, which would make the reason a list or the view a table. Code: `store::views`, `report::redirects`, `report::gate`. Evidence: `store::views::tests::a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic`.
+
+### D71 A doubled slash in a URL's path is the linking page's fault: the link is `broken_url`, reason `doubled_slash`, and the page there counts only what it owns
+A link to a URL whose path doubles a slash (`a//b`; not a `scheme://` inside the path, nor a query or fragment), or that redirected to one, is `broken_url`, reason `doubled_slash`, whatever the target answered; a target never asked stays `unchecked`, and a page's link to itself is judged as any (a `#fragment` on a doubled page is not the fault). A page at such a URL whose twin (the URL with its slashes collapsed) is a page of the run counts no link (`link_verdicts.counted`); one without a twin counts all but its broken path-relative links, which the doubled slash breaks. Those are the linking page's: the digest's `through`, a row's broken path-relative links on every doubled page its doubled-slash links reach, each page once, ranked with the row's red (maintainer, 2026-10-24; 8.6's Finding 10).
+Why: Fedora's, and most sites', doubled slashes are always written by a linking page, and a crawler following one meets hundreds of 404s the target page cannot fix: 8.14's `en-US/project/` has one link, a 302 to `code-of-conduct//`, and 562 broken relative links on the three pages it reaches.
+Rejected: a page reached only by a redirect from off a root not being the root's page, a page at a clean URL being the root's; the doubled slash pedantic or amber, the target's relative links then breaking for the reader; `unchecked` links judged too, a URL no one asked about being no verdict on the page it names.
+Reopens: a site that writes a doubled slash on purpose, or a profile classifying it (P7's inbox).
+Code: `store::views`, `report::views`, `report::digest::sections`. Evidence: `store::views::tests::a_link_to_a_url_with_a_doubled_slash_is_broken_whatever_it_answered`, `report::digest::tests::the_links_broken_through_a_doubled_slash_count_on_the_linking_page`.
 
 ### D61 Live slots are shared among the hosts with work, and a build's reads have a budget of their own
 Each host holds at most the 64 slots divided by the hosts with a target waiting or running, taken in turn,

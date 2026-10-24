@@ -48,16 +48,17 @@ pub struct Digest {
     /// target page's `source_repo`, `source_path` and `source_url`.
     pub broken_targets: Table,
     /// The pages holding a broken link or one that errored, ranked by
-    /// `broken_url` plus `error`, then `broken_anchor`: `page`, `title`,
-    /// `source_repo`, `source_path`, `source_url`, `links`, `broken_url`,
-    /// `broken_anchor` and `error`.
+    /// `broken_url` plus `error` plus `through`, then `broken_anchor`: `page`,
+    /// `title`, `source_repo`, `source_path`, `source_url`, `links`,
+    /// `broken_url`, `broken_anchor`, `error` and `through`, the broken
+    /// path-relative links on the doubled-slash pages its links reach (D71).
     pub pages: Table,
     /// Every broken link, a page's together and the pages in `pages`' order:
     /// `page`, `raw_href`, `target`, `fragment`, `kind`, `outcome`, `reason`
     /// and `status`.
     pub broken: Table,
     /// Each repo, ranked as `pages` are: `repo`, `pages`, `broken_pages`,
-    /// `links`, `broken_url`, `broken_anchor` and `error`.
+    /// `links`, `broken_url`, `broken_anchor`, `error` and `through`.
     pub by_repo: Table,
     /// `by_repo`'s columns for each Antora component, as `component`.
     pub by_component: Table,

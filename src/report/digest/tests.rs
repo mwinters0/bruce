@@ -266,7 +266,13 @@ fn pages_are_ranked_by_their_broken_links_and_their_links_follow_them() {
     assert_eq!(column(&d.pages, "page"), [url(1), url(2)]);
     assert_eq!(
         d.pages.rows[0][5..],
-        [Cell::Int(6), Cell::Int(2), Cell::Int(1), Cell::Int(1)]
+        [
+            Cell::Int(6),
+            Cell::Int(2),
+            Cell::Int(1),
+            Cell::Int(1),
+            Cell::Int(0)
+        ]
     );
     assert_eq!(
         column(&d.pages, "source_url")[1],
@@ -334,11 +340,124 @@ fn repos_and_components_are_ranked_and_a_page_without_either_is_kept() {
             Cell::Int(6),
             Cell::Int(2),
             Cell::Int(1),
-            Cell::Int(1)
+            Cell::Int(1),
+            Cell::Int(0)
         ]
     );
     assert_eq!(d.by_repo.rows[2][1..3], [Cell::Int(3), Cell::Int(0)]);
     assert_eq!(column(&d.by_component, "component"), ["handbook", "other"]);
+}
+
+/// A link from `src` to `to` written as `href`.
+fn written(store: &Store, src: u64, to: u64, href: &str) {
+    store
+        .connection()
+        .execute(
+            "INSERT INTO links VALUES (1, ?, ?, NULL, ?, 'anchor', NULL)",
+            params![src, to, href],
+        )
+        .unwrap();
+}
+
+/// [`store`] with a page (7) linking to `cc`, a 302 to `cc//`, which is page
+/// 51; 51 links relatively to the doubled-slash page 52 (`cc//a/`) and to a
+/// 404, and absolutely to another; 52 links relatively to a 404 and back to
+/// 51. Page 60 doubles a slash too, and page 61 is its twin.
+fn with_doubled_slashes() -> Store {
+    let store = store();
+    let conn = store.connection();
+    for (id, at) in [
+        (7, "https://e.test/seven"),
+        (51, "https://e.test/cc//"),
+        (52, "https://e.test/cc//a/"),
+        (60, "https://e.test/tw//x"),
+        (61, "https://e.test/tw/x"),
+    ] {
+        page(&store, 1, id, Some("r/seven"), Some(ROOT));
+        conn.execute(
+            "UPDATE targets SET url = ? WHERE url_id = ?",
+            params![at, id],
+        )
+        .unwrap();
+    }
+    target(&store, 1, 50, 302, "ok", None);
+    conn.execute(
+        "UPDATE targets SET url = 'https://e.test/cc', final_url = 'https://e.test/cc//' \
+         WHERE url_id = 50",
+        [],
+    )
+    .unwrap();
+    for id in [53, 54, 55] {
+        target(&store, 1, id, 404, "broken_url", None);
+    }
+    for (src, to, href) in [
+        (7, 50, "https://e.test/cc"),
+        (51, 52, "a/"),
+        (51, 53, "gone"),
+        (51, 54, "https://e.test/abs"),
+        (52, 55, "gone2"),
+        (52, 51, "../"),
+        (60, 54, "https://e.test/abs"),
+        (61, 1, "https://e.test/1"),
+    ] {
+        written(&store, src, to, href);
+    }
+    store
+}
+
+#[test]
+fn the_links_broken_through_a_doubled_slash_count_on_the_linking_page() {
+    let d = of(&with_doubled_slashes());
+    // Page 7's one link reaches 51 by the redirect, then 52, whose relative
+    // links, and 51's, break: 51's `a/` and `gone`, 52's `gone2` and `../`.
+    // They rank with page 7's red: 1 and 4 against page 1's 3.
+    assert_eq!(
+        column(&d.pages, "page")[..2],
+        ["https://e.test/seven".to_owned(), url(1)]
+    );
+    let row = |page: &str, name: &str| {
+        let at = column(&d.pages, "page")
+            .iter()
+            .position(|p| p == page)
+            .unwrap();
+        let col = d.pages.columns.iter().position(|c| c == name).unwrap();
+        d.pages.rows[at][col].clone()
+    };
+    assert_eq!(row("https://e.test/seven", "broken_url"), Cell::Int(1));
+    assert_eq!(row("https://e.test/seven", "through"), Cell::Int(4));
+    // Page 51 reached only in its doubled form counts its absolute link, and
+    // the relative ones it holds are page 7's; 52 holds only those; 60 has a
+    // twin, which holds its links.
+    assert_eq!(row("https://e.test/cc//", "broken_url"), Cell::Int(1));
+    assert_eq!(row("https://e.test/cc//", "through"), Cell::Int(0));
+    let pages = column(&d.pages, "page");
+    assert!(
+        !pages.contains(&"https://e.test/cc//a/".to_owned()),
+        "{pages:?}"
+    );
+    assert!(
+        !pages.contains(&"https://e.test/tw//x".to_owned()),
+        "{pages:?}"
+    );
+    let broken = column(&d.broken, "raw_href");
+    assert!(!broken.contains(&"gone".to_owned()) && !broken.contains(&"gone2".to_owned()));
+    assert_eq!(
+        broken.iter().filter(|h| *h == "https://e.test/abs").count(),
+        1
+    );
+    // The repo adds its pages': 1 + 1 red and 4 through.
+    let repo = d
+        .by_repo
+        .rows
+        .iter()
+        .find(|r| r[0] == Cell::Text("r/seven".to_owned()))
+        .unwrap();
+    assert_eq!(repo.last(), Some(&Cell::Int(4)));
+    assert_eq!(
+        d.totals.links,
+        10 + 1 + 1 + 1,
+        "the uncounted links are none"
+    );
 }
 
 #[test]

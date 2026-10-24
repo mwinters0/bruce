@@ -127,27 +127,30 @@ fn counted(n: i64, noun: &str) -> String {
     format!("{} {noun}{}", num(n), if n == 1 { "" } else { "s" })
 }
 
-/// A page's or a repo's summary count: its red links and its amber ones, each
-/// behind its dot and a level with none left out, then the issues in all. Red
-/// is `broken_url` and `error`, amber `broken_anchor` (see [`severity::Level::of_link`]).
-fn tally(red: i64, amber: i64) -> String {
+/// A page's or a repo's summary count: its red links, those broken through a
+/// link to a URL that doubles a slash (D71) and its amber ones, each behind its
+/// dot and a level with none left out, then the issues in all. Red is
+/// `broken_url` and `error`, amber `broken_anchor` (see
+/// [`severity::Level::of_link`]); the links broken through are red too.
+fn tally(red: i64, through: i64, amber: i64) -> String {
     let mut parts = Vec::new();
-    for (level, n, noun) in [
-        (Level::Broken, red, "broken link"),
-        (Level::Attention, amber, "missing fragment"),
+    for (level, n, words) in [
+        (Level::Broken, red, counted(red, "broken link")),
+        (
+            Level::Broken,
+            through,
+            format!("{} broken through it", num(through)),
+        ),
+        (Level::Attention, amber, counted(amber, "missing fragment")),
     ] {
         if n > 0 {
-            parts.push(format!(
-                "<span class=\"cn\">{} {}</span>",
-                level.dot(),
-                counted(n, noun)
-            ));
+            parts.push(format!("<span class=\"cn\">{} {words}</span>", level.dot()));
         }
     }
     format!(
         "{} <small>({} total)</small>",
         parts.join(", "),
-        counted(red + amber, "issue")
+        counted(red + through + amber, "issue")
     )
 }
 
@@ -449,7 +452,13 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
          written on. Open one for its links: <i>Written as</i> is the link in the page, <i>Resolves to</i> the \
          URL it names, <i>Kind</i> the element holding it, <code>anchor</code> being an \
          <code>&lt;a href&gt;</code>, and <i>Problem</i> and <i>Status</i> what the target \
-         answered.</p>\n",
+         answered.</p>\n\
+         <p>A link to a URL with a doubled slash in its path is broken whatever the URL answered, \
+         reason <code>doubled_slash</code>: the page linking there is the one to correct. Its \
+         row also counts the links <i>broken through it</i>, the relative links on the pages \
+         such a link reaches, which the doubled slash breaks, and ranks by them; those pages \
+         count only their absolute links, or none where a page at the URL without the doubled \
+         slash was checked.</p>\n",
     );
     let mut links: HashMap<&str, Vec<Row>> = HashMap::new();
     for row in rows(&d.broken) {
@@ -479,7 +488,11 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
              <span class=\"cnt\">{}</span></summary>\n",
             i + 1,
             esc(p.text("title").unwrap_or_else(|| short(url))),
-            tally(p.int("broken_url") + p.int("error"), p.int("broken_anchor"))
+            tally(
+                p.int("broken_url") + p.int("error"),
+                p.int("through"),
+                p.int("broken_anchor")
+            )
         );
         w!(
             out,
@@ -591,7 +604,11 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
             "<details>\n<summary><span class=\"rank\">{}</span><span class=\"ttl\">{name}</span>\
              <span class=\"cnt\">{}</span></summary>\n<ul>\n",
             i + 1,
-            tally(r.int("broken_url") + r.int("error"), r.int("broken_anchor"))
+            tally(
+                r.int("broken_url") + r.int("error"),
+                r.int("through"),
+                r.int("broken_anchor")
+            )
         );
         for (url, title) in of_repo.get(&repo).into_iter().flatten() {
             let label = esc(title);

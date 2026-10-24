@@ -127,19 +127,27 @@ fn a_summary_counts_red_then_amber_and_leaves_out_a_level_with_no_links() {
         "<span class=\"cn\"><span class=\"sev broken\" role=\"img\" aria-label=\"Broken\"></span>";
     let amber = "<span class=\"cn\"><span class=\"sev attention\" role=\"img\" aria-label=\"Attention\"></span>";
     assert_eq!(
-        tally(181, 2),
+        tally(181, 0, 2),
         format!(
             "{red} 181 broken links</span>, {amber} 2 missing fragments</span> \
              <small>(183 issues total)</small>"
         )
     );
     assert_eq!(
-        tally(1, 0),
+        tally(1, 0, 0),
         format!("{red} 1 broken link</span> <small>(1 issue total)</small>")
     );
     assert_eq!(
-        tally(0, 1),
+        tally(0, 0, 1),
         format!("{amber} 1 missing fragment</span> <small>(1 issue total)</small>")
+    );
+    // The links broken through a link are red, between the two.
+    assert_eq!(
+        tally(1, 579, 0),
+        format!(
+            "{red} 1 broken link</span>, {red} 579 broken through it</span> \
+             <small>(580 issues total)</small>"
+        )
     );
 }
 
