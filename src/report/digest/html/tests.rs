@@ -1,4 +1,4 @@
-use super::super::tests::{of, store};
+use super::super::tests::{of, store, with_unchecked};
 use crate::report::table::Cell;
 use crate::report::tests::{registry, xrefs};
 use crate::store::RunId;
@@ -134,7 +134,7 @@ fn a_repo_links_to_its_pages_rows() {
 fn errors_are_apart_from_the_breakage() {
     let html = html();
     let errors = section(&html, "errors");
-    assert!(errors.contains("https://e.test/12"));
+    assert!(errors.contains("https://slow.test/12"));
     assert!(errors.contains("server_error"));
     assert!(!errors.contains("https://e.test/10"));
 }
@@ -331,4 +331,64 @@ fn a_page_whose_links_hold_a_hint_shows_a_hint_column_and_no_other_does() {
     let plain = of(&xrefs(&["nothing-like-any-page.adoc"])).html();
     assert!(!plain.contains("<th>Hint</th>"));
     assert!(!html().contains("<th>Hint</th>"));
+}
+
+#[test]
+fn every_reason_the_crawler_writes_for_an_unchecked_link_is_explained() {
+    // The frontier's (`Frontier::plan`, `SKIPPED`, `EXTERNALS_SKIPPED`), the
+    // walk's robots.txt and sitemap depth (`crawl`), and the verdict's own
+    // (`link_verdicts`).
+    for reason in [
+        "scheme",
+        "skipped",
+        "out_of_scope",
+        "host_not_allowlisted",
+        "externals_skipped",
+        "robots",
+        "robots_unavailable",
+        "too_deep",
+        "cut",
+        "text_fragment",
+        "no_anchors",
+    ] {
+        assert!(super::unchecked_meaning(reason).is_some(), "{reason}");
+    }
+    assert!(super::unchecked_meaning("broken").is_none());
+}
+
+#[test]
+fn each_unchecked_reason_is_explained_beside_where_its_links_point_most() {
+    let mut d = of(&with_unchecked());
+    // Seven more hosts for `host_not_allowlisted`, past the five listed.
+    let row = d.unchecked_groups.rows[3].clone();
+    for n in 0..7 {
+        let mut more = row.clone();
+        more[1] = Cell::Text(format!("h{n}.test"));
+        more[2] = Cell::Int(1);
+        d.unchecked_groups.rows.insert(5, more);
+    }
+    let html = d.html();
+    let house = section(&html, "housekeeping");
+    let at = |needle: &str| house.find(needle).unwrap_or_else(|| panic!("no {needle}"));
+    let oos = at(
+        "<h3><code>out_of_scope</code> <small>5 links, to 4 targets</small></h3>\n<p>Links to pages on a site this run checks",
+    );
+    assert!(house[..oos].contains("None of them counts as broken."));
+    let hosts = at("<h3><code>host_not_allowlisted</code>");
+    let skipped = at("<h3><code>skipped</code>");
+    let scheme = at("<h3><code>scheme</code>");
+    assert!(house[skipped..scheme].contains("<h3><code>no_anchors</code>"));
+    let checked = at("<h3>External hosts checked</h3>");
+    assert!(oos < hosts && hosts < skipped && skipped < scheme && scheme < checked);
+    // The setting that would check each.
+    assert!(house[oos..hosts].contains("<code>[[root]]</code>"));
+    assert!(house[hosts..skipped].contains("add it to the <code>allowlist</code>"));
+    assert!(house[skipped..scheme].contains("match a <code>skip</code> pattern"));
+    assert!(house[oos..hosts].contains("<td>https://e.test/de/</td><td class=\"num\">3</td>"));
+    assert!(house[hosts..skipped].contains("<td>github.test</td>"));
+    assert!(house[hosts..skipped].contains("And 4 more, holding 4 links, none more than 1."));
+    assert!(!house[oos..hosts].contains("more, holding"));
+    assert!(house[scheme..checked].contains("<td>mailto:</td>"));
+    assert!(house[checked..].contains("<td>forge.test</td><td class=\"num\">2</td>"));
+    assert!(house[checked..].contains("<td>slow.test</td>"));
 }

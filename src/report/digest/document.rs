@@ -35,6 +35,13 @@ pub struct Digest {
     pub totals: Totals,
     /// The `unchecked` links by reason: `reason`, `links`, `targets`.
     pub unchecked: Table,
+    /// The `unchecked` links by reason and by where they point: `reason`,
+    /// `group` (a scheme, a host, or a host and part of a path), `links`,
+    /// `targets`, a reason's groups the most links first.
+    pub unchecked_groups: Table,
+    /// The hosts no root starts on whose links' targets were asked about,
+    /// the most links first: `host`, `links`, `targets`.
+    pub checked_hosts: Table,
     /// The broken targets, the one the most links name first and then the
     /// most pages: `target`, `fragment`, `outcome`, `reason`, `status`,
     /// `links`, `pages`, and the

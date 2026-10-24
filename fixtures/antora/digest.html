@@ -32,6 +32,8 @@ h1 { margin: 0 0 4px; font-size: 1.7rem; font-weight: 650; }
 h1 .date { color: var(--accent); font-weight: 500; }
 h2 { margin: 2.2rem 0 .4rem; padding-bottom: .3rem; border-bottom: 1px solid var(--line); font-size: 1.25rem; }
 h3 { margin: 1.4rem 0 .3rem; font-size: 1rem; }
+h3 small { font-weight: 400; }
+h3 + p + .scroll th:first-child { width: 60%; }
 a { color: var(--accent); text-decoration: none; overflow-wrap: anywhere; }
 a:hover { text-decoration: underline; }
 code { font: .86em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
@@ -306,13 +308,29 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </details>
 <details>
 <summary><span class="ttl">Unchecked links</span><span class="cnt">81 links</span></summary>
-<p>Links not checked, by why.</p>
+<p>Links this run did not check, grouped by why. None of them counts as broken. A run checks the pages under the roots named at the top, and links to other websites only when its <code>allowlist</code> names them.</p>
+<h3><code>host_not_allowlisted</code> <small>73 links, to 31 targets</small></h3>
+<p>Links to other websites, which this run was not set up to check. To check a site's links, add it to the <code>allowlist</code>; the sites that were checked are listed at the end.</p>
 <div class="scroll"><table>
-<thead><tr><th>Reason</th><th class="num">Links</th><th class="num">Targets they name</th></tr></thead>
+<thead><tr><th>Where they point</th><th class="num">Links</th><th class="num">Targets they name</th></tr></thead>
 <tbody>
-<tr><td>host_not_allowlisted</td><td class="num">73</td><td class="num">31</td></tr>
-<tr><td>out_of_scope</td><td class="num">8</td><td class="num">1</td></tr>
+<tr><td>github.com</td><td class="num">24</td><td class="num">24</td></tr>
+<tr><td>creativecommons.org</td><td class="num">8</td><td class="num">1</td></tr>
+<tr><td>docs.fedoraproject.org</td><td class="num">8</td><td class="num">1</td></tr>
+<tr><td>fedoraproject.org</td><td class="num">8</td><td class="num">1</td></tr>
+<tr><td>getfedora.org</td><td class="num">8</td><td class="num">1</td></tr>
 </tbody></table></div>
+<p class="muted">And 3 more, holding 17 links, none more than 8.</p>
+<h3><code>out_of_scope</code> <small>8 links, to 1 target</small></h3>
+<p>Links to pages on a site this run checks, but outside the part of it the run was set up to check, such as the other languages a language menu links to when only one language is crawled. To check them, add a <code>[[root]]</code> for them, or widen one.</p>
+<div class="scroll"><table>
+<thead><tr><th>Where they point</th><th class="num">Links</th><th class="num">Targets they name</th></tr></thead>
+<tbody>
+<tr><td>http://127.0.0.1:8099/en-US</td><td class="num">8</td><td class="num">1</td></tr>
+</tbody></table></div>
+<h3>External hosts checked</h3>
+<p>The other websites whose links this run did check: those on its <code>allowlist</code> that these pages link to.</p>
+<p class="muted">None.</p>
 </details>
 </details>
 </section>

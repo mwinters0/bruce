@@ -698,27 +698,147 @@ fn housekeeping(out: &mut String, d: &Digest) {
         page_list(out, &d.unlisted);
     });
     fold(out, "Unchecked links", &links(&d.unchecked), |out| {
-        out.push_str("<p>Links not checked, by why.</p>\n");
-        let body: Vec<Vec<String>> = rows(&d.unchecked)
-            .map(|r| {
-                vec![
-                    esc(r.text("reason").unwrap_or("")),
-                    num(r.int("links")),
-                    num(r.int("targets")),
-                ]
-            })
-            .collect();
-        table(
-            out,
-            &[
-                ("Reason", false),
-                ("Links", true),
-                ("Targets they name", true),
-            ],
-            &body,
-        );
+        unchecked(out, d)
     });
     close_section(out);
+}
+
+/// The groups of a reason, or the checked hosts, listed in full up to this
+/// many; the rest are counted.
+const MOST: usize = 5;
+const MOST_HOSTS: usize = 10;
+
+/// What an `unchecked` link's reason means, in a reader's words, and the
+/// setting that would check its links where there is one; the manual says it
+/// precisely. `None` for a reason this `bruce` does not write.
+fn unchecked_meaning(reason: &str) -> Option<&'static str> {
+    Some(match reason {
+        "out_of_scope" => {
+            "Links to pages on a site this run checks, but outside the part of it the run was \
+             set up to check, such as the other languages a language menu links to when only one \
+             language is crawled. To check them, add a <code>[[root]]</code> for them, or widen \
+             one."
+        }
+        "host_not_allowlisted" => {
+            "Links to other websites, which this run was not set up to check. To check a site's \
+             links, add it to the <code>allowlist</code>; the sites that were checked are listed \
+             at the end."
+        }
+        "skipped" => {
+            "Links that match a <code>skip</code> pattern in the configuration, left alone on \
+             purpose. These are usually pages a check cannot judge, such as a forge's \"new \
+             issue\" form or a login page."
+        }
+        "scheme" => {
+            "Links that do not lead to a web page, mostly email addresses (<code>mailto:</code>), \
+             so there is nothing to fetch. One that is a mistyped <code>https:</code> is worth \
+             fixing."
+        }
+        "robots" => {
+            "Links to pages the site asks robots not to fetch, in its <code>robots.txt</code>, \
+             and the run respected that. On a site this run checks, the <code>robots</code> \
+             setting for its host can turn this off."
+        }
+        "robots_unavailable" => {
+            "Links to a site whose <code>robots.txt</code>, which says what robots may fetch, \
+             could not be read, so the run left the whole site alone. Usually the site was down \
+             or failing at the time."
+        }
+        "externals_skipped" => {
+            "Links to other websites that a <code>check-dir</code> run was told not to check \
+             (<code>--externals skip</code>), with no earlier result to reuse."
+        }
+        "too_deep" => "Sitemaps nested too many levels inside other sitemaps, so not read.",
+        "no_anchors" => {
+            "Links to a spot (after <code>#</code>) in a file the run did not read as a page, \
+             such as an image or a file too large to read. The file was found; the spot was not \
+             checked."
+        }
+        "text_fragment" => {
+            "Links to some words on a page (<code>#:~:text=</code>), which the browser finds \
+             when it opens it. The page was found; whether the words are on it was not checked."
+        }
+        "cut" => "Links the run stopped before getting to.",
+        _ => return None,
+    })
+}
+
+/// The first `most` of `rows`, ranked, as a table of their `column`, links
+/// and targets, and a count of the rest, of their links and of the most any
+/// of them holds.
+fn most(out: &mut String, label: &str, column: &str, rows: &[Row], most: usize) {
+    let body: Vec<Vec<String>> = rows
+        .iter()
+        .take(most)
+        .map(|r| {
+            vec![
+                r.text(column)
+                    .map_or_else(|| "<span class=\"muted\">-</span>".to_owned(), esc),
+                num(r.int("links")),
+                num(r.int("targets")),
+            ]
+        })
+        .collect();
+    table(
+        out,
+        &[(label, false), ("Links", true), ("Targets they name", true)],
+        &body,
+    );
+    if rows.len() > most {
+        let rest = &rows[most..];
+        let each = match rest {
+            [first, _, ..] => format!(", none more than {}", num(first.int("links"))),
+            _ => String::new(),
+        };
+        w!(
+            out,
+            "<p class=\"muted\">And {} more, holding {}{each}.</p>\n",
+            num(rest.len() as i64),
+            counted(rest.iter().map(|r| r.int("links")).sum(), "link")
+        );
+    }
+}
+
+/// The unchecked links: each reason, what it means and where its links
+/// point most, then the hosts beyond the roots whose links were checked.
+fn unchecked(out: &mut String, d: &Digest) {
+    out.push_str(
+        "<p>Links this run did not check, grouped by why. None of them counts as broken. A run \
+         checks the pages under the roots named at the top, and links to other websites only \
+         when its <code>allowlist</code> names them.</p>\n",
+    );
+    let mut groups: HashMap<&str, Vec<Row>> = HashMap::new();
+    for row in rows(&d.unchecked_groups) {
+        groups
+            .entry(row.text("reason").unwrap_or(""))
+            .or_default()
+            .push(row);
+    }
+    if d.unchecked.rows.is_empty() {
+        out.push_str("<p class=\"muted\">None.</p>\n");
+    }
+    for r in rows(&d.unchecked) {
+        let reason = r.text("reason").unwrap_or("");
+        w!(
+            out,
+            "<h3><code>{}</code> <small>{}, to {}</small></h3>\n<p>{}</p>\n",
+            esc(reason),
+            counted(r.int("links"), "link"),
+            counted(r.int("targets"), "target"),
+            unchecked_meaning(reason).unwrap_or(
+                "<span class=\"muted\">This version of bruce has no description for this \
+                 reason.</span>"
+            )
+        );
+        let of_reason = groups.get(reason).map_or(&[][..], Vec::as_slice);
+        most(out, "Where they point", "group", of_reason, MOST);
+    }
+    out.push_str(
+        "<h3>External hosts checked</h3>\n<p>The other websites whose links this run did \
+         check: those on its <code>allowlist</code> that these pages link to.</p>\n",
+    );
+    let hosts: Vec<Row> = rows(&d.checked_hosts).collect();
+    most(out, "Host", "host", &hosts, MOST_HOSTS);
 }
 
 /// The pages of `orphans` or `unlisted`: `page`, `title` and the source.

@@ -76,7 +76,14 @@ heading, a click opening it. In this order:
 6. **Links that errored**, apart from the breakage.
 7. **Housekeeping**: the redirected links by where their targets land, the
    sitemap entries no page was fetched for, the orphans, the unlisted pages
-   and the unchecked links, each closed in its turn.
+   and the unchecked links, each closed in its turn. The unchecked links are
+   listed by reason, each with what its links are in plain words, the setting
+   in the [configuration](config.md) that would check them where there is
+   one, and where its links point most: the hosts, the parts of a root's
+   host, or the schemes, the first five and a count of the rest. After them
+   are the hosts no root starts on whose links were checked, the allowlist as
+   far as the pages link to it. [Why a link is unchecked](#why-a-link-is-unchecked)
+   says what each reason means precisely.
 
 The JSON holds every row the HTML lists and the targets it leaves out, and
 the by-component counts it has no section for.
@@ -105,7 +112,9 @@ and a count or status a number.
     "unlisted": [{"page":"https://docs.example.org/en-US/d/","root":"https://docs.example.org/en-US/","title":"D","source_repo":null,"source_path":null}],
     "sitemap_entries": [{"page":"https://docs.example.org/en-US/gone/","outcome":"broken_url","reason":null,"status":404}],
     "roots_without_sitemap": ["https://docs.example.net/"],
-    "unchecked": [{"reason":"skipped","links":1,"targets":1}]
+    "unchecked": [{"reason":"skipped","links":1,"targets":1}],
+    "unchecked_groups": [{"reason":"skipped","group":"forge.example.org/…/issues/new","links":1,"targets":1}],
+    "checked_hosts": [{"host":"slow.example.net","links":1,"targets":1}]
   }
 }
 ```
@@ -133,7 +142,28 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `housekeeping.unlisted` | The pages absent from the sitemap of a root that read one. |
 | `housekeeping.sitemap_entries` | The sitemap entries no page was fetched for, those whose `outcome` is not `ok` first: what the URL answered. Antora writes a sitemap from what it publishes, so such an entry is a build or deploy fault. |
 | `housekeeping.roots_without_sitemap` | The roots that read no sitemap, whose pages cannot be unlisted. |
-| `housekeeping.unchecked` | The `unchecked` links by `reason`, and the distinct `targets` they name. |
+| `housekeeping.unchecked` | The `unchecked` links by `reason` ([below](#why-a-link-is-unchecked)), and the distinct `targets` they name. |
+| `housekeeping.unchecked_groups` | The same links by `reason` and by `group`, where they point, every group listed: the reasons in `unchecked`'s order, a reason's groups the most `links` first. A `group` is the scheme, as `mailto:`, for a URL that is not `http` or `https`; for `skipped`, the host and the path's last two segments, as `forge.example.org/…/issues/new`, the part a `skip` glob usually matches; on a root's host, the URL up to the path's first segment, as `https://docs.example.org/de/`, with the `/` after it where the path goes on; and else the host. It is `null` for a link the run stopped before asking about. |
+| `housekeeping.checked_hosts` | The hosts no root starts on whose links' targets were asked about, the most `links` first: the [`allowlist`](config.md#allowlist) as far as the pages link to it. The run records no configuration, so a host the allowlist names that no page links to is in no row. |
+
+## Why a link is unchecked
+
+An `unchecked` link is not broken: the run did not learn whether it is. Its
+`reason` says why, as the HTML says in plainer words.
+
+| `reason` | The link |
+|---|---|
+| `out_of_scope` | Names a URL on a host a root starts on that no root's scope covers: under its `url`, or as its `include` and `exclude` allow ([Roots](config.md#roots)). It is not requested. |
+| `host_not_allowlisted` | Names a URL on a host no root starts on and the [`allowlist`](config.md#allowlist) does not name. It is not requested. |
+| `skipped` | Names a URL a [`skip`](config.md#skip) glob matches, or one whose redirect leads to such a URL. |
+| `scheme` | Names a URL whose scheme is not `http` or `https`, as `mailto:`. |
+| `robots` | Names a URL its host's `robots.txt` forbids, where that is obeyed ([Hosts](config.md#hosts)). |
+| `robots_unavailable` | Names a URL on a host whose `robots.txt` could not be read, which leaves the host unrequested for the rest of the run ([Hosts](config.md#hosts)). |
+| `externals_skipped` | In a `check-dir` run given `--externals skip`, names a URL on an allowlisted host that the baseline has no answer for ([`bruce check-dir`](check-dir.md)). |
+| `too_deep` | Is a sitemap that an index lists more than three files below the first, which is not read ([Roots](config.md#roots)). |
+| `no_anchors` | Has a fragment, and its target answered with no HTML page read to look for it in: an asset, a page too large to read, or a URL on an allowlisted host first named by a link other than an `<a href>`. |
+| `text_fragment` | Has a text fragment (`#:~:text=`), which names words rather than an anchor, and its target answered. |
+| `cut` | Names a target the run stopped before asking about. |
 
 ## Exit status
 

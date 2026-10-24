@@ -47,6 +47,8 @@ fn build(
         run,
         totals: sections::totals(conn, id)?,
         unchecked: sections::unchecked(conn, id)?,
+        unchecked_groups: sections::unchecked_groups(conn, id)?,
+        checked_hosts: sections::checked_hosts(conn, id)?,
         broken_targets: sections::broken_targets(conn, id)?,
         pages,
         broken,

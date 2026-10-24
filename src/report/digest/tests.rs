@@ -8,6 +8,9 @@ use crate::report::{Cell, VIEWS};
 
 const OTHER: &str = "https://other.test/";
 
+/// An allowlisted host no root starts on.
+const SLOW: &str = "https://slow.test/12";
+
 /// 2026-10-23T20:04:11Z, the start of run 1.
 const START: i64 = 1_792_785_851;
 
@@ -17,8 +20,8 @@ const START: i64 = 1_792_785_851;
 /// component `handbook`), 2 (`r/two`, `other`), 3 (in the sitemap, linked from
 /// nowhere), 4 (`ROOT`, in no sitemap) and 5 (`OTHER`) are crawled; 6 is
 /// allowlisted. Page 1 links to a 404 (10), by image to another (11), to page
-/// 2 at a missing fragment and a present one, to a 503 (12) and a skipped URL
-/// (13); page 2 to 10, to itself and to 15, a redirect to page 2; 4 to page 1;
+/// 2 at a missing fragment and a present one, to a 503 on the allowlisted
+/// `SLOW` (12) and a skipped URL (13); page 2 to 10, to itself and to 15, a redirect to page 2; 4 to page 1;
 /// and the allowlisted 6 to 10. Run 2 is a finished `check-dir` run, run 3 a
 /// crawl that never finished.
 pub(super) fn store() -> Store {
@@ -80,6 +83,11 @@ pub(super) fn store() -> Store {
         params![url(2)],
     )
     .unwrap();
+    conn.execute(
+        "UPDATE targets SET url = ? WHERE url_id = 12",
+        params![SLOW],
+    )
+    .unwrap();
     for (id, target_url) in [(100, ROOT), (101, "https://e.test/sitemap.xml")] {
         conn.execute(
             "INSERT INTO targets (answered_by, run_id, url_id, url, status, outcome) \
@@ -116,6 +124,91 @@ pub(super) fn store() -> Store {
 
 pub(super) fn of(store: &Store) -> Digest {
     digest(store, Some(RunId(1))).unwrap()
+}
+
+/// [`store`] with page 5 linking to an unchecked target of each reason the
+/// frontier gives, and twice to `forge.test`, an allowlisted host.
+pub(super) fn with_unchecked() -> Store {
+    let store = store();
+    let conn = store.connection();
+    for (id, at, outcome, reason, links) in [
+        (
+            30,
+            "https://e.test/de/a",
+            "unchecked",
+            Some("out_of_scope"),
+            2,
+        ),
+        (
+            31,
+            "https://e.test/de/b",
+            "unchecked",
+            Some("out_of_scope"),
+            1,
+        ),
+        (
+            32,
+            "https://e.test/fr",
+            "unchecked",
+            Some("out_of_scope"),
+            1,
+        ),
+        (
+            33,
+            "http://e.test/x/y",
+            "unchecked",
+            Some("out_of_scope"),
+            1,
+        ),
+        (
+            34,
+            "https://github.test/a/b",
+            "unchecked",
+            Some("host_not_allowlisted"),
+            2,
+        ),
+        (
+            35,
+            "https://github.test/c",
+            "unchecked",
+            Some("host_not_allowlisted"),
+            1,
+        ),
+        (
+            36,
+            "https://spdx.test/l",
+            "unchecked",
+            Some("host_not_allowlisted"),
+            1,
+        ),
+        (37, "mailto:a@e.test", "unchecked", Some("scheme"), 1),
+        (
+            38,
+            "https://forge.test/o/r/issues/new?t=x",
+            "unchecked",
+            Some("skipped"),
+            1,
+        ),
+        (
+            39,
+            "https://forge.test/user/login",
+            "unchecked",
+            Some("skipped"),
+            1,
+        ),
+        (40, "https://forge.test/o/r", "ok", None, 2),
+    ] {
+        target(&store, 1, id, 0, outcome, reason);
+        conn.execute(
+            "UPDATE targets SET url = ? WHERE url_id = ?",
+            params![at, id],
+        )
+        .unwrap();
+        for n in 0..links {
+            link(&store, 1, 5, id, Some(&format!("f{n}")), "anchor");
+        }
+    }
+    store
 }
 
 #[test]
@@ -234,6 +327,76 @@ fn errors_are_apart_from_breakage_and_name_the_pages_source() {
         ["https://forge.test/r/one/1.adoc"]
     );
     assert_eq!(column(&d.unchecked, "reason"), ["skipped"]);
+}
+
+#[test]
+fn the_unchecked_links_are_grouped_by_where_they_point() {
+    let d = of(&with_unchecked());
+    let g = &d.unchecked_groups;
+    assert_eq!(g.columns, ["reason", "group", "links", "targets"]);
+    // The reasons in `unchecked`'s order, the most links first; on a root's
+    // host the URL to the path's first segment, for `skipped` the host and
+    // the path's last two segments, a scheme for a URL that is not `http(s)`,
+    // and elsewhere the host.
+    assert_eq!(
+        column(&d.unchecked, "reason"),
+        [
+            "out_of_scope",
+            "host_not_allowlisted",
+            "skipped",
+            "no_anchors",
+            "scheme"
+        ]
+    );
+    let rows: Vec<(String, String, String, String)> = g
+        .rows
+        .iter()
+        .map(|r| (shown(&r[0]), shown(&r[1]), shown(&r[2]), shown(&r[3])))
+        .collect();
+    let want = [
+        ("out_of_scope", "https://e.test/de/", "3", "2"),
+        ("out_of_scope", "http://e.test/x/", "1", "1"),
+        ("out_of_scope", "https://e.test/fr", "1", "1"),
+        ("host_not_allowlisted", "github.test", "3", "2"),
+        ("host_not_allowlisted", "spdx.test", "1", "1"),
+        ("skipped", "e.test/13", "1", "1"),
+        ("skipped", "forge.test/user/login", "1", "1"),
+        ("skipped", "forge.test/\u{2026}/issues/new", "1", "1"),
+        ("no_anchors", "forge.test", "2", "1"),
+        ("scheme", "mailto:", "1", "1"),
+    ];
+    let want: Vec<(String, String, String, String)> = want
+        .iter()
+        .map(|(a, b, c, d)| (a.to_string(), b.to_string(), c.to_string(), d.to_string()))
+        .collect();
+    assert_eq!(rows, want);
+}
+
+#[test]
+fn the_external_hosts_checked_are_those_whose_links_were_asked() {
+    // forge.test's skipped links are no check of it, its asked one is; e.test
+    // is a root's host.
+    let d = of(&with_unchecked());
+    assert_eq!(d.checked_hosts.columns, ["host", "links", "targets"]);
+    assert_eq!(
+        column(&d.checked_hosts, "host"),
+        ["forge.test", "slow.test"]
+    );
+    let counts: Vec<String> = d
+        .checked_hosts
+        .rows
+        .iter()
+        .map(|r| format!("{} {}", shown(&r[1]), shown(&r[2])))
+        .collect();
+    assert_eq!(counts, ["2 1", "1 1"]);
+}
+
+/// A cell as text, a number as its digits.
+fn shown(cell: &Cell) -> String {
+    match cell {
+        Cell::Int(n) => n.to_string(),
+        other => other.text().unwrap_or("").to_owned(),
+    }
 }
 
 #[test]

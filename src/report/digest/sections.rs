@@ -109,6 +109,78 @@ pub(super) fn unchecked(conn: &Connection, run: RunId) -> Result<Table, Error> {
     sql.fetch(conn)
 }
 
+/// The head of a statement over the links on the run's crawled pages as
+/// `u`, each with its verdict's `outcome` and `reason`, its target's `url`
+/// and `target_outcome`, and the URL's `scheme`, `host`, `origin` (scheme,
+/// host and port), `path`, path segments `segs` and whether the host is a
+/// root's (`root_host`); [`link_urls`] binds the run into it. A URL is split
+/// by pattern, a target's being as the `url` crate writes one, or the raw
+/// text of one that did not parse (D26).
+const LINK_URLS: &str = "WITH r AS (SELECT coalesce(list(h), []) AS hosts FROM (SELECT \
+     regexp_extract(unnest(roots), '^[A-Za-z][A-Za-z0-9+.-]*://(?:[^@/?#]*@)?(\\[[^\\]]*\\]|[^:/?#]*)', 1) \
+     AS h FROM runs WHERE run_id = ";
+
+const LINK_URLS_THEN: &str = ")), u AS (SELECT v.outcome, v.reason, v.target_url_id, t.url, \
+     t.outcome AS target_outcome, \
+     lower(regexp_extract(t.url, '^([A-Za-z][A-Za-z0-9+.-]*):', 1)) AS scheme, \
+     regexp_extract(t.url, '^[A-Za-z][A-Za-z0-9+.-]*://(?:[^@/?#]*@)?(\\[[^\\]]*\\]|[^:/?#]*)', 1) AS host, \
+     regexp_extract(t.url, '^[A-Za-z][A-Za-z0-9+.-]*://[^/?#]*') AS origin, \
+     regexp_extract(t.url, '^[A-Za-z][A-Za-z0-9+.-]*://[^/?#]*(/[^?#]*)?', 1) AS path, \
+     string_split(trim(path, '/'), '/') AS segs, list_contains(r.hosts, host) AS root_host \
+     FROM link_verdicts v JOIN report_pages pg ON pg.run_id = v.run_id \
+     AND pg.url_id = v.src_url_id AND pg.crawled \
+     LEFT JOIN targets t ON t.run_id = v.run_id AND t.url_id = v.target_url_id \
+     CROSS JOIN r WHERE v.run_id = ";
+
+/// [`LINK_URLS`] over `run`.
+fn link_urls(run: RunId) -> Sql {
+    let mut sql = Sql::new(LINK_URLS);
+    sql.bind(run.0).push(LINK_URLS_THEN).bind(run.0).push(") ");
+    sql
+}
+
+/// The `unchecked` links by reason and by where they point, the reasons in
+/// [`unchecked`]'s order and a reason's groups the most links first. A group
+/// is a URL's scheme where it is not `http(s)`; for `skipped`, the host and the
+/// path's last two segments, which say what a `skip` glob matched; on a root's
+/// host, the URL up to the path's first segment, a root's scope being a URL's
+/// prefix; else the host.
+pub(super) fn unchecked_groups(conn: &Connection, run: RunId) -> Result<Table, Error> {
+    let mut sql = link_urls(run);
+    sql.push(
+        "SELECT reason, \"group\", links, targets FROM (SELECT reason, CASE \
+         WHEN url IS NULL THEN NULL \
+         WHEN scheme = '' THEN url \
+         WHEN scheme NOT IN ('http', 'https') THEN scheme || ':' \
+         WHEN reason = 'skipped' AND len(segs) > 2 \
+         THEN host || '/\u{2026}/' || array_to_string(segs[-2:], '/') \
+         WHEN reason = 'skipped' THEN host || '/' || array_to_string(segs, '/') \
+         WHEN root_host AND segs[1] = '' THEN origin || '/' \
+         WHEN root_host THEN origin || '/' || segs[1] \
+         || CASE WHEN len(segs) > 1 OR ends_with(path, '/') THEN '/' ELSE '' END \
+         ELSE host END AS \"group\", \
+         count(*)::BIGINT AS links, count(DISTINCT target_url_id)::BIGINT AS targets \
+         FROM u WHERE outcome = 'unchecked' GROUP BY 1, 2) \
+         ORDER BY sum(links) OVER (PARTITION BY reason) DESC, reason, links DESC, targets DESC, \
+         \"group\"",
+    );
+    sql.fetch(conn)
+}
+
+/// The hosts no root starts on whose links the run asked about, the most
+/// links first: the allowlist (D3) as far as the pages link to it, the run
+/// recording no configuration (D64).
+pub(super) fn checked_hosts(conn: &Connection, run: RunId) -> Result<Table, Error> {
+    let mut sql = link_urls(run);
+    sql.push(
+        "SELECT host, count(*)::BIGINT AS links, \
+         count(DISTINCT target_url_id)::BIGINT AS targets FROM u \
+         WHERE target_outcome <> 'unchecked' AND scheme IN ('http', 'https') AND NOT root_host \
+         GROUP BY 1 ORDER BY 2 DESC, 3 DESC, 1",
+    );
+    sql.fetch(conn)
+}
+
 /// The crawled pages holding a broken link, the most first.
 pub(super) fn pages(conn: &Connection, run: RunId) -> Result<Table, Error> {
     let mut sql = Sql::new(PAGE_COUNTS);

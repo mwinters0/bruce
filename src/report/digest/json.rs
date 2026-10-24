@@ -59,13 +59,16 @@ fn render(d: &Digest) -> String {
     let json = |table: &crate::report::Table| table.render(Format::Json);
     let housekeeping = format!(
         "{{\"redirects\":{},\"orphans\":{},\"unlisted\":{},\"sitemap_entries\":{},\
-         \"roots_without_sitemap\":{},\"unchecked\":{}}}",
+         \"roots_without_sitemap\":{},\"unchecked\":{},\"unchecked_groups\":{},\
+         \"checked_hosts\":{}}}",
         json(&d.redirects),
         json(&d.orphans),
         json(&d.unlisted),
         json(&d.sitemap_entries),
         strings(&d.roots_without_sitemap),
         json(&d.unchecked),
+        json(&d.unchecked_groups),
+        json(&d.checked_hosts),
     );
     object(&[
         ("format_version", FORMAT_VERSION.to_string()),

@@ -24,6 +24,8 @@ h1 { margin: 0 0 4px; font-size: 1.7rem; font-weight: 650; }
 h1 .date { color: var(--accent); font-weight: 500; }
 h2 { margin: 2.2rem 0 .4rem; padding-bottom: .3rem; border-bottom: 1px solid var(--line); font-size: 1.25rem; }
 h3 { margin: 1.4rem 0 .3rem; font-size: 1rem; }
+h3 small { font-weight: 400; }
+h3 + p + .scroll th:first-child { width: 60%; }
 a { color: var(--accent); text-decoration: none; overflow-wrap: anywhere; }
 a:hover { text-decoration: underline; }
 code { font: .86em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
