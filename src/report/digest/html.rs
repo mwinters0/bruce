@@ -730,9 +730,10 @@ fn unchecked_meaning(reason: &str) -> Option<&'static str> {
              issue\" form or a login page."
         }
         "scheme" => {
-            "Links that do not lead to a web page, mostly email addresses (<code>mailto:</code>), \
-             so there is nothing to fetch. One that is a mistyped <code>https:</code> is worth \
-             fixing."
+            "Links that do not lead to a web page but to something else a browser can open, \
+             mostly email addresses (<code>mailto:</code>), so there is nothing to fetch. A link \
+             starting with anything else, such as <code>file:</code> or a mistyped \
+             <code>hhttps:</code>, cannot work for a reader and is listed as broken instead."
         }
         "robots" => {
             "Links to pages the site asks robots not to fetch, in its <code>robots.txt</code>, \
@@ -803,9 +804,10 @@ fn most(out: &mut String, label: &str, column: &str, rows: &[Row], most: usize) 
 /// point most, then the hosts beyond the roots whose links were checked.
 fn unchecked(out: &mut String, d: &Digest) {
     out.push_str(
-        "<p>Links this run did not check, grouped by why. None of them counts as broken. A run \
-         checks the pages under the roots named at the top, and links to other websites only \
-         when its <code>allowlist</code> names them.</p>\n",
+        "<p>Links this run did not check, grouped by why. They are not counted as broken, as \
+         the run does not know whether they work; a link it knows cannot work is listed as \
+         broken instead. A run checks the pages under the roots named at the top, and links \
+         to other websites only when its <code>allowlist</code> names them.</p>\n",
     );
     let mut groups: HashMap<&str, Vec<Row>> = HashMap::new();
     for row in rows(&d.unchecked_groups) {

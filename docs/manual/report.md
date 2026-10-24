@@ -9,9 +9,10 @@ bruce report digest --out DIR [--name STEM] [--db FILE] [--run N] [--format json
 Prints one report over one **run** of a database that `bruce crawl` wrote
 ([`crawl.md`](crawl.md)). A crawl records what each link's target answered; a
 report is where a link is judged: a link is `broken_url` where its target
-answered 4xx or does not exist, `broken_anchor` where the page is there and
-the `#fragment` is not, and `error` where the target could not be asked or
-refused access (a timeout, a 5xx after retries, a 401, 403 or 429).
+answered 4xx or does not exist, or where no reader could follow it, as a
+`file:` link, `broken_anchor` where the page is there and the `#fragment` is
+not, and `error` where the target could not be asked or refused access (a
+timeout, a 5xx after retries, a 401, 403 or 429).
 
 ## Arguments
 
@@ -71,7 +72,7 @@ group and page. `--top N` keeps the first N.
 | `fragment` | The `#fragment`, or none. |
 | `kind` | The link's kind. |
 | `outcome` | `broken_url` or `broken_anchor`. |
-| `reason` | Why, where the crawl knew: `unresolved_xref` for an Antora `xref:` that names no page, a redirect loop, an unparseable URL. None for a plain 404 or a missing fragment. |
+| `reason` | Why, where the crawl knew: `unresolved_xref` for an Antora `xref:` that names no page, a redirect loop, an unparseable URL, `bad_scheme` for a scheme no reader can follow from a web page, as `file:` ([which schemes](digest.md#why-a-link-is-unchecked)). None for a plain 404 or a missing fragment. |
 | `hint` | For an `unresolved_xref`, the nearest page ID among the run's pages, written as the `xref:` writes one (`component:module:path`, the module empty for `ROOT`), where one is within three tenths of the longer ID's length in edits, so a typo finds its page; none for a site with no Antora pages. |
 | `status` | The HTTP status the target answered, where it answered. |
 | `source_repo`, `source_path` | The repo and file the page was built from, where the page links its edit page. |

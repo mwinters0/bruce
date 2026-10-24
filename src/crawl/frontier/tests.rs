@@ -67,9 +67,41 @@ fn everything_else_is_unchecked_and_says_which_case() {
     assert_eq!(reason("https://docs.example.org/en-US/c/"), "out_of_scope");
     assert_eq!(reason("https://other.example.net/"), "host_not_allowlisted");
     assert_eq!(reason("mailto:me@example.org"), "scheme");
-    assert_eq!(reason("tel:+15551234"), "scheme");
-    assert_eq!(reason("javascript:void(0)"), "scheme");
-    assert_eq!(reason("data:text/plain,hi"), "scheme");
+}
+
+#[test]
+fn a_scheme_a_public_web_page_uses_is_unchecked_and_any_other_broken() {
+    let f = frontier();
+    for url in [
+        "mailto:me@example.org",
+        "MAILTO:me@example.org",
+        "tel:+15551234",
+        "irc://irc.libera.chat/fedora",
+        "ircs://irc.libera.chat:6697/fedora",
+        "xmpp:me@example.org",
+        "appstream://org.example.App.desktop",
+        "ftp://ftp.example.org/pub/",
+        "news:comp.os.linux",
+        "magnet:?xt=urn:btih:0123456789abcdef",
+        "sms:+15551234",
+    ] {
+        let (planned, _) = plan(&f, url, Kind::Anchor);
+        assert_eq!(planned, Plan::Unchecked(SCHEME), "{url}");
+    }
+    assert_eq!(WORKING_SCHEMES.len(), 10, "each listed above");
+    for url in [
+        "file:///etc/hosts",
+        "file://path/to/config.ign",
+        "hhttps://forge.example.org/x",
+        "htps://docs.example.org/en-US/a/",
+        "javascript:void(0)",
+        "data:text/plain,hi",
+        "ssh://git@forge.example.org/r.git",
+    ] {
+        let (planned, form) = plan(&f, url, Kind::Image);
+        assert_eq!(planned, Plan::Broken(BAD_SCHEME), "{url}");
+        assert_eq!(form, Url::parse(url).unwrap().as_str(), "the plain form");
+    }
 }
 
 #[test]

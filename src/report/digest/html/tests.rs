@@ -373,7 +373,8 @@ fn each_unchecked_reason_is_explained_beside_where_its_links_point_most() {
     let oos = at(
         "<h3><code>out_of_scope</code> <small>5 links, to 4 targets</small></h3>\n<p>Links to pages on a site this run checks",
     );
-    assert!(house[..oos].contains("None of them counts as broken."));
+    assert!(house[..oos].contains("They are not counted as broken"));
+    assert!(house[..oos].contains("a link it knows cannot work is listed as broken instead"));
     let hosts = at("<h3><code>host_not_allowlisted</code>");
     let skipped = at("<h3><code>skipped</code>");
     let scheme = at("<h3><code>scheme</code>");
@@ -389,6 +390,7 @@ fn each_unchecked_reason_is_explained_beside_where_its_links_point_most() {
     assert!(house[hosts..skipped].contains("And 4 more, holding 4 links, none more than 1."));
     assert!(!house[oos..hosts].contains("more, holding"));
     assert!(house[scheme..checked].contains("<td>mailto:</td>"));
+    assert!(house[scheme..checked].contains("cannot work for a reader and is listed as broken"));
     assert!(house[checked..].contains("<td>forge.test</td><td class=\"num\">2</td>"));
     assert!(house[checked..].contains("<td>slow.test</td>"));
 }

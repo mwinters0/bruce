@@ -274,6 +274,67 @@ async fn every_target_gets_its_outcome_and_every_link_a_row() {
 }
 
 #[tokio::test]
+async fn a_scheme_no_reader_can_follow_is_reported_broken_and_a_working_one_unchecked() {
+    let server = MockServer::start().await;
+    page(
+        &server,
+        "/docs/",
+        r#"<title>Home</title><a href="mailto:me@example.org">mail</a>
+        <a href="irc://irc.example.org/docs">irc</a><a href="file:///etc/tools.conf">file</a>
+        <a href="hhttps://forge.example.org/x">typo</a>"#,
+    )
+    .await;
+
+    let done = crawl(&server, "", quick()).await;
+
+    assert_eq!(
+        done.targets(),
+        [
+            t(
+                "file:///etc/tools.conf",
+                "broken_url",
+                Some("bad_scheme"),
+                None
+            ),
+            t(
+                "hhttps://forge.example.org/x",
+                "broken_url",
+                Some("bad_scheme"),
+                None
+            ),
+            t("/docs/", "ok", None, Some(200)),
+            t(
+                "irc://irc.example.org/docs",
+                "unchecked",
+                Some("scheme"),
+                None
+            ),
+            t("mailto:me@example.org", "unchecked", Some("scheme"), None),
+        ]
+    );
+    done.store.install(crate::report::VIEWS).unwrap();
+    let run = Some(RunId(1));
+    let mut request = crate::report::Request::new(crate::report::Report::Broken);
+    request.run = run;
+    let broken = crate::report::run(&done.store, &request).unwrap().table;
+    let at = |name: &str| broken.columns.iter().position(|c| c == name).unwrap();
+    let shown: Vec<String> = broken
+        .rows
+        .iter()
+        .map(|r| format!("{:?} {:?}", r[at("raw_href")], r[at("reason")]))
+        .collect();
+    assert_eq!(shown.len(), 2, "{shown:?}");
+    assert!(shown.iter().all(|r| r.contains("bad_scheme")), "{shown:?}");
+    let digest = crate::report::digest(&done.store, run).unwrap();
+    let json: serde_json::Value = serde_json::from_str(&digest.json()).unwrap();
+    assert_eq!(json["totals"]["broken_url"], 2);
+    assert_eq!(json["totals"]["unchecked"], 2);
+    let html = digest.html();
+    assert!(html.contains("file:///etc/tools.conf"));
+    assert!(html.contains("URL broken \u{b7} bad_scheme"));
+}
+
+#[tokio::test]
 async fn a_page_records_the_scope_its_hash_covered_and_a_run_its_roots_scopes() {
     let server = MockServer::start().await;
     page(
@@ -1347,6 +1408,42 @@ async fn a_set_sitemap_is_a_target_whatever_it_answers() {
         "a broken set sitemap shows as a broken link from its root"
     );
     assert_eq!(done.summary.sitemaps, 0);
+}
+
+#[tokio::test]
+async fn an_index_entry_whose_scheme_no_reader_can_follow_is_broken() {
+    let server = MockServer::start().await;
+    xml(
+        &server,
+        "/docs/sitemap.xml",
+        r#"<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        <sitemap><loc>file:///srv/sitemap.xml</loc></sitemap>
+        <sitemap><loc>ftp://ftp.example.org/sitemap.xml</loc></sitemap></sitemapindex>"#,
+    )
+    .await;
+    page(&server, "/docs/", "<title>Home</title>").await;
+
+    let done = crawl(&server, "", quick()).await;
+
+    assert_eq!(
+        done.targets(),
+        [
+            t(
+                "file:///srv/sitemap.xml",
+                "broken_url",
+                Some("bad_scheme"),
+                None
+            ),
+            t(
+                "ftp://ftp.example.org/sitemap.xml",
+                "unchecked",
+                Some("scheme"),
+                None
+            ),
+            t("/docs/", "ok", None, Some(200)),
+            t("/docs/sitemap.xml", "ok", None, Some(200)),
+        ]
+    );
 }
 
 #[tokio::test]

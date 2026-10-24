@@ -71,7 +71,7 @@ use crate::store::{
     WriteHandle, WriterGone,
 };
 use crate::url::Canonical;
-use frontier::{EXTERNALS_SKIPPED, Frontier, Plan, SKIPPED};
+use frontier::{EXTERNALS_SKIPPED, Frontier, Plan, SCHEME, SKIPPED};
 use hops::{Chain, Stop};
 use schedule::{Route, Schedule, host_of};
 use sitemap::Sitemap;
@@ -875,17 +875,20 @@ where
                         continue;
                     }
                     if self.frontier.claim(id) {
-                        let unchecked_as = match plan {
-                            Plan::Unchecked("scheme") => Some("scheme"),
-                            _ if index && depth >= MAX_SITEMAP_DEPTH => Some("too_deep"),
+                        let unasked = match plan {
+                            Plan::Unchecked(SCHEME) => Some((Outcome::Unchecked, SCHEME)),
+                            Plan::Broken(reason) => Some((Outcome::BrokenUrl, reason)),
+                            _ if index && depth >= MAX_SITEMAP_DEPTH => {
+                                Some((Outcome::Unchecked, "too_deep"))
+                            }
                             _ => None,
                         };
-                        match unchecked_as {
-                            Some(reason) => self.send_target(unchecked(
+                        match unasked {
+                            Some((outcome, reason)) => self.send_target(unchecked(
                                 self.run,
                                 id,
                                 target_form.as_str(),
-                                Outcome::Unchecked,
+                                outcome,
                                 reason,
                             ))?,
                             None if index => found.push(self.sitemap_item(bare, depth + 1)),
@@ -1058,14 +1061,12 @@ where
         form: Canonical,
     ) -> Result<Option<Item>, Error> {
         match plan {
-            Plan::Unchecked(reason) => {
-                let row = unchecked(
-                    self.run,
-                    form.id(),
-                    form.as_str(),
-                    Outcome::Unchecked,
-                    reason,
-                );
+            Plan::Unchecked(reason) | Plan::Broken(reason) => {
+                let outcome = match plan {
+                    Plan::Broken(_) => Outcome::BrokenUrl,
+                    _ => Outcome::Unchecked,
+                };
+                let row = unchecked(self.run, form.id(), form.as_str(), outcome, reason);
                 self.send_target(row)?;
             }
             Plan::Baseline => self.pending.copy(form.id()),

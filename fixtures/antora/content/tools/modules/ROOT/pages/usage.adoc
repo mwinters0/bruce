@@ -10,3 +10,6 @@ See also the xref:reference.adoc#options[options] and the
 xref:ops:admin:partitions.adoc#layout[partition layout].
 
 The latest release notes are on https://example.org/releases/[example.org].
+
+Questions go to mailto:tools@example.org[the tools list]; an old draft points at
+file:///etc/tools.conf[a file on its writer's machine], which no reader can open.

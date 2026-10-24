@@ -69,8 +69,9 @@ grows from 682 KB to 805 KB, 1,403 of its rows being groups.
 
 **Not all unchecked links are harmless**: `hhttps:` (1), and
 `https://docs.fedoraproject.org/kubernetes.io` and `/docker.io`, which are
-scheme-less hrefs that a browser resolves against the page. The fold shows
-them. No section counts them as broken.
+scheme-less hrefs that a browser resolves against the page. The fold showed
+them and no section counted them as broken; 8.10 makes the first broken
+(D66), and 8.11 is to ask for the other two.
 
 ## What 8.8 and P9 inherit
 

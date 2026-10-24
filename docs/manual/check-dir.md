@@ -54,6 +54,9 @@ not on the allowlist) stays `unchecked`:
   else by a request to the live site, and a URL that answers broken is an
   `unresolved_xref`. One into a component the build holds stays
   `unresolved_xref`.
+- **A link whose scheme no reader can follow**, as `file:`, is `broken_url`,
+  reason `bad_scheme`, as in a crawl
+  ([which schemes](digest.md#why-a-link-is-unchecked)).
 - **A link starting `/`** resolves against the prefix, the way a static server
   serving the directory at `/` shows it.
 - **A link to an allowlisted host** is answered by `--externals`: `baseline` takes

@@ -156,7 +156,7 @@ An `unchecked` link is not broken: the run did not learn whether it is. Its
 | `out_of_scope` | Names a URL on a host a root starts on that no root's scope covers: under its `url`, or as its `include` and `exclude` allow ([Roots](config.md#roots)). It is not requested. |
 | `host_not_allowlisted` | Names a URL on a host no root starts on and the [`allowlist`](config.md#allowlist) does not name. It is not requested. |
 | `skipped` | Names a URL a [`skip`](config.md#skip) glob matches, or one whose redirect leads to such a URL. |
-| `scheme` | Names a URL whose scheme is not `http` or `https`, as `mailto:`. |
+| `scheme` | Names a URL whose scheme is not `http` or `https` but one a public web page uses: `mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`, `magnet` or `sms`. A link with any other scheme, as `file:` or a mistyped `hhttps:`, cannot work for a reader and is `broken_url`, reason `bad_scheme`. |
 | `robots` | Names a URL its host's `robots.txt` forbids, where that is obeyed ([Hosts](config.md#hosts)). |
 | `robots_unavailable` | Names a URL on a host whose `robots.txt` could not be read, which leaves the host unrequested for the rest of the run ([Hosts](config.md#hosts)). |
 | `externals_skipped` | In a `check-dir` run given `--externals skip`, names a URL on an allowlisted host that the baseline has no answer for ([`bruce check-dir`](check-dir.md)). |

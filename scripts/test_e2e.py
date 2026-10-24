@@ -180,7 +180,7 @@ class Verify(unittest.TestCase):
             0,
             self.doc(
                 redirected=[self.redirect(r) for r in e2e.UNCHANGED_REDIRECTED],
-                already_broken={"count": 9, "links": None},
+                already_broken={"count": 10, "links": None},
             ),
             "",
         )
@@ -191,7 +191,7 @@ class Verify(unittest.TestCase):
                 introduced=[self.introduced(r) for r in e2e.PLANTED_INTRODUCED],
                 inverse=[self.inverse(r) for r in e2e.PLANTED_INVERSE],
                 redirected=[self.redirect(r) for r in e2e.PLANTED_REDIRECTED],
-                already_broken={"count": 6, "links": None},
+                already_broken={"count": 7, "links": None},
             ),
             "",
         )

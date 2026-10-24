@@ -1,7 +1,8 @@
 //! The frontier: which URLs a run asks about, and how (D3, D7, D26).
 //!
 //! [`Frontier::plan`] sorts a URL into a [`Plan`] by the first test that
-//! applies: a scheme other than `http(s)`, a `skip` glob (D50), a root's
+//! applies: a scheme other than `http(s)`, `unchecked` where a public web
+//! page uses it and broken where none does (D66), a `skip` glob (D50), a root's
 //! scope, an allowlisted host (D3), a root's own host outside every scope
 //! (`out_of_scope`, D10), any other host (`host_not_allowlisted`); robots.txt
 //! is asked later, at each hop. It returns the URL's canonical form, the
@@ -29,6 +30,28 @@ pub const SKIPPED: &str = "skipped";
 /// (D22, D54).
 pub const EXTERNALS_SKIPPED: &str = "externals_skipped";
 
+/// The reason of a URL whose scheme a public web page uses but is not
+/// `http(s)`: nothing is fetched (D66).
+pub const SCHEME: &str = "scheme";
+
+/// The reason of a URL whose scheme no reader of a public web page can
+/// follow, which is `broken_url` (D66).
+pub const BAD_SCHEME: &str = "bad_scheme";
+
+/// The schemes besides `http(s)` that work on a public web page (D66).
+pub const WORKING_SCHEMES: [&str; 10] = [
+    "mailto",
+    "tel",
+    "irc",
+    "ircs",
+    "xmpp",
+    "appstream",
+    "ftp",
+    "news",
+    "magnet",
+    "sms",
+];
+
 /// What a run does about a URL.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Plan {
@@ -46,6 +69,9 @@ pub enum Plan {
     Status,
     /// Not requested; the target row says why.
     Unchecked(&'static str),
+    /// Not requested, as no reader can follow it: the target is `broken_url`
+    /// and its row says why (D66).
+    Broken(&'static str),
     /// Not requested: the baseline's rows for it are copied into the run
     /// (D52). Only a run checked against a baseline plans one.
     Baseline,
@@ -164,8 +190,14 @@ impl Frontier {
     /// out-of-scope URL on a root's own host told apart from any other host
     /// by its reason.
     pub fn plan(&self, url: &Url, kind: Kind) -> (Plan, Canonical) {
-        if !matches!(url.scheme(), "http" | "https") {
-            return (Plan::Unchecked("scheme"), canonical(url, false));
+        let scheme = url.scheme();
+        if !matches!(scheme, "http" | "https") {
+            let plan = if WORKING_SCHEMES.contains(&scheme) {
+                Plan::Unchecked(SCHEME)
+            } else {
+                Plan::Broken(BAD_SCHEME)
+            };
+            return (plan, canonical(url, false));
         }
         let plain = canonical(url, false);
         if self.config.skip.is_match(plain.as_str()) {
@@ -221,8 +253,8 @@ impl Frontier {
     }
 
     /// [`Frontier::plan`] for the URL a redirect leads to: a hop is followed
-    /// wherever it goes, so what a link would leave unchecked is asked for its
-    /// status alone. A skipped URL stays skipped, and ends the chain (D50);
+    /// wherever it goes, so what a link would leave unchecked or broken is
+    /// asked for its status alone. A skipped URL stays skipped, and ends the chain (D50);
     /// so does an allowlisted one under `--externals=skip` (D54). A hop onto
     /// a URL the build lacks is asked, never copied from the baseline nor
     /// judged `not_built`: an Antora alias stays in its component, so no hop
@@ -235,7 +267,9 @@ impl Frontier {
             {
                 (Plan::Unchecked(EXTERNALS_SKIPPED), form)
             }
-            (Plan::Unchecked(_) | Plan::Baseline | Plan::Unbuilt, form) => (Plan::Status, form),
+            (Plan::Unchecked(_) | Plan::Broken(_) | Plan::Baseline | Plan::Unbuilt, form) => {
+                (Plan::Status, form)
+            }
             planned => planned,
         }
     }

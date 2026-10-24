@@ -294,8 +294,8 @@ def replace(path: Path, old: str, new: str) -> None:
 def plant(tools: Path) -> None:
     """The changes a PR to `tools` makes, in its working tree: a deleted page
     (also linked by `link:`), a removed anchor, a deleted image, and new broken
-    links, xrefs and images, two valid xrefs out of the build, one of them
-    through a page-alias (D57)."""
+    links, xrefs and images, a mistyped scheme among them (D66), two valid xrefs
+    out of the build, one of them through a page-alias (D57)."""
     pages = tools / "modules" / "ROOT" / "pages"
     (pages / "reference.adoc").unlink()
     (tools / "modules" / "ROOT" / "images" / "diagram.svg").unlink()
@@ -311,6 +311,7 @@ def plant(tools: Path) -> None:
             "\nOne to a page there is: xref:guide::upgrade.adoc#rollback[rolling back].\n"
             "\nOne through a page-alias: xref:ops::disks.adoc[the disks].\n"
             "\nAn image that is not there:\n\nimage::missing.png[Missing]\n"
+            "\nA mistyped scheme: link:hhttps://example.org/tools/[the tools site].\n"
         )
 
 
@@ -413,6 +414,8 @@ PLANTED_INTRODUCED = {
     # a new broken link and a new broken image
     ("tools/usage/", "../nowhere/", "anchor", "broken_url", "not_built", "new"),
     ("tools/usage/", "missing.png", "image", "broken_url", "not_built", "new"),
+    # a link no reader can follow, judged as a crawl judges it
+    ("tools/usage/", "hhttps://example.org/tools/", "anchor", "broken_url", "bad_scheme", "new"),
     # an anchor others link to, removed, and linked from the build itself
     ("tools/", "usage/#running", "anchor", "broken_anchor", None, "new"),
 }
@@ -461,8 +464,9 @@ def verify(
         expect("unchanged introduced", doc["introduced"], [])
         expect("unchanged inverse", doc["inverse"], [])
         expect("unchanged redirected", redirected(doc, prefix), UNCHANGED_REDIRECTED)
-        # The footer's three root-relative links, 404 in the baseline, on each of three pages.
-        expect("unchanged already broken", doc["already_broken"]["count"], 9)
+        # The footer's three root-relative links, 404 in the baseline, on each of three pages,
+        # and usage's `file:` link (D66).
+        expect("unchanged already broken", doc["already_broken"]["count"], 10)
     if changed[1]:
         doc = changed[1]
         keys = ("page", "raw_href", "kind", "outcome", "reason", "baseline")
@@ -475,7 +479,7 @@ def verify(
         )
         expect("planted inverse count", len(doc["inverse"]), len(PLANTED_INVERSE))
         # Two built pages now, and the deleted page's three footer links are gone.
-        expect("planted already broken", doc["already_broken"]["count"], 6)
+        expect("planted already broken", doc["already_broken"]["count"], 7)
         expect("planted redirected", redirected(doc, prefix), PLANTED_REDIRECTED)
         if reports:
             expect("report introduced agrees with the gate", reports[0], doc["introduced"])

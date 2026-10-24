@@ -107,6 +107,6 @@ Maintainer, 2026-10-24, on reading 8.4.4's first draft:
 
 **It spawns 8.10 and 8.11**, P8's spec having gained "A link that cannot
 work is broken". The slashless home link is not broken; the housekeeping's
-redirects list it once 8.11 asks for it. 8.4.4's fold says "None of them
-counts as broken" and calls a mistyped `https:` "worth fixing", both for
-8.10 and 8.11 to rewrite. The review sees them on a crawl made after both.
+redirects list it once 8.11 asks for it. 8.10 rewrote 8.4.4's fold, which
+said "None of them counts as broken" and called a mistyped `https:` "worth
+fixing". The review reads it on a crawl made after both.

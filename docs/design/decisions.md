@@ -11,7 +11,7 @@ frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' 
 **Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
 phase index.
 
-<!-- decision-watermark: D65 -->
+<!-- decision-watermark: D66 -->
 
 ## Scope and modes
 
@@ -40,9 +40,16 @@ less its own). Code: `crawl::frontier::Frontier::plan`.
 (`src` on `<video>`, `<audio>`, `<source>`, `<track>`; `poster`) and the `url=` of a meta refresh,
 each link carrying its `kind`; no page yields `sitemap` (an entry) or `sitemap_file` (a file, D47).
 Assets get a HEAD request with GET fallback; reports default to `kind = anchor`, the gate (D9) to every
-kind. `mailto:`, `tel:`, `javascript:` and `data:` are `unchecked`. A `<link>` with no `href`, or
+kind. A scheme other than `http(s)` is never requested (D66). A `<link>` with no `href`, or
 whose `rel` is empty or only `preconnect` or `dns-prefetch`, is skipped; the first `<base href>` resolves every href after it. Rejected:
 `<a href>` only (misses broken images, canonicals); ignoring `<base>` (resolves a site wrongly).
+
+### D66 A scheme a public web page uses is `unchecked`; any other is `broken_url`, reason `bad_scheme`
+`mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`, `magnet` and `sms` take a reader somewhere no request can follow, so they stay `unchecked`, reason `scheme`. Any other scheme but `http(s)`, `file:` and a mistyped `hhttps:` among them, no reader of the site can follow, so it is broken in every report and the gate (maintainer, 2026-10-24: P8's spec, "A link that cannot work is broken"). On en-US's 8.1 crawl that is 2 of the 280 `scheme` links, one of each.
+Why its own reason: `reason = 'scheme'` keeps one outcome across runs, and the digest's Problem column says why, as `bad_redirect` does for a 3xx no browser could follow (D16).
+Rejected: every other scheme `unchecked`, which hid both links from every report; `scheme` under both outcomes, one name meaning two verdicts.
+Reopens: a listed scheme found broken, or an unlisted one found working, such as images a site embeds as `data:` URIs (Asciidoctor's `data-uri`), each of which this reads as broken.
+Code: `crawl::frontier::WORKING_SCHEMES`. Evidence: `crawl::frontier::tests::a_scheme_a_public_web_page_uses_is_unchecked_and_any_other_broken`, `crawl::tests::a_scheme_no_reader_can_follow_is_reported_broken_and_a_working_one_unchecked`.
 
 ### D14 Discovery is sitemap and link-following both, and each page records which
 Each root's sitemap is discovered (D40) or set (docs.fp.o's is under its en-US root, I1). Recording both
@@ -207,7 +214,7 @@ template chrome are reportable (I9). Text fragments are `unchecked`.
 Rejected: every `name` attribute, which makes `#viewport` and `#generator` pass on every page.
 
 ### D16 Five outcomes; `error` is separate from broken and never fails CI alone
-`ok`, `broken_url` (4xx except below, NXDOMAIN, a redirect loop, a 3xx that led nowhere), `broken_anchor`, `error` (timeouts,
+`ok`, `broken_url` (4xx except below, NXDOMAIN, a redirect loop, a 3xx that led nowhere, a scheme no reader can follow, D66), `broken_anchor`, `error` (timeouts,
 TLS, 5xx after 3 retries with backoff, and 401/403/429 with status kept), `unchecked`. A `Retry-After`
 over 60 s is `error` at once rather than stalling the run. A 2xx body over 16 MiB is `ok`, reason
 `too_large`, and not extracted, half a page's anchors giving false `broken_anchor`s. Rejected: `error`

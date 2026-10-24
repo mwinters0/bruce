@@ -18,8 +18,8 @@
   {
    "build": "partial",
    "path": "partial/tools/usage/index.html",
-   "bytes": 11726,
-   "sha256": "0736ff262c355f0eedac98681a6a1a80e8cd3bc4ab9d46fd43d0b6bf09c36bbe"
+   "bytes": 11959,
+   "sha256": "466abb4e406d98490bf2981a094184744364f8d4ab7b661bbec970f323c3aca6"
   },
   {
    "build": "partial",
