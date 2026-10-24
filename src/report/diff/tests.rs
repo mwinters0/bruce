@@ -1,9 +1,7 @@
 use duckdb::params;
 
-use super::super::tests::{ROOT, column, link, page, target, url};
+use super::super::tests::{ROOT, column, link, page, registry, target, url};
 use crate::extract::Kind;
-use crate::profile::Registry;
-use crate::profile::generic::Generic;
 use crate::report::{Error, Output, Report, Request, Store, VIEWS, run};
 use crate::store::RunId;
 
@@ -19,7 +17,7 @@ use crate::store::RunId;
 /// - 1 to page 2 at `#nope`: broken in 2 only, so `new`; at `#sec` it is
 ///   broken in neither.
 fn store() -> Store {
-    let store = Store::open_in_memory(&Registry::new(Box::new(Generic))).unwrap();
+    let store = Store::open_in_memory(&registry()).unwrap();
     store.install(VIEWS).unwrap();
     let conn = store.connection();
     for (run, finished) in [(1, true), (2, true), (3, false)] {

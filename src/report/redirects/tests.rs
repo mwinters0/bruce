@@ -1,9 +1,7 @@
 use duckdb::params;
 
-use super::super::tests::{column, link, page, target, url};
+use super::super::tests::{column, link, page, registry, target, url};
 use crate::extract::Kind;
-use crate::profile::Registry;
-use crate::profile::generic::Generic;
 use crate::report::{Cell, Format, Output, Report, Request, Store, VIEWS, run};
 
 const LOGIN: &str = "https://e.test/login";
@@ -28,7 +26,7 @@ fn hop(url: String, status: u16, refresh: bool) -> String {
 /// Page 3 is reached by 20 (a 301) and 21 (a refresh); the login page by
 /// 22, which pages 1, 2 and 3 link to, and 2 links to 22 by image as well.
 fn store() -> Store {
-    let store = Store::open_in_memory(&Registry::new(Box::new(Generic))).unwrap();
+    let store = Store::open_in_memory(&registry()).unwrap();
     store.install(VIEWS).unwrap();
     store
         .connection()

@@ -17,7 +17,7 @@ use duckdb::Connection;
 
 use super::error::Error;
 use super::inverse::{counts, inverse};
-use super::links::links;
+use super::links::errors;
 use super::request::{InverseMode, Request};
 use super::sql::{Cols, Sql};
 use super::table::{Format, Table, quoted};
@@ -168,7 +168,7 @@ pub(super) fn gate(conn: &Connection, run: RunId, request: &Request) -> Result<G
         inverse: inverse(conn, run, baseline, request)?,
         mode: request.inverse,
         redirected: redirected(conn, run, baseline, request)?,
-        errors: links(conn, run, request, "report_errors")?,
+        errors: errors(conn, run, request)?,
         already: broken(conn, run, baseline, request, false)?,
     })
 }

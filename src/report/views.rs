@@ -22,33 +22,44 @@ JOIN targets t ON t.run_id = p.run_id AND t.url_id = p.url_id",
 };
 
 /// The links of one outcome set, with the page they are on and what their
-/// target answered. `$outcomes` is the `IN` list.
+/// target answered. `$outcomes` is the `IN` list; `$columns` and `$joins` add
+/// to the select list and the `FROM`.
 macro_rules! link_rows {
-    ($outcomes:literal) => {
+    ($columns:literal, $joins:literal, $outcomes:literal) => {
         concat!(
             "\
 SELECT v.run_id, v.src_url_id, s.url AS page, v.raw_href, t.url AS target, v.fragment, v.kind,
-    v.outcome, v.reason, t.status, p.source_repo, p.source_path
+    v.outcome, v.reason, t.status, p.source_repo, p.source_path",
+            $columns,
+            "
 FROM link_verdicts v
 LEFT JOIN targets s ON s.run_id = v.run_id AND s.url_id = v.src_url_id
 LEFT JOIN targets t ON t.run_id = v.run_id AND t.url_id = v.target_url_id
-LEFT JOIN pages p ON p.run_id = v.run_id AND p.url_id = v.src_url_id
+LEFT JOIN pages p ON p.run_id = v.run_id AND p.url_id = v.src_url_id",
+            $joins,
+            "
 WHERE v.outcome IN ",
             $outcomes
         )
     };
 }
 
-/// A link whose outcome is `broken_url` or `broken_anchor`.
+/// A link whose outcome is `broken_url` or `broken_anchor`. An unresolved
+/// xref carries the page ID `antora_hints` finds nearest to its refspec (D65).
 const BROKEN: View = View {
     name: "report_broken",
-    select: link_rows!("('broken_url', 'broken_anchor')"),
+    select: link_rows!(
+        ",\n    h.hint",
+        "\nLEFT JOIN antora_hints h ON h.run_id = v.run_id AND h.src_url_id = v.src_url_id
+    AND h.xref_refspec = v.xref_refspec",
+        "('broken_url', 'broken_anchor')"
+    ),
 };
 
 /// A link whose outcome is `error`, apart from broken (D16).
 const ERRORS: View = View {
     name: "report_errors",
-    select: link_rows!("('error')"),
+    select: link_rows!("", "", "('error')"),
 };
 
 /// A page's link counts by kind, one row for each kind it links by. A page

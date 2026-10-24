@@ -1,9 +1,7 @@
 use duckdb::params;
 
-use super::super::tests::{ROOT, column, fact, link};
+use super::super::tests::{ROOT, column, fact, link, registry};
 use super::{counts, prefix};
-use crate::profile::Registry;
-use crate::profile::generic::Generic;
 use crate::report::{Cell, Gate, InverseMode, Report, Request, Store, VIEWS, gate, run};
 use crate::store::RunId;
 
@@ -57,7 +55,7 @@ fn anchor(store: &Store, run: u64, id: u64, name: &str) {
 ///
 /// Page 9, in `handbook` and not built, links to 3: gone with its page.
 fn store() -> Store {
-    let store = Store::open_in_memory(&Registry::new(Box::new(Generic))).unwrap();
+    let store = Store::open_in_memory(&registry()).unwrap();
     store.install(VIEWS).unwrap();
     let conn = store.connection();
     for (run, mode, baseline) in [(1, "crawl", None), (2, "local", Some(1))] {

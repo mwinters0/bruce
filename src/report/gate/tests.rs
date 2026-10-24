@@ -1,9 +1,7 @@
 use duckdb::params;
 
-use super::super::tests::{ROOT, column, link, page, target, url};
+use super::super::tests::{ROOT, column, link, page, registry, target, url};
 use crate::extract::Kind;
-use crate::profile::Registry;
-use crate::profile::generic::Generic;
 use crate::report::{Cell, Request};
 use crate::report::{Error, Gate, Report, Store, VIEWS, gate, run};
 use crate::store::RunId;
@@ -34,7 +32,7 @@ fn moved(store: &Store, run: u64, id: u64) {
 /// Page 2 links to 13, `unchecked` in the baseline and broken now: introduced,
 /// state `unchecked`.
 fn store() -> Store {
-    let store = Store::open_in_memory(&Registry::new(Box::new(Generic))).unwrap();
+    let store = Store::open_in_memory(&registry()).unwrap();
     store.install(VIEWS).unwrap();
     let conn = store.connection();
     for (run, mode, baseline) in [(1, "crawl", None), (2, "local", Some(1))] {

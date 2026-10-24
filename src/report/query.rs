@@ -6,7 +6,7 @@
 use duckdb::Connection;
 
 use super::error::Error;
-use super::links::links;
+use super::links::{broken, errors};
 use super::request::{Report, Request};
 use super::run::Chosen;
 use super::sql::{PAGE, Sql};
@@ -22,8 +22,8 @@ pub(super) fn run(
 ) -> Result<(Table, Vec<String>), Error> {
     let run = chosen.run;
     match request.report {
-        Report::Broken => Ok((links(conn, run, request, "report_broken")?, Vec::new())),
-        Report::Errors => Ok((links(conn, run, request, "report_errors")?, Vec::new())),
+        Report::Broken => Ok((broken(conn, run, request)?, Vec::new())),
+        Report::Errors => Ok((errors(conn, run, request)?, Vec::new())),
         Report::Stats => stats(conn, run, request),
         Report::Inbound => Ok((reach::inbound(conn, run, request)?, Vec::new())),
         Report::Sitemap => Ok((reach::sitemap(conn, run, request)?, Vec::new())),

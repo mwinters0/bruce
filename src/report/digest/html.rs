@@ -417,34 +417,41 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
                 p.text("source_url")
             )
         );
-        let body: Vec<Vec<String>> = links
-            .get(url)
-            .into_iter()
-            .flatten()
+        let page_links = links.get(url).map_or(&[][..], Vec::as_slice);
+        let hinted = page_links.iter().any(|r| r.text("hint").is_some());
+        let body: Vec<Vec<String>> = page_links
+            .iter()
             .map(|r| {
-                vec![
+                let mut cells = vec![
                     format!("<code>{}</code>", esc(r.text("raw_href").unwrap_or(""))),
                     target_link(r.text("target").unwrap_or(""), None),
                     r.text("fragment")
                         .map_or_else(|| "-".to_owned(), |f| format!("<code>{}</code>", esc(f))),
                     esc(r.text("kind").unwrap_or("")),
                     problem(r.text("outcome"), r.text("reason")),
-                    status_cell(r.int("status")),
-                ]
+                ];
+                if hinted {
+                    cells.push(r.text("hint").map_or_else(
+                        || "-".to_owned(),
+                        |hint| format!("<code>{}</code>", esc(hint)),
+                    ));
+                }
+                cells.push(status_cell(r.int("status")));
+                cells
             })
             .collect();
-        table(
-            out,
-            &[
-                ("Link", false),
-                ("Target", false),
-                ("Fragment", false),
-                ("Kind", false),
-                ("Problem", false),
-                ("Status", true),
-            ],
-            &body,
-        );
+        let mut columns = vec![
+            ("Link", false),
+            ("Target", false),
+            ("Fragment", false),
+            ("Kind", false),
+            ("Problem", false),
+        ];
+        if hinted {
+            columns.push(("Hint", false));
+        }
+        columns.push(("Status", true));
+        table(out, &columns, &body);
         out.push_str("</details>\n");
     }
     out.push_str("</section>\n");

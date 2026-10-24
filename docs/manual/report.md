@@ -72,10 +72,11 @@ group and page. `--top N` keeps the first N.
 | `kind` | The link's kind. |
 | `outcome` | `broken_url` or `broken_anchor`. |
 | `reason` | Why, where the crawl knew: `unresolved_xref` for an Antora `xref:` that names no page, a redirect loop, an unparseable URL. None for a plain 404 or a missing fragment. |
+| `hint` | For an `unresolved_xref`, the nearest page ID among the run's pages, written as the `xref:` writes one (`component:module:path`, the module empty for `ROOT`), where one is within three tenths of the longer ID's length in edits, so a typo finds its page; none for a site with no Antora pages. |
 | `status` | The HTTP status the target answered, where it answered. |
 | `source_repo`, `source_path` | The repo and file the page was built from, where the page links its edit page. |
 
-**`errors`** has the same columns, for the links whose outcome is `error`. An
+**`errors`** has the same columns but `hint`, for the links whose outcome is `error`. An
 error says the target could not be asked, not that the link is wrong, so it
 is kept apart from `broken`.
 
@@ -176,7 +177,7 @@ are the columns above and do not change. A missing value is `null`, a count
 or status a number:
 
 ```json
-[{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"status":200,"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc"}]
+[{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"hint":null,"status":200,"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc"}]
 ```
 
 `stats` prints its page rows alone as JSON, `unlisted` its pages alone and `introduced` and `inverse` their links alone; the totals, the roots without a sitemap and `introduced`'s other sections are in text only (`check-dir --format json` has them all).

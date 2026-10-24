@@ -67,8 +67,9 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   that scroll, a marker on every `<summary>`, print breaks, and the minor
   defects M19's trial found, spot-checked in Chrome's headless shell.
   Notes: [`../wip/roadmap-P8.4.1-digest-layout-notes.md`](../wip/roadmap-P8.4.1-digest-layout-notes.md).
-- [ ] **8.5** An unresolved xref's hint: the `antora` view, `broken`'s and the
+- [x] **8.5** An unresolved xref's hint: the `antora` view, `broken`'s and the
   digest's `hint`, measure and floor chosen on en-US's rows.
+  Notes: [`../wip/roadmap-P8.5-xref-hint-notes.md`](../wip/roadmap-P8.5-xref-hint-notes.md).
 - [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
   verdict and what it spawns in the notes.
 - [ ] **8.7** `changed` and `anchors-removed`: `report` children and kinds,

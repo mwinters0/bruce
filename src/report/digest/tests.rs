@@ -1,11 +1,9 @@
 use duckdb::params;
 use serde_json::Value;
 
-use super::super::tests::{ROOT, column, fact, link, page, target, url};
+use super::super::tests::{ROOT, column, fact, link, page, registry, target, url};
 use super::document::utc;
 use super::*;
-use crate::profile::Registry;
-use crate::profile::generic::Generic;
 use crate::report::{Cell, VIEWS};
 
 const OTHER: &str = "https://other.test/";
@@ -24,7 +22,7 @@ const START: i64 = 1_792_785_851;
 /// and the allowlisted 6 to 10. Run 2 is a finished `check-dir` run, run 3 a
 /// crawl that never finished.
 pub(super) fn store() -> Store {
-    let store = Store::open_in_memory(&Registry::new(Box::new(Generic))).unwrap();
+    let store = Store::open_in_memory(&registry()).unwrap();
     store.install(VIEWS).unwrap();
     let conn = store.connection();
     conn.execute(
@@ -294,7 +292,7 @@ fn the_default_names_a_later_unfinished_run() {
 
 #[test]
 fn a_run_with_no_pages_has_empty_sections() {
-    let store = Store::open_in_memory(&Registry::new(Box::new(Generic))).unwrap();
+    let store = Store::open_in_memory(&registry()).unwrap();
     store.install(VIEWS).unwrap();
     let id = store
         .begin_run(crate::store::Mode::Crawl, "h", None, &[])

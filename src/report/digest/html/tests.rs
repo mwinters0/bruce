@@ -1,5 +1,6 @@
 use super::super::tests::{of, store};
 use crate::report::table::Cell;
+use crate::report::tests::{registry, xrefs};
 use crate::store::RunId;
 
 /// The text of `html` from the section with `id` to its end tag.
@@ -184,10 +185,7 @@ fn an_unfinished_run_says_so() {
 
 #[test]
 fn a_run_with_nothing_to_report_says_so_in_each_section() {
-    let store = crate::store::Store::open_in_memory(&crate::profile::Registry::new(Box::new(
-        crate::profile::generic::Generic,
-    )))
-    .unwrap();
+    let store = crate::store::Store::open_in_memory(&registry()).unwrap();
     store.install(crate::report::VIEWS).unwrap();
     let id = store
         .begin_run(crate::store::Mode::Crawl, "h", None, &[])
@@ -231,7 +229,9 @@ fn a_fold_counts_in_the_unit_of_its_title_and_an_empty_list_is_no_table() {
     d.orphans.rows.clear();
     let html = d.html();
     let orphans = &html[html.find("Pages the sitemap lists").unwrap()..];
-    assert!(orphans.starts_with("Pages the sitemap lists that no page links to.</p>\n<p class=\"muted\">None.</p>"));
+    assert!(orphans.starts_with(
+        "Pages the sitemap lists that no page links to.</p>\n<p class=\"muted\">None.</p>"
+    ));
 }
 
 fn rows_of(t: &crate::report::table::Table, column: &str) -> i64 {
@@ -254,4 +254,15 @@ fn a_summary_names_its_counts_without_the_word_anchor() {
     assert_eq!(super::counted(2, "URL"), "2 URLs");
     assert_eq!(super::counted(1_000, "fragment"), "1,000 fragments");
     assert!(!html.contains(" anchor;"));
+}
+
+#[test]
+fn a_page_whose_links_hold_a_hint_shows_a_hint_column_and_no_other_does() {
+    let hinted = of(&xrefs(&["install/gide.adoc", "nothing-like-any-page.adoc"])).html();
+    assert_eq!(hinted.matches("<th>Hint</th>").count(), 1);
+    assert!(hinted.contains("<td><code>hb::install/guide.adoc</code></td>"));
+    assert!(hinted.contains("<td>-</td>"), "a link with none says so");
+    let plain = of(&xrefs(&["nothing-like-any-page.adoc"])).html();
+    assert!(!plain.contains("<th>Hint</th>"));
+    assert!(!html().contains("<th>Hint</th>"));
 }

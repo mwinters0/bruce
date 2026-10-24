@@ -1,10 +1,8 @@
 use duckdb::params;
 
-use super::super::tests::{ROOT, column, link, page, target, url};
+use super::super::tests::{ROOT, column, link, page, registry, target, url};
 use super::*;
 use crate::extract::Kind;
-use crate::profile::Registry;
-use crate::profile::generic::Generic;
 use crate::report::{Cell, Report, Store, VIEWS, run};
 
 const OTHER: &str = "https://other.test/";
@@ -16,7 +14,7 @@ const OTHER: &str = "https://other.test/";
 /// sitemap. Page 1 links to 2 and, by image, to 3; 3 to 2; 2 to itself;
 /// 4 to 1 and, through the redirect 20, to 3.
 fn store() -> Store {
-    let store = Store::open_in_memory(&Registry::new(Box::new(Generic))).unwrap();
+    let store = Store::open_in_memory(&registry()).unwrap();
     store.install(VIEWS).unwrap();
     let conn = store.connection();
     conn.execute(

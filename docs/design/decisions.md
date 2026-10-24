@@ -11,7 +11,7 @@ frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' 
 **Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
 phase index.
 
-<!-- decision-watermark: D64 -->
+<!-- decision-watermark: D65 -->
 
 ## Scope and modes
 
@@ -219,6 +219,7 @@ works, or as a sixth outcome, which every report and the gate would have to plac
 Live crawl: `broken_url`, reason `unresolved_xref`, raw refspec kept, with a "did you mean" hint
 from a fuzzy match over resource IDs, run only on failures. CI: resolved via D19 first (I6).
 Rejected: checking `#comp::page.adoc` against the page's own ids, which is what a naive checker does.
+The hint's measure and floor are D65.
 
 ### D46 Where a redirect lands is a target of its own, written by whoever claims it first
 A `final_url` then names a `targets` row bar a stopped run's, so D28's fragment join finds the landing
@@ -367,6 +368,10 @@ Evidence: `tests/signals.rs`.
 ### D64 The digest is one document over a crawl run's crawled pages in every kind, its JSON holds every broken and error row, and its HTML is that document rendered with no script
 The sections (figures, broken targets ranked by the links naming them, then their pages, pages, repos, components, errors, housekeeping) are tables built once from SQL, already ranked, and written with the run's context under a `format_version` apart from the schema's (D43), changed only by a change a loader would misread. It counts every kind (D13) on the pages a root covers, an allowlisted page holding no links (D3): a sitemap's entries are in no section but the redirects and the housekeeping's list of those no page was fetched for. The HTML lists the targets that more than one link names, the rest being in its per-page drill-downs, is dark on every screen and light in print, and is held by a golden file over the e2e site. Why: the CI database is truncated, and a loader dating a breakage needs the rows its runs no longer hold. Rejected: aggregates alone, which cannot date a breakage; ranking targets by pages, which hides behind three generated pages the 266 links one restored anchor removes; an HTML per report, eleven pages with no ranking across them; a digest of a `check-dir` run, whose gate prints its sections; an HTML that fetches the JSON beside it, which a file opened from disk cannot read, or renders an embedded copy by script, a blank page without one. Reopens: a reader missing a sortable table, the one thing a script would add; an every-locale digest too large to open (P9), a consumer for the gate's page.
 Code: `report::digest`. Evidence: `report::digest::tests::the_json_has_the_fields_the_manual_documents`.
+
+### D65 An unresolved xref's hint is the nearest page ID by edit distance, within three tenths of the longer, read in the page's own context
+`antora_hints` completes the refspec as Antora read it on its page (no component or module takes the page's, `ROOT` is the empty module), compares it with each `component:module:rel_path` of the run, and keeps the nearest within 3 edits in 10 of the longer, nearest by ID on a tie, none for an ID already there. On en-US's 92 (8.1's crawl) it names 47 links' hint and 34 are the page meant, by one reader. Why: Levenshtein found the typo, the missing directory and the moved module, where Jaro-Winkler weighed the shared prefix and hinted `Langpacks` for `WhatCanBePackaged`; the completion lets a refspec with no component find its page. Floors by link, hints and right: 0.8 gives 31 and 25, 0.75 41 and 30, 0.7 47 and 34, 0.65 49 and 36, 0.6 83 and 48. Rejected: Jaro-Winkler; a floor above 0.7, which loses the `:w` typos and `pgm_guide/release_process.adoc`; 0.6, whose 34 further hints hold 12 right; a hint for a refspec naming a version, which the build may not hold (KD10). Reopens: a hint naming the wrong page often enough on another site, or Resolve taking over the refspec grammar (I21).
+Code: `profile::antora::hints`. Evidence: `report::tests::an_unresolved_xref_names_the_nearest_page_id_within_the_distance`.
 
 ### D59 A bare `report` keeps the latest finished run, says of a later unfinished one, and refuses a baseline it imported
 Without `--run` a report reads the latest finished run (D2), says on stderr that a later run stopped before

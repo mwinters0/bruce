@@ -3,10 +3,17 @@ use duckdb::params;
 use super::*;
 use crate::extract::Kind;
 use crate::profile::Registry;
+use crate::profile::antora::Antora;
 use crate::profile::generic::Generic;
 use crate::store::RunId;
 
 pub(super) const ROOT: &str = "https://e.test/";
+
+/// The profiles `bruce` ships: the reports read the `antora` profile's hints
+/// whatever the site (D65).
+pub(super) fn registry() -> Registry {
+    Registry::new(Box::new(Generic)).with(Box::new(Antora))
+}
 
 pub(super) fn url(id: u64) -> String {
     format!("https://e.test/{id}")
@@ -74,7 +81,7 @@ pub(super) fn fact(store: &Store, run: u64, id: u64, key: &str, value: &str) {
 /// 404 and to page 2 itself. Page 3 is crawled and links to nothing, page 4
 /// is allowlisted.
 fn store() -> Store {
-    let store = Store::open_in_memory(&Registry::new(Box::new(Generic))).unwrap();
+    let store = Store::open_in_memory(&registry()).unwrap();
     store.install(VIEWS).unwrap();
     let conn = store.connection();
     for (id, root) in [(1, true), (2, true), (3, true), (4, false)] {
@@ -336,7 +343,7 @@ fn the_default_refuses_the_baseline_of_a_later_unfinished_run() {
 
 #[test]
 fn with_no_finished_run_a_report_says_so() {
-    let store = Store::open_in_memory(&Registry::new(Box::new(Generic))).unwrap();
+    let store = Store::open_in_memory(&registry()).unwrap();
     store.install(VIEWS).unwrap();
     store
         .begin_run(crate::store::Mode::Crawl, "h", None, &[])
@@ -344,4 +351,94 @@ fn with_no_finished_run_a_report_says_so() {
     let err = run(&store, &Request::new(Report::Broken)).unwrap_err();
     assert!(matches!(err, Error::NoFinishedRun));
     assert!(err.to_string().contains("--run"));
+}
+
+/// Page 1, of component `hb`, holds the xrefs; pages 2 to 4 are the pages
+/// a refspec may mean, and page 5 is another component's.
+pub(super) fn xrefs(refspecs: &[&str]) -> Store {
+    let store = Store::open_in_memory(&registry()).unwrap();
+    store.install(VIEWS).unwrap();
+    let run = store
+        .begin_run(crate::store::Mode::Crawl, "h", None, &[])
+        .unwrap();
+    for (id, component, module, rel_path) in [
+        (1, "hb", "ROOT", "start.adoc"),
+        (2, "hb", "ROOT", "install/guide.adoc"),
+        (3, "hb", "admin", "backup.adoc"),
+        (5, "other", "ROOT", "index.adoc"),
+    ] {
+        page(&store, run.0, id, None, Some(ROOT));
+        for (key, value) in [
+            ("component", component),
+            ("module", module),
+            ("rel_path", rel_path),
+        ] {
+            fact(&store, run.0, id, &format!("antora.{key}"), value);
+        }
+    }
+    for refspec in refspecs {
+        store
+            .connection()
+            .execute(
+                "INSERT INTO links VALUES (?, 1, 1, ?, ?, 'anchor', ?)",
+                params![run.0, refspec, format!("#{refspec}"), refspec],
+            )
+            .unwrap();
+    }
+    store.finish_run(run).unwrap();
+    store
+}
+
+#[test]
+fn an_unresolved_xref_names_the_nearest_page_id_within_the_distance() {
+    let store = xrefs(&[
+        "install/gide.adoc#top",
+        "2.0@hb:ROOT:install/gide.adoc",
+        "admin:backup.adco",
+        "other::indx.adoc",
+        "admin:backup.adoc",
+        "nothing-like-any-page.adoc",
+    ]);
+    let out = report(&store, |_| {});
+    assert_eq!(column(&out.table, "outcome"), ["broken_url"; 6]);
+    let by_href: std::collections::BTreeMap<_, _> = column(&out.table, "raw_href")
+        .into_iter()
+        .zip(column(&out.table, "hint"))
+        .collect();
+    let hint = |href: &str| by_href[&format!("#{href}")].as_str();
+    assert_eq!(
+        hint("install/gide.adoc#top"),
+        "hb::install/guide.adoc",
+        "a refspec with no component takes the page's, and its module"
+    );
+    assert_eq!(
+        hint("2.0@hb:ROOT:install/gide.adoc"),
+        "hb::install/guide.adoc",
+        "a version is none of an ID, and ROOT is the empty module"
+    );
+    assert_eq!(
+        hint("admin:backup.adco"),
+        "hb:admin:backup.adoc",
+        "a module alone takes the page's component"
+    );
+    assert_eq!(hint("other::indx.adoc"), "other::index.adoc");
+    assert_eq!(
+        hint("admin:backup.adoc"),
+        "Null",
+        "a page that is there is no hint for a refspec that did not find it"
+    );
+    assert_eq!(hint("nothing-like-any-page.adoc"), "Null");
+}
+
+#[test]
+fn errors_have_no_hint_and_a_site_without_antora_pages_has_none() {
+    let with_xrefs = xrefs(&["install/gide.adoc"]);
+    let out = run(&with_xrefs, &Request::new(Report::Errors)).unwrap();
+    assert!(!out.table.columns.contains(&"hint".to_owned()));
+    let out = report(&store(), |_| {});
+    assert_eq!(
+        column(&out.table, "hint"),
+        ["Null"; 3],
+        "no page has a path"
+    );
 }

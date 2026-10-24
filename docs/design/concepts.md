@@ -106,7 +106,7 @@ decisions each carries are cited in its module's doc.
 
 - **bruce** — `profile/`: the trait, the registry and the fact and lookup
   types in the parent file, and a child module for each profile compiled in
-  (D33), `generic` and `antora`, whose Resolve is its `resolve` child (D55). `cli` alone builds the registry (D39).
+  (D33), `generic` and `antora`, whose Resolve is its `resolve` child (D55) and whose hint for an unresolved xref is its `hints` child (D65). `cli` alone builds the registry (D39).
 
 **Not in one place.** I16's URL layout, a component-version's prefix in a
 page's URL, is read in `crawl/baseline.rs` (`Held::record`, `Held::holds`), `report/inverse.rs`

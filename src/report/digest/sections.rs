@@ -125,11 +125,11 @@ pub(super) fn pages(conn: &Connection, run: RunId) -> Result<Table, Error> {
     sql.fetch(conn)
 }
 
-/// Every broken link on a crawled page, a page's together; the caller puts
-/// the pages in `pages`' order.
+/// Every broken link on a crawled page, a page's together, an unresolved
+/// xref with its `hint` (D65); the caller puts the pages in `pages`' order.
 pub(super) fn broken(conn: &Connection, run: RunId) -> Result<Table, Error> {
     let mut sql = Sql::new(
-        "SELECT b.page, b.raw_href, b.target, b.fragment, b.kind, b.outcome, b.reason, \
+        "SELECT b.page, b.raw_href, b.target, b.fragment, b.kind, b.outcome, b.reason, b.hint, \
          b.status::INTEGER AS status FROM report_broken b",
     );
     sql.push(ON_CRAWLED)

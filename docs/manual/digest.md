@@ -56,7 +56,9 @@ order:
    restore a missing anchor. The targets one link names are not listed; their
    links are in the next section.
 4. **Pages by broken links**: each page that holds one, the most first, as a
-   drill-down of its broken links, with its live page and its source.
+   drill-down of its broken links, with its live page and its source. A page
+   with an unresolved `xref:` that looks like a typo has a Hint column,
+   the nearest page ID.
 5. **By repo**: the repos whose pages hold broken links, the most first, each
    with links to its pages in section 4.
 6. **Errors**, apart from the breakage.
@@ -80,7 +82,7 @@ and a count or status a number.
   "totals": {"pages":5,"links":10,"broken_url":3,"broken_anchor":1,"error":1,"unchecked":1},
   "broken_targets": [{"target":"https://docs.example.org/en-US/b/","fragment":"nope","outcome":"broken_anchor","reason":null,"status":200,"links":1,"pages":1,"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/b.adoc"}],
   "pages": [{"page":"https://docs.example.org/en-US/a/","title":"A","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","links":6,"broken_url":2,"broken_anchor":1,"error":1}],
-  "broken": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"status":200}],
+  "broken": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"hint":null,"status":200}],
   "by_repo": [{"repo":"https://forge.example.org/docs","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1}],
   "by_component": [{"component":"handbook","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1}],
   "errors": [{"page":"https://docs.example.org/en-US/a/","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","raw_href":"https://slow.example.net/","target":"https://slow.example.net/","fragment":null,"kind":"anchor","reason":"server_error","status":503}],
@@ -109,7 +111,7 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `totals` | The pages the roots cover and the links on them, and the links by outcome, over every kind. `unchecked` links are not broken: `housekeeping.unchecked` says why. |
 | `broken_targets` | Each target a broken link names, with its `fragment` when the link names one, the target named by the most `links` first, then by `pages`: one anchor restored in the target's repo removes that many links. `outcome` is `broken_url` or `broken_anchor`, and `reason` and `status` are the target's answer. `source_repo`, `source_path` and `source_url` are those of the target page, where the run holds it: the repo that would restore a missing anchor. |
 | `pages` | The pages that hold a broken link, the most `broken_url` plus `broken_anchor` first. `links` counts every link on the page, `error` its links that could not be checked. `source_url` is the forge's view of the page's file. |
-| `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order. `page` joins to `pages`. |
+| `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order. `page` joins to `pages`. `hint` is, for an Antora `xref:` that names no page, the nearest page ID in the run, as `component:module:path` with an empty module for `ROOT`, where one is close enough to be a typo of it, else `null`. |
 | `by_repo` | Each repo the pages were built from, the most broken links first, then by errors; `repo` is `null` for the pages that record none. `pages` counts the repo's pages, `broken_pages` those holding a broken link. |
 | `by_component` | The same by Antora component. A site with no Antora page has none. |
 | `errors` | Every link whose outcome is `error`, apart from breakage: the target could not be asked, not necessarily wrong. `source_url` is the linking page's. |

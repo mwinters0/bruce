@@ -19,6 +19,7 @@ use url::Url;
 
 use super::{BoxError, Extract, Lookup, Profile, Settled, Sink, View};
 
+mod hints;
 mod resolve;
 
 /// The profile for sites built by Antora.
@@ -170,7 +171,7 @@ impl Profile for Antora {
     }
 
     fn views(&self) -> &'static [View] {
-        &[PAGES]
+        &[PAGES, hints::HINTS]
     }
 }
 
