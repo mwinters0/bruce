@@ -133,11 +133,12 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   its broken path-relative links the linking page's, shown as a count
   "broken through it" and ranked with red.
   Notes: [`../wip/roadmap-P8.18-doubled-slash-notes.md`](../wip/roadmap-P8.18-doubled-slash-notes.md).
-- [ ] **8.18.1** A link naming a doubled-slash URL `doubled_slash` asked or
+- [x] **8.18.1** A link naming a doubled-slash URL `doubled_slash` asked or
   not (off the allowlist, `robots`, `skip`); a `?query` link on a doubled
   page broken through it as a path-relative one is, and a link broken on the
-  twin too not; the digest's page counts computed once, its time measured
-  back toward the 2.2 s before 8.18; earned by the review of 8.18's calls.
+  twin too not; the digest's page counts computed once, 8.5 s back to 3.1 s;
+  earned by the review of 8.18's calls.
+  Notes: [`../wip/roadmap-P8.18.1-doubled-slash-asked-notes.md`](../wip/roadmap-P8.18.1-doubled-slash-asked-notes.md).
 - [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
   verdict and what it spawns in the notes.
   In progress; findings so far in
@@ -170,3 +171,16 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **Only `http(s)` URLs can double a slash.** With a doubled-slash link
+  `doubled_slash` asked or not, the `unchecked` `data:` and `mailto:` targets
+  went red where a base64 body held `//`, so `store::views` reads the path of
+  a URL starting `http://` or `https://` alone (D71). Reconsidering it changes
+  what another scheme's URL with a `//` in its text is judged: an `ftp://` one
+  would be `doubled_slash` rather than judged by its scheme (D66).
+- **A link's copy on the twin is the same `raw_href` and kind.** `through`
+  leaves out a link on a doubled page when the twin holds a broken link
+  written and kinded the same (D71): 2 of 556 on 8.14's database. Reconsidering
+  it changes which links the twin's row owns; matching on the resolved target
+  would be exact, but a relative link resolves differently on each page, so the
+  two targets are never one.

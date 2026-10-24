@@ -18,8 +18,8 @@
 //!    `unchecked`, reason `cut`.
 //! 3. A link to a URL whose path doubles a slash, or to one that redirected
 //!    to such a URL, is `broken_url`, reason [`DOUBLED_SLASH`], whatever the
-//!    target answered, bar a target never asked and a page's link to itself,
-//!    a `#fragment` link on a doubled-slash page being that page's (D71).
+//!    target answered and asked or not, bar a page's link to itself, a
+//!    `#fragment` link on a doubled-slash page being that page's (D71).
 //! 4. A target that is not `ok` gives its link its own outcome and reason: the
 //!    fragment is not looked at (D16).
 //! 5. No fragment, an empty one, and `top` in any case are `ok` (D12). `top`
@@ -36,13 +36,14 @@
 //! added or removed has the reason [`PEDANTIC_TRAILING_SLASH`], whatever the
 //! hops between (D70). It is not an outcome of its own.
 //!
-//! `relative` says the link's `raw_href` is path-relative, resolved against its
-//! page's path. `counted` says the link counts in the reports (D71): not a
-//! link on a page whose URL doubles a slash and whose twin, the URL with its
-//! slashes collapsed, is a page of the run, and not a broken path-relative
-//! one on such a page without a twin, which the doubled slash breaks and the
-//! linking page answers for. `doubled_slash` lists the targets whose URL
-//! doubles a slash, or whose landing does.
+//! `relative` says the link's `raw_href` keeps its page's path: it is resolved
+//! against it (`../`, `committee/`) or is a `?query` on it. `counted` says the
+//! link counts in the reports (D71): not a link on a page whose URL doubles a
+//! slash and whose twin, the URL with its slashes collapsed, is a page of the
+//! run, and not a broken `relative` one on such a page without a twin, which
+//! the doubled slash breaks and the linking page answers for. `doubled_slash`
+//! lists the targets whose URL doubles a slash, or whose landing does, and for
+//! the first the page of the run at its twin's URL, `twin_id`.
 
 use crate::profile::View;
 
@@ -56,38 +57,42 @@ pub const DOUBLED_SLASH: &str = "doubled_slash";
 /// Every view the store ships, `doubled_slash` before the view that joins it.
 pub(super) const ALL: &[View] = &[DOUBLED_SLASH_TARGETS, LINK_VERDICTS];
 
-/// A true expression where the path of the URL `$url` doubles a slash. A
-/// `scheme://` inside the path doubles none, and nor does a query or a
-/// fragment (D71).
+/// A true expression where the path of the `http(s)` URL `$url` doubles a
+/// slash. A `scheme://` inside the path doubles none, nor does a query or a
+/// fragment, and nor does the body of a `data:` URL or a `mailto:` (D71). The
+/// cheap `contains` goes first, a conjunction being tried in order.
 macro_rules! doubled {
     ($url:literal) => {
         concat!(
-            "coalesce(regexp_matches(regexp_extract(",
+            "coalesce(contains(substr(",
             $url,
-            ", '^[^?#]*'), '[^:/]//'), false)"
+            ", 8), '//') AND regexp_matches(regexp_extract(",
+            $url,
+            ", '^https?://[^?#]*'), '[^:/]//'), false)"
         )
     };
 }
 
 /// The targets whose URL doubles a slash (`own`) or that redirected to a URL
-/// that does, and for the first whether its `twin`, its URL with the slashes
-/// collapsed, is a page of the run (D71).
+/// that does, and for the first its `twin_id`, the page of the run at its
+/// URL with the slashes collapsed, if any (D71). It joins the few, not
+/// every target of the run, to look for the twin.
 const DOUBLED_SLASH_TARGETS: View = View {
     name: "doubled_slash",
     select: concat!(
         "\
-SELECT run_id, url_id, own,
-    own AND EXISTS (SELECT 1 FROM pages tp
-        JOIN targets tt ON tt.run_id = tp.run_id AND tt.url_id = tp.url_id
-        WHERE tp.run_id = d.run_id
-            AND tt.url = regexp_replace(d.url, '([^:/])/{2,}', '\\1/', 'g')) AS twin
+SELECT d.run_id, d.url_id, d.own, min(tp.url_id) AS twin_id
 FROM (SELECT run_id, url_id, url, ",
         doubled!("url"),
         " AS own FROM targets WHERE ",
         doubled!("url"),
         " OR ",
         doubled!("final_url"),
-        ") d"
+        ") d
+LEFT JOIN targets tt ON d.own AND tt.run_id = d.run_id
+    AND tt.url = regexp_replace(d.url, '([^:/])/{2,}', '\\1/', 'g')
+LEFT JOIN pages tp ON tp.run_id = tt.run_id AND tp.url_id = tt.url_id
+GROUP BY d.run_id, d.url_id, d.own"
     ),
 };
 
@@ -110,8 +115,8 @@ WITH joined AS (
         coalesce(try(url_decode(l.fragment)), l.fragment) AS decoded,
         d.url_id IS NOT NULL AS doubled,
         sd.url_id IS NOT NULL AS src_doubled,
-        coalesce(sd.twin, false) AS src_twin,
-        NOT regexp_matches(l.raw_href, '^([A-Za-z][A-Za-z0-9+.-]*:|[/#?]|$)') AS relative
+        sd.twin_id IS NOT NULL AS src_twin,
+        NOT regexp_matches(l.raw_href, '^([A-Za-z][A-Za-z0-9+.-]*:|[/#]|$)') AS relative
     FROM links l
     LEFT JOIN targets t ON t.run_id = l.run_id AND t.url_id = l.target_url_id
     LEFT JOIN doubled_slash d ON d.run_id = t.run_id AND d.url_id = t.url_id
@@ -124,7 +129,7 @@ WITH joined AS (
                 OR target_outcome = 'broken_url')
             THEN ['broken_url', 'unresolved_xref']
         WHEN NOT found THEN ['unchecked', 'cut']
-        WHEN doubled AND target_outcome <> 'unchecked' AND target_url_id <> src_url_id THEN ['broken_url', 'doubled_slash']
+        WHEN doubled AND target_url_id <> src_url_id THEN ['broken_url', 'doubled_slash']
         WHEN target_outcome <> 'ok' THEN [target_outcome, target_reason]
         WHEN coalesce(fragment, '') = '' OR lower(fragment) = 'top' THEN ['ok', NULL]
         WHEN contains(fragment, ':~:') THEN ['unchecked', 'text_fragment']

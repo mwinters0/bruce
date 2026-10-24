@@ -72,7 +72,7 @@ group and page. `--top N` keeps the first N.
 | `fragment` | The `#fragment`, or none. |
 | `kind` | The link's kind. |
 | `outcome` | `broken_url` or `broken_anchor`. |
-| `reason` | Why, where the crawl knew: `unresolved_xref` for an Antora `xref:` that names no page, a redirect loop, an unparseable URL, `bad_scheme` for a scheme no reader can follow from a web page, as `file:` ([which schemes](digest.md#why-a-link-is-unchecked)), and `doubled_slash` for a link to a URL whose path doubles a slash (`a//b`), or to one that redirects to such a URL, whatever the URL answered: the page linking there is the one to correct. None for a plain 404 or a missing fragment. |
+| `reason` | Why, where the crawl knew: `unresolved_xref` for an Antora `xref:` that names no page, a redirect loop, an unparseable URL, `bad_scheme` for a scheme no reader can follow from a web page, as `file:` ([which schemes](digest.md#why-a-link-is-unchecked)), and `doubled_slash` for a link to a URL whose path doubles a slash (`a//b`), or to one that redirects to such a URL, whatever the URL answered and whether it was asked: the page linking there is the one to correct. None for a plain 404 or a missing fragment. |
 | `hint` | For an `unresolved_xref`, the nearest page ID among the run's pages, written as the `xref:` writes one (`component:module:path`, the module empty for `ROOT`), where one is within three tenths of the longer ID's length in edits, so a typo finds its page; none for a site with no Antora pages. |
 | `status` | The HTTP status the target answered, where it answered. |
 | `source_repo`, `source_path` | The repo and file the page was built from, where the page links its edit page. |
@@ -198,7 +198,7 @@ Opening a database with `bruce` installs the views the reports read, so
 outcome and reason (`ok`, reason `pedantic_trailing_slash`, for a link through
 a redirect that only adds or drops a final `/`), and whether it `counts`: the reports leave out the links of a
 page whose URL doubles a slash and whose twin, the URL with the slashes collapsed, is a page of the run, and its
-broken path-relative links where it has no twin, which the doubled slash breaks and the linking page answers for
+broken relative links (`../`, `?query`) where it has no twin, which the doubled slash breaks and the linking page answers for
 ([the digest's *broken through it*](digest.md#the-html)). Each holds every run, so filter on `run_id`.
 
 ## Exit status

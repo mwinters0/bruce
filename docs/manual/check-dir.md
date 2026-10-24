@@ -58,8 +58,8 @@ not on the allowlist) stays `unchecked`:
   reason `bad_scheme`, as in a crawl
   ([which schemes](digest.md#why-a-link-is-unchecked)).
 - **A link to a URL whose path doubles a slash** (`a//b`), or that redirects
-  to one, is `broken_url`, reason `doubled_slash`, whatever the URL answered,
-  as in a crawl.
+  to one, is `broken_url`, reason `doubled_slash`, whatever the URL answered
+  and whether it was asked, as in a crawl.
 - **A link starting `/`** resolves against the prefix, the way a static server
   serving the directory at `/` shows it.
 - **A link to an allowlisted host**, or to a root's host outside every root's

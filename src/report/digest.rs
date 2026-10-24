@@ -40,7 +40,8 @@ fn build(
     later_unfinished: Option<RunId>,
 ) -> Result<Digest, Error> {
     let run = sections::run(conn, id)?;
-    let pages = sections::pages(conn, id)?;
+    let counts = sections::page_counts(conn, id)?;
+    let pages = sections::pages(conn, id, counts)?;
     let mut broken = sections::broken(conn, id)?;
     in_order_of(&mut broken, &pages);
     Ok(Digest {
@@ -52,8 +53,8 @@ fn build(
         broken_targets: sections::broken_targets(conn, id)?,
         pages,
         broken,
-        by_repo: sections::by_repo(conn, id)?,
-        by_component: sections::by_component(conn, id)?,
+        by_repo: sections::by_repo(conn, id, counts)?,
+        by_component: sections::by_component(conn, id, counts)?,
         errors: sections::errors(conn, id)?,
         redirects: sections::redirects(conn, id)?,
         orphans: sections::orphans(conn, id)?,

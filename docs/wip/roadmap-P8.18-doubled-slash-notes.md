@@ -27,12 +27,6 @@ file and the tests follow.
 - **`counted` is the gate's too, by way of `report_broken`**; `introduced`
   reads `link_verdicts` directly for the baseline's side and so does not
   filter it, which no built page needs.
-- **A digest is four times slower on that database** (8.5 s against 2.2 s,
-  release build, a copy of the file, one run): `doubled_slash` runs a regex over every target
-  of a run (0.17 s a read of the view), and `pages`, `by_repo` and
-  `by_component` each evaluate `through`'s walk over `link_verdicts` again.
-  Computing `through` once and joining it to the three is the remedy if every
-  locale's digest (P9) makes it matter.
 - **8.17 asks the toggled URL** and is untouched; a doubled slash is not a
   toggled one (`a//` against `a` differ by two).
 
@@ -47,9 +41,10 @@ file and the tests follow.
   link.** The first draft of the rule made all 25 per page broken, and counted
   them on the page's own row where it has no twin; the page's link to itself
   is judged as any other now (`store::views::tests::a_doubled_slash_page_linking_to_itself_is_judged_as_any_link`).
-- **`relative` is the `raw_href` that is not a scheme, a leading `/`, a
-  `#fragment` or a `?query`**, so a root-relative link (`/en-US/…`), which a
-  doubled path does not break, is counted on its own page.
+- **`relative` is the `raw_href` that is not a scheme, a leading `/` or a
+  `#fragment`** (a `?query` joined it in 8.18.1), so a root-relative link
+  (`/en-US/…`), which a doubled path does not break, is counted on its own
+  page.
 - **Rejected: dropping the twin page's links from `link_verdicts`**, which
   would take them out of the gate's baseline side and of every report that
   reads the view; a column keeps the verdict and lets each report choose.

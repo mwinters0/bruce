@@ -460,6 +460,53 @@ fn the_links_broken_through_a_doubled_slash_count_on_the_linking_page() {
     );
 }
 
+/// The count in column `name` of `page`'s row of the pages section.
+fn pages_count(d: &Digest, page: &str, name: &str) -> Cell {
+    let at = column(&d.pages, "page")
+        .iter()
+        .position(|p| p == page)
+        .unwrap();
+    let col = d.pages.columns.iter().position(|c| c == name).unwrap();
+    d.pages.rows[at][col].clone()
+}
+
+#[test]
+fn a_link_broken_on_the_twin_too_is_not_broken_through_it_and_a_query_link_is() {
+    let store = with_doubled_slashes();
+    let conn = store.connection();
+    target(&store, 1, 62, 404, "broken_url", None);
+    conn.execute(
+        "UPDATE targets SET url = 'https://e.test/tw//x?q=1' WHERE url_id = 62",
+        [],
+    )
+    .unwrap();
+    for (src, to, href) in [
+        // Page 7 now names page 60, which has its twin, 61.
+        (7, 60, "https://e.test/tw//x"),
+        // Broken on both: the twin's to count.
+        (60, 53, "gone-both"),
+        (61, 53, "gone-both"),
+        // Broken here only: the linking page's.
+        (60, 53, "gone-here"),
+        (61, 1, "gone-here"),
+        // A query keeps the doubled path, so it breaks here alone.
+        (60, 62, "?q=1"),
+        (61, 1, "?q=1"),
+    ] {
+        written(&store, src, to, href);
+    }
+    let d = of(&store);
+    let seven = "https://e.test/seven";
+    // The four through the redirect to 51, and `gone-here` and `?q=1`.
+    assert_eq!(pages_count(&d, seven, "through"), Cell::Int(6));
+    assert_eq!(pages_count(&d, seven, "broken_url"), Cell::Int(2));
+    assert_eq!(
+        pages_count(&d, "https://e.test/tw/x", "broken_url"),
+        Cell::Int(1),
+        "the twin counts the link broken on both"
+    );
+}
+
 #[test]
 fn errors_are_apart_from_breakage_and_name_the_pages_source() {
     let d = of(&store());

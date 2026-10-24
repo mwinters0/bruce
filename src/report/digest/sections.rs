@@ -19,55 +19,56 @@ use crate::store::{Mode, RunId};
 const ON_CRAWLED: &str = " JOIN report_pages pg ON pg.run_id = b.run_id \
                           AND pg.url_id = b.src_url_id AND pg.crawled ";
 
-/// The head of a statement over the counted links (D71) of a page, over every
-/// kind, as `s`, and the broken links reached *through* a link to a URL that
-/// doubles a slash, as `th` (D71).
+/// The page counts the pages, repos and components rank by, computed once into
+/// the temporary table `digest_page_counts` (D71): each crawled page's counted
+/// links, `links`, `broken_url`, `broken_anchor` and `error`, and the broken
+/// links reached *through* a link to a URL that doubles a slash, `through`.
 ///
-/// A doubled-slash page is one of the run's whose own URL doubles one (`dp`).
-/// Its path-relative links resolve against the doubled path, so they break
-/// there and nowhere else. A link with reason `doubled_slash` reaches the page
-/// it lands on, if that is in `dp`, and from it every page in `dp` its
-/// path-relative links reach in turn (`reach`); the broken path-relative
-/// links on those pages (`brk`) are the linking page's, each counted once
-/// however many links of the page reach the same page. [`page_counts`] binds
-/// the run into it.
-const PAGE_COUNTS: &str = "WITH RECURSIVE s AS (SELECT url_id, sum(links)::BIGINT AS links, \
+/// A doubled-slash page is one of the run's whose own URL doubles one (`dp`),
+/// with its `twin_id`. Its relative links resolve against the doubled path (or
+/// are a `?query` on it), so they break there and nowhere else. A link with
+/// reason `doubled_slash` reaches the page it lands on, if that is in `dp`,
+/// and from it every page in `dp` its relative links reach in turn (`reach`);
+/// the broken relative links on those pages (`brk`) are the linking page's,
+/// each counted once however many links of the page reach the same page, bar
+/// one whose copy on the page's twin, the same `raw_href` and kind, is broken
+/// too, which the twin's row counts.
+const PAGE_COUNTS: &str = "CREATE OR REPLACE TEMP TABLE digest_page_counts AS \
+     WITH RECURSIVE s AS (SELECT url_id, sum(links)::BIGINT AS links, \
      sum(broken_url)::BIGINT AS broken_url, sum(broken_anchor)::BIGINT AS broken_anchor, \
-     sum(error)::BIGINT AS error FROM report_stats WHERE run_id = ";
-
-const PAGE_COUNTS_DOUBLED: &str = " GROUP BY url_id), \
-     dp AS (SELECT d.url_id FROM doubled_slash d JOIN pages p ON p.run_id = d.run_id \
-     AND p.url_id = d.url_id WHERE d.own AND d.run_id = ";
-
-const PAGE_COUNTS_LINKS: &str = "), lv AS (SELECT v.src_url_id AS src, \
-     coalesce(landing.url_id, v.target_url_id) AS dst, v.reason, v.relative, v.outcome, \
-     v.counted FROM link_verdicts v \
+     sum(error)::BIGINT AS error FROM report_stats WHERE run_id = $1 GROUP BY url_id), \
+     dp AS (SELECT d.url_id, d.twin_id FROM doubled_slash d JOIN pages p \
+     ON p.run_id = d.run_id AND p.url_id = d.url_id WHERE d.own AND d.run_id = $1), \
+     lv AS (SELECT v.src_url_id AS src, coalesce(landing.url_id, v.target_url_id) AS dst, \
+     v.reason, v.relative, v.outcome, v.counted, v.raw_href, v.kind FROM link_verdicts v \
      JOIN targets t ON t.run_id = v.run_id AND t.url_id = v.target_url_id \
      LEFT JOIN targets landing ON landing.run_id = t.run_id AND landing.url = t.final_url \
-     WHERE v.run_id = ";
-
-const PAGE_COUNTS_THROUGH: &str = " AND (v.reason = 'doubled_slash' OR v.src_url_id IN \
-     (SELECT url_id FROM dp))), \
-     brk AS (SELECT src AS url_id, count(*)::BIGINT AS n FROM lv WHERE relative \
-     AND outcome IN ('broken_url', 'broken_anchor', 'error') \
-     AND src IN (SELECT url_id FROM dp) GROUP BY src), \
+     WHERE v.run_id = $1 AND (v.reason = 'doubled_slash' OR v.src_url_id IN \
+     (SELECT url_id FROM dp UNION SELECT twin_id FROM dp))), \
+     brk AS (SELECT l.src AS url_id, count(*)::BIGINT AS n FROM lv l \
+     JOIN dp ON dp.url_id = l.src WHERE l.relative \
+     AND l.outcome IN ('broken_url', 'broken_anchor', 'error') \
+     AND NOT EXISTS (SELECT 1 FROM lv c WHERE c.src = dp.twin_id AND c.raw_href = l.raw_href \
+     AND c.kind = l.kind AND c.outcome IN ('broken_url', 'broken_anchor', 'error')) \
+     GROUP BY l.src), \
      reach(page, dst) AS (SELECT src, dst FROM lv WHERE reason = 'doubled_slash' AND counted \
      AND dst IN (SELECT url_id FROM dp) \
      UNION SELECT r.page, e.dst FROM reach r JOIN lv e ON e.src = r.dst \
      WHERE e.relative AND e.dst IN (SELECT url_id FROM dp)), \
      th AS (SELECT r.page AS url_id, sum(b.n)::BIGINT AS through FROM reach r \
-     JOIN brk b ON b.url_id = r.dst GROUP BY r.page)";
+     JOIN brk b ON b.url_id = r.dst GROUP BY r.page) \
+     SELECT s.url_id, s.links, s.broken_url, s.broken_anchor, s.error, \
+     coalesce(th.through, 0)::BIGINT AS through FROM s LEFT JOIN th ON th.url_id = s.url_id";
 
-/// [`PAGE_COUNTS`] over `run`, ready for the statement that reads `s` and `th`.
-fn page_counts(run: RunId) -> Sql {
-    let mut sql = Sql::new(PAGE_COUNTS);
-    sql.bind(run.0)
-        .push(PAGE_COUNTS_DOUBLED)
-        .bind(run.0)
-        .push(PAGE_COUNTS_LINKS)
-        .bind(run.0)
-        .push(PAGE_COUNTS_THROUGH);
-    sql
+/// Proof that [`page_counts`] ran for the run being read, which [`pages`],
+/// [`by_repo`] and [`by_component`] join.
+#[derive(Clone, Copy)]
+pub(super) struct PageCounts(());
+
+/// Computes `run`'s page counts, once for the three sections that rank by them.
+pub(super) fn page_counts(conn: &Connection, run: RunId) -> Result<PageCounts, Error> {
+    conn.execute(PAGE_COUNTS, [run.0])?;
+    Ok(PageCounts(()))
 }
 
 /// The run's context, or why it has no digest.
@@ -231,20 +232,16 @@ pub(super) fn checked_hosts(conn: &Connection, run: RunId) -> Result<Table, Erro
 /// their red links (`broken_url` and `error`) with those broken through them
 /// (`through`, D71) and then their amber ones (`broken_anchor`), the severity
 /// of the HTML's dots.
-pub(super) fn pages(conn: &Connection, run: RunId) -> Result<Table, Error> {
-    let mut sql = page_counts(run);
-    sql.push(
-        " SELECT pg.url AS page, pg.title, p.source_repo, p.source_path, p.source_url, \
-         s.links, s.broken_url, s.broken_anchor, s.error, \
-         coalesce(th.through, 0)::BIGINT AS through \
+pub(super) fn pages(conn: &Connection, run: RunId, _: PageCounts) -> Result<Table, Error> {
+    let mut sql = Sql::new(
+        "SELECT pg.url AS page, pg.title, p.source_repo, p.source_path, p.source_url, \
+         s.links, s.broken_url, s.broken_anchor, s.error, s.through \
          FROM report_pages pg JOIN pages p ON p.run_id = pg.run_id AND p.url_id = pg.url_id \
-         JOIN s ON s.url_id = pg.url_id LEFT JOIN th ON th.url_id = pg.url_id \
+         JOIN digest_page_counts s ON s.url_id = pg.url_id \
          WHERE pg.crawled AND s.broken_url + s.broken_anchor + s.error > 0 AND pg.run_id = ",
     );
-    sql.bind(run.0).push(
-        " ORDER BY s.broken_url + s.error + coalesce(th.through, 0) DESC, \
-         s.broken_anchor DESC, pg.url",
-    );
+    sql.bind(run.0)
+        .push(" ORDER BY s.broken_url + s.error + s.through DESC, s.broken_anchor DESC, pg.url");
     sql.fetch(conn)
 }
 
@@ -290,14 +287,14 @@ pub(super) fn broken_targets(conn: &Connection, run: RunId) -> Result<Table, Err
 fn grouped(
     conn: &Connection,
     run: RunId,
+    _: PageCounts,
     group: &str,
     column: &str,
     join: &str,
     key: Option<&str>,
 ) -> Result<Table, Error> {
-    let mut sql = page_counts(run);
-    sql.push(" SELECT * FROM (SELECT ")
-        .push(group)
+    let mut sql = Sql::new("SELECT * FROM (SELECT ");
+    sql.push(group)
         .push(" AS ")
         .push(column)
         .push(
@@ -308,9 +305,8 @@ fn grouped(
              coalesce(sum(s.broken_url), 0)::BIGINT AS broken_url, \
              coalesce(sum(s.broken_anchor), 0)::BIGINT AS broken_anchor, \
              coalesce(sum(s.error), 0)::BIGINT AS error, \
-             coalesce(sum(th.through), 0)::BIGINT AS through \
-             FROM report_pages pg LEFT JOIN s ON s.url_id = pg.url_id \
-             LEFT JOIN th ON th.url_id = pg.url_id ",
+             coalesce(sum(s.through), 0)::BIGINT AS through \
+             FROM report_pages pg LEFT JOIN digest_page_counts s ON s.url_id = pg.url_id ",
         )
         .push(join);
     if let Some(key) = key {
@@ -324,17 +320,22 @@ fn grouped(
 
 /// The repos the crawled pages were built from, ranked as [`pages`] ranks a
 /// page; a page with no source is the row with no repo.
-pub(super) fn by_repo(conn: &Connection, run: RunId) -> Result<Table, Error> {
-    grouped(conn, run, "pg.source_repo", "repo", "", None)
+pub(super) fn by_repo(conn: &Connection, run: RunId, counts: PageCounts) -> Result<Table, Error> {
+    grouped(conn, run, counts, "pg.source_repo", "repo", "", None)
 }
 
 /// The Antora components of the crawled pages, ranked as [`pages`] ranks a
 /// page. A site
 /// of no Antora pages has none.
-pub(super) fn by_component(conn: &Connection, run: RunId) -> Result<Table, Error> {
+pub(super) fn by_component(
+    conn: &Connection,
+    run: RunId,
+    counts: PageCounts,
+) -> Result<Table, Error> {
     grouped(
         conn,
         run,
+        counts,
         "f.value",
         "component",
         "JOIN page_facts f ON f.run_id = pg.run_id AND f.url_id = pg.url_id AND f.key = ",

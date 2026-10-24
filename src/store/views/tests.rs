@@ -386,12 +386,26 @@ fn a_link_to_a_url_with_a_doubled_slash_is_broken_whatever_it_answered() {
     raw_target(&store, 4, "https://e.test/d//e", "error", None);
     raw_target(&store, 5, "https://e.test/f///", "broken_url", None);
     raw_target(&store, 6, "https://e.test//", "ok", None);
-    // Never asked: nothing is known of what it answers.
+    // Never asked, off the allowlist or behind a `skip`: the URL is the fault.
     raw_target(&store, 7, "https://e.test/g//h", "unchecked", None);
+    raw_target(&store, 12, "https://o.test/i//j", "unchecked", None);
     store
         .connection()
-        .execute("UPDATE targets SET reason = 'skipped' WHERE url_id = 7", [])
+        .execute(
+            "UPDATE targets SET reason = 'skipped' WHERE url_id = 7; \
+             UPDATE targets SET reason = 'host_not_allowlisted' WHERE url_id = 12",
+            [],
+        )
         .unwrap();
+    // Not a web page's URL: a `data:` body and a `mailto:` name no path.
+    raw_target(
+        &store,
+        13,
+        "data:text/plain;base64,YQ//Yg==",
+        "unchecked",
+        None,
+    );
+    raw_target(&store, 14, "mailto:a//b@e.test", "unchecked", None);
     // A `scheme://` in the path, a doubled slash in a query or a fragment,
     // and a single slash double nothing.
     raw_target(
@@ -421,6 +435,9 @@ fn a_link_to_a_url_with_a_doubled_slash_is_broken_whatever_it_answered() {
         ("query", 9),
         ("single", 10),
         ("landed-query", 11),
+        ("off", 12),
+        ("data", 13),
+        ("mail", 14),
     ] {
         link(&store, label, id, None, None);
     }
@@ -432,7 +449,10 @@ fn a_link_to_a_url_with_a_doubled_slash_is_broken_whatever_it_answered() {
         ("error", "broken_url", doubled),
         ("broken", "broken_url", doubled),
         ("root", "broken_url", doubled),
-        ("unchecked", "unchecked", Some("skipped")),
+        ("unchecked", "broken_url", doubled),
+        ("off", "broken_url", doubled),
+        ("data", "unchecked", None),
+        ("mail", "unchecked", None),
         ("archive", "ok", None),
         ("query", "ok", None),
         ("single", "ok", None),
@@ -487,15 +507,17 @@ fn a_doubled_slash_page_counts_nothing_with_a_twin_and_its_absolute_links_withou
         link_from(&store, src, "https://e.test/gone", 40);
         link_from(&store, src, "/gone", 40);
         link_from(&store, src, "#gone", 40);
+        link_from(&store, src, "?next=1", 41);
     }
     let all = |src| counted(&store, src);
-    // A relative href is neither absolute, rooted, a fragment nor a query.
+    // A relative href is neither absolute, rooted nor a fragment: a query
+    // keeps the page's path.
     let relative: Vec<_> = all(1)
         .into_iter()
         .filter(|(_, (_, relative))| *relative)
         .map(|(href, _)| href)
         .collect();
-    assert_eq!(relative, ["../fine/", "../gone/"]);
+    assert_eq!(relative, ["../fine/", "../gone/", "?next=1"]);
     assert!(all(1).values().all(|(counted, _)| *counted));
     assert!(
         all(30).values().all(|(counted, _)| !*counted),
