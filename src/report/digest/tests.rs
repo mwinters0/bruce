@@ -306,7 +306,7 @@ fn a_broken_target_carries_the_source_of_the_page_it_names() {
     let t = &d.broken_targets;
     assert_eq!(column(t, "target"), [url(10), url(11), url(2)]);
     assert_eq!(column(t, "fragment")[2], "nope");
-    assert_eq!(t.rows[0][5..7], [Cell::Int(2), Cell::Int(2)]);
+    assert_eq!(t.rows[0][6..8], [Cell::Int(2), Cell::Int(2)]);
     assert_eq!(column(t, "outcome")[2], "broken_anchor");
     // A missing anchor is the target page's repo to restore.
     assert_eq!(column(t, "source_repo")[2], "r/two");
@@ -322,10 +322,10 @@ fn broken_targets_are_ranked_by_their_links_then_their_pages() {
     }
     let t = of(&store).broken_targets;
     assert_eq!(column(&t, "target"), [url(11), url(10), url(2)]);
-    assert_eq!(t.rows[0][5..7], [Cell::Int(4), Cell::Int(1)]);
+    assert_eq!(t.rows[0][6..8], [Cell::Int(4), Cell::Int(1)]);
     // 10 has two links on two pages, `2#nope` two on one: the pages break the tie.
-    assert_eq!(t.rows[1][5..7], [Cell::Int(2), Cell::Int(2)]);
-    assert_eq!(t.rows[2][5..7], [Cell::Int(2), Cell::Int(1)]);
+    assert_eq!(t.rows[1][6..8], [Cell::Int(2), Cell::Int(2)]);
+    assert_eq!(t.rows[2][6..8], [Cell::Int(2), Cell::Int(1)]);
 }
 
 #[test]
@@ -363,7 +363,7 @@ fn written(store: &Store, src: u64, to: u64, href: &str) {
 /// 51; 51 links relatively to the doubled-slash page 52 (`cc//a/`) and to a
 /// 404, and absolutely to another; 52 links relatively to a 404 and back to
 /// 51. Page 60 doubles a slash too, and page 61 is its twin.
-fn with_doubled_slashes() -> Store {
+pub(super) fn with_doubled_slashes() -> Store {
     let store = store();
     let conn = store.connection();
     for (id, at) in [
@@ -458,6 +458,39 @@ fn the_links_broken_through_a_doubled_slash_count_on_the_linking_page() {
         10 + 1 + 1 + 1,
         "the uncounted links are none"
     );
+}
+
+#[test]
+fn a_doubled_slash_a_redirect_lands_on_is_the_links_landing() {
+    let store = with_doubled_slashes();
+    // A link naming a doubled-slash URL itself has none: the URL shows it.
+    target(&store, 1, 70, 200, "ok", None);
+    store
+        .connection()
+        .execute(
+            "UPDATE targets SET url = 'https://e.test/own//x' WHERE url_id = 70",
+            [],
+        )
+        .unwrap();
+    written(&store, 7, 70, "https://e.test/own//x");
+    let d = of(&store);
+    let landing = |t: &crate::report::table::Table, target: &str| {
+        let at = column(t, "target")
+            .iter()
+            .position(|u| u == target)
+            .unwrap_or_else(|| panic!("{target} in {:?}", column(t, "target")));
+        t.rows[at][t.columns.iter().position(|c| c == "landing").unwrap()].clone()
+    };
+    let cc = Cell::Text("https://e.test/cc//".to_owned());
+    assert_eq!(landing(&d.broken, "https://e.test/cc"), cc);
+    assert_eq!(landing(&d.broken_targets, "https://e.test/cc"), cc);
+    assert_eq!(landing(&d.broken, "https://e.test/own//x"), Cell::Null);
+    assert_eq!(
+        landing(&d.broken_targets, "https://e.test/own//x"),
+        Cell::Null
+    );
+    // A target broken for another reason has none.
+    assert_eq!(landing(&d.broken, &url(54)), Cell::Null);
 }
 
 /// The count in column `name` of `page`'s row of the pages section.

@@ -142,9 +142,10 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
 - [x] **8.4.7** The pages' and repos' summaries without their parenthetical
   total; earned by 8.6's twelfth finding.
   Notes: [`../wip/roadmap-P8.4.7-no-totals-notes.md`](../wip/roadmap-P8.4.7-no-totals-notes.md).
-- [ ] **8.18.2** A link whose redirect lands on a doubled-slash URL shows
+- [x] **8.18.2** A link whose redirect lands on a doubled-slash URL shows
   that landing under *Resolves to*, and the doubled slash is marked where it
   is shown; earned by 8.6's eleventh finding.
+  Notes: [`../wip/roadmap-P8.18.2-doubled-slash-shown-notes.md`](../wip/roadmap-P8.18.2-doubled-slash-shown-notes.md).
 - [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
   verdict and what it spawns in the notes.
   In progress; findings so far in

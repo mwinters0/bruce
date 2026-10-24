@@ -1,4 +1,4 @@
-use super::super::tests::{of, ranked, store, with_unchecked};
+use super::super::tests::{of, ranked, store, with_doubled_slashes, with_unchecked};
 use crate::report::table::Cell;
 use crate::report::tests::{registry, xrefs};
 use crate::store::RunId;
@@ -552,4 +552,58 @@ fn each_redirected_landing_is_a_details_with_its_hops_and_pages_inside() {
             .contains("<th>Linking pages</th>")
     );
     assert!(!house.contains("First hops</th>"));
+}
+
+#[test]
+fn a_doubled_slash_is_marked_in_the_path_alone() {
+    let slashes = super::slashes;
+    assert_eq!(
+        slashes("https://fedoraproject.org//"),
+        "https://fedoraproject.org<mark>//</mark>"
+    );
+    assert_eq!(slashes("e.test/a///b/"), "e.test/a<mark>///</mark>b/");
+    // A scheme's `//`, a protocol-relative start, a query and a fragment
+    // double none.
+    for none in [
+        "https://web.archive.org/web/1/https://e.test/",
+        "//e.test/a",
+        "e.test/a?b=//c",
+        "e.test/a#//",
+    ] {
+        assert_eq!(slashes(none), none);
+    }
+    assert_eq!(slashes("<b>//c"), "&lt;b&gt;<mark>//</mark>c");
+}
+
+#[test]
+fn a_doubled_slash_link_shows_where_its_slash_doubles() {
+    let html = of(&with_doubled_slashes()).html();
+    let pages = section(&html, "pages");
+    // Page 7's `cc` lands on `cc//`: the landing is under the URL it names.
+    assert!(pages.contains(
+        "<td><a href=\"https://e.test/cc\">e.test/cc</a><br><small>\u{2192} lands on \
+         <a href=\"https://e.test/cc//\">e.test/cc<mark>//</mark></a></small></td>"
+    ));
+    // A link not broken by a doubled slash is shown as written.
+    assert!(pages.contains("<td><code>https://e.test/abs</code></td>"));
+    assert!(!pages.contains("e.test/abs</a><br>"));
+
+    let mut d = of(&with_doubled_slashes());
+    let col = |name: &str| d.broken.columns.iter().position(|c| c == name).unwrap();
+    let (raw, target, landing) = (col("raw_href"), col("target"), col("landing"));
+    let at = d
+        .broken
+        .rows
+        .iter()
+        .position(|r| r[target] == Cell::Text("https://e.test/cc".into()))
+        .unwrap();
+    d.broken.rows[at][raw] = Cell::Text("https://e.test/x//y".into());
+    d.broken.rows[at][target] = Cell::Text("https://e.test/x//y".into());
+    d.broken.rows[at][landing] = Cell::Null;
+    let html = d.html();
+    let pages = section(&html, "pages");
+    assert!(pages.contains(
+        "<td><code>https://e.test/x<mark>//</mark>y</code></td>\
+         <td><a href=\"https://e.test/x//y\">e.test/x<mark>//</mark>y</a></td>"
+    ));
 }

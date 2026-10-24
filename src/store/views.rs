@@ -73,6 +73,11 @@ macro_rules! doubled {
     };
 }
 
+/// A true expression where the URL of the target aliased `t` doubles a slash,
+/// for a query telling a `doubled_slash` target's own doubled slash from its
+/// landing's without the `doubled_slash` view's scan of every target.
+pub const TARGET_URL_DOUBLES: &str = doubled!("t.url");
+
 /// The targets whose URL doubles a slash (`own`) or that redirected to a URL
 /// that does, and for the first its `twin_id`, the page of the run at its
 /// URL with the slashes collapsed, if any (D71). It joins the few, not

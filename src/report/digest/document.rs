@@ -43,8 +43,8 @@ pub struct Digest {
     /// the most links first: `host`, `links`, `targets`.
     pub checked_hosts: Table,
     /// The broken targets, the one the most links name first and then the
-    /// most pages: `target`, `fragment`, `outcome`, `reason`, `status`,
-    /// `links`, `pages`, and the
+    /// most pages: `target`, `landing`, `fragment`, `outcome`, `reason`,
+    /// `status`, `links`, `pages`, and the
     /// target page's `source_repo`, `source_path` and `source_url`.
     pub broken_targets: Table,
     /// The pages holding a broken link or one that errored, ranked by
@@ -54,8 +54,9 @@ pub struct Digest {
     /// path-relative links on the doubled-slash pages its links reach (D71).
     pub pages: Table,
     /// Every broken link, a page's together and the pages in `pages`' order:
-    /// `page`, `raw_href`, `target`, `fragment`, `kind`, `outcome`, `reason`
-    /// and `status`.
+    /// `page`, `raw_href`, `target`, `landing`, `fragment`, `kind`, `outcome`,
+    /// `reason`, `hint` and `status`. `landing` is the URL a `doubled_slash`
+    /// target redirected to where that, not the target, doubles a slash (D71).
     pub broken: Table,
     /// Each repo, ranked as `pages` are: `repo`, `pages`, `broken_pages`,
     /// `links`, `broken_url`, `broken_anchor`, `error` and `through`.

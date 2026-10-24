@@ -14,6 +14,7 @@ use std::fmt::Write as _;
 use self::severity::{Level, legend, mark};
 use super::document::{Digest, utc};
 use crate::report::table::{Cell, Table};
+use crate::store::DOUBLED_SLASH;
 
 mod severity;
 
@@ -160,11 +161,37 @@ fn short(url: &str) -> &str {
 /// A link to `url` labelled `label`, or the label alone where `url` is not
 /// an `http` or `https` one.
 fn a(url: &str, label: &str) -> String {
+    a_html(url, &esc(label))
+}
+
+/// [`a`], its label already HTML.
+fn a_html(url: &str, label: &str) -> String {
     if url.starts_with("https://") || url.starts_with("http://") {
-        format!("<a href=\"{}\">{}</a>", esc(url), esc(label))
+        format!("<a href=\"{}\">{label}</a>", esc(url))
     } else {
-        esc(label)
+        label.to_owned()
     }
+}
+
+/// `text` escaped, each doubled slash in its path marked: a run of `/` after
+/// anything but a `:` or a `/`, ahead of any `?` or `#`, as `doubled_slash`
+/// reads one (D71).
+fn slashes(text: &str) -> String {
+    let path = &text[..text.find(['?', '#']).unwrap_or(text.len())];
+    let bytes = path.as_bytes();
+    let mut out = String::new();
+    let (mut from, mut i) = (0, 1);
+    while i + 1 < bytes.len() {
+        if bytes[i] == b'/' && bytes[i + 1] == b'/' && !matches!(bytes[i - 1], b':' | b'/') {
+            let end = i + bytes[i..].iter().take_while(|&&b| b == b'/').count();
+            w!(out, "{}<mark>{}</mark>", esc(&path[from..i]), &path[i..end]);
+            (from, i) = (end, end);
+        } else {
+            i += 1;
+        }
+    }
+    out.push_str(&esc(&text[from..]));
+    out
 }
 
 /// A link to `target`, at `fragment` where there is one, shown without its
@@ -176,6 +203,41 @@ fn target_link(target: &str, fragment: Option<&str>) -> String {
             &format!("{}#{fragment}", short(target)),
         ),
         None => a(target, short(target)),
+    }
+}
+
+/// A broken link's target, at `fragment` where there is one: for a
+/// `doubled_slash` one its doubled slash marked, and under it the `landing`
+/// that doubles one where the target does not (D71).
+fn target_cell(r: &Row, fragment: Option<&str>) -> String {
+    let target = r.text("target").unwrap_or("");
+    if r.text("reason") != Some(DOUBLED_SLASH) {
+        return target_link(target, fragment);
+    }
+    let mut cell = match fragment {
+        Some(fragment) => a_html(
+            &format!("{target}#{fragment}"),
+            &slashes(&format!("{}#{fragment}", short(target))),
+        ),
+        None => a_html(target, &slashes(short(target))),
+    };
+    if let Some(landing) = r.text("landing") {
+        w!(
+            cell,
+            "<br><small>\u{2192} lands on {}</small>",
+            a_html(landing, &slashes(short(landing)))
+        );
+    }
+    cell
+}
+
+/// A broken link as its page writes it, a doubled slash marked.
+fn written_as(r: &Row) -> String {
+    let raw = r.text("raw_href").unwrap_or("");
+    if r.text("reason") == Some(DOUBLED_SLASH) {
+        format!("<code>{}</code>", slashes(raw))
+    } else {
+        format!("<code>{}</code>", esc(raw))
     }
 }
 
@@ -401,7 +463,7 @@ fn fix_once(out: &mut String, d: &Digest) {
                     mark(Level::of_link(r.text("outcome"), r.text("reason"))),
                     num(r.int("links")),
                     num(r.int("pages")),
-                    target_link(r.text("target").unwrap_or(""), r.text("fragment")),
+                    target_cell(r, r.text("fragment")),
                     problem(r.text("outcome"), r.text("reason")),
                     status_cell(r.int("status")),
                     source(
@@ -450,7 +512,9 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
          <code>&lt;a href&gt;</code>, and <i>Problem</i> and <i>Status</i> what the target \
          answered.</p>\n\
          <p>A link to a URL with a doubled slash in its path is broken whatever the URL answered, \
-         reason <code>doubled_slash</code>: the page linking there is the one to correct. Its \
+         reason <code>doubled_slash</code>: the page linking there is the one to correct. The \
+         doubled slash is marked, and where a redirect lands on it, the landing is under \
+         <i>Resolves to</i>. Its \
          row also counts the links <i>broken through it</i>, the relative links on the pages \
          such a link reaches, which the doubled slash breaks, and ranks by them; those pages \
          count only their absolute links, or none where a page at the URL without the doubled \
@@ -510,8 +574,8 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
             .map(|r| {
                 let mut cells = vec![
                     mark(Level::of_link(r.text("outcome"), r.text("reason"))),
-                    format!("<code>{}</code>", esc(r.text("raw_href").unwrap_or(""))),
-                    target_link(r.text("target").unwrap_or(""), None),
+                    written_as(r),
+                    target_cell(r, None),
                     r.text("fragment")
                         .map_or_else(|| "-".to_owned(), |f| format!("<code>{}</code>", esc(f))),
                     esc(r.text("kind").unwrap_or("")),

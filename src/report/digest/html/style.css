@@ -29,6 +29,7 @@ h3 + p + .scroll th:first-child { width: 60%; }
 a { color: var(--accent); text-decoration: none; overflow-wrap: anywhere; }
 a:hover { text-decoration: underline; }
 code { font: .86em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+mark { background: none; color: var(--bad); font-weight: 700; }
 small, .muted { color: var(--muted); }
 p { margin: .5rem 0; }
 dl.meta { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; margin: 10px 0 0; }

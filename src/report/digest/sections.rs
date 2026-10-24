@@ -13,7 +13,7 @@ use crate::report::redirects;
 use crate::report::request::{Report, Request};
 use crate::report::sql::Sql;
 use crate::report::table::{Cell, Table};
-use crate::store::{Mode, RunId};
+use crate::store::{DOUBLED_SLASH, Mode, RunId, TARGET_URL_DOUBLES};
 
 /// A link of `view`, a `report_*` link view, on a crawled page.
 const ON_CRAWLED: &str = " JOIN report_pages pg ON pg.run_id = b.run_id \
@@ -245,14 +245,28 @@ pub(super) fn pages(conn: &Connection, run: RunId, _: PageCounts) -> Result<Tabl
     sql.fetch(conn)
 }
 
+/// The redirected targets doubling no slash themselves, joined as `dl` to a
+/// `doubled_slash` link `b`: `dl.final_url` is its `landing`, which then
+/// doubles one (D71). Only the redirected targets are joined, a join of
+/// every target by URL taking several times as long.
+fn landing_join() -> String {
+    format!(
+        "LEFT JOIN (SELECT t.run_id, t.url, t.final_url FROM targets t \
+         WHERE t.final_url IS NOT NULL AND NOT {TARGET_URL_DOUBLES}) dl \
+         ON b.reason = '{DOUBLED_SLASH}' AND dl.run_id = b.run_id AND dl.url = b.target "
+    )
+}
+
 /// Every broken link on a crawled page, a page's together, an unresolved
-/// xref with its `hint` (D65); the caller puts the pages in `pages`' order.
+/// xref with its `hint` (D65) and a doubled slash its `landing`; the caller
+/// puts the pages in `pages`' order.
 pub(super) fn broken(conn: &Connection, run: RunId) -> Result<Table, Error> {
     let mut sql = Sql::new(
-        "SELECT b.page, b.raw_href, b.target, b.fragment, b.kind, b.outcome, b.reason, b.hint, \
-         b.status::INTEGER AS status FROM report_broken b",
+        "SELECT b.page, b.raw_href, b.target, dl.final_url AS landing, b.fragment, b.kind, \
+         b.outcome, b.reason, b.hint, b.status::INTEGER AS status FROM report_broken b",
     );
     sql.push(ON_CRAWLED)
+        .push(&landing_join())
         .push("WHERE b.run_id = ")
         .bind(run.0)
         .push(" ORDER BY b.page, b.outcome DESC, b.raw_href, b.fragment");
@@ -261,16 +275,17 @@ pub(super) fn broken(conn: &Connection, run: RunId) -> Result<Table, Error> {
 
 /// The broken targets, the one named by the most links first and then by the
 /// most pages, each with the source of the page it names where the run holds
-/// it: the page a redirect landed on, for a link to a page that moved.
+/// it: the page a redirect landed on, for a link to a page that moved. A
+/// doubled slash has its `landing`, as in [`broken`].
 pub(super) fn broken_targets(conn: &Connection, run: RunId) -> Result<Table, Error> {
     let mut sql = Sql::new(
-        "SELECT b.target, b.fragment, max(b.outcome) AS outcome, max(b.reason) AS reason, \
-         max(b.status)::INTEGER AS status, count(*)::BIGINT AS links, \
+        "SELECT b.target, max(dl.final_url) AS landing, b.fragment, max(b.outcome) AS outcome, \
+         max(b.reason) AS reason, max(b.status)::INTEGER AS status, count(*)::BIGINT AS links, \
          count(DISTINCT b.src_url_id)::BIGINT AS pages, max(tp.source_repo) AS source_repo, \
          max(tp.source_path) AS source_path, max(tp.source_url) AS source_url \
          FROM report_broken b",
     );
-    sql.push(ON_CRAWLED).push(
+    sql.push(ON_CRAWLED).push(&landing_join()).push(
         "LEFT JOIN targets t ON t.run_id = b.run_id AND t.url = b.target \
          LEFT JOIN targets landing ON landing.run_id = t.run_id AND landing.url = t.final_url \
          LEFT JOIN pages tp ON tp.run_id = b.run_id \
@@ -278,7 +293,7 @@ pub(super) fn broken_targets(conn: &Connection, run: RunId) -> Result<Table, Err
          WHERE b.run_id = ",
     );
     sql.bind(run.0)
-        .push(" GROUP BY b.target, b.fragment ORDER BY 6 DESC, 7 DESC, 1, 2");
+        .push(" GROUP BY b.target, b.fragment ORDER BY 7 DESC, 8 DESC, 1, 3");
     sql.fetch(conn)
 }
 
