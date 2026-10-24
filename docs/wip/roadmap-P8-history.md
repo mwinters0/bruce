@@ -131,7 +131,11 @@ The JSON keeps its own order.
 8. **Errors**, apart from breakage (D16).
 9. **Housekeeping**, collapsed: redirected links to update, the sitemap's
    entries no page was fetched for, orphans,
-   unlisted pages, and the unchecked counts by reason.
+   unlisted pages, and the unchecked counts by reason, **each reason
+   explained, with the hosts or path prefixes it covers most, and the external
+   hosts whose links were checked**, all read off the run's rows (2026-10-24,
+   maintainer: a reader cannot know what `out_of_scope` means, or which hosts
+   were allowlisted).
 
 **The digest counts every kind**, `kind` a column, where `report` counts
 `anchor` alone unless asked (D13): a broken image is on a page someone is

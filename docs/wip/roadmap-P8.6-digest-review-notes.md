@@ -58,3 +58,24 @@ Placed by this session, the maintainer not having named them: the header and
 the figures stay open and first; "Since the last run" (3, 8.8) stays after the
 figures; "Anchors removed" (7, 8.7) follows the targets; the errors precede the
 housekeeping.
+
+## Finding 3: the unchecked reasons are unexplained
+
+Maintainer, 2026-10-24, on reading 8.4.3: good. The housekeeping's unchecked
+links need a legend: a reader may not know what `out_of_scope` means, or which
+hosts were allowlisted. On run 1 (`frontier.rs`, `plan`, against the rows):
+
+- **`out_of_scope`**, 157,827 links: on a root's own host and outside every
+  root's scope. Here they are docs.fedoraproject.org's other locales, about
+  2,307 links to each, every page's language menu.
+- **`host_not_allowlisted`**, 27,405 links to 1,315 hosts, github.com (1,196),
+  fedoraproject.org (986) and spdx.org (601) the most linked.
+- **`skipped`**, 1,958: a `skip` glob, here forge's "new issue" links.
+- **`scheme`**, 280: not http or https, `mailto:` mostly.
+- **The run records no allowlist, `skip` or scope**, only `config_hash`. The
+  hosts checked are read off its rows instead: on run 1, forge.fedoraproject.org
+  alone. An allowlisted host no page links to is not shown, and does not need to
+  be. Recording the config in the run was rejected, being a schema change for
+  nothing the reader lacks.
+
+**It spawns 8.4.4**, and amends P8's spec, "What the document holds", item 9.
