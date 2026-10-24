@@ -432,7 +432,8 @@ newly check from new breakage. **8.15**, from the review of 8.13's call
 (2026-10-24), lands before 8.14 too. The checklist lists 8.6 after them.
 **8.16 to 8.18**, from the review of 8.14's crawl (2026-10-24), land "A
 trailing slash is pedantic": 8.16, the reason, before 8.6 resumes, the
-digest reading it off 8.14's database; 8.17 and 8.18 after 8.6. **8.19**
+digest reading it off 8.14's database; 8.17 after 8.6, and 8.18, rewritten by
+8.6's tenth finding, before it goes on (maintainer, 2026-10-24). **8.19**
 lands "Severity is marked" after 8.16, whose level it shows, and before 8.6
 resumes.
 

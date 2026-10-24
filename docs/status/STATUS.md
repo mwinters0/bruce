@@ -128,16 +128,16 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   and linking pages inside, so a phone need not scroll across the table;
   earned by 8.6's ninth finding.
   Notes: [`../wip/roadmap-P8.4.6-redirect-details-notes.md`](../wip/roadmap-P8.4.6-redirect-details-notes.md).
+- [ ] **8.18** A link into a URL whose path doubles a slash: `broken_url`,
+  reason `doubled_slash`; the page there counted only where it has no twin,
+  its broken path-relative links the linking page's, shown as a count
+  "broken through it" and ranked with red.
 - [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
   verdict and what it spawns in the notes.
   In progress; findings so far in
   [`../wip/roadmap-P8.6-digest-review-notes.md`](../wip/roadmap-P8.6-digest-review-notes.md).
 - [ ] **8.17** A `broken_url` link whose URL with its final `/` toggled
   answers: still broken, the digest naming that URL as its fix.
-- [ ] **8.18** A link into a URL whose path doubles a slash: `broken_url`,
-  reason `doubled_slash`; the page there counted only where it has no twin,
-  its broken path-relative links the linking page's, shown as a count
-  "broken through it" and ranked with red.
 - [ ] **8.7** `changed` and `anchors-removed`: `report` children and kinds,
   the scope changed and the root missed flagged.
 - [ ] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,
