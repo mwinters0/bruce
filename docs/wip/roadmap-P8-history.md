@@ -127,6 +127,14 @@ The JSON keeps its own order.
    link, fragment, reason, status).
 6. **By repo**: the repos ranked by the broken links on their pages, each a
    link to the repo and in-page links to its pages' rows in 5 (D17).
+
+**5 and 6 count and rank by severity** (maintainer, 2026-10-24, on 8.14's
+digest; 8.6's notes, "Finding 9"): a row holds a page's or a repo's red links
+(`broken_url` and `error`) and amber ones (`broken_anchor`), "Severity is
+marked", and ranks by its red, then its amber. In the HTML its summary reads
+"● 181 broken links, ● 2 missing fragments (183 issues total)", the dots
+red and amber, a level with no links left out with its dot, and nothing more:
+not the links on the page, nor a repo's pages.
 7. **Anchors removed**: the pages that lost anchors links still name.
 8. **Errors**, apart from breakage (D16).
 9. **Housekeeping**, collapsed: redirected links to update, the sitemap's
@@ -135,7 +143,13 @@ The JSON keeps its own order.
    explained, with the hosts or path prefixes it covers most, and the external
    hosts whose links were checked**, all read off the run's rows (2026-10-24,
    maintainer: a reader cannot know what `out_of_scope` means, or which hosts
-   were allowlisted).
+   were allowlisted). **In the HTML each landing of the redirected links is
+   a `<details>`** of its own, as a page is in 5: its summary the dot, the
+   landing and its counts, its redirecting URLs, first hops and linking pages
+   inside. Placed by this session on the maintainer's finding that the table
+   ran too wide to scroll on a phone, its lists of linking pages the cause
+   (8.6's notes, "Finding 9"); the other lists stay tables, none of their
+   cells a list.
 
 **The digest counts every kind**, `kind` a column, where `report` counts
 `anchor` alone unless asked (D13): a broken image is on a page someone is

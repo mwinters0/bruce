@@ -119,6 +119,13 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   a section's summary; `broken_url` and `error` red, `broken_anchor` and a
   redirect that is not pedantic amber, pedantic a grey ring.
   Notes: [`../wip/roadmap-P8.19.1-severity-findings-notes.md`](../wip/roadmap-P8.19.1-severity-findings-notes.md).
+- [ ] **8.4.5** The pages' and repos' rows counted and ranked by severity:
+  red (`broken_url`, `error`) then amber (`broken_anchor`), each summary
+  "● N broken links, ● M missing fragments (T issues total)", a level with
+  no links left out; earned by 8.6's ninth finding.
+- [ ] **8.4.6** The redirected links one `<details>` per landing, its hops
+  and linking pages inside, so a phone need not scroll across the table;
+  earned by 8.6's ninth finding.
 - [ ] **8.6** The maintainer's review of a real en-US digest: no code, the
   verdict and what it spawns in the notes.
   In progress; findings so far in

@@ -171,10 +171,31 @@ the wrong contract, and amends P8's spec, "Severity is marked". These levels
 are defaults: the maintainer placed each kind's classification in the
 profile, filed in P7's inbox.
 
+## Finding 9: rows counted by severity; the redirects too wide
+
+Maintainer, 2026-10-24, on 8.14's digest after 8.19.1:
+
+- **A row's summary in the pages and repos sections** is to read "● 181
+  broken links, ● 2 missing fragments (183 issues total)", the dots red and
+  amber, a level with no links left out rather than reported as 0. Asked, the
+  maintainer counted a row's `error` links in its red, as "Finding 8" makes
+  them, and dropped the rest of the old parenthetical ("of 644 links on the
+  page", "on 15 of its 44 pages").
+- **The rows rank by their red, then their amber.**
+- **"Redirected links" renders columns so wide** that a phone scrolls across
+  large empty spaces. The design was left to this session: each landing a
+  `<details>` of its own, the width being its cell of linking pages (2,365 for
+  `docs.fedoraproject.org/en-US/docs/`) and its hops; the other housekeeping
+  lists, with no cell holding a list, stay tables.
+
+**It earns 8.4.5 and 8.4.6**, 8.4 having shipped those summaries, that
+ranking and that table, and amends P8's spec, "What the document holds".
+
 ## Where the review stands
 
-Findings 1 to 8 are filed. Every slice findings 1 to 7 spawned ahead of the
-review has landed (8.4.2 to 8.4.4, 8.10 to 8.13, 8.15, 8.16, 8.19 and 8.19.1). The review **resumed on 8.14's crawl**, no digest of 8.1's database showing what 8.10 to
+Findings 1 to 9 are filed. Every slice findings 1 to 8 spawned ahead of the
+review has landed (8.4.2 to 8.4.4, 8.10 to 8.13, 8.15, 8.16, 8.19 and 8.19.1),
+and 8.4.5 and 8.4.6 land before the review goes on. The review **resumed on 8.14's crawl**, no digest of 8.1's database showing what 8.10 to
 8.13 reclassify. After a round of fixes, the digest is rewritten from the
 copy with a release build:
 
