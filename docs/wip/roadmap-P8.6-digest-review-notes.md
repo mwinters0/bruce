@@ -42,10 +42,8 @@ labels neither:
 heading saying which way it points. The JSON's field names stay, a rename
 being a change a loader would misread (D64's `format_version`).
 
-**Open, for the maintainer**: whether "By repo" should also count broken
-links by the repo of their target, the repo "Fix in" names, beside the repo
-of their page. That changes what the section delivers, so 8.4.2 does not
-decide it.
+"By repo" counts by the repo of the link's page alone (maintainer,
+2026-10-24; D64, Rejected).
 
 ## Finding 2: the sections' order and folding
 
@@ -174,6 +172,4 @@ target/release/bruce report digest --db <8.14's database> \
 cd runs/p8.6-review/digest && setsid python3 -m http.server 8086 --bind 0.0.0.0
 ```
 
-**Still open for the maintainer**: Finding 1's question, whether "Repos"
-should also count broken links by their target's repo. 8.16 and 8.19 land
-before the review resumes.
+8.16 and 8.19 land before the review resumes.
