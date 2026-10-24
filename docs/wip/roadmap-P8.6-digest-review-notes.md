@@ -3,7 +3,7 @@
 The review is in progress and is expected to take several rounds, so this doc
 holds the findings so far, not a verdict. Findings 1 to 7 were read off run 1
 of 8.1's crawl (`runs/p8.6-review/digest/en-us-2026-10-23.{html,json}`). The
-digest under review is now run 1 of 8.14's crawl, written at `f24ca61` from a
+digest under review is now run 1 of 8.14's crawl, written at `9d8f196` from a
 copy of its database, `runs/p8.6-review/en-us-p8.14.duckdb`:
 `runs/p8.6-review/digest/en-us-2026-10-24.{html,json}`, served by
 `python3 -m http.server 8086` from that directory (its PID in
