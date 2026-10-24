@@ -1,9 +1,11 @@
 # P8.6 — The maintainer's review of a real en-US digest: notes
 
 The review is in progress and is expected to take several rounds, so this doc
-holds the findings so far, not a verdict. The digest under review is run 1 of
-8.1's crawl, written at `c02085a` from a copy of its database:
-`runs/p8.6-review/digest/en-us-2026-10-23.{html,json}`, served by
+holds the findings so far, not a verdict. Findings 1 to 7 were read off run 1
+of 8.1's crawl (`runs/p8.6-review/digest/en-us-2026-10-23.{html,json}`). The
+digest under review is now run 1 of 8.14's crawl, written at `f24ca61` from a
+copy of its database, `runs/p8.6-review/en-us-p8.14.duckdb`:
+`runs/p8.6-review/digest/en-us-2026-10-24.{html,json}`, served by
 `python3 -m http.server 8086` from that directory (its PID in
 `runs/p8.6-review/server.pid`). It is rewritten in place after each round of
 fixes, so the URL stays the same.
@@ -160,16 +162,14 @@ circle in the first column, the design left to this session. **It spawns
 
 ## Where the review stands
 
-Findings 1 to 5 are filed: 8.4.2 to 8.4.4 and 8.10 to 8.12 have landed, and
-**8.13 (KD21) lands before 8.14's crawl** (maintainer, 2026-10-24: a host
-that does not resolve or never answers must not hide its links as
-unchecked). The review **resumes on 8.14's crawl**, no digest of 8.1's
-database showing what 8.10 to 8.13 reclassify:
+Findings 1 to 7 are filed, and every slice they spawned ahead of the review
+has landed: 8.4.2 to 8.4.4, 8.10 to 8.13, 8.15, 8.16 and 8.19. The review
+**resumes on 8.14's crawl**, no digest of 8.1's database showing what 8.10 to
+8.13 reclassify. After a round of fixes, the digest is rewritten from the
+copy with a release build:
 
 ```sh
-target/release/bruce report digest --db <8.14's database> \
+target/release/bruce report digest --db runs/p8.6-review/en-us-p8.14.duckdb \
   --out runs/p8.6-review/digest --name en-us
 cd runs/p8.6-review/digest && setsid python3 -m http.server 8086 --bind 0.0.0.0
 ```
-
-8.16 and 8.19 land before the review resumes.
