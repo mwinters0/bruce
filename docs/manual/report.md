@@ -18,14 +18,14 @@ timeout, a 5xx after retries, a 401, 403 or 429).
 
 | Argument | Default | Meaning |
 |---|---|---|
-| `REPORT` | required | `broken`, `errors`, `stats`, `inbound`, `sitemap`, `orphans`, `unlisted`, `redirects`, `diff`, `introduced` or `inverse`; or `digest`, which writes files and takes its own options, so [`digest.md`](digest.md) documents it. |
+| `REPORT` | required | `broken`, `errors`, `stats`, `inbound`, `sitemap`, `orphans`, `unlisted`, `redirects`, `diff`, `changed`, `anchors-removed`, `introduced` or `inverse`; or `digest`, which writes files and takes its own options, so [`digest.md`](digest.md) documents it. |
 | `--db FILE` | `bruce.duckdb` | The database to read. It must exist; a report never creates one. |
-| `--run N` | the latest finished run | The run to read. See [Which run](#which-run). Not for `diff`. For `introduced` and `inverse`, a [`check-dir`](check-dir.md) run. |
-| `--from N` | the finished run before `--to` | `diff` only: the run to compare against. |
-| `--to N` | the latest finished run | `diff` only: the run to compare. |
-| `--repo REPO` | none | Only pages whose source file is in this repo, as the page records it (`https://forge.fedoraproject.org/fedora/docs`); for `broken`, `errors`, `stats`, `redirects`, `diff`, `introduced` and `inverse`, the links on those pages (for `inverse`, the baseline's pages outside the build). |
+| `--run N` | the latest finished run | The run to read. See [Which run](#which-run). Not for `diff`, `changed` or `anchors-removed`. For `introduced` and `inverse`, a [`check-dir`](check-dir.md) run. |
+| `--from N` | the finished run before `--to` | `diff`, `changed` and `anchors-removed` only: the run to compare against. |
+| `--to N` | the latest finished run | `diff`, `changed` and `anchors-removed` only: the run to compare. |
+| `--repo REPO` | none | Only pages whose source file is in this repo, as the page records it (`https://forge.fedoraproject.org/fedora/docs`); for `broken`, `errors`, `stats`, `redirects`, `diff`, `introduced` and `inverse`, the links on those pages; for `changed` and `anchors-removed`, the page a row lists (for `inverse`, the baseline's pages outside the build). |
 | `--fact KEY=VALUE` | none | Only pages with this fact, such as `antora.component=fedora-docs`, or the links on them. Repeat to require several. |
-| `--kind KIND` | `anchor`; every kind for `introduced` and `inverse` | Count links of this kind. Repeat to add kinds; `all` is every kind. `sitemap` and `unlisted` ignore it. |
+| `--kind KIND` | `anchor`; every kind for `introduced` and `inverse` | Count links of this kind. Repeat to add kinds; `all` is every kind. `sitemap`, `unlisted` and `changed` ignore it. |
 | `--top N` | all rows | Print the first N rows, in the report's order. `introduced`'s and `inverse`'s counts are then counted over those rows alone. |
 | `--format` | `text` | `text`, or `json`. |
 
@@ -49,11 +49,11 @@ the report is refused, since those rows are the baseline's and not the
 build's; name a run with `--run`. `diff`'s default `--to` does the same.
 [`bruce prune`](prune.md) deletes the runs a database no longer needs.
 
-`diff` reads two runs. With neither option it compares the latest two
+`diff`, `changed` and `anchors-removed` read two runs. With neither option it compares the latest two
 finished runs; `--to N` alone compares run N with the finished run before it,
 and `--from N` alone compares run N with the latest finished run. Named runs
-may be unfinished, which `bruce report` says on stderr. `--run` with `diff`,
-and `--from` or `--to` with any other report, are command-line errors.
+may be unfinished, which `bruce report` says on stderr. `--run` with one of
+those, and `--from` or `--to` with any other report, are command-line errors.
 
 ## The reports
 
@@ -145,6 +145,40 @@ not reach as `new`. `new` comes first, then `broken_url` before
 `broken_anchor`. `--repo` and `--fact` keep the rows whose page matches in
 the run the row is read from, and `--kind` chooses the links compared in
 both. Below the text table a line names the two runs.
+
+**`changed`** has a row for each page a root's scope covers whose content
+hash moved between the runs, or whose hash could not be compared, or which its
+root's `hash_root` missed: `change`, `page`, `scope_from`, `scope_to`,
+`root_missed`, `title`, `source_repo` and `source_path`, read from `--to`'s
+page. A hash is comparable only where both runs hashed the page over the same
+region: a page's `hash_scope` is `root` where its root's `hash_root` matched,
+`region` where its profile's content region was hashed and `whole` where the
+page was ([the content hash](config.md#roots)).
+`change` is `changed` where the `hash_scope`, and the root's `hash_root` and
+`hash_exclude`, are the same in both runs and the hash differs, and
+`scope_changed` where either differs, whatever the hash did. `root_missed` is
+true for a page hashed `whole` under a root that sets `hash_root`, a root
+whose `hash_root` matched nothing on it, so that its chrome is hashed and it
+reads as changed on every build; such a page is a row whether or not its hash
+moved (`change` then `root_missed`), and does not need to be in `--from`. The
+rows are `changed`, then `scope_changed`, then `root_missed`, by page. Pages
+no root covers, as the forge's and the allowlisted ones, are not read, and nor
+are pages in only one of the runs (`diff` and `sitemap` tell those). `--kind` is
+ignored. Below the text table a line names the two runs.
+
+**`anchors-removed`** has a row for each page that lost an anchor which
+links still name: `page`, `anchor`, `links`, `pages`, `source_repo` and
+`source_path`. The anchor is one `--from`'s page had and `--to`'s lacks, and
+`anchor` is the fragment as the links write it; `links` counts the links in
+`--to` that name it (the same links `broken` lists as `broken_anchor`, a link
+that was redirected counted for the page it landed on) and `pages` the pages
+they are on. The most linked first, then by page. An anchor lost that nothing
+links to is no row, nor is a missing fragment the page never had, nor an
+anchor on a page `--from` did not hold. `--kind` chooses the links counted.
+`source_repo` is the repo of the page that lost the anchor, the one to restore it
+in, and `--repo` and `--fact` filter that page. With `--format json` each row
+also has `linking_pages`, an array of the pages whose links they are. Below the
+text table a line names the two runs.
 
 **`introduced`** reads a run that [`bruce check-dir`](check-dir.md) wrote,
 and has a row for each link that is `broken_url` or `broken_anchor` in it and

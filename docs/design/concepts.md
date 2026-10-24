@@ -60,7 +60,7 @@ decisions each carries are cited in its module's doc.
   statement and the filters every report shares in `sql`, `broken`'s and
   `errors`' query in `links`, `stats`' and the choice among all the reports in
   `query`, how a page is reached (`inbound`, `orphans`, `sitemap`,
-  `unlisted`) in `reach`, `redirects`, `diff` (two runs), the gate
+  `unlisted`) in `reach`, `redirects`, `diff`, `changed` and `anchors_removed` (two runs each), the gate
   (`introduced`: a CI run against its baseline, D9) and the `inverse` check
   (what the change removed that pages outside the build link to, D56) each in their own child,
   the crawl run's digest (D64) in `digest`, its document in the `document` child, its sections' queries in `sections`,

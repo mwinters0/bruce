@@ -24,6 +24,12 @@ pub enum Report {
     Unlisted,
     /// The links broken in one run and not in another, and the reverse.
     Diff,
+    /// The pages whose content hash moved between two runs, those whose hash
+    /// scope changed and those a root's `hash_root` missed (D15).
+    Changed,
+    /// The anchors a page had in one run and lost in another, that links
+    /// still name.
+    AnchorsRemoved,
     /// The redirected links, grouped by where they landed.
     Redirects,
     /// A CI run's broken links that its baseline did not have broken, the
@@ -36,7 +42,7 @@ pub enum Report {
 
 impl Report {
     /// Every report built.
-    pub const ALL: [Report; 11] = [
+    pub const ALL: [Report; 13] = [
         Report::Broken,
         Report::Errors,
         Report::Stats,
@@ -46,6 +52,8 @@ impl Report {
         Report::Unlisted,
         Report::Redirects,
         Report::Diff,
+        Report::Changed,
+        Report::AnchorsRemoved,
         Report::Introduced,
         Report::Inverse,
     ];
@@ -62,9 +70,20 @@ impl Report {
             Report::Unlisted => "unlisted",
             Report::Redirects => "redirects",
             Report::Diff => "diff",
+            Report::Changed => "changed",
+            Report::AnchorsRemoved => "anchors-removed",
             Report::Introduced => "introduced",
             Report::Inverse => "inverse",
         }
+    }
+
+    /// Whether the report compares two runs, `from` and `to`, where the
+    /// others read one.
+    pub fn compares(self) -> bool {
+        matches!(
+            self,
+            Report::Diff | Report::Changed | Report::AnchorsRemoved
+        )
     }
 }
 
@@ -83,10 +102,11 @@ pub struct Request {
     pub report: Report,
     /// The run; the latest finished one where `None`.
     pub run: Option<RunId>,
-    /// `diff` only: the run compared against, by default the finished run
-    /// before `to`.
+    /// A two-run report only (`Report::compares`): the run compared against,
+    /// by default the finished run before `to`.
     pub from: Option<RunId>,
-    /// `diff` only: the run compared, by default the latest finished one.
+    /// A two-run report only: the run compared, by default the latest
+    /// finished one.
     pub to: Option<RunId>,
     /// `pages.source_repo` of the page a row is about: the linking page for a
     /// link report, else the page listed.
@@ -129,14 +149,15 @@ impl Request {
 /// A report's rows, and what to say beside them.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Output {
-    /// The run read, or for `diff` the one compared (`to`).
+    /// The run read, or for a two-run report the one compared (`to`).
     pub run: RunId,
     /// The run never finished, so the report is incomplete.
     pub unfinished: bool,
     /// Where no run was named, the latest run after the one read that never
     /// finished, which a report of the latest finished run does not see.
     pub later_unfinished: Option<RunId>,
-    /// `diff` only: the run compared against, and whether it never finished.
+    /// A two-run report only: the run compared against, and whether it never
+    /// finished.
     pub from: Option<(RunId, bool)>,
     pub table: Table,
     /// Lines for a text rendering to print under the table; JSON omits them.

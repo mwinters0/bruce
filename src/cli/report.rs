@@ -1,7 +1,7 @@
 //! `bruce report <kind> [--db f] [--run n | --from n --to n] [--repo r]
 //! [--fact k=v] [--kind k] [--top n] [--format f]`: one report over one run,
-//! or `diff` over two (D6, D27): by default the latest finished run, and for
-//! `diff` the two latest. `bruce report digest --out dir [--name s] [--db f]
+//! or `diff`, `changed` or `anchors-removed` over two (D6, D27): by default the
+//! latest finished run, and for those the two latest. `bruce report digest --out dir [--name s] [--db f]
 //! [--run n] [--format json|html|both]` writes a crawl run's dated digest
 //! instead (D64).
 //!
@@ -225,14 +225,14 @@ pub fn command() -> Command {
                 .long("from")
                 .value_name("N")
                 .value_parser(value_parser!(u64))
-                .help("`diff` only: the run to compare against [default: the finished run before --to]"),
+                .help("`diff`, `changed` and `anchors-removed` only: the run to compare against [default: the finished run before --to]"),
         )
         .arg(
             Arg::new("to")
                 .long("to")
                 .value_name("N")
                 .value_parser(value_parser!(u64))
-                .help("`diff` only: the run to compare [default: the latest finished]"),
+                .help("`diff`, `changed` and `anchors-removed` only: the run to compare [default: the latest finished]"),
         )
         .arg(
             Arg::new("repo")
@@ -269,8 +269,8 @@ pub fn command() -> Command {
 }
 
 /// The options a report or the digest does not take, and the ones that name
-/// a run, which `diff` and the other reports take differently: `diff` reads
-/// `--from` and `--to`, the rest `--run`.
+/// a run, which the reports that compare two runs and the others take
+/// differently: the first read `--from` and `--to`, the rest `--run`.
 pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
     let name = m.get_one::<String>("report").map(String::as_str);
     let given = |name| m.contains_id(name);
@@ -318,11 +318,17 @@ pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
             &format!("`{format}` is the digest's; a report is text or json"),
         );
     }
-    if name == Some("diff") {
+    if let Some(report) = Report::ALL
+        .into_iter()
+        .find(|r| Some(r.name()) == name && r.compares())
+    {
         if given("run") {
             return refuse(
                 "--run",
-                "diff compares two runs; name them with --from and --to",
+                &format!(
+                    "{} compares two runs; name them with --from and --to",
+                    report.name()
+                ),
             );
         }
     } else if let Some(flag) = [("from", "--from"), ("to", "--to")]
@@ -331,7 +337,7 @@ pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
     {
         return refuse(
             flag,
-            "only diff compares two runs; the other reports read --run",
+            "only diff, changed and anchors-removed compare two runs; the other reports read --run",
         );
     }
     Ok(())

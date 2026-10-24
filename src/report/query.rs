@@ -1,7 +1,7 @@
 //! The report to run, and `stats`' query: a view, the run, the filters, the
 //! order and the limit. The page reports are in `reach`; `broken` and
-//! `errors` are `links`', and `redirects`, `diff` and `introduced` are link
-//! reports of their own.
+//! `errors` are `links`', and `redirects`, `introduced` and the two-run
+//! `diff`, `changed` and `anchors-removed` are reports of their own.
 
 use duckdb::Connection;
 
@@ -11,7 +11,7 @@ use super::request::{Report, Request};
 use super::run::Chosen;
 use super::sql::{PAGE, Sql};
 use super::table::{Cell, Table};
-use super::{diff, gate, inverse, reach, redirects};
+use super::{anchors_removed, changed, diff, gate, inverse, reach, redirects};
 use crate::store::RunId;
 
 /// Runs the report, returning its table and the notes a text rendering adds.
@@ -48,9 +48,15 @@ pub(super) fn run(
             ];
             Ok((table, notes))
         }
-        Report::Diff => {
-            let (from, _) = chosen.from.expect("choose gives a diff its base run");
-            Ok(diff::diff(conn, from, run, request)?)
+        Report::Diff | Report::Changed | Report::AnchorsRemoved => {
+            let (from, _) = chosen
+                .from
+                .expect("choose gives a two-run report its base run");
+            match request.report {
+                Report::Diff => Ok(diff::diff(conn, from, run, request)?),
+                Report::Changed => Ok(changed::changed(conn, from, run, request)?),
+                _ => Ok(anchors_removed::anchors_removed(conn, from, run, request)?),
+            }
         }
     }
 }

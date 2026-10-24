@@ -6,14 +6,17 @@
 //! (`run`), runs one report and renders it (`table`).
 //!
 //! The filters are the same for every report: the links of kinds `kinds`
-//! (`anchor` by default, every kind for the gate, D13; `sitemap` and `unlisted` count no link), and the
+//! (`anchor` by default, every kind for the gate, D13; `sitemap`, `unlisted` and `changed` count no link), and the
 //! pages in the repo `repo` (D17) holding every `facts` pair (D32, D38). A link
 //! report filters on the page a link is on, a page report on the page a row
 //! lists; `links` has `broken` and `errors`, `query` `stats`, `reach` how a page is
 //! reached, `redirects` the moved links, `diff` what broke or was fixed
-//! between two runs, `gate` what a CI run broke that its baseline had not and `inverse` what
+//! between two runs, `changed` the pages whose content moved, `anchors_removed` the anchors a page lost
+//! that links still name, `gate` what a CI run broke that its baseline had not and `inverse` what
 //! the change removed that pages outside the build link to.
 
+mod anchors_removed;
+mod changed;
 mod diff;
 mod digest;
 mod error;

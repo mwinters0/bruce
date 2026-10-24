@@ -1,13 +1,13 @@
-//! Choosing the run a report reads, or the two a `diff` compares.
+//! Choosing the run a report reads, or the two a two-run report compares.
 
 use duckdb::Connection;
 
 use super::error::Error;
-use super::request::{Report, Request};
+use super::request::Request;
 use crate::store::RunId;
 
-/// The runs a request reads: `run`, and for `diff` the run it is compared
-/// against. Each carries whether it never finished.
+/// The runs a request reads: `run`, and for a two-run report the run it is
+/// compared against. Each carries whether it never finished.
 pub(super) struct Chosen {
     pub(super) run: RunId,
     pub(super) unfinished: bool,
@@ -16,11 +16,11 @@ pub(super) struct Chosen {
     pub(super) from: Option<(RunId, bool)>,
 }
 
-/// The runs `request` names, else the latest finished one. A `diff` reads
-/// `to` and `from`, which default to the latest finished run and the finished
+/// The runs `request` names, else the latest finished one. A two-run report
+/// reads `to` and `from`, which default to the latest finished run and the finished
 /// run before `to`; every other report reads `run`.
 pub(super) fn choose(conn: &Connection, request: &Request) -> Result<Chosen, Error> {
-    if request.report != Report::Diff {
+    if !request.report.compares() {
         let (run, unfinished, later_unfinished) = one(conn, request.run)?;
         return Ok(Chosen {
             run,
