@@ -152,6 +152,10 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
 - [x] **8.17** A `broken_url` link whose URL with its final `/` toggled
   answers: still broken, the digest naming that URL as its fix.
   Notes: [`../wip/roadmap-P8.17-toggled-slash-notes.md`](../wip/roadmap-P8.17-toggled-slash-notes.md).
+- [ ] **8.17.1** A link redirected onto a `broken_url` landing whose URL
+  with its final `/` toggled answers: the landing toggled, the digest showing
+  the landing, its `/` marked, and naming that URL as its fix; earned by the
+  review of 8.17's call.
 - [ ] **8.7** `changed` and `anchors-removed`: `report` children and kinds,
   the scope changed and the root missed flagged.
 - [ ] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,
@@ -178,11 +182,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **A toggled slash answers only with a 2xx, asked once.** 8.17's probe
-  counts a toggled URL that redirects as no answer, and never asks about a
-  target that was redirected before its 4xx, so a link that works for a reader
-  through one redirect shows no fix. Counting a redirect means following its
-  hops, each a request under the pace and robots.txt, and a destination that
-  may be a 404; D72 holds the reasoning. Reconsidering changes how many
-  `wrong_trailing_slash` rows a crawl shows and what it costs.

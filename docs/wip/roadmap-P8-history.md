@@ -325,7 +325,11 @@ fragment.
   it (D16) for a link a reader follows.
 - **A `broken_url` link whose URL with its final `/` toggled answers stays
   broken**, a reader landing on the error, and the digest names that URL as
-  its fix.
+  its fix. Where a redirect lands on the error, the landing's URL is the one
+  toggled and named (maintainer, 2026-10-24, reviewing 8.17), the fault being
+  the linking page's as for a doubled slash, and the link shows that landing
+  under *Resolves to*, "→ lands on …", its final `/` marked as a doubled
+  slash is. A toggled URL that redirects is no answer.
 - **A link to a URL whose path doubles a slash is `broken_url`, reason
   `doubled_slash`**, whatever it answered, as an unresolved xref is (D20),
   and whether the link names that URL or a redirect lands on it: the fault
@@ -445,7 +449,8 @@ trailing slash is pedantic": 8.16, the reason, before 8.6 resumes, the
 digest reading it off 8.14's database; 8.17 after 8.6, and 8.18, rewritten by
 8.6's tenth finding, before it goes on (maintainer, 2026-10-24), as does
 **8.18.1**, from the review of 8.18's calls, and **8.4.7 and 8.18.2**, from
-8.6's twelfth and eleventh findings. **8.19**
+8.6's twelfth and eleventh findings. **8.17.1**, from the review of 8.17's
+call, lands after it. **8.19**
 lands "Severity is marked" after 8.16, whose level it shows, and before 8.6
 resumes.
 
