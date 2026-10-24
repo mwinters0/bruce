@@ -1,4 +1,4 @@
-//! Subcommands (D27), one child module each: `check_dir`, `crawl`, `export_baseline`, `prune` and `report`. The only module that names a
+//! Subcommands (D27), one child module each: `check_dir`, `crawl`, `export_baseline`, `prune` and `report`, and `file`, the baseline file two of them read. The only module that names a
 //! concrete profile, to build the registry (D39).
 
 mod check_dir;
@@ -6,6 +6,7 @@ mod check_dir;
 pub mod crawl;
 mod db;
 mod export_baseline;
+mod file;
 mod interrupt;
 mod prune;
 mod report;

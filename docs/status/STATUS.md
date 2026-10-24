@@ -26,7 +26,7 @@ the profile's facts, the other locales its language menu names and the content h
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, the body decoding, the local fetcher over a map of URLs to files and the router that sends a URL the build holds to it and any other to HTTP;
 `crawl`, the frontier with the other locales learned and the URLs outside every scope waiting on them, the hops of a redirect, D16's outcomes, the ask of a 404's URL, or of the 404 a redirect lands on, with its final `/` toggled (D72), the schedule that gives a build's reads a budget of their own and each live host its share of the run's other slots (D61), sitemaps, the run that writes a target's rows and its stop, and a run from seeds checked against a baseline: the component-versions the build holds, `not_built`, the baseline's rows copied for what it lacks, and the xrefs into a component the build lacks resolved to the baseline's pages or the URLs they name;
 `ci`, a build directory read as its production URLs; and
-`report`, the `report_*` views, the choice of run, the eight single-run reports, `diff`, `changed` and `anchors-removed` over two runs, and the gate (`introduced` with the inverse check, the redirected links, the errors and the breakage already in the baseline; `check-dir --inverse fail|warn`), as a text table or JSON, and the digest of a crawl run (D64), written as dated JSON and HTML by `bruce report digest`.
+`report`, the `report_*` views, the choice of run, the eight single-run reports, `diff`, `changed` and `anchors-removed` over two runs, and the gate (`introduced` with the inverse check, the redirected links, the errors and the breakage already in the baseline; `check-dir --inverse fail|warn`), as a text table or JSON, and the digest of a crawl run (D64), written as dated JSON and HTML by `bruce report digest`, compared with the run before it, a named run or a baseline file (D73).
 `docs/manual/` holds the config reference, `bruce crawl`'s, `bruce check-dir`'s, `bruce report`'s, `bruce prune`'s, `bruce export-baseline`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -160,9 +160,14 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
 - [x] **8.7** `changed` and `anchors-removed`: `report` children and kinds,
   the scope changed and the root missed flagged.
   Notes: [`../wip/roadmap-P8.7-two-run-reports-notes.md`](../wip/roadmap-P8.7-two-run-reports-notes.md).
-- [ ] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,
-  section 3's causes, section 7, the figures' changes; over 8.14's en-US
-  crawl against 8.1's.
+- [x] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,
+  the header's compared run, the figures' changes and section 7 (anchors
+  removed); shown on 8.14's en-US crawl against 8.1's. Section 3 is 8.8.1.
+  Notes: [`../wip/roadmap-P8.8-digest-comparison-notes.md`](../wip/roadmap-P8.8-digest-comparison-notes.md).
+- [ ] **8.8.1** The digest's section 3, "since the last run": the breakage new
+  and fixed, each new row saying why by what the comparison held (P8's spec, "A
+  new break is laid at the door of what the comparison shows"), over 8.14's
+  en-US crawl against 8.1's; earned by 8.8's split.
 - [ ] **8.9** Servo's renders of the digest beside Chrome's headless shell's,
   after 8.6's verdict: whether Servo alone is enough to check how the
   digest renders, the verdict in the notes.

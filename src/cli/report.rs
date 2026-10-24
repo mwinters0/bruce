@@ -2,8 +2,8 @@
 //! [--fact k=v] [--kind k] [--top n] [--format f]`: one report over one run,
 //! or `diff`, `changed` or `anchors-removed` over two (D6, D27): by default the
 //! latest finished run, and for those the two latest. `bruce report digest --out dir [--name s] [--db f]
-//! [--run n] [--format json|html|both]` writes a crawl run's dated digest
-//! instead (D64).
+//! [--run n] [--from n | --since file|url] [--format json|html|both]` writes a
+//! crawl run's dated digest instead (D64), compared with another run (D73).
 //!
 //! A report reads a database a crawl wrote and never creates one; opening it
 //! installs the views, so a database from before them gains them here.
@@ -19,9 +19,10 @@ use clap::builder::PossibleValuesParser;
 use clap::{Arg, ArgAction, ArgMatches, Command, value_parser};
 
 use super::db;
+use super::file::BaselineFile;
 use crate::extract::Kind;
 use crate::profile::Registry;
-use crate::report::{self, Digest, Format, Report, Request};
+use crate::report::{self, Against, Digest, Format, Report, Request};
 use crate::store::{RunId, Store};
 
 /// The value of `REPORT` that writes the digest, which is no `Report`: it
@@ -81,9 +82,21 @@ impl DigestFormat {
 pub struct DigestArgs {
     pub db: Option<PathBuf>,
     pub run: Option<RunId>,
+    /// The run to compare with: `--from`, else a baseline file `--since`
+    /// names, else the finished crawl run before the digest's.
+    pub against: Compare,
     pub out: PathBuf,
     pub name: String,
     pub format: DigestFormat,
+}
+
+/// What `report digest` compares its run with.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Compare {
+    Previous,
+    Run(RunId),
+    /// A baseline file's path or URL.
+    Since(String),
 }
 
 impl From<&ArgMatches> for DigestArgs {
@@ -91,6 +104,11 @@ impl From<&ArgMatches> for DigestArgs {
         DigestArgs {
             db: m.get_one::<String>("db").map(PathBuf::from),
             run: m.get_one::<u64>("run").map(|&n| RunId(n)),
+            against: match (m.get_one::<u64>("from"), m.get_one::<String>("since")) {
+                (Some(&n), _) => Compare::Run(RunId(n)),
+                (_, Some(since)) => Compare::Since(since.clone()),
+                _ => Compare::Previous,
+            },
             out: m
                 .get_one::<String>("out")
                 .map(PathBuf::from)
@@ -225,7 +243,14 @@ pub fn command() -> Command {
                 .long("from")
                 .value_name("N")
                 .value_parser(value_parser!(u64))
-                .help("`diff`, `changed` and `anchors-removed` only: the run to compare against [default: the finished run before --to]"),
+                .conflicts_with("since")
+                .help("`diff`, `changed` and `anchors-removed`: the run to compare against [default: the finished run before --to]; `digest`: the run to compare with [default: the finished crawl run before --run]"),
+        )
+        .arg(
+            Arg::new("since")
+                .long("since")
+                .value_name("FILE|URL")
+                .help("`digest` only: compare with the run of this baseline file, a path or an http(s) URL, as `check-dir --baseline` takes one, instead of --from"),
         )
         .arg(
             Arg::new("to")
@@ -281,10 +306,9 @@ pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
         ))
     };
     if name == Some(DIGEST) {
-        let whole =
-            "the digest is of a whole run; it takes --run, --db, --out, --name and --format";
+        let whole = "the digest is of a whole run; it takes --run, --from, --since, --db, --out, \
+                     --name and --format";
         for (id, flag) in [
-            ("from", "--from"),
             ("to", "--to"),
             ("repo", "--repo"),
             ("fact", "--fact"),
@@ -311,6 +335,9 @@ pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
         if given(id) {
             return refuse(flag, "only digest writes files");
         }
+    }
+    if given("since") {
+        return refuse("--since", "only digest compares with a baseline file");
     }
     if let Some(format @ ("html" | "both")) = m.get_one::<String>("format").map(String::as_str) {
         return refuse(
@@ -436,12 +463,35 @@ fn report(args: &Args, registry: &Registry) -> Result<(), String> {
 /// `.html`, and prints the path of each (D64).
 fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
     let (store, db) = open(args.db.as_deref(), registry)?;
+    // The file outlives the digest, which reads the run imported from it.
+    let file = match &args.against {
+        Compare::Since(spec) => {
+            let runtime = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .map_err(|e| e.to_string())?;
+            Some(BaselineFile::open(spec, None, &runtime).map_err(|e| format!("--since {e}"))?)
+        }
+        _ => None,
+    };
+    let against = match (&args.against, &file) {
+        (Compare::Run(run), _) => Against::Run(*run),
+        (_, Some(file)) => Against::File(file.path()),
+        _ => Against::Previous,
+    };
     let digest: Digest =
-        report::digest(&store, args.run).map_err(|e| format!("{}: {e}", db.display()))?;
+        report::digest(&store, args.run, against).map_err(|e| format!("{}: {e}", db.display()))?;
+    let compared = digest
+        .compared
+        .as_ref()
+        .filter(|c| !c.file)
+        .map(|c| (c.run.id, c.run.finished.is_none()));
     warn_incomplete(
         digest.run.id,
         digest.later_unfinished,
-        [(digest.run.id, digest.unfinished)],
+        [(digest.run.id, digest.unfinished)]
+            .into_iter()
+            .chain(compared),
     );
     let io_error = |path: &Path, e: io::Error| format!("{}: {e}", path.display());
     fs::create_dir_all(&args.out).map_err(|e| io_error(&args.out, e))?;

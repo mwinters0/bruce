@@ -1,7 +1,7 @@
 # `bruce report digest`
 
 ```sh
-bruce report digest --out DIR [--name STEM] [--db FILE] [--run N] [--format json|html|both]
+bruce report digest --out DIR [--name STEM] [--db FILE] [--run N] [--from N | --since FILE|URL] [--format json|html|both]
 ```
 
 Writes one **digest** of a crawl run: the run's figures, the broken links
@@ -28,7 +28,23 @@ fetched for.
 | `--name STEM` | `bruce` | The file name's first part, so the digests of an en-US crawl and an every-locale crawl share a directory. It holds no `/`. |
 | `--db FILE` | `bruce.duckdb` | The database to read. It must exist. |
 | `--run N` | the latest finished run | The run to digest, as [`bruce report`](report.md#which-run) chooses it. A run that never finished is digested with a warning on stderr. A run that [`bruce check-dir`](check-dir.md) made has no digest. |
+| `--from N` | the finished crawl run before `--run` | The run to [compare with](#the-comparison): a crawl run of the database, finished or not. |
+| `--since FILE\|URL` | none | Compare with the run of a baseline file, as [`bruce check-dir`](check-dir.md)'s `--baseline` takes one: a path or an `http(s)` URL, gzipped or not. It holds one finished run, which [`bruce export-baseline`](export-baseline.md) writes. Not with `--from`. |
 | `--format` | `both` | `json`, `html` or `both`: the files to write. |
+
+## The comparison
+
+The digest compares its run with another, to say what changed: the header names
+that run, each figure shows its change since it, and the anchors removed since
+are a section. **By default** the other run is the finished crawl run before the
+digest's in the database; a `check-dir` run is never one. **`--from`** names
+another run of the database. **`--since`** names a baseline file, for a
+deployment that keeps no history: the digest imports its run, reads it, and
+removes it again, so the database holds the runs it held before and a bare
+[`bruce report`](report.md) still reads its latest finished run. A digest of a
+database that holds no earlier run, given neither, says so in the header and
+the section and has `null` for `compared_with`. The comparison is of two runs
+of one site: a run of other roots shows as pages gained and lost.
 
 ## The files
 
@@ -59,11 +75,13 @@ field for it. The lists that are not links (orphans, unlisted pages, sitemap
 entries, the unchecked counts) have no dot. In this order:
 
 1. **The header**: the roots, the run's id, start, finish and duration, the
-   `bruce` that crawled it, and the run compared with. Its links go to each
-   section's heading.
+   `bruce` that crawled it, and the run [compared with](#the-comparison), or
+   that there was none. Its links go to each section's heading.
 2. **Figures**: the pages checked and the links on them, and among those
    links the ones to a broken URL, to a missing fragment, and that errored.
-   The first two of those are the broken links.
+   The first two of those are the broken links. Beneath each is its change since
+   the compared run, as `+12`, `−3` or `no change`, in red where what is
+   broken rose and green where it fell.
 3. **Pages, by the broken links on them**: each page that holds one, or a
    link that errored, as a drill-down of those links, with its live page and
    its source. Its summary reads, for a page of 181 links to a broken URL or
@@ -106,8 +124,13 @@ entries, the unchecked counts) have no dot. In this order:
    most links first, each with the pages linking to it and the target's own
    source, where restoring a missing fragment mends every link in its row.
    The targets one link names are not listed; their links are in section 3.
-6. **Links that errored**, apart from the breakage.
-7. **Housekeeping**: the redirected links by where their targets land, each
+6. **Anchors removed since the compared run**: the pages that had an anchor
+   in the compared run and lost it while links still name it, the most linked
+   first, each with the links to it and the pages they are on, and the page's
+   source: the links to a missing fragment that the page's own change
+   broke, to restore in its source. An anchor no link names is no row.
+7. **Links that errored**, apart from the breakage.
+8. **Housekeeping**: the redirected links by where their targets land, each
    landing a closed drill-down of its own (its dot, the landing, its links and
    redirecting URLs, and inside the hops the first took and the pages the links are
    written on, listed one to a line so a phone has no wide table to scroll), those
@@ -134,13 +157,14 @@ and a count or status a number.
   "format_version": 1,
   "tool_version": "0.1.0",
   "run": {"id":1,"tool_version":"0.1.0","started_at":"2026-10-23T20:04:11Z","finished_at":"2026-10-23T21:14:44Z","duration_seconds":4233,"roots":["https://docs.example.org/en-US/"]},
-  "compared_with": null,
+  "compared_with": {"id":0,"from_file":false,"tool_version":"0.1.0","started_at":"2026-10-22T20:03:58Z","finished_at":"2026-10-22T21:12:09Z","roots":["https://docs.example.org/en-US/"],"totals":{"pages":5,"links":9,"broken_url":2,"broken_anchor":0,"error":1,"unchecked":1}},
   "totals": {"pages":5,"links":10,"broken_url":3,"broken_anchor":1,"error":1,"unchecked":1},
   "broken_targets": [{"target":"https://docs.example.org/en-US/b/","landing":null,"fix":null,"fragment":"nope","outcome":"broken_anchor","reason":null,"status":200,"links":1,"pages":1,"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/b.adoc"}],
   "pages": [{"page":"https://docs.example.org/en-US/a/","title":"A","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0}],
   "broken": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","landing":null,"fix":null,"fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"hint":null,"status":200}],
   "by_repo": [{"repo":"https://forge.example.org/docs","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0}],
   "by_component": [{"component":"handbook","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0}],
+  "anchors_removed": [{"page":"https://docs.example.org/en-US/b/","anchor":"nope","links":1,"pages":1,"linking_pages":["https://docs.example.org/en-US/a/"],"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc"}],
   "errors": [{"page":"https://docs.example.org/en-US/a/","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","raw_href":"https://slow.example.net/","target":"https://slow.example.net/","fragment":null,"kind":"anchor","reason":"server_error","status":503}],
   "housekeeping": {
     "redirects": [{"landing":"https://docs.example.org/en-US/b/","links":1,"urls":1,"chain":"301 https://docs.example.org/en-US/old/","reason":null,"pages":["https://docs.example.org/en-US/a/"]}],
@@ -159,19 +183,21 @@ and a count or status a number.
 another meaning, never when one is added, so a loader reading version 1 may
 ignore a field it does not know. `tool_version` is the `bruce` that wrote the
 file, and `run.tool_version` the one that crawled. `compared_with` is the run
-this one was compared with, and `null`.
+this one was compared with, or `null` where there was none.
 
 Every list below is **already ranked**; a loader needs to sort none of them.
 
 | Field | Holds |
 |---|---|
 | `run` | The run digested: its `id`, start and finish (`finished_at` and `duration_seconds` are `null` for a run that never finished) and the `roots` it crawled. |
+| `compared_with` | The run compared with: its `id` (`null` for a baseline file's run, `from_file` true, whose number is that of a run the database held only while the digest was made), its start and finish (`finished_at` `null` for a run that never finished), the `bruce` that crawled it, its `roots` and its `totals`, which a loader subtracts to give a figure's change. |
 | `totals` | The pages the roots cover and the links on them, and the links by outcome, over every kind. `unchecked` links are not broken: `housekeeping.unchecked` says why. |
 | `broken_targets` | Each target a broken link names, with its `fragment` when the link names one, the target named by the most `links` first, then by `pages`: one anchor restored in the target's repo removes that many links. `outcome` is `broken_url` or `broken_anchor`, and `reason` and `status` are the target's answer. `landing` is, for a target whose `reason` is `doubled_slash` and whose own URL doubles no slash, the URL it redirected to, which does, and for a target whose `reason` is `wrong_trailing_slash` and which redirected, the URL it landed on; else `null`. `fix` is, for a target whose `reason` is `wrong_trailing_slash`, its URL (its `landing` where it has one) with the final `/` added or dropped, which answered when the crawl asked it; else `null`. `source_repo`, `source_path` and `source_url` are those of the target page, where the run holds it: the repo that would restore a missing anchor. |
 | `pages` | The pages that hold a broken link or one that errored, the most `broken_url` plus `error` plus `through` first, then the most `broken_anchor`. `links` counts every link on the page that counts, `error` its links that could not be checked, and `through` the broken relative links (a `?query` is one) on the pages at doubled-slash URLs that its `doubled_slash` links reach, each page once, less those broken on the page's twin too (zero for nearly every page). A page at a doubled-slash URL counts no link where the URL with its slashes collapsed is a page of the run, and else all but its broken relative links. `source_url` is the forge's view of the page's file. |
 | `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order; a link that errored is in `errors`, where the HTML's drill-down finds it. `page` joins to `pages`. `hint` is, for an Antora `xref:` that names no page, the nearest page ID in the run, as `component:module:path` with an empty module for `ROOT`, where one is close enough to be a typo of it, else `null`. `landing` and `fix` are as in `broken_targets`. |
 | `by_repo` | Each repo the pages were built from, ranked as `pages` are, `through` the sum of its pages'; `repo` is `null` for the pages that record none. `pages` counts the repo's pages, `broken_pages` those holding a broken link or an error. |
 | `by_component` | The same by Antora component. A site with no Antora page has none. |
+| `anchors_removed` | The pages of `run` that lost an anchor since `compared_with`, links still naming it, one row to a `page` and `anchor`, the most `links` first and then the most `pages`: the links to it, the distinct pages they are on and those pages as `linking_pages`, over every kind of link. A page that landed a redirect is the page it landed on. Empty where `compared_with` is `null`. |
 | `errors` | Every link whose outcome is `error`, apart from breakage: the target could not be asked, not necessarily wrong. `source_url` is the linking page's. |
 | `housekeeping.redirects` | The redirected links by landing URL, the most `links` first: `urls` distinct URLs reached it, `chain` is the hops the first took, and `pages` the pages whose links they are. `reason` is `pedantic_trailing_slash` on a landing whose links name a URL that differs from it only by a final `/`, which comes after every other row, else `null`: such a landing has two rows where other links reach it too. |
 | `housekeeping.orphans` | The pages a sitemap lists that no other page links to. |
@@ -206,5 +232,5 @@ An `unchecked` link is not broken: the run did not learn whether it is. Its
 | Status | Meaning |
 |---|---|
 | 0 | The files were written. Finding broken links does not change this. |
-| 1 | The database could not be read or has no such run or no finished one, the run is a `check-dir` run, the run a bare digest would read is the baseline of a later unfinished `check-dir` run, or a file could not be written; the message says which. |
+| 1 | The database could not be read or has no such run or no finished one, the run or the run compared with is a `check-dir` run, `--since` names no baseline (a file that is not one, or of another schema version), the run a bare digest would read is the baseline of a later unfinished `check-dir` run, or a file could not be written; the message says which. |
 | 2 | The command line was not understood. |

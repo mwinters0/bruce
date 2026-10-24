@@ -50,7 +50,14 @@ impl Store {
         if doomed.is_empty() {
             return Ok(doomed);
         }
-        let ids: Vec<String> = doomed.iter().map(|r| r.0.to_string()).collect();
+        self.delete_runs(&doomed)?;
+        Ok(doomed)
+    }
+
+    /// Deletes `runs` with every row of theirs, in one transaction, and
+    /// checkpoints.
+    pub(super) fn delete_runs(&self, runs: &[RunId]) -> Result<(), Error> {
+        let ids: Vec<String> = runs.iter().map(|r| r.0.to_string()).collect();
         let ids = ids.join(", ");
         self.conn.execute_batch("BEGIN")?;
         let deleted = TABLES.iter().try_for_each(|table| {
@@ -65,7 +72,7 @@ impl Store {
             }
         }
         self.conn.execute_batch("CHECKPOINT")?;
-        Ok(doomed)
+        Ok(())
     }
 
     /// The runs `rule` deletes, oldest first.

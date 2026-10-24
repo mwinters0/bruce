@@ -390,7 +390,7 @@ async fn a_scheme_no_reader_can_follow_is_reported_broken_and_a_working_one_unch
         .collect();
     assert_eq!(shown.len(), 2, "{shown:?}");
     assert!(shown.iter().all(|r| r.contains("bad_scheme")), "{shown:?}");
-    let digest = crate::report::digest(&done.store, run).unwrap();
+    let digest = crate::report::digest(&done.store, run, crate::report::Against::Previous).unwrap();
     let json: serde_json::Value = serde_json::from_str(&digest.json()).unwrap();
     assert_eq!(json["totals"]["broken_url"], 2);
     assert_eq!(json["totals"]["unchecked"], 4);

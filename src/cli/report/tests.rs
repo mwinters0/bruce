@@ -193,6 +193,7 @@ fn the_digest_takes_a_directory_a_name_and_a_run() {
         DigestArgs {
             db: Some("d".into()),
             run: Some(RunId(4)),
+            against: Compare::Previous,
             out: "o".into(),
             name: "bruce".into(),
             format: DigestFormat::Both,
@@ -217,7 +218,6 @@ fn the_digest_takes_a_directory_a_name_and_a_run() {
 fn the_digest_refuses_what_is_not_its_own() {
     assert!(job(&["digest"]).is_err(), "it needs --out");
     for bad in [
-        ["--from", "1"],
         ["--to", "1"],
         ["--repo", "r"],
         ["--fact", "a=b"],
@@ -237,9 +237,78 @@ fn the_digest_refuses_what_is_not_its_own() {
         ["--name", "n"],
         ["--format", "html"],
         ["--format", "both"],
+        ["--since", "b.duckdb"],
     ] {
         assert!(job(&["broken", bad[0], bad[1]]).is_err(), "{bad:?}");
     }
+}
+
+#[test]
+fn the_digest_compares_with_a_run_or_a_baseline_file_and_not_both() {
+    let against = |extra: &[&str]| {
+        let mut args = vec!["digest", "--out", "o"];
+        args.extend(extra);
+        let Job::Digest(d) = job(&args).unwrap() else {
+            panic!("a digest")
+        };
+        d.against
+    };
+    assert_eq!(against(&[]), Compare::Previous);
+    assert_eq!(against(&["--from", "3"]), Compare::Run(RunId(3)));
+    assert_eq!(
+        against(&["--since", "https://x.test/b.duckdb.gz"]),
+        Compare::Since("https://x.test/b.duckdb.gz".into())
+    );
+    assert!(job(&["digest", "--out", "o", "--from", "3", "--since", "b"]).is_err());
+}
+
+#[test]
+fn a_digest_since_a_baseline_file_compares_with_its_run_and_leaves_the_database_whole() {
+    let dir = TempDir::new().unwrap();
+    let registry = crate::cli::registry();
+    let crawl = |name: &str| {
+        let db = dir.path().join(name);
+        let store = crate::cli::db::open(&db, &registry).unwrap();
+        let id = store
+            .begin_run(crate::store::Mode::Crawl, name, None, &[])
+            .unwrap();
+        store.finish_run(id).unwrap();
+        (db, store, id)
+    };
+    let (yesterday, store, id) = crawl("yesterday.duckdb");
+    let baseline = dir.path().join("baseline.duckdb");
+    store
+        .export_baseline(Some(id), &baseline, &registry)
+        .unwrap();
+    drop(store);
+    let (today, store, _) = crawl("today.duckdb");
+    drop(store);
+    let args = DigestArgs {
+        db: Some(today.clone()),
+        run: None,
+        against: Compare::Since(baseline.display().to_string()),
+        out: dir.path().join("out"),
+        name: "d".into(),
+        format: DigestFormat::Json,
+    };
+    assert_eq!(
+        run(&Job::Digest(args), crate::cli::registry()),
+        ExitCode::SUCCESS
+    );
+    let written = std::fs::read_dir(dir.path().join("out"))
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap();
+    let json = std::fs::read_to_string(written.path()).unwrap();
+    assert!(json.contains("\"from_file\":true"), "{json}");
+    let store = crate::cli::db::open(&today, &registry).unwrap();
+    let runs: i64 = store
+        .connection()
+        .query_row("SELECT count(*) FROM runs", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(runs, 1, "the baseline is not left in the database");
+    let _ = yesterday;
 }
 
 #[test]
@@ -257,6 +326,7 @@ fn a_digest_is_written_under_the_day_the_run_started() {
     let args = DigestArgs {
         db: Some(db),
         run: None,
+        against: Compare::Previous,
         out: out.clone(),
         name: "en-us".into(),
         format: DigestFormat::Both,
@@ -304,6 +374,7 @@ fn a_digest_of_a_database_that_is_not_there_is_refused() {
     let args = DigestArgs {
         db: Some(dir.path().join("none.duckdb")),
         run: None,
+        against: Compare::Previous,
         out: dir.path().join("out"),
         name: "bruce".into(),
         format: DigestFormat::Both,

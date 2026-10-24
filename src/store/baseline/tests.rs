@@ -239,6 +239,30 @@ fn a_baseline_already_imported_is_reused_and_copies_nothing() {
 }
 
 #[test]
+fn a_discarded_import_leaves_the_database_as_it_was_and_a_reused_one_stays() {
+    let (_dir, store, ci, out) = exported();
+    run(&ci, 1, None, true);
+    let rows = |db: &Store| {
+        (
+            count(db, "SELECT count(*) FROM runs"),
+            count(db, "SELECT count(*) FROM targets"),
+            count(db, "SELECT count(*) FROM pages"),
+        )
+    };
+    let before = rows(&ci);
+    let imported = ci.import_baseline(&out).unwrap();
+    assert_ne!(rows(&ci), before);
+    ci.discard_import(imported).unwrap();
+    assert_eq!(rows(&ci), before);
+
+    let kept = rows(&store);
+    let held = store.import_baseline(&out).unwrap();
+    assert!(held.reused);
+    store.discard_import(held).unwrap();
+    assert_eq!(rows(&store), kept);
+}
+
+#[test]
 fn the_database_a_baseline_came_from_already_holds_it() {
     let (_dir, store, _ci, out) = exported();
     let imported = store.import_baseline(&out).unwrap();

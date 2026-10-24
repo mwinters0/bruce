@@ -26,12 +26,12 @@ fn a_path_is_used_as_it_is_and_a_gzipped_file_is_decompressed_whatever_its_name(
     let tmp = tempfile::tempdir().unwrap();
     let plain = tmp.path().join("b.duckdb");
     std::fs::write(&plain, b"database bytes").unwrap();
-    let file = BaselineFile::open(plain.to_str().unwrap(), &config(), &runtime()).unwrap();
+    let file = BaselineFile::open(plain.to_str().unwrap(), Some(&config()), &runtime()).unwrap();
     assert_eq!(file.path(), plain);
 
     let packed = tmp.path().join("b.bin");
     std::fs::write(&packed, gzip(b"database bytes")).unwrap();
-    let file = BaselineFile::open(packed.to_str().unwrap(), &config(), &runtime()).unwrap();
+    let file = BaselineFile::open(packed.to_str().unwrap(), Some(&config()), &runtime()).unwrap();
     assert_ne!(file.path(), packed);
     assert_eq!(std::fs::read(file.path()).unwrap(), b"database bytes");
     let made = file.path().to_owned();
@@ -44,7 +44,7 @@ fn a_path_is_used_as_it_is_and_a_gzipped_file_is_decompressed_whatever_its_name(
 fn a_missing_file_is_an_error_naming_it() {
     let tmp = tempfile::tempdir().unwrap();
     let missing = tmp.path().join("nope.duckdb");
-    let e = BaselineFile::open(missing.to_str().unwrap(), &config(), &runtime()).unwrap_err();
+    let e = BaselineFile::open(missing.to_str().unwrap(), Some(&config()), &runtime()).unwrap_err();
     assert!(e.contains("nope.duckdb"), "{e}");
 }
 
@@ -62,8 +62,12 @@ fn a_url_is_downloaded_through_a_redirect_and_a_gzipped_download_is_decompressed
             .mount(&server)
             .await;
     });
-    let file =
-        BaselineFile::open(&format!("{}/latest", server.uri()), &config(), &runtime).unwrap();
+    let file = BaselineFile::open(
+        &format!("{}/latest", server.uri()),
+        Some(&config()),
+        &runtime,
+    )
+    .unwrap();
     assert_eq!(std::fs::read(file.path()).unwrap(), b"database bytes");
     let temporaries = file.temporary.clone();
     assert_eq!(
@@ -86,6 +90,21 @@ fn a_url_that_answers_an_error_is_one() {
             .await;
     });
     let url = format!("{}/b.duckdb", server.uri());
-    let e = BaselineFile::open(&url, &config(), &runtime).unwrap_err();
+    let e = BaselineFile::open(&url, Some(&config()), &runtime).unwrap_err();
     assert!(e.contains("404"), "{e}");
+}
+
+#[test]
+fn with_no_config_a_url_is_downloaded_under_the_defaults() {
+    let runtime = runtime();
+    let server = runtime.block_on(MockServer::start());
+    runtime.block_on(async {
+        Mock::given(path("/b.duckdb"))
+            .respond_with(ResponseTemplate::new(200).set_body_bytes(b"database bytes".to_vec()))
+            .mount(&server)
+            .await;
+    });
+    let url = format!("{}/b.duckdb", server.uri());
+    let file = BaselineFile::open(&url, None, &runtime).unwrap();
+    assert_eq!(std::fs::read(file.path()).unwrap(), b"database bytes");
 }

@@ -18,6 +18,7 @@
   --accent-deep: #294172;
   --bad: #f0868b;
   --warn: #e5be6b;
+  --good: #7fcf9a;
 }
 * { box-sizing: border-box; }
 body {
@@ -49,6 +50,9 @@ nav { margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
 .fig { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
 .fig .n { display: block; font-size: 1.7rem; font-weight: 650; font-variant-numeric: tabular-nums; }
 .fig .l { color: var(--muted); }
+.fig .d { display: block; color: var(--muted); font-variant-numeric: tabular-nums; }
+.fig .d.worse { color: var(--bad); }
+.fig .d.better { color: var(--good); }
 .fig.bad .n { color: var(--bad); }
 .fig.warn .n { color: var(--warn); }
 .legend { color: var(--muted); }
@@ -106,7 +110,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
   :root {
     color-scheme: light;
     --bg: #fff; --surface: #fff; --raised: #f2f4f8; --text: #111; --muted: #555;
-    --line: #ccd; --accent: #1f5f93; --accent-deep: #fff; --bad: #a11; --warn: #7a5a00;
+    --line: #ccd; --accent: #1f5f93; --accent-deep: #fff; --bad: #a11; --warn: #7a5a00; --good: #1a6b36;
   }
   header { background: none; }
   details { break-inside: avoid-page; }
@@ -133,7 +137,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <dt>Crawled by</dt><dd>bruce <span class="version">V</span></dd>
 <dt>Compared with</dt><dd>no earlier run</dd>
 </dl>
-<nav><a href="#figures">Figures</a> <a href="#pages">Pages</a> <a href="#repos">Repos</a> <a href="#fix-once">Targets</a> <a href="#errors">Errors</a> <a href="#housekeeping">Housekeeping</a></nav>
+<nav><a href="#figures">Figures</a> <a href="#pages">Pages</a> <a href="#repos">Repos</a> <a href="#fix-once">Targets</a> <a href="#anchors-removed">Anchors removed</a> <a href="#errors">Errors</a> <a href="#housekeeping">Housekeeping</a></nav>
 </div></header>
 <main>
 <section id="figures">
@@ -287,6 +291,12 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <tr><td class="dot"><span class="sev broken" role="img" aria-label="Broken"></span></td><td class="num">8</td><td class="num">8</td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>URL broken</td><td class="num">404</td><td><span class="muted">-</span></td></tr>
 </tbody></table></div>
 <p>Targets named by one link each: 1. Each is in the drill-down of the page its link is on, among the pages above.</p>
+</details>
+</section>
+<section id="anchors-removed">
+<details class="sect">
+<summary><h2>Anchors removed since the compared run</h2></summary>
+<p>There was no earlier run to compare with, so no anchor is known to have been removed.</p>
 </details>
 </section>
 <section id="errors">

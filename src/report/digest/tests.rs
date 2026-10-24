@@ -134,8 +134,32 @@ pub(super) fn ranked() -> Store {
     store
 }
 
+/// [`store`] and run 4, a finished crawl of the same root that held two pages:
+/// page 1, linking to the 404 (10), and page 2, with the anchor `nope` that
+/// run 1 lost and page 1 links to.
+pub(super) fn compared() -> Store {
+    let store = store();
+    let conn = store.connection();
+    conn.execute(
+        "INSERT INTO runs VALUES (4, to_timestamp(? - 86400), to_timestamp(? - 86400 + 60), \
+         'crawl', '0.0.8', 'h', NULL, [?], [])",
+        params![START, START, ROOT],
+    )
+    .unwrap();
+    page(&store, 4, 1, Some("r/one"), Some(ROOT));
+    page(&store, 4, 2, Some("r/two"), Some(ROOT));
+    target(&store, 4, 10, 404, "broken_url", None);
+    link(&store, 4, 1, 10, None, "anchor");
+    conn.execute(
+        "INSERT INTO anchors VALUES (4, 2, 'nope', 'h2', 'content'), (4, 2, 'sec', 'h2', 'content')",
+        [],
+    )
+    .unwrap();
+    store
+}
+
 pub(super) fn of(store: &Store) -> Digest {
-    digest(store, Some(RunId(1))).unwrap()
+    digest(store, Some(RunId(1)), Against::Previous).unwrap()
 }
 
 /// [`store`] with page 5 linking to an unchecked target of each reason the
@@ -717,20 +741,26 @@ fn housekeeping_holds_the_redirects_orphans_and_unlisted_pages() {
 #[test]
 fn a_run_is_named_and_a_check_dir_run_has_no_digest() {
     let store = store();
-    assert_eq!(digest(&store, Some(RunId(1))).unwrap().run.id, RunId(1));
-    let d = digest(&store, Some(RunId(3))).unwrap();
+    assert_eq!(
+        digest(&store, Some(RunId(1)), Against::Previous)
+            .unwrap()
+            .run
+            .id,
+        RunId(1)
+    );
+    let d = digest(&store, Some(RunId(3)), Against::Previous).unwrap();
     assert!(d.unfinished && d.run.finished.is_none());
     assert!(matches!(
-        digest(&store, Some(RunId(2))),
+        digest(&store, Some(RunId(2)), Against::Previous),
         Err(Error::NotCrawl(RunId(2)))
     ));
     assert!(matches!(
-        digest(&store, Some(RunId(9))),
+        digest(&store, Some(RunId(9)), Against::Previous),
         Err(Error::NoSuchRun(RunId(9)))
     ));
     // The default is the latest finished run, which here is the `check-dir` one.
     assert!(matches!(
-        digest(&store, None),
+        digest(&store, None, Against::Previous),
         Err(Error::NotCrawl(RunId(2)))
     ));
 }
@@ -742,7 +772,7 @@ fn the_default_names_a_later_unfinished_run() {
         .connection()
         .execute("DELETE FROM runs WHERE run_id = 2", [])
         .unwrap();
-    let d = digest(&store, None).unwrap();
+    let d = digest(&store, None, Against::Previous).unwrap();
     assert_eq!((d.run.id, d.later_unfinished), (RunId(1), Some(RunId(3))));
 }
 
@@ -754,7 +784,7 @@ fn a_run_with_no_pages_has_empty_sections() {
         .begin_run(crate::store::Mode::Crawl, "h", None, &[])
         .unwrap();
     store.finish_run(id).unwrap();
-    let d = digest(&store, None).unwrap();
+    let d = digest(&store, None, Against::Previous).unwrap();
     assert_eq!((d.totals.pages, d.totals.links), (0, 0));
     assert!(d.pages.rows.is_empty() && d.by_repo.rows.is_empty());
     let json: Value = serde_json::from_str(&d.json()).unwrap();
@@ -782,8 +812,12 @@ fn the_json_is_valid_and_carries_its_version_and_context() {
 #[test]
 fn an_unfinished_runs_digest_has_no_finish() {
     let store = store();
-    let json: Value =
-        serde_json::from_str(&digest(&store, Some(RunId(3))).unwrap().json()).unwrap();
+    let json: Value = serde_json::from_str(
+        &digest(&store, Some(RunId(3)), Against::Previous)
+            .unwrap()
+            .json(),
+    )
+    .unwrap();
     assert_eq!(json["run"]["finished_at"], Value::Null);
     assert_eq!(json["run"]["duration_seconds"], Value::Null);
 }
@@ -836,6 +870,9 @@ fn same_shape(documented: &Value, actual: &Value, at: &str) {
 fn the_json_has_the_fields_the_manual_documents() {
     let documented = documented();
     assert_eq!(documented["format_version"], FORMAT_VERSION);
-    let json: Value = serde_json::from_str(&of(&store()).json()).unwrap();
+    // A comparison fills `compared_with` and `anchors_removed`, which a digest
+    // of one run leaves null and empty.
+    let compared = digest(&compared(), Some(RunId(1)), Against::Run(RunId(4))).unwrap();
+    let json: Value = serde_json::from_str(&compared.json()).unwrap();
     same_shape(&documented, &json, "$");
 }

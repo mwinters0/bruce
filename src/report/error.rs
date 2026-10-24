@@ -23,6 +23,8 @@ pub enum Error {
         run: RunId,
         later: RunId,
     },
+    /// The baseline file a digest is compared with could not be imported (D52).
+    Baseline(crate::store::Error),
 }
 
 impl fmt::Display for Error {
@@ -45,9 +47,11 @@ impl fmt::Display for Error {
             ),
             Error::NotCrawl(run) => write!(
                 f,
-                "run {} is a `check-dir` run; a digest is of a crawl run, so name one with --run",
+                "run {} is a `check-dir` run; a digest is of, and compares with, a crawl run, \
+                 so name one with --run or --from",
                 run.0
             ),
+            Error::Baseline(e) => write!(f, "the baseline to compare with: {e}"),
             Error::BaselineOfLater { run, later } => write!(
                 f,
                 "run {} is the baseline run {} was checked against, and run {} never finished; \
@@ -62,6 +66,7 @@ impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Error::Db(e) => Some(e),
+            Error::Baseline(e) => Some(e),
             _ => None,
         }
     }

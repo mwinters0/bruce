@@ -31,6 +31,18 @@ impl Store {
         self.with_attached(file, ALIAS, true, |store| store.import_attached())
     }
 
+    /// Deletes the run `imported` made, leaving the database as it was before
+    /// [`Store::import_baseline`]; a run it found already there stays. A
+    /// reader that imports only to compare, as the digest does (D73), calls
+    /// it so the baseline is not the database's latest finished run.
+    pub fn discard_import(&self, imported: Imported) -> Result<(), Error> {
+        if imported.reused {
+            Ok(())
+        } else {
+            self.delete_runs(&[imported.run])
+        }
+    }
+
     fn import_attached(&self) -> Result<Imported, Error> {
         self.check_attached_version()?;
         let (run, finished): (u64, bool) = {

@@ -1,4 +1,4 @@
-//! The baseline file `--baseline` names, ready to import (D21, D52).
+//! The baseline file `--baseline` or `--since` names, ready to import (D21, D52).
 //!
 //! A path is used as it is. A URL is downloaded to a temporary file, and a
 //! gzipped file, whatever its name, is decompressed into another; nothing is
@@ -30,9 +30,10 @@ impl BaselineFile {
     }
 
     /// Makes `spec`, a path or an `http(s)` URL, a database file to import.
+    /// A download is paced by `config`'s hosts, else by the defaults.
     pub fn open(
         spec: &str,
-        config: &Config,
+        config: Option<&Config>,
         runtime: &tokio::runtime::Runtime,
     ) -> Result<BaselineFile, String> {
         let mut file = BaselineFile {
@@ -43,6 +44,14 @@ impl BaselineFile {
             && matches!(url.scheme(), "http" | "https")
         {
             let downloaded = file.temporary_file()?;
+            let own;
+            let config = match config {
+                Some(config) => config,
+                None => {
+                    own = Config::for_url(spec).map_err(|e| format!("{spec}: {e}"))?;
+                    &own
+                }
+            };
             let fetcher = HttpFetcher::new(Settings::default(), Hosts::new(config))
                 .map_err(|e| e.to_string())?;
             let mut out = File::create(&downloaded).map_err(|e| failed(&downloaded, &e))?;

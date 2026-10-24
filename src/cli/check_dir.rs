@@ -36,9 +36,7 @@ use crate::profile::Registry;
 use crate::report::{Format, Gate, InverseMode, Report, Request};
 use crate::store::{Mode, RunId, RunRoot, Writer};
 
-mod file;
-
-use file::BaselineFile;
+use super::file::BaselineFile;
 
 /// The exit status of a run the tool could not make, as a command line `clap`
 /// refuses has it.
@@ -225,7 +223,7 @@ fn check(args: &Args, registry: Registry) -> Result<Checked, String> {
         .enable_all()
         .build()
         .map_err(|e| e.to_string())?;
-    let baseline_file = BaselineFile::open(&args.baseline, &config, &runtime)?;
+    let baseline_file = BaselineFile::open(&args.baseline, Some(&config), &runtime)?;
     let db = db::path(args.db.as_deref());
     let in_db = |e: crate::store::Error| format!("{}: {e}", db.display());
     let store = db::open(db, &registry).map_err(in_db)?;

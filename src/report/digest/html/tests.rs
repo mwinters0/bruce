@@ -1,4 +1,4 @@
-use super::super::tests::{of, ranked, store, with_doubled_slashes, with_unchecked};
+use super::super::tests::{compared, of, ranked, store, with_doubled_slashes, with_unchecked};
 use crate::report::table::Cell;
 use crate::report::tests::{registry, xrefs};
 use crate::store::RunId;
@@ -195,6 +195,7 @@ fn the_sections_after_the_figures_are_pages_repos_targets_errors_housekeeping() 
         "pages",
         "repos",
         "fix-once",
+        "anchors-removed",
         "errors",
         "housekeeping",
     ];
@@ -216,7 +217,14 @@ fn every_section_after_the_figures_starts_collapsed_under_its_heading() {
     let html = html();
     let figures = section(&html, "figures");
     assert!(figures.contains("<h2>Figures</h2>") && !figures.contains("<details"));
-    for id in ["pages", "repos", "fix-once", "errors", "housekeeping"] {
+    for id in [
+        "pages",
+        "repos",
+        "fix-once",
+        "anchors-removed",
+        "errors",
+        "housekeeping",
+    ] {
         // The id is outside the `<details>`, so a link to it lands on the
         // heading where a browser opens no closed `<details>` for a fragment.
         let s = section(&html, id);
@@ -272,7 +280,8 @@ fn text_a_page_wrote_is_escaped_and_only_http_urls_are_links() {
 #[test]
 fn an_unfinished_run_says_so() {
     let store = store();
-    let d = crate::report::digest(&store, Some(RunId(3))).unwrap();
+    let d =
+        crate::report::digest(&store, Some(RunId(3)), crate::report::Against::Previous).unwrap();
     let html = d.html();
     assert!(html.contains("This run never finished"));
     assert!(html.contains("never finished</dd>"));
@@ -287,7 +296,9 @@ fn a_run_with_nothing_to_report_says_so_in_each_section() {
         .begin_run(crate::store::Mode::Crawl, "h", None, &[])
         .unwrap();
     store.finish_run(id).unwrap();
-    let html = crate::report::digest(&store, None).unwrap().html();
+    let html = crate::report::digest(&store, None, crate::report::Against::Previous)
+        .unwrap()
+        .html();
     for said in [
         "No broken target is named by more than one link.",
         "No page holds a broken link.",
@@ -655,4 +666,101 @@ fn a_wrong_trailing_slash_link_names_the_url_that_answers() {
     }
     // A target broken for another reason is shown as it is.
     assert!(!section(&html, "pages").contains("e.test/11</a><br>"));
+}
+
+/// Run 1's digest compared with run 4.
+fn compared_digest() -> crate::report::Digest {
+    crate::report::digest(
+        &compared(),
+        Some(RunId(1)),
+        crate::report::Against::Run(RunId(4)),
+    )
+    .unwrap()
+}
+
+fn compared_html() -> String {
+    compared_digest().html()
+}
+
+#[test]
+fn the_header_names_the_run_compared_with_and_each_figure_its_change() {
+    let html = compared_html();
+    assert!(html.contains(
+        "<dt>Compared with</dt><dd>run 4, started <time datetime=\"2026-10-22T20:04:11Z\">"
+    ));
+    let figures = section(&html, "figures");
+    // Run 4 held 2 pages and 1 link, 1 of them to a broken URL.
+    for (n, label, change) in [
+        (5, "Pages checked", "<span class=\"d\">+3</span>"),
+        (10, "Links on them", "<span class=\"d\">+9</span>"),
+        (
+            3,
+            "Links to a broken URL",
+            "<span class=\"d worse\">+2</span>",
+        ),
+        (
+            1,
+            "Links to a missing fragment",
+            "<span class=\"d worse\">+1</span>",
+        ),
+        (1, "Links that errored", "<span class=\"d worse\">+1</span>"),
+    ] {
+        assert!(
+            figures.contains(&format!(
+                "<span class=\"n\">{n}</span><span class=\"l\">{label}</span>{change}"
+            )),
+            "{label}"
+        );
+    }
+    assert!(figures.contains("Each figure's change is since run 4."));
+}
+
+#[test]
+fn a_fall_in_what_is_broken_is_for_the_better_and_no_change_is_said() {
+    let mut d = compared_digest();
+    let c = d.compared.as_mut().unwrap();
+    c.totals.broken_url = 5;
+    c.totals.pages = 5;
+    let figures = d.html();
+    let figures = section(&figures, "figures");
+    assert!(figures.contains("<span class=\"d better\">\u{2212}2</span>"));
+    assert!(figures.contains("<span class=\"d\">no change</span>"));
+}
+
+#[test]
+fn the_anchors_removed_are_a_section_of_pages_with_their_dots() {
+    let html = compared_html();
+    let s = section(&html, "anchors-removed");
+    assert!(s.contains("<code>#nope</code>"));
+    assert!(s.contains("https://e.test/2"));
+    assert_eq!(
+        s.matches("<td class=\"dot\"><span class=\"sev attention\"")
+            .count(),
+        1
+    );
+    assert!(s.contains("<th class=\"dot\"></th>"));
+}
+
+#[test]
+fn with_nothing_to_compare_with_the_section_and_the_header_say_so() {
+    let html = html();
+    assert!(html.contains("<dt>Compared with</dt><dd>no earlier run</dd>"));
+    assert!(section(&html, "anchors-removed").contains("no earlier run to compare with"));
+    assert!(
+        !html.contains("<span class=\"d\"") && !html.contains("<span class=\"d "),
+        "no change without a comparison"
+    );
+}
+
+#[test]
+fn a_baseline_files_run_is_named_for_its_file_and_an_unfinished_one_says_so() {
+    let mut d = compared_digest();
+    let c = d.compared.as_mut().unwrap();
+    c.file = true;
+    c.run.finished = None;
+    let html = d.html();
+    assert!(html.contains("<dd>the run of a baseline file, started"));
+    assert!(html.contains("never finished, so its figures are incomplete"));
+    assert!(html.contains("since the run of the baseline file."));
+    assert!(section(&html, "anchors-removed").contains("the baseline file's run"));
 }

@@ -28,10 +28,22 @@ pub struct Totals {
     pub unchecked: i64,
 }
 
+/// The run a digest was compared with, and its figures (D73).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Compared {
+    pub run: Run,
+    pub totals: Totals,
+    /// The run came from a baseline file, so its number is that of a run the
+    /// database held only while the digest was made, and says nothing.
+    pub file: bool,
+}
+
 /// A crawl run's digest.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Digest {
     pub run: Run,
+    /// The run compared with, or `None` where there was none to compare.
+    pub compared: Option<Compared>,
     pub totals: Totals,
     /// The `unchecked` links by reason: `reason`, `links`, `targets`.
     pub unchecked: Table,
@@ -77,6 +89,10 @@ pub struct Digest {
     /// The sitemap's entries no page was fetched for, those that did not
     /// answer `ok` first: `page`, `outcome`, `reason` and `status`.
     pub sitemap_entries: Table,
+    /// The pages that lost an anchor links still name since the compared run:
+    /// `page`, `anchor`, `links`, `pages`, `linking_pages`, `source_repo` and
+    /// `source_path`. Empty where `compared` is `None`.
+    pub anchors_removed: Table,
     /// The roots that read no sitemap, which have no unlisted pages.
     pub roots_without_sitemap: Vec<String>,
     /// The run never finished, so the digest is incomplete.

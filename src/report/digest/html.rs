@@ -11,18 +11,20 @@
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
+use self::markup::{
+    Row, a, a_html, close_section, duration, esc, num, open_section, rows, short, source, table, w,
+    when,
+};
 use self::severity::{Level, legend, mark};
-use super::document::{Digest, utc};
-use crate::report::table::{Cell, Table};
+use super::document::Digest;
+use crate::report::table::Table;
 use crate::store::{DOUBLED_SLASH, WRONG_TRAILING_SLASH};
 
+mod compared;
+mod markup;
 mod severity;
 
 const STYLE: &str = include_str!("html/style.css");
-
-macro_rules! w {
-    ($out:expr, $($arg:tt)*) => {{ let _ = write!($out, $($arg)*); }};
-}
 
 impl Digest {
     /// The HTML document.
@@ -34,6 +36,7 @@ impl Digest {
         let ids = pages(&mut out, self);
         repos(&mut out, self, &ids);
         fix_once(&mut out, self);
+        compared::anchors_removed(&mut out, self);
         errors(&mut out, self);
         housekeeping(&mut out, self);
         out.push_str("</main>\n");
@@ -47,80 +50,6 @@ impl Digest {
         );
         out
     }
-}
-
-/// One row of a table, its cells found by column name.
-struct Row<'a> {
-    columns: &'a [String],
-    cells: &'a [Cell],
-}
-
-impl<'a> Row<'a> {
-    fn cell(&self, name: &str) -> &'a Cell {
-        let at = self
-            .columns
-            .iter()
-            .position(|c| c == name)
-            .unwrap_or_else(|| panic!("the digest's table has no column `{name}`"));
-        &self.cells[at]
-    }
-
-    fn text(&self, name: &str) -> Option<&'a str> {
-        self.cell(name).text().filter(|s| !s.is_empty())
-    }
-
-    fn int(&self, name: &str) -> i64 {
-        match self.cell(name) {
-            Cell::Int(n) => *n,
-            _ => 0,
-        }
-    }
-
-    fn list(&self, name: &str) -> &'a [String] {
-        match self.cell(name) {
-            Cell::List(items) => items,
-            _ => &[],
-        }
-    }
-}
-
-fn rows(table: &Table) -> impl Iterator<Item = Row<'_>> {
-    table.rows.iter().map(|cells| Row {
-        columns: &table.columns,
-        cells,
-    })
-}
-
-/// `s` safe in text and in a quoted attribute.
-fn esc(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    for c in s.chars() {
-        match c {
-            '&' => out.push_str("&amp;"),
-            '<' => out.push_str("&lt;"),
-            '>' => out.push_str("&gt;"),
-            '"' => out.push_str("&quot;"),
-            '\'' => out.push_str("&#39;"),
-            c => out.push(c),
-        }
-    }
-    out
-}
-
-/// `n` with a comma between thousands.
-fn num(n: i64) -> String {
-    let digits = n.unsigned_abs().to_string();
-    let mut out = String::new();
-    for (i, c) in digits.chars().enumerate() {
-        if i > 0 && (digits.len() - i).is_multiple_of(3) {
-            out.push(',');
-        }
-        out.push(c);
-    }
-    if n < 0 {
-        out.insert(0, '-');
-    }
-    out
 }
 
 /// `n` of `noun`, pluralised.
@@ -149,28 +78,6 @@ fn tally(red: i64, through: i64, amber: i64) -> String {
         }
     }
     parts.join(", ")
-}
-
-/// `url` without its scheme, to show.
-fn short(url: &str) -> &str {
-    url.strip_prefix("https://")
-        .or_else(|| url.strip_prefix("http://"))
-        .unwrap_or(url)
-}
-
-/// A link to `url` labelled `label`, or the label alone where `url` is not
-/// an `http` or `https` one.
-fn a(url: &str, label: &str) -> String {
-    a_html(url, &esc(label))
-}
-
-/// [`a`], its label already HTML.
-fn a_html(url: &str, label: &str) -> String {
-    if url.starts_with("https://") || url.starts_with("http://") {
-        format!("<a href=\"{}\">{label}</a>", esc(url))
-    } else {
-        label.to_owned()
-    }
 }
 
 /// `text` escaped, each doubled slash in its path marked: a run of `/` after
@@ -271,35 +178,6 @@ fn written_as(r: &Row) -> String {
     }
 }
 
-/// A page's file, as a link to the forge's view of it where the run holds one.
-fn source(repo: Option<&str>, path: Option<&str>, url: Option<&str>) -> String {
-    match (url, path, repo) {
-        (Some(url), Some(path), _) => a(url, path),
-        (Some(url), None, _) => a(url, short(url)),
-        (None, Some(path), Some(repo)) => {
-            format!("{} <small>in {}</small>", esc(path), a(repo, short(repo)))
-        }
-        (None, None, Some(repo)) => a(repo, short(repo)),
-        _ => "<span class=\"muted\">-</span>".to_owned(),
-    }
-}
-
-/// The time as a `<time>`, in UTC.
-fn when(seconds: i64) -> String {
-    let (_, rfc) = utc(seconds);
-    let shown = format!("{} UTC", rfc.trim_end_matches('Z').replace('T', " "));
-    format!("<time datetime=\"{rfc}\">{shown}</time>")
-}
-
-fn duration(seconds: i64) -> String {
-    let (h, m, s) = (seconds / 3_600, seconds % 3_600 / 60, seconds % 60);
-    match (h, m) {
-        (0, 0) => format!("{s} s"),
-        (0, _) => format!("{m} min {s} s"),
-        _ => format!("{h} h {m} min {s} s"),
-    }
-}
-
 /// What a link's outcome and reason say, in words: a missing fragment is a
 /// fragment, `anchor` being the Kind column's `<a href>` as `--kind` names it.
 fn problem(outcome: Option<&str>, reason: Option<&str>) -> String {
@@ -322,57 +200,6 @@ fn status_cell(status: i64) -> String {
     } else {
         "<span class=\"muted\">-</span>".to_owned()
     }
-}
-
-/// A table of already-rendered cells; a header marked `true` is a number, and
-/// one with no name is the severity dot's column. A table with no row is the
-/// word for it, not a header over nothing.
-fn table(out: &mut String, head: &[(&str, bool)], body: &[Vec<String>]) {
-    if body.is_empty() {
-        out.push_str("<p class=\"muted\">None.</p>\n");
-        return;
-    }
-    out.push_str("<div class=\"scroll\"><table>\n<thead><tr>");
-    for (name, numeric) in head {
-        w!(out, "<th{}>{name}</th>", column_class(name, *numeric));
-    }
-    out.push_str("</tr></thead>\n<tbody>\n");
-    for row in body {
-        out.push_str("<tr>");
-        for (cell, (name, numeric)) in row.iter().zip(head) {
-            w!(out, "<td{}>{cell}</td>", column_class(name, *numeric));
-        }
-        out.push_str("</tr>\n");
-    }
-    out.push_str("</tbody></table></div>\n");
-}
-
-/// The class of a column's cells.
-fn column_class(name: &str, numeric: bool) -> &'static str {
-    match (name.is_empty(), numeric) {
-        (true, _) => " class=\"dot\"",
-        (_, true) => " class=\"num\"",
-        _ => "",
-    }
-}
-
-/// Opens the section `id` under its `heading`, a `<details>` that starts
-/// collapsed, `note` beside the heading. The id is the `<section>`'s, outside the
-/// `<details>`, so a link to it lands on the heading in every browser, one that
-/// opens no closed `<details>` for a fragment included.
-fn open_section(out: &mut String, id: &str, heading: &str, note: Option<&str>) {
-    w!(
-        out,
-        "<section id=\"{id}\">\n<details class=\"sect\">\n<summary><h2>{heading}</h2>"
-    );
-    if let Some(note) = note {
-        w!(out, "<small>{note}</small>");
-    }
-    out.push_str("</summary>\n");
-}
-
-fn close_section(out: &mut String) {
-    out.push_str("</details>\n</section>\n");
 }
 
 fn head(out: &mut String, d: &Digest) {
@@ -418,7 +245,11 @@ fn head(out: &mut String, d: &Digest) {
         "<dt>Crawled by</dt><dd>bruce <span class=\"version\">{}</span></dd>\n",
         esc(&run.tool_version)
     );
-    out.push_str("<dt>Compared with</dt><dd>no earlier run</dd>\n</dl>\n");
+    w!(
+        out,
+        "<dt>Compared with</dt><dd>{}</dd>\n</dl>\n",
+        compared::line(d)
+    );
     if d.unfinished {
         out.push_str(
             "<p class=\"warn-box\">This run never finished, so the digest is incomplete.</p>\n",
@@ -427,7 +258,7 @@ fn head(out: &mut String, d: &Digest) {
     out.push_str(
         "<nav><a href=\"#figures\">Figures</a> <a href=\"#pages\">Pages</a> \
          <a href=\"#repos\">Repos</a> <a href=\"#fix-once\">Targets</a> \
-         <a href=\"#errors\">Errors</a> <a href=\"#housekeeping\">Housekeeping</a></nav>\n\
+         <a href=\"#anchors-removed\">Anchors removed</a> <a href=\"#errors\">Errors</a> <a href=\"#housekeeping\">Housekeeping</a></nav>\n\
          </div></header>\n",
     );
 }
@@ -435,16 +266,21 @@ fn head(out: &mut String, d: &Digest) {
 fn figures(out: &mut String, d: &Digest) {
     let t = &d.totals;
     out.push_str("<section id=\"figures\">\n<h2>Figures</h2>\n<div class=\"figures\">\n");
-    for (label, n, class) in [
+    let changes = compared::changes(d);
+    for (i, (label, n, class)) in [
         ("Pages checked", t.pages, ""),
         ("Links on them", t.links, ""),
         ("Links to a broken URL", t.broken_url, " bad"),
         ("Links to a missing fragment", t.broken_anchor, " bad"),
         ("Links that errored", t.error, " warn"),
-    ] {
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let change = changes.as_ref().map_or("", |c| c[i].as_str());
         w!(
             out,
-            "<div class=\"fig{class}\"><span class=\"n\">{}</span><span class=\"l\">{label}</span></div>\n",
+            "<div class=\"fig{class}\"><span class=\"n\">{}</span><span class=\"l\">{label}</span>{change}</div>\n",
             num(n)
         );
     }
@@ -453,9 +289,10 @@ fn figures(out: &mut String, d: &Digest) {
         "</div>\n<p class=\"muted\">Every figure but the first counts links on the pages \
          checked. The {} broken links are those to a broken URL and those to a missing fragment. \
          {} links were not checked; the housekeeping says why. A link that errored could not be \
-         asked, which does not make it broken.</p>\n{}</section>\n",
+         asked, which does not make it broken.{}</p>\n{}</section>\n",
         num(t.broken_url + t.broken_anchor),
         num(t.unchecked),
+        compared::since(d),
         legend()
     );
 }
