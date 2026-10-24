@@ -144,7 +144,7 @@ lists and www.redhat.com, and at the default two requests a second where there
 is none. They are asked alongside the crawl, each at its own pace.
 
 A rate faster than the site asked for needs its permission. The example asks
-no faster, and a crawl of the English pages takes about two hours.
+no faster, and a crawl of the English pages takes a little over an hour.
 
 ### What is crawled
 
