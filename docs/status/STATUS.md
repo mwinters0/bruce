@@ -168,9 +168,11 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   and fixed, each new row saying why by what the comparison held (D74), shown on
   8.14's en-US crawl against 8.1's (all 671 new breaks `first_judged`, none fixed).
   Notes: [`../wip/roadmap-P8.8.1-digest-since-notes.md`](../wip/roadmap-P8.8.1-digest-since-notes.md).
-- [ ] **8.9** Servo's renders of the digest beside Chrome's headless shell's,
+- [x] **8.9** Servo's renders of the digest beside Chrome's headless shell's,
   after 8.6's verdict: whether Servo alone is enough to check how the
-  digest renders, the verdict in the notes.
+  digest renders, the verdict in the notes: it is not, for a phone's tables
+  or print.
+  Notes: [`../wip/roadmap-P8.9-servo-vs-chrome-notes.md`](../wip/roadmap-P8.9-servo-vs-chrome-notes.md).
 - [ ] **8.20** The maintainer's closing review of the finished digest, the
   two-run sections included: no code, the verdict and what it spawns in the
   notes.
@@ -189,3 +191,12 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **`runs/headless-browser-trial/` (292 MB, Chrome's headless shell and the
+  libraries it loads) is kept, not deleted as 8.4.1's notes said 8.9 would.**
+  8.9's verdict is that Servo cannot check a phone's tables or print, and the
+  trial is the only Chrome on this machine, its three system libraries absent
+  otherwise. Reconsidering: delete it and accept Servo's blind spots, or pin
+  Chrome in `mise.toml` (the trial's `http:` backend, a checksum by hand) so
+  `mise run shot` can render with it. Notes:
+  [`../wip/roadmap-P8.9-servo-vs-chrome-notes.md`](../wip/roadmap-P8.9-servo-vs-chrome-notes.md).

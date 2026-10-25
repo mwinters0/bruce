@@ -39,7 +39,8 @@ file hold.
   (`uv run --with pypdf`, `PdfReader(f).pages[i].extract_text()`): page 1 no
   longer ends on a heading and its paragraph, and "Housekeeping" no longer
   stands alone. Nothing asserts on page breaks; they are read by eye.
-- **`runs/headless-browser-trial/`** stays for 8.9, which deletes it.
+- **`runs/headless-browser-trial/`** holds that Chrome; 8.9's notes have the
+  recipe and the verdict.
 
 ## Negative results
 
