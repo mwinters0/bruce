@@ -26,6 +26,28 @@ fn a_digest_is_compared_with_the_finished_crawl_run_before_it() {
 }
 
 #[test]
+fn a_run_shares_its_day_with_another_crawl_run_started_that_day() {
+    let store = compared();
+    let conn = store.connection();
+    assert!(!super::shares_day(conn, RunId(4)).unwrap());
+    let add = |id: u64, mode: &str| {
+        conn.execute(
+            "INSERT INTO runs SELECT ?, started_at + INTERVAL 1 HOUR, NULL, ?, '0.0.8', 'h', \
+             NULL, roots, [] FROM runs WHERE run_id = 4",
+            duckdb::params![id, mode],
+        )
+        .unwrap();
+    };
+    // A `check-dir` run that day is no crawl, and no digest names it.
+    add(5, "local");
+    assert!(!super::shares_day(conn, RunId(4)).unwrap());
+    add(6, "crawl");
+    assert!(super::shares_day(conn, RunId(4)).unwrap());
+    let d = digest(&store, Some(RunId(1)), Against::Run(RunId(4))).unwrap();
+    assert!(d.compared.unwrap().shares_day);
+}
+
+#[test]
 fn a_digest_with_nothing_to_compare_with_says_so() {
     let d = of(&store());
     assert!(d.compared.is_none() && d.anchors_removed.rows.is_empty());

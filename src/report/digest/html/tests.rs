@@ -65,7 +65,7 @@ fn the_title_carries_the_date_and_the_times_are_utc() {
         html.contains("<time datetime=\"2026-10-23T21:14:44Z\">2026-10-23 21:14:44 UTC</time>")
     );
     assert!(html.contains(">1 h 10 min 33 s<"));
-    assert!(html.contains("no earlier run"));
+    assert!(html.contains("No earlier run to compare with"));
 }
 
 #[test]
@@ -188,15 +188,15 @@ fn errors_are_apart_from_the_breakage() {
 }
 
 #[test]
-fn the_sections_after_the_figures_are_since_pages_repos_targets_errors_housekeeping() {
-    let html = html();
+fn the_sections_after_the_figures_are_broken_fixed_pages_repos_targets_errors_housekeeping() {
+    let html = fixed_html();
     let order = [
         "figures",
-        "since",
+        "broken-since",
+        "fixed-since",
         "pages",
         "repos",
         "fix-once",
-        "anchors-removed",
         "errors",
         "housekeeping",
     ];
@@ -215,15 +215,15 @@ fn the_sections_after_the_figures_are_since_pages_repos_targets_errors_housekeep
 
 #[test]
 fn every_section_after_the_figures_starts_collapsed_under_its_heading() {
-    let html = html();
+    let html = fixed_html();
     let figures = section(&html, "figures");
     assert!(figures.contains("<h2>Figures</h2>") && !figures.contains("<details"));
     for id in [
-        "since",
+        "broken-since",
+        "fixed-since",
         "pages",
         "repos",
         "fix-once",
-        "anchors-removed",
         "errors",
         "housekeeping",
     ] {
@@ -684,12 +684,26 @@ fn compared_html() -> String {
     compared_digest().html()
 }
 
+/// [`compared_html`] with a link broken in run 4 and mended since, so that
+/// both two-run sections are shown.
+fn fixed_html() -> String {
+    crate::report::digest(
+        &crate::report::digest::tests::compared_with_a_fix(),
+        Some(RunId(1)),
+        crate::report::Against::Run(RunId(4)),
+    )
+    .unwrap()
+    .html()
+}
+
 #[test]
 fn the_header_names_the_run_compared_with_and_each_figure_its_change() {
     let html = compared_html();
     assert!(html.contains(
-        "<dt>Compared with</dt><dd>run 4, started <time datetime=\"2026-10-22T20:04:11Z\">"
+        "</h1>\n<p class=\"subtitle\">Compared with <time datetime=\"2026-10-22\">2026-10-22</time> \
+         (run #4)</p>\n"
     ));
+    assert!(!html.contains("<dt>Compared with</dt>"));
     let figures = section(&html, "figures");
     // Run 4 held 2 pages and 1 link, 1 of them to a broken URL.
     for (n, label, change) in [
@@ -715,6 +729,29 @@ fn the_header_names_the_run_compared_with_and_each_figure_its_change() {
         );
     }
     assert!(figures.contains("Each figure's change is since run 4."));
+    // Each figure is coloured as its links' dots are below.
+    for (class, label) in [
+        ("fig bad", "Links to a broken URL"),
+        ("fig warn", "Links to a missing fragment"),
+    ] {
+        let at = figures.find(label).unwrap();
+        let open = figures[..at].rfind("<div class=\"").unwrap();
+        assert!(
+            figures[open..].starts_with(&format!("<div class=\"{class}\">")),
+            "{label}"
+        );
+    }
+}
+
+#[test]
+fn a_compared_run_sharing_its_day_is_named_by_its_time_too() {
+    let mut d = compared_digest();
+    d.compared.as_mut().unwrap().shares_day = true;
+    let html = d.html();
+    assert!(html.contains(
+        "<p class=\"subtitle\">Compared with <time datetime=\"2026-10-22T20:04:11Z\">\
+         2026-10-22 20:04:11 UTC</time> (run #4)</p>"
+    ));
 }
 
 #[test]
@@ -730,23 +767,9 @@ fn a_fall_in_what_is_broken_is_for_the_better_and_no_change_is_said() {
 }
 
 #[test]
-fn the_anchors_removed_are_a_section_of_pages_with_their_dots() {
+fn the_breakage_new_and_fixed_are_sections_the_new_links_under_their_causes() {
     let html = compared_html();
-    let s = section(&html, "anchors-removed");
-    assert!(s.contains("<code>#nope</code>"));
-    assert!(s.contains("https://e.test/2"));
-    assert_eq!(
-        s.matches("<td class=\"dot\"><span class=\"sev attention\"")
-            .count(),
-        1
-    );
-    assert!(s.contains("<th class=\"dot\"></th>"));
-}
-
-#[test]
-fn the_breakage_new_and_fixed_is_a_section_of_links_under_their_causes() {
-    let html = compared_html();
-    let s = section(&html, "since");
+    let s = section(&html, "broken-since");
     // Run 1 broke three links run 4's page 1 and 2 did not hold; the one run 4's
     // page 1 had to the same 404 is broken in both.
     assert!(s.contains("3 to a broken URL or a missing fragment are broken since run 4"));
@@ -759,31 +782,24 @@ fn the_breakage_new_and_fixed_is_a_section_of_links_under_their_causes() {
         3,
         "a dot for each of the links"
     );
-    assert!(s.contains("0 were fixed") && s.contains("<h3>Fixed</h3>\n<p class=\"muted\">None."));
-    assert!(html.contains("<a href=\"#since\">Since</a>"));
+    assert!(html.contains("<a href=\"#broken-since\">Broken since</a>"));
+    // Nothing was fixed, so that section and its link are left out.
+    assert!(!html.contains("fixed-since"));
 }
 
 #[test]
 fn a_mended_link_is_listed_with_what_it_is_now() {
-    let html = crate::report::digest(
-        &crate::report::digest::tests::compared_with_a_fix(),
-        Some(RunId(1)),
-        crate::report::Against::Run(RunId(4)),
-    )
-    .unwrap()
-    .html();
-    let s = section(&html, "since");
-    assert!(s.contains("1 was fixed"));
-    assert!(s.contains("Broken then, not now"));
+    let html = fixed_html();
+    let s = section(&html, "fixed-since");
+    assert!(s.contains("1 broken in run 4 is not"));
     assert!(s.contains("<td>Link removed</td>"), "{s}");
 }
 
 #[test]
-fn with_nothing_to_compare_with_the_section_and_the_header_say_so() {
+fn with_nothing_to_compare_with_the_header_says_so_and_the_two_run_sections_are_left_out() {
     let html = html();
-    assert!(section(&html, "since").contains("no earlier run to compare with"));
-    assert!(html.contains("<dt>Compared with</dt><dd>no earlier run</dd>"));
-    assert!(section(&html, "anchors-removed").contains("no earlier run to compare with"));
+    assert!(!html.contains("broken-since") && !html.contains("fixed-since"));
+    assert!(html.contains("<p class=\"subtitle\">No earlier run to compare with</p>"));
     assert!(
         !html.contains("<span class=\"d\"") && !html.contains("<span class=\"d "),
         "no change without a comparison"
@@ -797,8 +813,60 @@ fn a_baseline_files_run_is_named_for_its_file_and_an_unfinished_one_says_so() {
     c.file = true;
     c.run.finished = None;
     let html = d.html();
-    assert!(html.contains("<dd>the run of a baseline file, started"));
-    assert!(html.contains("never finished, so its figures are incomplete"));
+    assert!(html.contains(
+        "<p class=\"subtitle\">Compared with <time datetime=\"2026-10-22\">2026-10-22</time> \
+         (baseline file, never finished)</p>"
+    ));
     assert!(html.contains("since the run of the baseline file."));
-    assert!(section(&html, "anchors-removed").contains("the baseline file's run"));
+    assert!(section(&html, "broken-since").contains("since the baseline file's run"));
+}
+
+#[test]
+fn what_is_new_is_marked_by_a_bar_and_a_drill_down_counts_its_new_links() {
+    let html = compared_html();
+    let pages = section(&html, "pages");
+    // Page 1 held a broken link in run 4: not new, counting its 3 new links.
+    assert!(pages.contains("<details id=\"p1\">\n<summary><span class=\"rank\">1</span>"));
+    assert!(pages.contains(", <span class=\"cn\">3 new</span></span></summary>"));
+    // Page 2 is new, which says so to a screen reader and counts nothing more.
+    assert!(
+        pages.contains(
+            "<details class=\"new\" id=\"p2\">\n<summary><span class=\"vh\">New: </span>"
+        )
+    );
+    assert_eq!(pages.matches(" new</span>").count(), 1);
+    // Every new link in a drill-down: page 1's two and its error, page 2's one.
+    assert_eq!(
+        pages
+            .matches("<tr class=\"new\"><td class=\"dot\"><span class=\"vh\">New: </span>")
+            .count(),
+        4
+    );
+    assert_eq!(pages.matches("<tr><td").count(), 1, "the 404 run 4 had too");
+    let errors = section(&html, "errors");
+    assert!(errors.contains("<tr class=\"new\">"));
+    let repos = section(&html, "repos");
+    assert!(repos.contains("<details class=\"new\">"));
+    assert!(html.contains(
+        "<span class=\"newbar\" aria-hidden=\"true\"></span> A bar at the left edge marks a row \
+         or a drill-down that is new since run 4."
+    ));
+}
+
+#[test]
+fn the_first_digest_marks_nothing_new() {
+    let html = html();
+    assert!(!html.contains("class=\"new\""));
+    assert!(!html.contains("New: "));
+    assert!(!html.contains(" new</span>"));
+    assert!(!html.contains("<span class=\"newbar\""));
+}
+
+#[test]
+fn a_comparison_with_nothing_new_leaves_out_the_broken_since() {
+    let mut d = compared_digest();
+    d.new_breakage.rows.clear();
+    let html = d.html();
+    assert!(!html.contains("broken-since") && !html.contains("fixed-since"));
+    assert!(html.contains("<nav><a href=\"#figures\">Figures</a> <a href=\"#pages\">"));
 }

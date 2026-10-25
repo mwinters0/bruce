@@ -161,11 +161,12 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   the scope changed and the root missed flagged.
   Notes: [`../wip/roadmap-P8.7-two-run-reports-notes.md`](../wip/roadmap-P8.7-two-run-reports-notes.md).
 - [x] **8.8** The digest's comparison: `--from`, `--since` with `cli::file`,
-  the header's compared run, the figures' changes and section 7 (anchors
-  removed); shown on 8.14's en-US crawl against 8.1's. Section 3 is 8.8.1.
+  the header's compared run, the figures' changes and the JSON's
+  `anchors_removed`; shown on 8.14's en-US crawl against 8.1's. Sections 3
+  and 4 are 8.8.1.
   Notes: [`../wip/roadmap-P8.8-digest-comparison-notes.md`](../wip/roadmap-P8.8-digest-comparison-notes.md).
-- [x] **8.8.1** The digest's section 3, "since the last run": the breakage new
-  and fixed, each new row saying why by what the comparison held (D74), shown on
+- [x] **8.8.1** The digest's sections 3 and 4, "broken since" and "fixed
+  since" the previous run: the breakage new and fixed, each new row saying why by what the comparison held (D74), shown on
   8.14's en-US crawl against 8.1's (all 671 new breaks `first_judged`, none fixed).
   Notes: [`../wip/roadmap-P8.8.1-digest-since-notes.md`](../wip/roadmap-P8.8.1-digest-since-notes.md).
 - [x] **8.9** Servo's renders of the digest beside Chrome's headless shell's,
@@ -173,9 +174,25 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   digest renders, the verdict in the notes: it is not, for a phone's tables
   or print.
   Notes: [`../wip/roadmap-P8.9-servo-vs-chrome-notes.md`](../wip/roadmap-P8.9-servo-vs-chrome-notes.md).
-- [ ] **8.20** The maintainer's closing review of the finished digest, the
+- [x] **8.8.2** Sections 3 and 4 apart, "Broken since the previous run" and
+  "Fixed since the previous run"; no HTML section of the anchors removed; the
+  compared run a sub-title, its day and number; earned by 8.20's findings 1
+  to 3.
+  Notes: [`../wip/roadmap-P8.8.2-two-sections-notes.md`](../wip/roadmap-P8.8.2-two-sections-notes.md).
+- [x] **8.8.3** A two-run section with nothing to list left out, its link in
+  the header too, as with no comparison; earned by 8.20's sixth finding.
+  Notes: [`../wip/roadmap-P8.8.3-empty-sections-notes.md`](../wip/roadmap-P8.8.3-empty-sections-notes.md).
+- [x] **8.19.2** The missing fragments' figure amber, as their dots are;
+  earned by 8.20's fourth finding.
+  Notes: [`../wip/roadmap-P8.19.2-amber-figure-notes.md`](../wip/roadmap-P8.19.2-amber-figure-notes.md).
+- [x] **8.21** What is new since the compared run marked in every section, a
+  bar at the left edge, a drill-down counting its new links, `new` in the
+  JSON (D75); earned by 8.20's fifth finding.
+  Notes: [`../wip/roadmap-P8.21-new-marked-notes.md`](../wip/roadmap-P8.21-new-marked-notes.md).
+- [x] **8.20** The maintainer's closing review of the finished digest, the
   two-run sections included: no code, the verdict and what it spawns in the
-  notes.
+  notes. Approved, with findings 1 to 6 landed.
+  Notes: [`../wip/roadmap-P8.20-closing-review-notes.md`](../wip/roadmap-P8.20-closing-review-notes.md).
 
 ## Not started
 

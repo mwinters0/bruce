@@ -13,8 +13,8 @@ tool fails here, and any machine rebuilds `sim/` from the guide alone.
 What it checks: the guide has tagged blocks, every path stays inside `sim/`,
 `bruce.toml` is among them, and `cargo run --example sim_config -- bruce.toml`
 accepts it. That example loads a config as `bruce crawl --config` does, with no
-request sent. **The crawl is not run**: at one to two hours it is launched by
-hand from `sim/` (`CLAUDE.md`, "Long-running processes").
+request sent. **The crawl is not run**: at one to two hours it is launched
+detached from `sim/` by `mise run crawl` (`review.py`).
 
 Only the files the guide names are written; whatever else `sim/` holds, a
 crawl's logs included, is left alone. `sim/` is gitignored.

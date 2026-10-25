@@ -29,7 +29,7 @@ run = "uv run check.py"
 
 # The simulated deployment: the deployment guide's tagged blocks extracted
 # into the gitignored `sim/`, and its config checked to load (D42). The crawl
-# is launched by hand from `sim/`; `scripts/sim.py` says why.
+# is `mise run crawl`, below; `scripts/sim.py` says why it is not this.
 [tasks.sim]
 description = "Extract the deployment guide into sim/ and check its config loads"
 dir = "{{config_root}}/scripts"
@@ -50,6 +50,25 @@ run = "uv run e2e.py"
 description = "Render the digest's HTML headless with Servo to PNGs under runs/shot/"
 dir = "{{config_root}}/scripts"
 run = "uv run shot.py"
+
+# The en-US crawl a review reads, into a copy of the last one's database so
+# the digest compares two runs: `crawl` launches it detached and returns,
+# `digest` writes its digest once it has finished, `serve` serves that on port
+# 8086 (`scripts/review.py`). `digest` and `serve` take a `runs/` directory.
+[tasks.crawl]
+description = "Launch an en-US crawl detached, into a copy of the last crawl's database"
+dir = "{{config_root}}/scripts"
+run = "uv run review.py crawl"
+
+[tasks.digest]
+description = "Write the digest of the newest review crawl, once it has finished"
+dir = "{{config_root}}/scripts"
+run = "uv run review.py digest"
+
+[tasks.serve]
+description = "Serve the newest review crawl's digest on port 8086"
+dir = "{{config_root}}/scripts"
+run = "uv run review.py serve"
 
 # The cargo commands one at a time; `check` runs fmt, clippy and test among
 # the rest, each with the flags it holds a round to.

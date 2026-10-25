@@ -298,7 +298,7 @@ fn pages_are_ranked_by_their_broken_links_and_their_links_follow_them() {
     let d = of(&store());
     assert_eq!(column(&d.pages, "page"), [url(1), url(2)]);
     assert_eq!(
-        d.pages.rows[0][5..],
+        d.pages.rows[0][5..10],
         [
             Cell::Int(6),
             Cell::Int(2),
@@ -366,7 +366,7 @@ fn repos_and_components_are_ranked_and_a_page_without_either_is_kept() {
     let d = of(&store());
     assert_eq!(column(&d.by_repo, "repo"), ["r/one", "r/two", "Null"]);
     assert_eq!(
-        d.by_repo.rows[0][1..],
+        d.by_repo.rows[0][1..8],
         [
             Cell::Int(1),
             Cell::Int(1),
@@ -485,7 +485,7 @@ fn the_links_broken_through_a_doubled_slash_count_on_the_linking_page() {
         .iter()
         .find(|r| r[0] == Cell::Text("r/seven".to_owned()))
         .unwrap();
-    assert_eq!(repo.last(), Some(&Cell::Int(4)));
+    assert_eq!(repo[7], Cell::Int(4), "through");
     assert_eq!(
         d.totals.links,
         10 + 1 + 1 + 1,
@@ -739,7 +739,10 @@ fn housekeeping_holds_the_redirects_orphans_and_unlisted_pages() {
     // The entries no page was fetched for, the one that failed first; the
     // sitemap's pages are in no list of entries.
     let entries = &d.sitemap_entries;
-    assert_eq!(entries.columns, ["page", "outcome", "reason", "status"]);
+    assert_eq!(
+        entries.columns,
+        ["page", "outcome", "reason", "status", "new"]
+    );
     assert_eq!(column(entries, "page"), [url(20), url(21)]);
     assert_eq!(column(entries, "outcome"), ["broken_url", "unchecked"]);
     assert_eq!(column(entries, "reason")[1], "robots");

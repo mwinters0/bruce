@@ -41,6 +41,11 @@ impl<'a> Row<'a> {
         }
     }
 
+    /// The row is new since the compared run (D75).
+    pub(super) fn is_new(&self) -> bool {
+        matches!(self.cell("new"), Cell::Bool(true))
+    }
+
     pub(super) fn list(&self, name: &str) -> &'a [String] {
         match self.cell(name) {
             Cell::List(items) => items,
@@ -127,6 +132,12 @@ pub(super) fn when(seconds: i64) -> String {
     format!("<time datetime=\"{rfc}\">{shown}</time>")
 }
 
+/// The UTC day of the time as a `<time>`.
+pub(super) fn day(seconds: i64) -> String {
+    let (date, _) = utc(seconds);
+    format!("<time datetime=\"{date}\">{date}</time>")
+}
+
 pub(super) fn duration(seconds: i64) -> String {
     let (h, m, s) = (seconds / 3_600, seconds % 3_600 / 60, seconds % 60);
     match (h, m) {
@@ -135,10 +146,25 @@ pub(super) fn duration(seconds: i64) -> String {
         _ => format!("{h} h {m} min {s} s"),
     }
 }
+/// What a screen reader reads of the bar marking a row or a drill-down new;
+/// the bar is the class `new`.
+pub(super) const NEW: &str = "<span class=\"vh\">New: </span>";
+
 /// A table of already-rendered cells; a header marked `true` is a number, and
 /// one with no name is the severity dot's column. A table with no row is the
 /// word for it, not a header over nothing.
 pub(super) fn table(out: &mut String, head: &[(&str, bool)], body: &[Vec<String>]) {
+    let body: Vec<(bool, &[String])> = body.iter().map(|r| (false, r.as_slice())).collect();
+    rows_of(out, head, &body);
+}
+
+/// [`table`], each row marked new where its flag says (D75).
+pub(super) fn marked(out: &mut String, head: &[(&str, bool)], body: &[(bool, Vec<String>)]) {
+    let body: Vec<(bool, &[String])> = body.iter().map(|(n, r)| (*n, r.as_slice())).collect();
+    rows_of(out, head, &body);
+}
+
+fn rows_of(out: &mut String, head: &[(&str, bool)], body: &[(bool, &[String])]) {
     if body.is_empty() {
         out.push_str("<p class=\"muted\">None.</p>\n");
         return;
@@ -148,14 +174,26 @@ pub(super) fn table(out: &mut String, head: &[(&str, bool)], body: &[Vec<String>
         w!(out, "<th{}>{name}</th>", column_class(name, *numeric));
     }
     out.push_str("</tr></thead>\n<tbody>\n");
-    for row in body {
-        out.push_str("<tr>");
-        for (cell, (name, numeric)) in row.iter().zip(head) {
-            w!(out, "<td{}>{cell}</td>", column_class(name, *numeric));
+    for (new, row) in body {
+        out.push_str(if *new { "<tr class=\"new\">" } else { "<tr>" });
+        for (i, (cell, (name, numeric))) in row.iter().zip(head).enumerate() {
+            let said = if *new && i == 0 { NEW } else { "" };
+            w!(out, "<td{}>{said}{cell}</td>", column_class(name, *numeric));
         }
         out.push_str("</tr>\n");
     }
     out.push_str("</tbody></table></div>\n");
+}
+
+/// A `<details>`'s opening tag, marked new where `new` says (D75), and what a
+/// screen reader reads of the mark, for the start of its summary.
+pub(super) fn details(new: bool, id: Option<&str>) -> (String, &'static str) {
+    let id = id.map_or_else(String::new, |id| format!(" id=\"{id}\""));
+    if new {
+        (format!("<details class=\"new\"{id}>"), NEW)
+    } else {
+        (format!("<details{id}>"), "")
+    }
 }
 
 /// The class of a column's cells.

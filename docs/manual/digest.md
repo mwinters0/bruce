@@ -35,15 +35,15 @@ fetched for.
 ## The comparison
 
 The digest compares its run with another, to say what changed: the header names
-that run, each figure shows its change since it, and the breakage new and fixed
-and the anchors removed since are sections. **By default** the other run is the finished crawl run before the
+that run, each figure shows its change since it, and the breakage new and the
+breakage fixed since are sections, each left out where it would list nothing. **By default** the other run is the finished crawl run before the
 digest's in the database; a `check-dir` run is never one. **`--from`** names
 another run of the database. **`--since`** names a baseline file, for a
 deployment that keeps no history: the digest imports its run, reads it, and
 removes it again, so the database holds the runs it held before and a bare
 [`bruce report`](report.md) still reads its latest finished run. A digest of a
-database that holds no earlier run, given neither, says so in the header and
-the section and has `null` for `compared_with`. The comparison is of two runs
+database that holds no earlier run, given neither, says so in the header, has
+neither section, and has `null` for `compared_with`. The comparison is of two runs
 of one site: a run of other roots shows as pages gained and lost.
 
 ## The files
@@ -72,24 +72,38 @@ from the others in shape, so the three read apart in print and without
 colour, and every dot is named for a screen reader. The figures' legend names
 the three. Only the JSON's `outcome` and `reason` decide a level; it has no
 field for it. The lists that are not links (orphans, unlisted pages, sitemap
-entries, the unchecked counts) have no dot. In this order:
+entries, the unchecked counts) have no dot. **A bar at the left edge** marks a
+row or a drill-down that is new since the compared run, as the JSON's `new`
+says ([below](#the-json)), and a drill-down that is not new counts its new
+links in its summary, "● 4 broken links, 1 new"; the figures' legend says
+so. A digest with no compared run marks nothing, and the unchecked counts
+and the hosts checked are never marked, nor the two sections that are all
+new or all fixed. In this order:
 
-1. **The header**: the roots, the run's id, start, finish and duration, the
-   `bruce` that crawled it, and the run [compared with](#the-comparison), or
-   that there was none. Its links go to each section's heading.
+1. **The header**: under the title, the run [compared with](#the-comparison)
+   as the day it started and its number, "Compared with 2026-10-22 (run #4)",
+   the time too where another crawl run of the database started that day, a
+   baseline file's run as "(baseline file)", and "never finished" added
+   where it did not; or that there was none. Then the roots, the run's id,
+   start, finish and duration, and the `bruce` that crawled it. Its links go
+   to each section's heading.
 2. **Figures**: the pages checked and the links on them, and among those
-   links the ones to a broken URL, to a missing fragment, and that errored.
+   links the ones to a broken URL, in red, to a missing fragment, in amber
+   as their dots are, and that errored.
    The first two of those are the broken links. Beneath each is its change since
    the compared run, as `+12`, `−3` or `no change`, in red where what is
    broken rose and green where it fell.
-3. **Broken since the compared run**: the links broken in this run and not in
+3. **Broken since the previous run**: the links broken in this run and not in
    the compared one, each group under its cause ([below](#why-a-link-is-newly-broken)) a
    closed drill-down of the links, with the page each is on, what it is written as
    and names, and the source of the page answering for it (the target's, as the compared
    run recorded it, for a target removed, moved or without the anchor, else the linking
-   page's), and the links the compared run had broken that are not, each with what it
-   is now. Empty, and says so, where there was no compared run.
-4. **Pages, by the broken links on them**: each page that holds one, or a
+   page's). Left out, with its link in the header, where no link broke since,
+   or there was no compared run.
+4. **Fixed since the previous run**: the links the compared run had broken that are
+   not broken in this one, each with what it is now and the linking page's source.
+   Left out, as section 3 is, where none was fixed.
+5. **Pages, by the broken links on them**: each page that holds one, or a
    link that errored, as a drill-down of those links, with its live page and
    its source. Its summary reads, for a page of 181 links to a broken URL or
    that errored and 2 to a missing fragment, "● 181 broken links, ● 2 missing
@@ -120,22 +134,17 @@ entries, the unchecked counts) have no dot. In this order:
    and *Problem* and *Status* what the target answered: `URL broken` or
    `fragment missing`. A page with an unresolved `xref:` that looks like a
    typo has a Hint column, the nearest page ID.
-5. **Repos, by the broken links on their pages**: the repos whose pages hold
-   broken links, ranked and counted as the pages are, each with links to its pages in section 4,
+6. **Repos, by the broken links on their pages**: the repos whose pages hold
+   broken links, ranked and counted as the pages are, each with links to its pages in section 5,
    which open that section where the browser opens a closed section for a
    link into it: Chrome 97, Firefox 139 and Safari 26.2 on. In an older one,
    open the pages first. A link counts against the repo of the page it is
-   written on, which may not be the repo section 6 names for its target.
-6. **Broken targets, by the links to them** ("fix once, fix many"): the
+   written on, which may not be the repo section 7 names for its target.
+7. **Broken targets, by the links to them** ("fix once, fix many"): the
    targets that more than one broken link names, from whatever pages, the
    most links first, each with the pages linking to it and the target's own
    source, where restoring a missing fragment mends every link in its row.
-   The targets one link names are not listed; their links are in section 4.
-7. **Anchors removed since the compared run**: the pages that had an anchor
-   in the compared run and lost it while links still name it, the most linked
-   first, each with the links to it and the pages they are on, and the page's
-   source: the links to a missing fragment that the page's own change
-   broke, to restore in its source. An anchor no link names is no row.
+   The targets one link names are not listed; their links are in section 5.
 8. **Links that errored**, apart from the breakage.
 9. **Housekeeping**: the redirected links by where their targets land, each
    landing a closed drill-down of its own (its dot, the landing, its links and
@@ -166,20 +175,20 @@ and a count or status a number.
   "run": {"id":1,"tool_version":"0.1.0","started_at":"2026-10-23T20:04:11Z","finished_at":"2026-10-23T21:14:44Z","duration_seconds":4233,"roots":["https://docs.example.org/en-US/"]},
   "compared_with": {"id":0,"from_file":false,"tool_version":"0.1.0","started_at":"2026-10-22T20:03:58Z","finished_at":"2026-10-22T21:12:09Z","roots":["https://docs.example.org/en-US/"],"totals":{"pages":5,"links":9,"broken_url":2,"broken_anchor":0,"error":1,"unchecked":1}},
   "totals": {"pages":5,"links":10,"broken_url":3,"broken_anchor":1,"error":1,"unchecked":1},
-  "broken_targets": [{"target":"https://docs.example.org/en-US/b/","landing":null,"fix":null,"fragment":"nope","outcome":"broken_anchor","reason":null,"status":200,"links":1,"pages":1,"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/b.adoc"}],
-  "pages": [{"page":"https://docs.example.org/en-US/a/","title":"A","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0}],
-  "broken": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","landing":null,"fix":null,"fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"hint":null,"status":200}],
-  "by_repo": [{"repo":"https://forge.example.org/docs","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0}],
+  "broken_targets": [{"target":"https://docs.example.org/en-US/b/","landing":null,"fix":null,"fragment":"nope","outcome":"broken_anchor","reason":null,"status":200,"links":1,"pages":1,"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/b.adoc","new":true}],
+  "pages": [{"page":"https://docs.example.org/en-US/a/","title":"A","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0,"new":false,"new_links":1}],
+  "broken": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","landing":null,"fix":null,"fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"hint":null,"status":200,"new":true}],
+  "by_repo": [{"repo":"https://forge.example.org/docs","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0,"new":false,"new_links":1}],
   "by_component": [{"component":"handbook","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0}],
   "new_breakage": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"status":200,"cause":"anchor_removed","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/b.adoc"}],
   "fixed_breakage": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../old/","target":"https://docs.example.org/en-US/old/","fragment":null,"kind":"anchor","outcome":"broken_url","reason":null,"status":404,"became":"ok","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc"}],
   "anchors_removed": [{"page":"https://docs.example.org/en-US/b/","anchor":"nope","links":1,"pages":1,"linking_pages":["https://docs.example.org/en-US/a/"],"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc"}],
-  "errors": [{"page":"https://docs.example.org/en-US/a/","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","raw_href":"https://slow.example.net/","target":"https://slow.example.net/","fragment":null,"kind":"anchor","reason":"server_error","status":503}],
+  "errors": [{"page":"https://docs.example.org/en-US/a/","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","raw_href":"https://slow.example.net/","target":"https://slow.example.net/","fragment":null,"kind":"anchor","reason":"server_error","status":503,"new":false}],
   "housekeeping": {
-    "redirects": [{"landing":"https://docs.example.org/en-US/b/","links":1,"urls":1,"chain":"301 https://docs.example.org/en-US/old/","reason":null,"pages":["https://docs.example.org/en-US/a/"]}],
-    "orphans": [{"page":"https://docs.example.org/en-US/c/","title":"C","root":"https://docs.example.org/en-US/","source_repo":null,"source_path":null}],
-    "unlisted": [{"page":"https://docs.example.org/en-US/d/","root":"https://docs.example.org/en-US/","title":"D","source_repo":null,"source_path":null}],
-    "sitemap_entries": [{"page":"https://docs.example.org/en-US/gone/","outcome":"broken_url","reason":null,"status":404}],
+    "redirects": [{"landing":"https://docs.example.org/en-US/b/","links":1,"urls":1,"chain":"301 https://docs.example.org/en-US/old/","reason":null,"pages":["https://docs.example.org/en-US/a/"],"new":false}],
+    "orphans": [{"page":"https://docs.example.org/en-US/c/","title":"C","root":"https://docs.example.org/en-US/","source_repo":null,"source_path":null,"new":false}],
+    "unlisted": [{"page":"https://docs.example.org/en-US/d/","root":"https://docs.example.org/en-US/","title":"D","source_repo":null,"source_path":null,"new":false}],
+    "sitemap_entries": [{"page":"https://docs.example.org/en-US/gone/","outcome":"broken_url","reason":null,"status":404,"new":false}],
     "roots_without_sitemap": ["https://docs.example.net/"],
     "unchecked": [{"reason":"skipped","links":1,"targets":1}],
     "unchecked_groups": [{"reason":"skipped","group":"forge.example.org/…/issues/new","links":1,"targets":1}],
@@ -193,6 +202,15 @@ another meaning, never when one is added, so a loader reading version 1 may
 ignore a field it does not know. `tool_version` is the `bruce` that wrote the
 file, and `run.tool_version` the one that crawled. `compared_with` is the run
 this one was compared with, or `null` where there was none.
+
+**What is new since it**: each row of `broken_targets`, `pages`, `broken`,
+`by_repo`, `errors` and the housekeeping's `redirects`, `orphans`, `unlisted`
+and `sitemap_entries` has `new`, true where `compared_with`'s same list had
+no such row: the same page, target and fragment, or for a broken link, one
+`new_breakage` lists. A repo is new where its pages hold a broken link or an
+error and held none then. `pages` and `by_repo` also have `new_links`, the
+new rows of `broken` and `errors` on the page or the repo's pages. Both are
+`null` where `compared_with` is, nothing being known to be new.
 
 Every list below is **already ranked**; a loader needs to sort none of them.
 

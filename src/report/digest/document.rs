@@ -36,6 +36,9 @@ pub struct Compared {
     /// The run came from a baseline file, so its number is that of a run the
     /// database held only while the digest was made, and says nothing.
     pub file: bool,
+    /// Another crawl run of the database started on the run's UTC day, so the
+    /// day alone does not name it. Never for a baseline file's run.
+    pub shares_day: bool,
 }
 
 /// A crawl run's digest.

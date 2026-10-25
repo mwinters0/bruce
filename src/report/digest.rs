@@ -15,6 +15,7 @@ mod compare;
 mod document;
 mod html;
 mod json;
+mod novelty;
 mod sections;
 
 use std::path::Path;
@@ -94,7 +95,7 @@ fn build(conn: &Connection, read: &Read, from: Option<RunId>, file: bool) -> Res
         ),
         None => (empty(), empty()),
     };
-    Ok(Digest {
+    let mut digest = Digest {
         run,
         compared,
         totals: sections::totals(conn, id)?,
@@ -117,7 +118,9 @@ fn build(conn: &Connection, read: &Read, from: Option<RunId>, file: bool) -> Res
         roots_without_sitemap: sections::roots_without_sitemap(conn, id)?,
         unfinished: read.unfinished,
         later_unfinished: read.later_unfinished,
-    })
+    };
+    novelty::mark(conn, &mut digest)?;
+    Ok(digest)
 }
 
 /// The section of a digest with nothing to compare with.

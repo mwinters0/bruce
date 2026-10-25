@@ -27,6 +27,7 @@ cd scripts && uv run concepts.py         # every production .rs claimed by one c
 cd scripts && uv run python -m unittest test_<script>   # one script's own tests
 mise run sim                             # the deployment guide's tagged blocks into sim/, config checked to load
 mise run shot                            # an HTML page (the digest's golden file) rendered headless to PNGs under runs/shot/, to read
+mise run crawl | digest | serve          # an en-US crawl into a copy of the last, detached; its digest; served on :8086 (scripts/review.py)
 mise run e2e                             # the fixture Antora site built, crawled and gated under runs/e2e/ (slow, needs node; `check` runs it when the binary is affected)
 mise run build | test | clippy | fmt | bench   # one cargo command; Rust is pinned in mise.toml
 ```

@@ -1,6 +1,7 @@
-//! Section 3, "since the compared run": the links broken in the digest's run
-//! and not in the one it is compared with, each saying why by what the
-//! comparison held, and the links the comparison had broken that are not.
+//! Sections 3 and 4, "broken since" and "fixed since" the compared run: the
+//! links broken in the digest's run and not in the one it is compared with,
+//! each saying why by what the comparison held, and the links the comparison
+//! had broken that are not.
 //!
 //! A link is keyed as `diff` keys it, by its page, its target and its
 //! fragment, several links sharing a key being a key's, but a row is a link.

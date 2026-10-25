@@ -12,8 +12,8 @@ use std::collections::HashMap;
 use std::fmt::Write as _;
 
 use self::markup::{
-    Row, a, a_html, close_section, duration, esc, num, open_section, rows, short, source, table, w,
-    when,
+    Row, a, a_html, close_section, details, duration, esc, marked, num, open_section, rows, short,
+    source, table, w, when,
 };
 use self::severity::{Level, legend, mark};
 use super::document::Digest;
@@ -33,11 +33,11 @@ impl Digest {
         head(&mut out, self);
         out.push_str("<main>\n");
         figures(&mut out, self);
-        compared::since_last_run(&mut out, self);
+        compared::broken_since(&mut out, self);
+        compared::fixed_since(&mut out, self);
         let ids = pages(&mut out, self);
         repos(&mut out, self, &ids);
         fix_once(&mut out, self);
-        compared::anchors_removed(&mut out, self);
         errors(&mut out, self);
         housekeeping(&mut out, self);
         out.push_str("</main>\n");
@@ -79,6 +79,21 @@ fn tally(red: i64, through: i64, amber: i64) -> String {
         }
     }
     parts.join(", ")
+}
+
+/// A page's or a repo's summary count, [`tally`]'s, and how many of its links
+/// are new where it is not new itself (D75).
+fn summary_count(r: &Row) -> String {
+    let mut count = tally(
+        r.int("broken_url") + r.int("error"),
+        r.int("through"),
+        r.int("broken_anchor"),
+    );
+    let new = r.int("new_links");
+    if !r.is_new() && new > 0 {
+        w!(count, ", <span class=\"cn\">{} new</span>", num(new));
+    }
+    count
 }
 
 /// `text` escaped, each doubled slash in its path marked: a run of `/` after
@@ -222,8 +237,10 @@ fn head(out: &mut String, d: &Digest) {
     );
     w!(
         out,
-        "<header><div>\n<h1>Link check digest <span class=\"date\">{}</span></h1>\n<dl class=\"meta\">\n",
-        d.date()
+        "<header><div>\n<h1>Link check digest <span class=\"date\">{}</span></h1>\n\
+         <p class=\"subtitle\">{}</p>\n<dl class=\"meta\">\n",
+        d.date(),
+        compared::subtitle(d)
     );
     let roots: Vec<String> = run.roots.iter().map(|r| a(r, short(r))).collect();
     w!(out, "<dt>Roots</dt><dd>{}</dd>\n", roots.join(", "));
@@ -246,21 +263,29 @@ fn head(out: &mut String, d: &Digest) {
         "<dt>Crawled by</dt><dd>bruce <span class=\"version\">{}</span></dd>\n",
         esc(&run.tool_version)
     );
-    w!(
-        out,
-        "<dt>Compared with</dt><dd>{}</dd>\n</dl>\n",
-        compared::line(d)
-    );
+    out.push_str("</dl>\n");
     if d.unfinished {
         out.push_str(
             "<p class=\"warn-box\">This run never finished, so the digest is incomplete.</p>\n",
         );
     }
-    out.push_str(
-        "<nav><a href=\"#figures\">Figures</a> <a href=\"#since\">Since</a> <a href=\"#pages\">Pages</a> \
+    let (broken, fixed) = compared::shown(d);
+    w!(
+        out,
+        "<nav><a href=\"#figures\">Figures</a> {}{}<a href=\"#pages\">Pages</a> \
          <a href=\"#repos\">Repos</a> <a href=\"#fix-once\">Targets</a> \
-         <a href=\"#anchors-removed\">Anchors removed</a> <a href=\"#errors\">Errors</a> <a href=\"#housekeeping\">Housekeeping</a></nav>\n\
+         <a href=\"#errors\">Errors</a> <a href=\"#housekeeping\">Housekeeping</a></nav>\n\
          </div></header>\n",
+        if broken {
+            "<a href=\"#broken-since\">Broken since</a> "
+        } else {
+            ""
+        },
+        if fixed {
+            "<a href=\"#fixed-since\">Fixed since</a> "
+        } else {
+            ""
+        }
     );
 }
 
@@ -272,7 +297,7 @@ fn figures(out: &mut String, d: &Digest) {
         ("Pages checked", t.pages, ""),
         ("Links on them", t.links, ""),
         ("Links to a broken URL", t.broken_url, " bad"),
-        ("Links to a missing fragment", t.broken_anchor, " bad"),
+        ("Links to a missing fragment", t.broken_anchor, " warn"),
         ("Links that errored", t.error, " warn"),
     ]
     .into_iter()
@@ -294,17 +319,12 @@ fn figures(out: &mut String, d: &Digest) {
         num(t.broken_url + t.broken_anchor),
         num(t.unchecked),
         compared::since(d),
-        legend()
+        legend() + &compared::new_legend(d)
     );
 }
 
 fn fix_once(out: &mut String, d: &Digest) {
-    open_section(
-        out,
-        "fix-once",
-        "By: Link Target",
-        None,
-    );
+    open_section(out, "fix-once", "By: Link Target", None);
     out.push_str(
         "<p>Fix once, fix many: each row is a target that more than one broken link names, \
          from whatever pages, the most links first. Restoring the target in its own source, the \
@@ -324,10 +344,10 @@ fn fix_once(out: &mut String, d: &Digest) {
             num(held),
             num(all)
         );
-        let body: Vec<Vec<String>> = many
+        let body: Vec<(bool, Vec<String>)> = many
             .iter()
             .map(|r| {
-                vec![
+                let cells = vec![
                     mark(Level::of_link(r.text("outcome"), r.text("reason"))),
                     num(r.int("links")),
                     num(r.int("pages")),
@@ -339,10 +359,11 @@ fn fix_once(out: &mut String, d: &Digest) {
                         r.text("source_path"),
                         r.text("source_url"),
                     ),
-                ]
+                ];
+                (r.is_new(), cells)
             })
             .collect();
-        table(
+        marked(
             out,
             &[
                 ("", false),
@@ -413,17 +434,14 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
         let url = p.text("page").unwrap_or("");
         let id = format!("p{}", i + 1);
         ids.insert(url.to_owned(), id.clone());
+        let (open, said) = details(p.is_new(), Some(&id));
         w!(
             out,
-            "<details id=\"{id}\">\n<summary><span class=\"rank\">{}</span><span class=\"ttl\">{}</span>\
+            "{open}\n<summary>{said}<span class=\"rank\">{}</span><span class=\"ttl\">{}</span>\
              <span class=\"cnt\">{}</span></summary>\n",
             i + 1,
             esc(p.text("title").unwrap_or_else(|| short(url))),
-            tally(
-                p.int("broken_url") + p.int("error"),
-                p.int("through"),
-                p.int("broken_anchor")
-            )
+            summary_count(&p)
         );
         w!(
             out,
@@ -440,7 +458,7 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
         let hinted = page_links.iter().any(|r| r.text("hint").is_some());
         // The red links together, a link that errored after the broken URLs,
         // then the amber ones.
-        let mut found: Vec<(Option<Level>, Vec<String>)> = page_links
+        let mut found: Vec<(Option<Level>, bool, Vec<String>)> = page_links
             .iter()
             .map(|r| {
                 let mut cells = vec![
@@ -459,7 +477,11 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
                     ));
                 }
                 cells.push(status_cell(r.int("status")));
-                (Level::of_link(r.text("outcome"), r.text("reason")), cells)
+                (
+                    Level::of_link(r.text("outcome"), r.text("reason")),
+                    r.is_new(),
+                    cells,
+                )
             })
             .collect();
         found.extend(page_errors.iter().map(|r| {
@@ -476,10 +498,13 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
                 cells.push("-".to_owned());
             }
             cells.push(status_cell(r.int("status")));
-            (Some(Level::Broken), cells)
+            (Some(Level::Broken), r.is_new(), cells)
         }));
-        found.sort_by_key(|(level, _)| std::cmp::Reverse(*level));
-        let body: Vec<Vec<String>> = found.into_iter().map(|(_, cells)| cells).collect();
+        found.sort_by_key(|(level, _, _)| std::cmp::Reverse(*level));
+        let body: Vec<(bool, Vec<String>)> = found
+            .into_iter()
+            .map(|(_, new, cells)| (new, cells))
+            .collect();
         let mut columns = vec![
             ("", false),
             ("Written as", false),
@@ -492,7 +517,7 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
             columns.push(("Hint", false));
         }
         columns.push(("Status", true));
-        table(out, &columns, &body);
+        marked(out, &columns, &body);
         out.push_str("</details>\n");
     }
     close_section(out);
@@ -500,12 +525,7 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
 }
 
 fn repos(out: &mut String, d: &Digest, ids: &Ids) {
-    open_section(
-        out,
-        "repos",
-        "By: Source Page Repo",
-        None,
-    );
+    open_section(out, "repos", "By: Source Page Repo", None);
     let mut of_repo: HashMap<Option<&str>, Vec<(&str, &str)>> = HashMap::new();
     for p in rows(&d.pages) {
         let url = p.text("page").unwrap_or("");
@@ -525,16 +545,13 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
             Some(repo) => a(repo, short(repo)),
             None => "<span class=\"muted\">No source recorded</span>".to_owned(),
         };
+        let (open, said) = details(r.is_new(), None);
         w!(
             out,
-            "<details>\n<summary><span class=\"rank\">{}</span><span class=\"ttl\">{name}</span>\
+            "{open}\n<summary>{said}<span class=\"rank\">{}</span><span class=\"ttl\">{name}</span>\
              <span class=\"cnt\">{}</span></summary>\n<ul>\n",
             i + 1,
-            tally(
-                r.int("broken_url") + r.int("error"),
-                r.int("through"),
-                r.int("broken_anchor")
-            )
+            summary_count(&r)
         );
         for (url, title) in of_repo.get(&repo).into_iter().flatten() {
             let label = esc(title);
@@ -566,10 +583,10 @@ fn errors(out: &mut String, d: &Digest) {
     if d.errors.rows.is_empty() {
         out.push_str("<p>No link errored.</p>\n");
     } else {
-        let body: Vec<Vec<String>> = rows(&d.errors)
+        let body: Vec<(bool, Vec<String>)> = rows(&d.errors)
             .map(|r| {
                 let page = r.text("page").unwrap_or("");
-                vec![
+                let cells = vec![
                     mark(Some(Level::Broken)),
                     a(page, short(page)),
                     r.text("source_url")
@@ -579,10 +596,11 @@ fn errors(out: &mut String, d: &Digest) {
                     esc(r.text("kind").unwrap_or("")),
                     problem(None, r.text("reason")),
                     status_cell(r.int("status")),
-                ]
+                ];
+                (r.is_new(), cells)
             })
             .collect();
-        table(
+        marked(
             out,
             &[
                 ("", false),
@@ -616,9 +634,10 @@ fn fold(out: &mut String, title: &str, count: &str, inner: impl FnOnce(&mut Stri
 /// links are on, a list so that no cell grows as wide as the longest.
 fn redirect(out: &mut String, r: &Row) {
     let landing = r.text("landing").unwrap_or("");
+    let (open, said) = details(r.is_new(), None);
     w!(
         out,
-        "<details>\n<summary>{}<span class=\"ttl\">{}</span><span class=\"cnt\">{}, {}</span></summary>\n",
+        "{open}\n<summary>{said}{}<span class=\"ttl\">{}</span><span class=\"cnt\">{}, {}</span></summary>\n",
         mark(Some(Level::of_redirect(r.text("reason")))),
         esc(short(landing)),
         counted(r.int("links"), "link"),
@@ -669,17 +688,18 @@ fn housekeeping(out: &mut String, d: &Digest) {
         &entries(&d.sitemap_entries),
         |out| {
             out.push_str("<p>Antora writes a sitemap from what it publishes, so an entry that did not answer is a build or deploy fault.</p>\n");
-            let body: Vec<Vec<String>> = rows(&d.sitemap_entries)
+            let body: Vec<(bool, Vec<String>)> = rows(&d.sitemap_entries)
                 .map(|r| {
                     let page = r.text("page").unwrap_or("");
-                    vec![
+                    let cells = vec![
                         a(page, short(page)),
                         problem(r.text("outcome"), r.text("reason")),
                         status_cell(r.int("status")),
-                    ]
+                    ];
+                    (r.is_new(), cells)
                 })
                 .collect();
-            table(
+            marked(
                 out,
                 &[("Entry", false), ("Answer", false), ("Status", true)],
                 &body,
@@ -854,17 +874,18 @@ fn unchecked(out: &mut String, d: &Digest) {
 
 /// The pages of `orphans` or `unlisted`: `page`, `title` and the source.
 fn page_list(out: &mut String, t: &Table) {
-    let body: Vec<Vec<String>> = rows(t)
+    let body: Vec<(bool, Vec<String>)> = rows(t)
         .map(|r| {
             let page = r.text("page").unwrap_or("");
-            vec![
+            let cells = vec![
                 a(page, r.text("title").unwrap_or_else(|| short(page))),
                 a(page, short(page)),
                 source(r.text("source_repo"), r.text("source_path"), None),
-            ]
+            ];
+            (r.is_new(), cells)
         })
         .collect();
-    table(
+    marked(
         out,
         &[("Title", false), ("Page", false), ("Source", false)],
         &body,

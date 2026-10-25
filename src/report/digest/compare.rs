@@ -1,6 +1,5 @@
 //! What a digest is compared with (D73): the run before it or the one named,
-//! its figures, and the two-run section the comparison fills, the anchors
-//! removed since.
+//! its figures, and the anchors removed since, which the JSON alone holds.
 
 use duckdb::Connection;
 
@@ -32,7 +31,19 @@ pub(super) fn compared(conn: &Connection, run: RunId, file: bool) -> Result<Comp
         run: sections::run(conn, run)?,
         totals: sections::totals(conn, run)?,
         file,
+        shares_day: !file && shares_day(conn, run)?,
     })
+}
+
+/// Whether another crawl run started on `run`'s UTC day.
+fn shares_day(conn: &Connection, run: RunId) -> Result<bool, Error> {
+    let others: i64 = conn.query_row(
+        "SELECT count(*) FROM runs r, runs this WHERE this.run_id = ? AND r.run_id <> this.run_id \
+         AND r.mode = ? AND epoch(r.started_at)::BIGINT // 86400 = epoch(this.started_at)::BIGINT // 86400",
+        duckdb::params![run.0, Mode::Crawl.as_str()],
+        |row| row.get(0),
+    )?;
+    Ok(others > 0)
 }
 
 /// The anchors `to`'s pages lost since `from` that links still name, over

@@ -102,7 +102,7 @@ earlier run and puts a report into the crawl, where D6 keeps none.
 ## What the document holds
 
 Settled 2026-10-23 (maintainer), numbered as below. **The HTML shows them
-in the order 1, 2, 3, 5, 6, 4, 7, 8, 9**, the pages first, then the repos,
+in the order 1, 2, 3, 5, 6, 4, 8, 9**, section 3 as two and 7 in the JSON alone, the pages first, then the repos,
 then the targets, and **every section after the figures is a `<details>`
 that starts collapsed** (maintainer, 2026-10-24, reading the en-US digest:
 [`../status/history/2026-10-24.md`](../status/history/2026-10-24.md)).
@@ -110,12 +110,15 @@ The JSON keeps its own order.
 
 
 1. **The header**: the roots, the run's start, finish and duration, its id,
-   the tool version, and the run compared with, or that there was none.
+   the tool version, and the run compared with, or that there was none, as a
+   sub-title under the title: its day, its time where another run started that
+   day, and its number (8.20's notes, "Finding 3").
 2. **The headline figures**: pages and links checked, `broken_url`,
    `broken_anchor` and `error`, each with its change since the compared run.
 3. **Since the last run**: the breakage new and fixed, each new row saying
    why: the linking page changed, the target lost the anchor, or the target
-   page is gone or moved, with the source link of the page responsible.
+   page is gone or moved, with the source link of the page responsible. The
+   HTML has two sections, the new and the fixed (8.20's notes, "Finding 1").
 4. **Fix once, fix many**: the broken targets ranked by the broken links
    naming them, then by their pages, each with the target page's own source
    where the site holds it, the repo that would restore an anchor. On en-US it
@@ -136,7 +139,8 @@ errors is a row too, its errors in its drill-down. In the HTML its summary reads
 "● 181 broken links, ● 2 missing fragments", the dots red and amber, a level
 with no links left out with its dot, and nothing more: no total (8.6's notes,
 "Finding 12"), nor the links on the page, nor a repo's pages.
-7. **Anchors removed**: the pages that lost anchors links still name.
+7. **Anchors removed**: the pages that lost anchors links still name, in the
+   JSON; the HTML has no section of them (8.20's notes, "Finding 2").
 8. **Errors**, apart from breakage (D16).
 9. **Housekeeping**, collapsed: redirected links to update, the sitemap's
    entries no page was fetched for, orphans,
@@ -152,6 +156,10 @@ with no links left out with its dot, and nothing more: no total (8.6's notes,
    (8.6's notes, "Finding 9"); the other lists stay tables, none of their
    cells a list.
 
+**What is new since the compared run is marked** in every section a reader
+acts on, a bar in the HTML and `new` in the JSON, and nothing on a digest with
+no comparison (D75; 8.20's notes, "Finding 5").
+
 **The digest counts every kind**, `kind` a column, where `report` counts
 `anchor` alone unless asked (D13): a broken image is on a page someone is
 fixing anyway. **No section by component**; the JSON carries that aggregate
@@ -163,8 +171,10 @@ Settled 2026-10-23 (maintainer). **The two-run sections compare with the
 finished crawl run before the digest's**, `--from N` naming another, **or
 with a baseline file, `digest --since FILE|URL`**, imported as a run of its
 own (D21, D52): a deployment keeping no history compares with the baseline
-it published the day before. With no run to compare, the sections say so
-and the JSON's `compared_with` is `null`. Whether P9's nightly passes
+it published the day before. With no run to compare, the header says so
+and the JSON's `compared_with` is `null`; the HTML leaves out a two-run section
+that would list nothing, with no run to compare or none since (8.20's notes,
+"Finding 6"). Whether P9's nightly passes
 `--since` is P9's script's, for its re-read. Rejected: comparing with the
 previous digest's JSON, which holds no hash or anchor; leaving a deployment
 without history with no comparison.

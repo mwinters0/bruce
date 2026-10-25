@@ -31,7 +31,7 @@ grilling, spec amendment and a numbered slice.
 **Ledger lines stay one line each.** The detail lives in the dated history
 entry each line points at.
 
-Allocated so far: M1–M20. <!-- out-of-band-watermark: M20 -->
+Allocated so far: M1–M21. <!-- out-of-band-watermark: M21 -->
 
 ## The ledger
 
@@ -43,3 +43,4 @@ Allocated so far: M1–M20. <!-- out-of-band-watermark: M20 -->
 | M18 | 2026-10-23 | `mise run check` runs `mise run e2e` whenever the `bruce` binary is affected | | [2026-10-23](../status/history/2026-10-23.md) |
 | M19 | 2026-10-23 | `mise run shot` renders an HTML page headless with Servo's servoshell, pinned by mise, to PNGs at a desktop's and a phone's width and with its print rules applied | | [2026-10-23](../status/history/2026-10-23.md) |
 | M20 | 2026-10-24 | `check --affected` gives a member at the workspace root the top-level directories its targets sit in, so a change under `src/` is formatted, linted, e2e-tested and graphed again | | [2026-10-24](../status/history/2026-10-24.md) |
+| M21 | 2026-10-25 | `mise run crawl`, `digest` and `serve` launch an en-US crawl into a copy of the last one's database, write its digest and serve it (`scripts/review.py`) | | [2026-10-25](../status/history/2026-10-25.md) |
