@@ -53,6 +53,11 @@ fit the same way. What existing tools don't provide:
 CI, and every command run by hand, each serve their purpose fully; neither is
 the other's afterthought.
 
+**A broken experience is reported whatever breaks it**: a link that does not
+take its reader where it means to is broken whether the page's markup, the
+server's configuration or a redirect between them is at fault, and where the
+fix is known its reason names it.
+
 The decisions are in [`decisions.md`](decisions.md), and the external facts
 they rest on are in [`site-invariants.md`](site-invariants.md). The bootstrap
 plan is frozen as [`historical/initial.md`](historical/initial.md).
