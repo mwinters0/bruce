@@ -14,16 +14,15 @@ against the simulated deployment (D41, D42). **The deployment will soon check
 every locale, not only en-US** (maintainer, 2026-10-21), so each part is
 designed for a site of many locale roots, not for one.
 
-## P9 follows P8
+## P9 follows the run-history reports
 
-Settled 2026-10-21 (maintainer). **P9 is specified and waits for P8**, the
-run-history reports. P8 changes the schema (`../design/roadmap-P8-history.md`,
-"A hash records its scope"), and a 0.x release migrates nothing
-(D43), so a
-deployment before P8 would discard its history at the next release. P8 needs no
-deployment, its evidence being local en-US crawls, and nothing P9 builds
-serves anyone before a deployment exists. When P9 is sliced, the grilling
-re-reads this spec against what P8 changed.
+Settled 2026-10-21 (maintainer). **P9 follows the run-history reports**,
+which changed the schema, a run recording its hash scope (D15), and a 0.x
+release migrates nothing (D43), so a deployment before them would have
+discarded its history at the next release. They needed no deployment, their
+evidence being local en-US crawls, and nothing P9 builds serves anyone before
+a deployment exists. When P9 is sliced, the grilling re-reads this spec
+against what they changed (below, "What the run-history reports left").
 
 ## The guide's hash scope is the profile's region
 
@@ -81,9 +80,8 @@ crawl out of the nightly one's. CI's baseline stays en-US's. Rejected: a
 rotation of a few locales a night, each run blind to the links into the
 locales it skips.
 
-**Runs stay en-US only until P8's run-history reports exist** and the
-maintainer has judged the reports acceptable on en-US runs (maintainer,
-2026-10-21). P8 lands first (above, "P9 follows P8"), so **the every-locale
+**Runs stay en-US only until the maintainer has judged the reports
+acceptable on en-US runs** (maintainer, 2026-10-21), so **the every-locale
 crawl is a P9 slice**, run after that verdict, on the maintainer's machine,
 measuring the figures the guide's locale section states.
 
@@ -191,7 +189,7 @@ beside the baseline (D27).
 
 ## The slice order the grilling proposed
 
-Proposed 2026-10-21, to be re-checked against what P8 changed when P9 is
+Proposed 2026-10-21, to be re-checked against what the run-history reports changed when P9 is
 sliced; not yet a checklist.
 
 1. **9.1 The site-root refresh**: `ci`, D22 amended, the concept map's
@@ -208,12 +206,12 @@ sliced; not yet a checklist.
 5. **9.5 The closing evidence**: a quick-docs mirror running the guide's
    workflow against the Pages URL, a planted break failing and a clean
    change passing.
-6. **9.6 The maintainer's review of the en-US reports**, P8's included: no
+6. **9.6 The maintainer's review of the en-US reports**, the digest included: no
    code; the verdict and what it spawns in the notes.
 7. **9.7 The every-locale crawl**, on the maintainer's machine after 9.6's
    verdict, and the guide's locale figures; and its digest's size and
-   rendering, reopening P8's every-row HTML where either is bad
-   (`../design/roadmap-P8-history.md`, "Every row, until every locale is measured").
+   rendering, reopening the digest's every-row HTML where either is bad
+   (D64, Reopens).
 8. **9.8 The release P9 closes on**, and the README's CI section corrected.
 
 Every tag push and every new repository (9.4, 9.5, 9.8) is the
@@ -268,4 +266,50 @@ Found 2026-10-21, for the decisions above.
 - **docs.fp.o's `/` is a 200 meta refresh to `./en-US/`.** The en-US run's
   docs.fp.o targets begin with 72 distinct first segments: the locales,
   2,307 targets apiece, and a few others (`infra`, `f28`, `fedora-project`),
-  each asked once since P8.11 (D10, D67).
+  each asked once (D10, D67).
+
+## What the run-history reports left
+
+Found 2026-10-25, for the re-grilling.
+
+- **A baseline crawled before a bad scheme was broken, or a stray URL on a
+  root's host asked, holds such a link as `unchecked`** (D66, D10). A
+  `check-dir` built after either calls the link introduced, or under
+  `--externals=baseline` copies the row and stays silent. P9 ships the binary
+  beside the baseline it crawled (above, "CI fetches the binary from beside
+  the baseline"); a deployer pinning a release against a newer baseline, or
+  the reverse, meets the mismatch.
+- **An every-locale digest is unmeasured** (D64, Reopens), and three things
+  in it may grow: the unchecked groups, about 1,300 rows a run of external
+  hosts, listed whole; section 3, where `first_judged` may want folding to a
+  count; and the reads of `link_verdicts`, which each of thirteen sections
+  makes again, 0.2 to 0.45 s each on en-US. The remedy for the last is reading
+  it once into a temporary table the views read by name, a change to how the
+  store installs them.
+- **The digest's cost on en-US**, a release build: 3.1 s over the 2026-10-24
+  crawl, 5.6 to 7.2 s over the 2026-10-25 crawl with D75's marks. The JSON was
+  671 KB a run against an estimate of 300 KB, its broken targets and redirect
+  landings with their linking pages most of the difference; the HTML of the
+  2026-10-24 crawl against 2026-10-23's is 4.0 MB. The crawls are named in
+  `../design/decisions.md`'s preamble.
+- **`robots_unavailable` means a host answered with no file** (D8), so a run's
+  count should be near zero: on the 2026-10-24 crawl it is 1 link,
+  `jenkins.fedorainfracloud.org`, whose `/robots.txt` is a 302 onto a name
+  that does not answer. A large count means a host failing with 5xx or 429. A
+  host down at its first request has every link `error` for the whole run.
+- **`digest --since FILE` imports into the database it reads** (D73,
+  Reopens).
+- **pagure.io is a read-only archive**: its 18 `new_issue` targets answer 404
+  and are reported broken. src.fedoraproject.org's `new_issue` redirects to a
+  login page that answers 200. The guide adds no `skip` for either, and
+  robots.txt already keeps Bugzilla's `enter_bug.cgi` unasked.
+- **No real pair of runs has yet differed by content**: `changed` and
+  `anchors-removed` were empty between the 2026-10-23 and 2026-10-24 crawls,
+  and the 2026-10-25 crawl against 2026-10-24's has no new break, one fixed
+  link, two new errors and 16 new redirect landings (D74, Reopens). The
+  nightly is the first source of a real one.
+- **The review tooling** is `mise run crawl | digest | serve`
+  (`scripts/review.py`). The digest's golden file,
+  `fixtures/antora/digest.html`, is rewritten by
+  `cd scripts && uv run e2e.py --save-digest`; a change of layout shows only
+  in a render (`scripts/shot.py`).

@@ -2,7 +2,7 @@
 """An HTML page rendered headless to PNGs, for review.
 
 `bruce report digest` writes a page nobody can check by reading it, and its
-layout fails at a phone's width and in print (8.4.1). This renders it with
+layout fails at a phone's width and in print. This renders it with
 Servo's `servoshell`, pinned in `mise.toml`, at three sizes under `--out`:
 
 - `<stem>-1280.png`, a desktop's width;
@@ -19,9 +19,15 @@ its own); a page longer than that is cut. This machine may have no fonts, so a
 `fonts.conf` beside the renders points fontconfig at the pinned DejaVu, and
 DejaVu stands behind every family the page names, so a render does not differ by
 the host's fonts. **The renders are for a person to read**: nothing asserts on
-them, Servo laying a page out differently from Chrome in places (at 390 px it
-does not crush a table's columns as Chrome does), so a fix to a phone's layout
-is spot-checked in Chrome as well.
+them. Closed, a page renders as Chrome's headless shell renders it, at both
+widths; opened, Servo lays a phone's tables out otherwise (it breaks at every
+`/`, scrolls at another column and paints no edge shadow, where Chrome crushes
+the columns), drops the underscores in an `<h3>`'s `<code>` and reveals no
+fragment's closed ancestors. So a phone's layout and print are checked in
+Chrome, and this is a first look. PAGE is a path from `scripts/`, where the
+task runs, or an absolute one. Rejected: Playwright with Chrome's headless
+shell, for the node package, the 278 MB browser and the system libraries it
+brings.
 
 Usage:
 

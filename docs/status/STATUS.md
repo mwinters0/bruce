@@ -43,7 +43,7 @@ The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-P
 
 No phase is current. Every phase in
 [`../design/roadmap.md`](../design/roadmap.md)'s index not `Complete` or
-`Struck`: P9 is specified, to be grilled again now that P8 is complete; P7 has
+`Struck`: P9 is specified, to be grilled again before it is sliced; P7 has
 not been grilled.
 
 ## Decisions worth another look
@@ -56,11 +56,10 @@ reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
 - **`runs/headless-browser-trial/` (292 MB, Chrome's headless shell and the
-  libraries it loads) is kept, not deleted as 8.4.1's notes said 8.9 would.**
-  8.9's verdict is that Servo cannot check a phone's tables or print, and the
-  trial is the only Chrome on this machine, its three system libraries absent
-  otherwise. Reconsidering: delete it and accept Servo's blind spots, or pin
-  Chrome in `mise.toml` (the trial's `http:` backend, a checksum by hand) so
-  `mise run shot` can render with it. Notes:
-  [`../design/roadmap-P8-history-notes.md`](../design/roadmap-P8-history-notes.md),
-  "The renders".
+  libraries it loads) is kept, not deleted once Servo's renders had been
+  compared with Chrome's.** Servo cannot check a phone's tables or print
+  (`scripts/shot.py`), and the trial is the only Chrome on this machine, its
+  three system libraries absent otherwise. Reconsidering: delete it and accept
+  Servo's blind spots, or pin Chrome in `mise.toml` (the trial's `http:`
+  backend, a checksum by hand) so `mise run shot` can render with it. The
+  trial's `README.md` says how to render and print with it.

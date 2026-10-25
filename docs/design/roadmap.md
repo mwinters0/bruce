@@ -16,8 +16,8 @@ never reused.
 |---|---|---|
 | P1–P5 | **Struck** at the first keystone, 2026-10-21 | their decisions are [`decisions.md`](decisions.md)'s |
 | P6 — release | **Struck** at the second keystone, 2026-10-22 | its decisions are [`decisions.md`](decisions.md)'s |
-| P8 — run-history reports | **Complete**, 2026-10-25 | [`roadmap-P8-history.md`](roadmap-P8-history.md), its notes [`roadmap-P8-history-notes.md`](roadmap-P8-history-notes.md) |
-| P9 — the deployment guide | Specified; to be grilled again after P8 | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
+| P8 — run-history reports | **Struck** at the third keystone, 2026-10-25 | its decisions are [`decisions.md`](decisions.md)'s |
+| P9 — the deployment guide | Specified; to be grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
 | P7 — declarative per-root rules | Sketched; not grilled | this file, below |
 
 **A row's state is one of `Sketched`, `Specified`, `Current`, `Complete` or
@@ -76,18 +76,9 @@ A standing rule is added only with the maintainer, and carries its check.
   `scripts/workflows.py`, which fails on a `uses:` (`mise run check` runs its
   tests over the real workflows).
 
-## P8 — Run-history reports
-
-Complete: [`roadmap-P8-history.md`](roadmap-P8-history.md) and its notes,
-[`roadmap-P8-history-notes.md`](roadmap-P8-history-notes.md). A run's digest
-as dated JSON and HTML, and the two-run reports `changed` and
-`anchors-removed`.
-
 ## P9 — The deployment guide
 
 Specified: [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md).
-It follows P8, whose schema change a 0.x release would make its first
-deployers pay for.
 
 ## P7 — Declarative per-root rules
 

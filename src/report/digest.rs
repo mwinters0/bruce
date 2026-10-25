@@ -2,7 +2,7 @@
 //! dated JSON (`json`), for a database to load and graph over a retention the
 //! crawl's own never has, and as HTML (`html`) for a person to read (D64).
 //!
-//! It composes what the reports hold into the sections of the P8 spec: the
+//! It composes what the reports hold into the sections D64 names: the
 //! figures, the broken targets ranked by the links naming them, the pages
 //! ranked by their broken links, the repos and components, the errors apart
 //! from breakage (D16) and the housekeeping. Every section is a [`Table`] whose
