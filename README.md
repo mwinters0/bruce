@@ -22,7 +22,7 @@ Download the archive for the latest release from
 check it against its `.sha256` file and unpack it:
 
 ```sh
-tag=v0.1.0
+tag=v0.2.0
 asset=bruce-$tag-x86_64-unknown-linux-gnu
 base=https://github.com/mwinters0/bruce/releases/download/$tag
 curl -fLO $base/$asset.tar.gz -O $base/$asset.tar.gz.sha256

@@ -202,7 +202,7 @@ precedence over it, and `[host]` (below) says when a host's own rate does.
 
 ## User agent
 
-Every request names `bruce` and its version, `bruce/0.1.0`. `user_agent` names
+Every request names `bruce` and its version, `bruce/0.2.0`. `user_agent` names
 your deployment instead, so a site operator can tell whose crawler it is.
 `check-dir`'s download of a `--baseline` URL always names `bruce`.
 
