@@ -143,7 +143,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <dt>Run</dt><dd>1, started <time datetime="T">T</time>, finished <time datetime="T">T</time>, after <span class="duration">V</span></dd>
 <dt>Crawled by</dt><dd>bruce <span class="version">V</span></dd>
 </dl>
-<nav><a href="#figures">Figures</a> <a href="#pages">Pages</a> <a href="#repos">Repos</a> <a href="#fix-once">Targets</a> <a href="#errors">Errors</a> <a href="#housekeeping">Housekeeping</a></nav>
+<nav><a href="#figures">Figures</a> <a href="#pages">Pages</a> <a href="#repos">Repos</a> <a href="#fix-once">Targets</a> <a href="#errors">Unverified</a> <a href="#housekeeping">Housekeeping</a></nav>
 </div></header>
 <main>
 <section id="figures">
@@ -153,10 +153,10 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <div class="fig"><span class="n">304</span><span class="l">Links on them</span></div>
 <div class="fig bad"><span class="n">25</span><span class="l">Links to a broken URL</span></div>
 <div class="fig warn"><span class="n">0</span><span class="l">Links to a missing fragment</span></div>
-<div class="fig warn"><span class="n">0</span><span class="l">Links that errored</span></div>
+<div class="fig bad"><span class="n">0</span><span class="l">Links that could not be verified</span></div>
 </div>
-<p class="muted">Every figure but the first counts links on the pages checked. The 25 broken links are those to a broken URL and those to a missing fragment. 82 links were not checked; the housekeeping says why. A link that errored could not be asked, which does not make it broken.</p>
-<p class="legend">A dot marks the severity of a link or a target: <span class="sev broken" aria-hidden="true"></span> <b>Broken</b>, a link to a broken URL, or one that errored; <span class="sev attention" aria-hidden="true"></span> <b>Attention</b>, a link to a missing fragment, or a redirect to update; <span class="sev pedantic" aria-hidden="true"></span> <b>Pedantic</b>, a redirect differing from its landing only by a final <code>/</code>.</p>
+<p class="muted">Every figure but the first counts links on the pages checked. The 25 broken links are those to a broken URL and those to a missing fragment. 82 links were not checked; the housekeeping says why. A link that could not be verified was asked and refused, failed or not answered, which does not make it broken.</p>
+<p class="legend">A dot marks the severity of a link or a target: <span class="sev broken" aria-hidden="true"></span> <b>Broken</b>, a link to a broken URL, or one that could not be verified; <span class="sev attention" aria-hidden="true"></span> <b>Attention</b>, a link to a missing fragment, or a redirect to update; <span class="sev pedantic" aria-hidden="true"></span> <b>Pedantic</b>, a redirect differing from its landing only by a final <code>/</code>.</p>
 </section>
 <section id="pages">
 <details class="sect">
@@ -300,9 +300,9 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </section>
 <section id="errors">
 <details class="sect">
-<summary><h2>Links that errored</h2></summary>
-<p>Links whose target could not be asked, apart from the broken ones: the target did not answer, which does not make it wrong.</p>
-<p>No link errored.</p>
+<summary><h2>Links that could not be verified</h2></summary>
+<p>Links whose target was asked and gave no verdict: it refused (401, 403, 429), failed (5xx, after retries) or did not answer (a timeout, TLS, the connection). The page may well be there, so they are apart from the broken links, whose target answered that it is not.</p>
+<p>Every link asked could be verified.</p>
 </details>
 </section>
 <section id="housekeeping">

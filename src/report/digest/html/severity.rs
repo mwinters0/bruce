@@ -83,7 +83,10 @@ pub(super) fn legend() -> String {
     };
     format!(
         "<p class=\"legend\">A dot marks the severity of a link or a target: {}; {}; {}.</p>\n",
-        item(Level::Broken, "a link to a broken URL, or one that errored"),
+        item(
+            Level::Broken,
+            "a link to a broken URL, or one that could not be verified"
+        ),
         item(
             Level::Attention,
             "a link to a missing fragment, or a redirect to update"

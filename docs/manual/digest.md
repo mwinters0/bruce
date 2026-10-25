@@ -65,7 +65,7 @@ header and the figures are open; every section after them is closed under its
 heading, a click opening it. A dot marks each finding, a row that names a
 link or a target, in a column with no heading, or first in a drill-down's
 summary; a heading has none. It is red
-and filled for a link to a broken URL or one that errored, amber and filled for
+and filled for a link to a broken URL or one that could not be verified, amber and filled for
 a link to a missing fragment or a redirect to update, and a grey ring for a
 redirect that differs from its landing only by a final `/`. The ring differs
 from the others in shape, so the three read apart in print and without
@@ -88,11 +88,11 @@ new or all fixed. In this order:
    start, finish and duration, and the `bruce` that crawled it. Its links go
    to each section's heading.
 2. **Figures**: the pages checked and the links on them, and among those
-   links the ones to a broken URL, in red, to a missing fragment, in amber
-   as their dots are, and that errored.
+   links the ones to a broken URL, in red, to a missing fragment, in amber,
+   and that could not be verified (the JSON's `error`), in red, as their dots are.
    The first two of those are the broken links. Beneath each is its change since
-   the compared run, as `+12`, `−3` or `no change`, in red where what is
-   broken rose and green where it fell.
+   the compared run, as `+12` or `−3`, in red where what is broken rose and
+   green where it fell, and nothing where it did not change.
 3. **Broken since the previous run**: the links broken in this run and not in
    the compared one, each group under its cause ([below](#why-a-link-is-newly-broken)) a
    closed drill-down of the links, with the page each is on, what it is written as
@@ -104,9 +104,9 @@ new or all fixed. In this order:
    not broken in this one, each with what it is now and the linking page's source.
    Left out, as section 3 is, where none was fixed.
 5. **Pages, by the broken links on them**: each page that holds one, or a
-   link that errored, as a drill-down of those links, with its live page and
+   link that could not be verified, as a drill-down of those links, with its live page and
    its source. Its summary reads, for a page of 181 links to a broken URL or
-   that errored and 2 to a missing fragment, "● 181 broken links, ● 2 missing
+   that could not be verified and 2 to a missing fragment, "● 181 broken links, ● 2 missing
    fragments", the dots red and amber, a level with no links left out. The pages rank by their red links, then their amber ones,
    and the drill-down lists the red before the amber. A link is counted on the
    page it is written on. A link to a URL whose path doubles a slash is red,
@@ -145,7 +145,10 @@ new or all fixed. In this order:
    most links first, each with the pages linking to it and the target's own
    source, where restoring a missing fragment mends every link in its row.
    The targets one link names are not listed; their links are in section 5.
-8. **Links that errored**, apart from the breakage.
+8. **Links that could not be verified**, apart from the breakage: their
+   target refused access (401, 403, 429), failed (5xx, after retries) or did
+   not answer (a timeout, TLS, the connection), so the page may well be
+   there. A broken URL's target answered that it is not.
 9. **Housekeeping**: the redirected links by where their targets land, each
    landing a closed drill-down of its own (its dot, the landing, its links and
    redirecting URLs, and inside the hops the first took and the pages the links are
@@ -220,8 +223,8 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `compared_with` | The run compared with: its `id` (`null` for a baseline file's run, `from_file` true, whose number is that of a run the database held only while the digest was made), its start and finish (`finished_at` `null` for a run that never finished), the `bruce` that crawled it, its `roots` and its `totals`, which a loader subtracts to give a figure's change. |
 | `totals` | The pages the roots cover and the links on them, and the links by outcome, over every kind. `unchecked` links are not broken: `housekeeping.unchecked` says why. |
 | `broken_targets` | Each target a broken link names, with its `fragment` when the link names one, the target named by the most `links` first, then by `pages`: one anchor restored in the target's repo removes that many links. `outcome` is `broken_url` or `broken_anchor`, and `reason` and `status` are the target's answer. `landing` is, for a target whose `reason` is `doubled_slash` and whose own URL doubles no slash, the URL it redirected to, which does, and for a target whose `reason` is `wrong_trailing_slash` and which redirected, the URL it landed on; else `null`. `fix` is, for a target whose `reason` is `wrong_trailing_slash`, its URL (its `landing` where it has one) with the final `/` added or dropped, which answered when the crawl asked it; else `null`. `source_repo`, `source_path` and `source_url` are those of the target page, where the run holds it: the repo that would restore a missing anchor. |
-| `pages` | The pages that hold a broken link or one that errored, the most `broken_url` plus `error` plus `through` first, then the most `broken_anchor`. `links` counts every link on the page that counts, `error` its links that could not be checked, and `through` the broken relative links (a `?query` is one) on the pages at doubled-slash URLs that its `doubled_slash` links reach, each page once, less those broken on the page's twin too (zero for nearly every page). A page at a doubled-slash URL counts no link where the URL with its slashes collapsed is a page of the run, and else all but its broken relative links. `source_url` is the forge's view of the page's file. |
-| `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order; a link that errored is in `errors`, where the HTML's drill-down finds it. `page` joins to `pages`. `hint` is, for an Antora `xref:` that names no page, the nearest page ID in the run, as `component:module:path` with an empty module for `ROOT`, where one is close enough to be a typo of it, else `null`. `landing` and `fix` are as in `broken_targets`. |
+| `pages` | The pages that hold a broken link or one whose outcome is `error`, the most `broken_url` plus `error` plus `through` first, then the most `broken_anchor`. `links` counts every link on the page that counts, `error` its links that could not be verified, and `through` the broken relative links (a `?query` is one) on the pages at doubled-slash URLs that its `doubled_slash` links reach, each page once, less those broken on the page's twin too (zero for nearly every page). A page at a doubled-slash URL counts no link where the URL with its slashes collapsed is a page of the run, and else all but its broken relative links. `source_url` is the forge's view of the page's file. |
+| `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order; a link whose outcome is `error` is in `errors`, where the HTML's drill-down finds it. `page` joins to `pages`. `hint` is, for an Antora `xref:` that names no page, the nearest page ID in the run, as `component:module:path` with an empty module for `ROOT`, where one is close enough to be a typo of it, else `null`. `landing` and `fix` are as in `broken_targets`. |
 | `by_repo` | Each repo the pages were built from, ranked as `pages` are, `through` the sum of its pages'; `repo` is `null` for the pages that record none. `pages` counts the repo's pages, `broken_pages` those holding a broken link or an error. |
 | `by_component` | The same by Antora component. A site with no Antora page has none. |
 | `new_breakage` | The links broken in `run` and not in `compared_with`, a link to a row: `outcome` is `broken_url` or `broken_anchor`, and `cause` is what the compared run held, [below](#why-a-link-is-newly-broken), the rows in that order and then `broken_url` first. `source_repo`, `source_path` and `source_url` are those of the page answering for it: the target page's, as the compared run recorded it, for `target_removed`, `target_moved` and `anchor_removed`, else the linking page's. Empty where `compared_with` is `null`. |

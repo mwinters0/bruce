@@ -39,11 +39,11 @@ pub(super) fn subtitle(d: &Digest) -> String {
 
 /// A figure's change since the compared run, as the sign and the amount, and
 /// a class saying whether it is for the better: a rise in what is broken is
-/// not. The class repeats what the text says, never carrying it alone.
+/// not. The class repeats what the text says, never carrying it alone. No
+/// change is nothing.
 fn change(now: i64, then: i64, broken: bool) -> String {
-    let by = now - then;
-    let (text, class) = match by {
-        0 => ("no change".to_owned(), ""),
+    let (text, class) = match now - then {
+        0 => return String::new(),
         n if n > 0 => (format!("+{}", num(n)), if broken { " worse" } else { "" }),
         n => (
             format!("\u{2212}{}", num(-n)),
@@ -142,7 +142,7 @@ fn cause_words(cause: &str) -> (&'static str, &'static str, &'static str) {
         ),
         _ => (
             "First judged now",
-            "The compared run could not judge the link (it errored, or was left unchecked), \
+            "The compared run could not judge the link (it could not be verified, or was left unchecked), \
              so this is no regression.",
             "Linking page's source",
         ),

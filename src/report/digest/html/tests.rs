@@ -76,7 +76,7 @@ fn the_figures_are_the_totals() {
         (10, "Links on them"),
         (3, "Links to a broken URL"),
         (1, "Links to a missing fragment"),
-        (1, "Links that errored"),
+        (1, "Links that could not be verified"),
     ] {
         assert!(
             figures.contains(&format!(
@@ -305,7 +305,7 @@ fn a_run_with_nothing_to_report_says_so_in_each_section() {
         "No broken target is named by more than one link.",
         "No page holds a broken link.",
         "No repo's pages hold a broken link.",
-        "No link errored.",
+        "Every link asked could be verified.",
     ] {
         assert!(html.contains(said), "{said}");
     }
@@ -719,7 +719,11 @@ fn the_header_names_the_run_compared_with_and_each_figure_its_change() {
             "Links to a missing fragment",
             "<span class=\"d worse\">+1</span>",
         ),
-        (1, "Links that errored", "<span class=\"d worse\">+1</span>"),
+        (
+            1,
+            "Links that could not be verified",
+            "<span class=\"d worse\">+1</span>",
+        ),
     ] {
         assert!(
             figures.contains(&format!(
@@ -733,6 +737,7 @@ fn the_header_names_the_run_compared_with_and_each_figure_its_change() {
     for (class, label) in [
         ("fig bad", "Links to a broken URL"),
         ("fig warn", "Links to a missing fragment"),
+        ("fig bad", "Links that could not be verified"),
     ] {
         let at = figures.find(label).unwrap();
         let open = figures[..at].rfind("<div class=\"").unwrap();
@@ -755,7 +760,7 @@ fn a_compared_run_sharing_its_day_is_named_by_its_time_too() {
 }
 
 #[test]
-fn a_fall_in_what_is_broken_is_for_the_better_and_no_change_is_said() {
+fn a_fall_in_what_is_broken_is_for_the_better_and_no_change_is_left_out() {
     let mut d = compared_digest();
     let c = d.compared.as_mut().unwrap();
     c.totals.broken_url = 5;
@@ -763,7 +768,10 @@ fn a_fall_in_what_is_broken_is_for_the_better_and_no_change_is_said() {
     let figures = d.html();
     let figures = section(&figures, "figures");
     assert!(figures.contains("<span class=\"d better\">\u{2212}2</span>"));
-    assert!(figures.contains("<span class=\"d\">no change</span>"));
+    assert!(
+        figures.contains("<span class=\"n\">5</span><span class=\"l\">Pages checked</span></div>")
+    );
+    assert!(!figures.contains("no change"));
 }
 
 #[test]

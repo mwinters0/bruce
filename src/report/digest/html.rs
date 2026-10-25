@@ -274,7 +274,7 @@ fn head(out: &mut String, d: &Digest) {
         out,
         "<nav><a href=\"#figures\">Figures</a> {}{}<a href=\"#pages\">Pages</a> \
          <a href=\"#repos\">Repos</a> <a href=\"#fix-once\">Targets</a> \
-         <a href=\"#errors\">Errors</a> <a href=\"#housekeeping\">Housekeeping</a></nav>\n\
+         <a href=\"#errors\">Unverified</a> <a href=\"#housekeeping\">Housekeeping</a></nav>\n\
          </div></header>\n",
         if broken {
             "<a href=\"#broken-since\">Broken since</a> "
@@ -298,7 +298,7 @@ fn figures(out: &mut String, d: &Digest) {
         ("Links on them", t.links, ""),
         ("Links to a broken URL", t.broken_url, " bad"),
         ("Links to a missing fragment", t.broken_anchor, " warn"),
-        ("Links that errored", t.error, " warn"),
+        ("Links that could not be verified", t.error, " bad"),
     ]
     .into_iter()
     .enumerate()
@@ -314,8 +314,8 @@ fn figures(out: &mut String, d: &Digest) {
         out,
         "</div>\n<p class=\"muted\">Every figure but the first counts links on the pages \
          checked. The {} broken links are those to a broken URL and those to a missing fragment. \
-         {} links were not checked; the housekeeping says why. A link that errored could not be \
-         asked, which does not make it broken.{}</p>\n{}</section>\n",
+         {} links were not checked; the housekeeping says why. A link that could not be \
+         verified was asked and refused, failed or not answered, which does not make it broken.{}</p>\n{}</section>\n",
         num(t.broken_url + t.broken_anchor),
         num(t.unchecked),
         compared::since(d),
@@ -456,7 +456,7 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
         let page_links = links.get(url).map_or(&[][..], Vec::as_slice);
         let page_errors = errored.get(url).map_or(&[][..], Vec::as_slice);
         let hinted = page_links.iter().any(|r| r.text("hint").is_some());
-        // The red links together, a link that errored after the broken URLs,
+        // The red links together, an unverified link after the broken URLs,
         // then the amber ones.
         let mut found: Vec<(Option<Level>, bool, Vec<String>)> = page_links
             .iter()
@@ -575,13 +575,15 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
 }
 
 fn errors(out: &mut String, d: &Digest) {
-    open_section(out, "errors", "Links that errored", None);
+    open_section(out, "errors", "Links that could not be verified", None);
     out.push_str(
-        "<p>Links whose target could not be asked, apart from the broken ones: the target did \
-         not answer, which does not make it wrong.</p>\n",
+        "<p>Links whose target was asked and gave no verdict: it refused (401, 403, 429), \
+         failed (5xx, after retries) or did not answer (a timeout, TLS, the connection). The \
+         page may well be there, so they are apart from the broken links, whose target \
+         answered that it is not.</p>\n",
     );
     if d.errors.rows.is_empty() {
-        out.push_str("<p>No link errored.</p>\n");
+        out.push_str("<p>Every link asked could be verified.</p>\n");
     } else {
         let body: Vec<(bool, Vec<String>)> = rows(&d.errors)
             .map(|r| {
