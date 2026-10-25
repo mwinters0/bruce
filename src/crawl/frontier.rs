@@ -36,8 +36,9 @@ pub const OUT_OF_SCOPE: &str = "out_of_scope";
 /// The reason of a URL `skip` matched (D50).
 pub const SKIPPED: &str = "skipped";
 
-/// The reason of an allowlisted URL `--externals=skip` neither copies nor asks
-/// (D22, D54).
+/// The reason of a URL `--externals=skip` neither copies nor asks: one on an
+/// allowlisted host, or on a root's host outside every scope and locale
+/// (D10, D22, D54).
 pub const EXTERNALS_SKIPPED: &str = "externals_skipped";
 
 /// The reason of a URL whose scheme a public web page uses but is not
@@ -70,13 +71,14 @@ pub enum Plan {
     /// In root `root`'s scope: GET, an HTML response extracted and its links
     /// followed.
     Page { root: usize },
-    /// On an allowlisted host, or in scope where the build lacks it and the
-    /// baseline holds no target, and named by an `anchor` link: GET,
-    /// extracted for its anchors only (D3).
+    /// On an allowlisted host, on a root's host outside every scope and
+    /// locale, or in scope where the build lacks it and the baseline holds no
+    /// target, and named by an `anchor` link: GET, extracted for its anchors
+    /// only (D3).
     Anchors,
     /// As [`Plan::Anchors`] but named by any other kind of link, or reached
-    /// by a redirect where a link would leave it unchecked or to the
-    /// baseline: asked for its status alone, HEAD with the GET fallback
+    /// by a redirect where a link would leave it unchecked, broken, waiting,
+    /// unbuilt or to the baseline: asked for its status alone, HEAD with the GET fallback
     /// (D13).
     Status,
     /// Not requested; the target row says why.
@@ -120,7 +122,8 @@ pub struct Outside {
     pub form: Canonical,
 }
 
-/// What `--externals` asks of a URL on an allowlisted host (D22).
+/// What `--externals` asks of a URL on an allowlisted host, or on a root's
+/// host outside every scope and locale (D22).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Externals {
     /// Nothing is requested: the baseline's rows are copied where it holds

@@ -19,7 +19,7 @@
 //!
 //! Once its [`Stopper`] is stopped, a request waiting for its host's permit
 //! or a backoff returns [`FailureKind::Stopped`] at once, and nothing more is
-//! sent (`super`'s doc). A robots.txt request it stops leaves the host
+//! sent (`super`'s doc). A robots.txt request it stops leaves that origin
 //! [`Access::Unavailable`] for the run.
 
 use std::error::Error as _;

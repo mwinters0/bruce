@@ -1314,8 +1314,9 @@ async fn a_failure_with_no_response_is_classified_by_its_cause() {
         &format!(r#"<img src="http://localhost:{port}/x.png">"#),
     )
     .await;
-    // The hop leaves the port the host's robots.txt was read from, and not
-    // the host, so it is allowed and then refused.
+    // The hop leaves for another port of the same host, an origin of its
+    // own, whose robots.txt request gets no response on the host's name, so
+    // the target fails at the access check (D69).
     redirect(
         &outer,
         "/x.png",

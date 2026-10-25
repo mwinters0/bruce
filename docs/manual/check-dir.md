@@ -23,7 +23,7 @@ have broken. The run is added to a database like a crawl's ([`crawl.md`](crawl.m
 | `--baseline FILE\|URL` | required | The baseline file, or an `http` or `https` URL to download it from. A gzipped file is decompressed, whatever its name. Nothing is cached. |
 | `--config FILE` | none | The configuration the baseline was crawled under ([`config.md`](config.md)). With none, the prefix is the only root. |
 | `--db FILE` | `bruce.duckdb` | The database the run is added to, created if it does not exist. |
-| `--externals MODE` | `baseline` | How a link to an allowlisted host is answered; see below. |
+| `--externals MODE` | `baseline` | How a link to an allowlisted host, or out of every scope on a root's host, is answered; see below. |
 | `--inverse MODE` | `fail` | Whether the [inverse check](#the-inverse-check) fails the check (`fail`) or is only listed (`warn`). |
 | `--format` | `text` | `text`, or `json`. |
 | `--all` | off | Print the breakage already in the baseline in full. |
@@ -105,7 +105,7 @@ strict; the same list is `bruce report inverse --run N` ([`report.md`](report.md
 Text lists, in order:
 
 1. **Introduced breakage**: a row for each link, with the columns
-   [`report.md`](report.md)'s `broken` has and one more, `baseline`, naming
+   [`report.md`](report.md)'s `broken` has but `hint`, and one more, `baseline`, naming
    what the baseline had for it: `new` where it had no such link, else the
    outcome it had (`ok`, `unchecked`, `error`).
 2. **Inverse breakage**: the baseline's links from pages outside the build to

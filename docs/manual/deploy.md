@@ -74,7 +74,8 @@ missing, an error where the host asks for a login or fails. A host whose name
 does not resolve outside Red Hat's network is `broken_url`, and one that
 refuses or never answers is an `error`, the reason saying which (`nxdomain`,
 `connect`, `timeout`): `bruce` reads a host's `robots.txt` before anything else
-on it, and the host's silence there is the answer for every link to it. A
+on it, and its silence there is the answer for every link to that scheme, host
+and port. A
 host's `robots.txt` can also forbid a link: Bugzilla's allows only its bug pages, and
 fedorapeople.org's allows nothing, so those links are reported as not checked,
 with the reason `robots`.

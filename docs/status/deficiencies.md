@@ -85,4 +85,10 @@ roadmap's phase index.
   reading those counts under `--top` would promote it.
   Detail: `src/report/gate.rs`
 
-<!-- deficiency-watermark: KD21 -->
+- **KD22** — A two-run report refused because its default `--to` is a later
+  unfinished `check-dir` run's baseline tells the user to name a run with
+  `--run`, which that report refuses; `--to` is the answer. **(c) unowned**:
+  anyone meeting the refusal on a two-run report would promote it.
+  Detail: `src/report/error.rs`
+
+<!-- deficiency-watermark: KD22 -->

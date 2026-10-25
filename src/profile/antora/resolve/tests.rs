@@ -141,7 +141,7 @@ fn a_refspec_is_its_version_component_module_page_and_fragment() {
     assert_eq!(
         parse("guide::page$install.adoc"),
         None,
-        "the family comes first, so this one is `guide::page$…` with no component"
+        "the family comes first, so `guide::page` is no family and this one is not a page"
     );
     assert_eq!(
         parse("page$ops:admin:x.adoc"),

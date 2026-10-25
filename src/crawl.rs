@@ -10,7 +10,7 @@
 //! blocking pool, extracts the page and sends its rows to the writer from
 //! there, so the writer's bounded channel pushes back on the pool and not on
 //! the runtime (D28). A URL is asked about by whoever claims its `url_id`
-//! first (`frontier`), a sitemap probe and the ask of a 404's toggled slash
+//! first (`frontier`), a sitemap probe and the ask of a broken 4xx's toggled slash
 //! (`slash`, D72) aside, though a redirect's hops are
 //! asked again wherever they lead (D46); a page a redirect lands on is recorded by whichever of the
 //! redirecting target and the landing URL's own discovery claims it first.

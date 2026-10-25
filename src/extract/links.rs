@@ -6,7 +6,7 @@
 //! given, an href beginning `/` against that root (D53). A second handler on the same
 //! elements runs after the profile's, takes the tag the profile left in the
 //! sink and puts it on the links the element yielded (D38), which a profile's
-//! own handler could not do from before the link existed.
+//! own handler cannot do, the links being the core's.
 
 use std::cell::RefCell;
 

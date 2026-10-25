@@ -81,7 +81,8 @@ fn absent(now: &mut Table, then: &Table, key: &[&str]) {
     push(now, "new", flags);
 }
 
-/// A repo is new where its pages hold a broken link now and held none then.
+/// A repo is new where its pages hold a broken link or an error now and held
+/// none then.
 fn repos(d: &mut Digest, then: &Table) {
     let (repo, broken) = (at(then, "repo"), at(then, "broken_pages"));
     let held: HashSet<Option<String>> = then

@@ -1,7 +1,7 @@
 //! The document's markup helpers: escaping, numbers, links, the table, a
 //! section's opening and a table's row found by column name. They depend on no
-//! part of the document, so the parts that use them (`compared`, `severity`)
-//! stand beside `html` and not under a cycle with it.
+//! part of the HTML but the time's format, so `compared`, which uses them,
+//! stands beside `html` and not under a cycle with it.
 
 use std::fmt::Write as _;
 

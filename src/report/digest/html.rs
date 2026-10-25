@@ -1,7 +1,8 @@
 //! The digest as one HTML document: the same [`Digest`] the JSON is written
 //! from, rendered with no script and no outside file, so it stands alone
 //! wherever it is copied (D64). Every section's rows arrive ranked, and are
-//! written in that order.
+//! written in that order, bar a page's drill-down, which joins its errors to
+//! its broken links, red first.
 //!
 //! Dark on every screen and light in print, one stylesheet inline, drill-downs
 //! as `<details>` and navigation as in-page anchors. Every text is escaped, and

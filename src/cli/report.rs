@@ -459,8 +459,8 @@ fn report(args: &Args, registry: &Registry) -> Result<(), String> {
     say(&text)
 }
 
-/// Writes the digest of the run named, as `DIR/STEM-YYYY-MM-DD.json` and
-/// `.html`, and prints the path of each (D64).
+/// Writes the digest of the run named, as `DIR/STEM-YYYY-MM-DD.json`, `.html`
+/// or both as `--format` says, and prints the path of each (D64).
 fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
     let (store, db) = open(args.db.as_deref(), registry)?;
     // The file outlives the digest, which reads the run imported from it.
@@ -499,8 +499,6 @@ fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
         args.out
             .join(format!("{}-{}.{extension}", args.name, digest.date()))
     };
-    // The files are rendered before either is written, so a failing one
-    // leaves no half of the pair.
     let mut files = Vec::new();
     if args.format.json() {
         files.push((file("json"), digest.json()));

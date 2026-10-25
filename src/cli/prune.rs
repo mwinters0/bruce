@@ -48,14 +48,14 @@ pub fn command() -> Command {
                 .long("keep")
                 .value_name("N")
                 .value_parser(value_parser!(u64).range(1..))
-                .help("Keep the N latest finished runs and delete every older run"),
+                .help("Keep the N latest finished runs, and the baselines they name, and delete every older run"),
         )
         .arg(
             Arg::new("older-than")
                 .long("older-than")
                 .value_name("AGE")
                 .value_parser(age)
-                .help("Delete the runs started longer ago than this, such as 90d or 12h"),
+                .help("Delete the runs started longer ago than this, such as 90d or 12h, bar a kept run's baseline and an unfinished run after the latest finished one"),
         )
         .group(
             ArgGroup::new("rule")

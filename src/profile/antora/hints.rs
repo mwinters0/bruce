@@ -13,9 +13,9 @@
 
 use super::super::View;
 
-/// A row for each link whose verdict is `unresolved_xref` and for which a
-/// page of the run lies within the distance: its run, page, raw refspec and
-/// `hint`. A site without Antora pages has no row.
+/// A row for each page and raw refspec whose links' verdict is
+/// `unresolved_xref` and for which a page of the run lies within the
+/// distance: its run, page, raw refspec and `hint`. A site without Antora pages has no row.
 pub(super) const HINTS: View = View {
     name: "antora_hints",
     select: "\

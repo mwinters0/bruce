@@ -20,7 +20,8 @@ use crate::store::RunId;
 /// The causes of a new break, the order they are listed in. The first three
 /// are a change in what a link names: the target page is gone, moved or lost
 /// the anchor, and the source shown is the target's, as the comparison
-/// recorded it; the rest are the linking page's own.
+/// recorded it where it did, else as this run does; the rest are the linking
+/// page's own.
 pub const CAUSES: [&str; 7] = [
     "target_removed",
     "target_moved",
@@ -42,8 +43,9 @@ fn cause_order() -> String {
 
 /// The links of `to` that are broken and are not in `from`, each with its
 /// `cause` (one of [`CAUSES`]) and the `source_repo`, `source_path` and
-/// `source_url` of the page that answers for it: the target's, as `from`
-/// recorded it, where the target changed, else the linking page's. The causes
+/// `source_url` of the page that answers for it: the target's where the
+/// target changed, each field as `from` recorded it where it did, else as
+/// `to` does; else the linking page's. The causes
 /// in [`CAUSES`]' order, then `broken_url` before `broken_anchor`. The run ids
 /// are written into the text, being numbers.
 ///

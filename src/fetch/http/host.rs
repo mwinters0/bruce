@@ -50,7 +50,8 @@ pub enum Listing {
 /// An origin's robots.txt, settled once per run.
 #[derive(Debug)]
 enum Robots {
-    /// Not read (the host has `robots = false`) or not there: all allowed.
+    /// Not there (a 4xx), or a file the parser refuses: all allowed. A host
+    /// with `robots = false` never reads one.
     Open,
     Rules(Robot),
     Unreachable,

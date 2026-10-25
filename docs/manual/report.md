@@ -10,7 +10,7 @@ bruce report digest --out DIR [--name STEM] [--db FILE] [--run N] [--from N | --
 Prints one report over one **run** of a database that `bruce crawl` wrote
 ([`crawl.md`](crawl.md)). A crawl records what each link's target answered; a
 report is where a link is judged: a link is `broken_url` where its target
-answered 4xx or does not exist, or where no reader could follow it, as a
+answered a 4xx but 401, 403 or 429, or does not exist, or where no reader could follow it, as a
 `file:` link, `broken_anchor` where the page is there and the `#fragment` is
 not, and `error` where the target could not be asked or refused access (a
 timeout, a 5xx after retries, a 401, 403 or 429).
@@ -73,7 +73,7 @@ group and page. `--top N` keeps the first N.
 | `fragment` | The `#fragment`, or none. |
 | `kind` | The link's kind. |
 | `outcome` | `broken_url` or `broken_anchor`. |
-| `reason` | Why, where the crawl knew: `unresolved_xref` for an Antora `xref:` that names no page, a redirect loop, an unparseable URL, `bad_scheme` for a scheme no reader can follow from a web page, as `file:` ([which schemes](digest.md#why-a-link-is-unchecked)), and `doubled_slash` for a link to a URL whose path doubles a slash (`a//b`), or to one that redirects to such a URL, whatever the URL answered and whether it was asked: the page linking there is the one to correct, and `wrong_trailing_slash` for a 404 whose URL with its final `/` added or dropped answered 2xx when the crawl asked it for its status alone, that URL being the fix (the 404's URL a redirect landed on, for a target that was redirected first). None for any other 404 or a missing fragment. |
+| `reason` | Why, where the crawl knew: `unresolved_xref` for an Antora `xref:` that names no page, a redirect loop, an unparseable URL, `bad_scheme` for a scheme no reader can follow from a web page, as `file:` ([which schemes](digest.md#why-a-link-is-unchecked)), and `doubled_slash` for a link to a URL whose path doubles a slash (`a//b`), or to one that redirects to such a URL, whatever the URL answered and whether it was asked: the page linking there is the one to correct, and `wrong_trailing_slash` for a broken 4xx (any but 401, 403 and 429) whose URL with its final `/` added or dropped answered 2xx when the crawl asked it for its status alone, that URL being the fix (the URL a redirect landed on, for a target that was redirected first). None for any other 4xx or a missing fragment. |
 | `hint` | For an `unresolved_xref`, the nearest page ID among the run's pages, written as the `xref:` writes one (`component:module:path`, the module empty for `ROOT`), where one is within three tenths of the longer ID's length in edits, so a typo finds its page; none for a site with no Antora pages. |
 | `status` | The HTTP status the target answered, where it answered. |
 | `source_repo`, `source_path` | The repo and file the page was built from, where the page links its edit page. |
@@ -137,7 +137,7 @@ array of the pages whose links they are.
 **`diff`** has a row for each link that is broken (as `broken` has it) in
 one run and not in the other: `change` is `new` where the link is broken in
 `--to` and not in `--from`, and `fixed` where it was broken in `--from` and
-is not in `--to`, and the other columns are `broken`'s, read from the run
+is not in `--to`, and the other columns are `broken`'s but `hint`, read from the run
 the link is broken in. A link is the same link in both runs when its page,
 its target and its fragment are, however it was written, and links sharing
 those are one row. Not broken includes absent: a link removed with its page
@@ -163,8 +163,9 @@ whose `hash_root` matched nothing on it, so that its chrome is hashed and it
 reads as changed on every build; such a page is a row whether or not its hash
 moved (`change` then `root_missed`), and does not need to be in `--from`. The
 rows are `changed`, then `scope_changed`, then `root_missed`, by page. Pages
-no root covers, as the forge's and the allowlisted ones, are not read, and nor
-are pages in only one of the runs (`diff` and `sitemap` tell those). `--kind` is
+no root covers, as the forge's and the allowlisted ones, are not read, and a
+page in only one of the runs is never `changed` or `scope_changed` (`diff` and
+`sitemap` tell those). `--kind` is
 ignored. Below the text table a line names the two runs.
 
 **`anchors-removed`** has a row for each page that lost an anchor which
@@ -184,7 +185,7 @@ text table a line names the two runs.
 **`introduced`** reads a run that [`bruce check-dir`](check-dir.md) wrote,
 and has a row for each link that is `broken_url` or `broken_anchor` in it and
 that the run's baseline does not have broken, the failures of `check-dir`'s
-exit status: `broken`'s columns with one more, `baseline`, after `status`. It
+exit status: `broken`'s columns but `hint`, with one more, `baseline`, after `status`. It
 is `new` where the baseline has no such link (the same page, target and
 fragment), else the outcome the baseline had (`ok`, `unchecked` or `error`).
 Below the text table are the baseline run and its day, the inverse breakage
@@ -231,7 +232,7 @@ Opening a database with `bruce` installs the views the reports read, so
 `report_pages`, `report_inbound`, `report_roots`, `report_sitemap` and
 `report_redirects`, and beneath them `link_verdicts`, every link with its
 outcome and reason (`ok`, reason `pedantic_trailing_slash`, for a link through
-a redirect that only adds or drops a final `/`), and whether it `counts`: the reports leave out the links of a
+a redirect that only adds or drops a final `/`), and whether it is `counted`: the reports leave out the links of a
 page whose URL doubles a slash and whose twin, the URL with the slashes collapsed, is a page of the run, and its
 broken relative links (`../`, `?query`) where it has no twin, which the doubled slash breaks and the linking page answers for
 ([the digest's *broken through it*](digest.md#the-html)). Each holds every run, so filter on `run_id`.
@@ -241,5 +242,5 @@ broken relative links (`../`, `?query`) where it has no twin, which the doubled 
 | Status | Meaning |
 |---|---|
 | 0 | The report ran. Finding broken links does not change this. |
-| 1 | The database could not be read, or has no such run or no finished one, `diff` has no finished run to compare, the run a bare report would read is the baseline of a later unfinished `check-dir` run, or an `introduced` or `inverse` run names no baseline; the message says which. |
+| 1 | The database could not be read, or has no such run or no finished one, `diff`, `changed` or `anchors-removed` has no finished run to compare, the run a bare report would read is the baseline of a later unfinished `check-dir` run, or an `introduced` or `inverse` run names no baseline; the message says which. |
 | 2 | The command line was not understood. |

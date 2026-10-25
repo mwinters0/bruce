@@ -154,17 +154,17 @@ impl Failure {
     }
 }
 
-/// Whether a URL may be requested, by its host's robots.txt (D8).
+/// Whether a URL may be requested, by its origin's robots.txt (D8, D69).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Access {
     Allowed,
-    /// A rule of the host's robots.txt forbids it: `unchecked`, `robots`.
+    /// A rule of the origin's robots.txt forbids it: `unchecked`, `robots`.
     Disallowed,
-    /// The host answered its robots.txt request with no file to read, or a
+    /// The origin answered its robots.txt request with no file to read, or a
     /// stop kept it unread: `unchecked`, `robots_unavailable`.
     Unavailable,
-    /// The host's robots.txt request produced no response: every URL of the
-    /// host settles as that failure would (D8, D16).
+    /// The origin's robots.txt request produced no response on its own name:
+    /// every URL of the origin settles as that failure would (D8, D16, D69).
     Failed(Failure),
 }
 
@@ -223,7 +223,7 @@ pub trait Fetcher {
         async { Access::Allowed }
     }
 
-    /// The sitemaps the robots.txt of `url`'s host names in `Sitemap:` lines,
+    /// The sitemaps the robots.txt of `url`'s origin names in `Sitemap:` lines,
     /// as written (D40). Empty for a fetcher with no robots.txt behind it,
     /// and for a host whose robots.txt is not read.
     fn sitemaps(&self, _url: &Url) -> impl Future<Output = Vec<String>> + Send {

@@ -181,7 +181,7 @@ fn a_link_fixed_says_what_it_became() {
     assert_eq!(became(1, 53), text("link_removed"));
     assert_eq!(became(6, 51), text("page_removed"));
     assert_eq!(became(1, 52), text("error"));
-    // 1>30 and 1>10 are broken in both, 1>31 was ok.
+    // 1>10 is broken in both; 1>30 and 1>31 were ok.
     assert_eq!(t.rows.len(), 4, "{t:?}");
     assert_eq!(of(&t, 1, 50, None, "source_repo"), text("r/one"));
     assert_eq!(of(&t, 6, 51, None, "source_repo"), text("r/six"));

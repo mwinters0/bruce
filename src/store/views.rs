@@ -12,7 +12,7 @@
 //!    `broken_url`, reason `unresolved_xref`, whatever its target answered
 //!    (D20). A CI run that resolved the refspec points the link at the page it
 //!    names with the refspec's own fragment, and keeps the refspec: rules 2 to
-//!    7 judge it (D55), unless the URL it names, which Resolve may only have
+//!    8 judge it (D55), unless the URL it names, which Resolve may only have
 //!    derived, is itself broken (D57).
 //! 2. A link whose target has no row, which only a stopped run leaves, is
 //!    `unchecked`, reason `cut`.
@@ -40,7 +40,7 @@
 //! against it (`../`, `committee/`) or is a `?query` on it. `counted` says the
 //! link counts in the reports (D71): not a link on a page whose URL doubles a
 //! slash and whose twin, the URL with its slashes collapsed, is a page of the
-//! run, and not a broken `relative` one on such a page without a twin, which
+//! run, and not a broken or errored `relative` one on such a page without a twin, which
 //! the doubled slash breaks and the linking page answers for. `doubled_slash`
 //! lists the targets whose URL doubles a slash, or whose landing does, and for
 //! the first the page of the run at its twin's URL, `twin_id`.

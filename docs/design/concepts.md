@@ -37,7 +37,7 @@ decisions each carries are cited in its module's doc.
   `hops` child; D16's classification in the `outcome` child; which target starts next, a build's reads in a budget of their own and each live host holding its share of
   the run's other slots, in the `schedule` child (D61); reading one
   sitemap file, gzip and index included, in the `sitemap` child, discovery
-  staying in the parent, and asking the URL a 404's final slash toggled to, in the `slash` child (D72). A run over a local build begins from its seeds in the
+  staying in the parent, and asking the URL a broken 4xx's final slash toggled to, in the `slash` child (D72). A run over a local build begins from its seeds in the
   parent, which holds the build's site root for `extract` to resolve an href beginning `/` against (D53).
   What a run over a build leaves to the baseline, the component-versions its
   pages hold and the copies the parent sends last is in the `baseline` child (D54); the
@@ -60,11 +60,11 @@ decisions each carries are cited in its module's doc.
   statement and the filters every report shares in `sql`, `broken`'s and
   `errors`' query in `links`, `stats`' and the choice among all the reports in
   `query`, how a page is reached (`inbound`, `orphans`, `sitemap`,
-  `unlisted`) in `reach`, `redirects`, `diff`, `changed` and `anchors_removed` (two runs each), the gate
+  `unlisted`) in `reach`, `redirects`, and `diff`, `changed` and `anchors_removed` (two runs each), the gate
   (`introduced`: a CI run against its baseline, D9) and the `inverse` check
   (what the change removed that pages outside the build link to, D56) each in their own child,
   the crawl run's digest (D64) in `digest`, its document in the `document` child, its sections' queries in `sections`,
-  the run it is compared with, and the anchors removed since (in the JSON alone), in `compare` (D73), the breakage new and fixed since, each new link with its cause, in `cause` (D74), what is new since in each section in `novelty` (D75), its JSON in `json` and its HTML, with the stylesheet it holds, the severity dots in its `severity` child, the markup helpers they and the document share in `markup` and the comparison's sub-title, figure changes, the legend's line for what is new and sections (the breakage new, the breakage fixed) in its `compared` child, in `html`,
+  the run it is compared with, and the anchors removed since (in the JSON alone), in `compare` (D73), the breakage new and fixed since, each new link with its cause, in `cause` (D74), what is new since in each section in `novelty` (D75), its JSON in `json` and its HTML, with the stylesheet it holds, the severity dots in its `severity` child, the markup helpers it and `compared` share in `markup` and the comparison's sub-title, figure changes, the legend's line for what is new and sections (the breakage new, the breakage fixed) in its `compared` child, in `html`,
   the views they read in `views`, the table's
   text and JSON in `table` and the failures in `error`.
   It sits above `store`, whose `link_verdicts` its views join, and below
@@ -121,7 +121,7 @@ below `profile` (D39).
 
 ## Canonical URLs and IDs
 
-- **bruce** — `url.rs`: the canonical form and `url_id`, below `config`, which reads it to match a root's scope on the form (D39, D44).
+- **bruce** — `url.rs`: the canonical form, `url_id` and a final `/` toggled (D72), below `config`, which reads it to match a root's scope on the form (D39, D44).
 
 ## Configuration
 

@@ -117,8 +117,8 @@ pub struct Request {
     pub kinds: Vec<Kind>,
     /// Keep this many rows, in the report's order.
     pub top: Option<usize>,
-    /// Name the linking pages in a `redirects` group, a list too long for a
-    /// text table.
+    /// Name the linking pages in a `redirects` group or of an
+    /// `anchors-removed` row, a list too long for a text table.
     pub linking_pages: bool,
     /// The gate only: whether an inverse breakage fails it.
     pub inverse: InverseMode,

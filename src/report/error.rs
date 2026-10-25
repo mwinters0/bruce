@@ -10,7 +10,8 @@ pub enum Error {
     /// No `--run`, and no run in the database has finished.
     NoFinishedRun,
     NoSuchRun(RunId),
-    /// A `diff` with no `--from`, and no finished run before the one compared.
+    /// A two-run report (`diff`, `changed`, `anchors-removed`) with no `--from`,
+    /// and no finished run before the one compared.
     NoEarlierRun(RunId),
     /// An `introduced` or `inverse` report over a run that names no baseline,
     /// which only a `check-dir` run does.
@@ -52,6 +53,9 @@ impl fmt::Display for Error {
                 run.0
             ),
             Error::Baseline(e) => write!(f, "the baseline to compare with: {e}"),
+            // deficiency: KD22 The advice is `--run`'s, which `cli::report::check`
+            // refuses for `diff`, `changed` and `anchors-removed`: their default
+            // `--to` raises this too (`run::choose`), and is answered by `--to`.
             Error::BaselineOfLater { run, later } => write!(
                 f,
                 "run {} is the baseline run {} was checked against, and run {} never finished; \

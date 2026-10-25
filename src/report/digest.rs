@@ -7,7 +7,8 @@
 //! ranked by their broken links, the repos and components, the errors apart
 //! from breakage (D16) and the housekeeping. Every section is a [`Table`] whose
 //! rows are already in the order a reader wants them, so a rendering walks
-//! them and ranks nothing. Everything counts every kind of link (D13), and
+//! them and ranks nothing but a page's drill-down, its errors joined to its
+//! broken links by severity. Everything counts every kind of link (D13), and
 //! reads the pages a root covers alone.
 
 mod cause;
