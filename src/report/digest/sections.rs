@@ -18,7 +18,7 @@ use crate::store::{DOUBLED_SLASH, Mode, RunId, TARGET_URL_DOUBLES, WRONG_TRAILIN
 use crate::url::toggle_slash;
 
 /// A link of `view`, a `report_*` link view, on a crawled page.
-const ON_CRAWLED: &str = " JOIN report_pages pg ON pg.run_id = b.run_id \
+pub(super) const ON_CRAWLED: &str = " JOIN report_pages pg ON pg.run_id = b.run_id \
                           AND pg.url_id = b.src_url_id AND pg.crawled ";
 
 /// The page counts the pages, repos and components rank by, computed once into

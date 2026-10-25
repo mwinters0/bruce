@@ -158,6 +158,15 @@ pub(super) fn compared() -> Store {
     store
 }
 
+/// [`compared`] and, in run 4, a link of page 1 to a 404 (17) that run 1's page
+/// 1 does not hold: broken then, mended since.
+pub(super) fn compared_with_a_fix() -> Store {
+    let store = compared();
+    target(&store, 4, 17, 404, "broken_url", None);
+    link(&store, 4, 1, 17, None, "anchor");
+    store
+}
+
 pub(super) fn of(store: &Store) -> Digest {
     digest(store, Some(RunId(1)), Against::Previous).unwrap()
 }
@@ -870,9 +879,15 @@ fn same_shape(documented: &Value, actual: &Value, at: &str) {
 fn the_json_has_the_fields_the_manual_documents() {
     let documented = documented();
     assert_eq!(documented["format_version"], FORMAT_VERSION);
-    // A comparison fills `compared_with` and `anchors_removed`, which a digest
+    // A comparison fills `compared_with`, the breakage new and fixed and
+    // `anchors_removed`, which a digest
     // of one run leaves null and empty.
-    let compared = digest(&compared(), Some(RunId(1)), Against::Run(RunId(4))).unwrap();
+    let compared = digest(
+        &compared_with_a_fix(),
+        Some(RunId(1)),
+        Against::Run(RunId(4)),
+    )
+    .unwrap();
     let json: Value = serde_json::from_str(&compared.json()).unwrap();
     same_shape(&documented, &json, "$");
 }

@@ -188,10 +188,11 @@ fn errors_are_apart_from_the_breakage() {
 }
 
 #[test]
-fn the_sections_after_the_figures_are_pages_repos_targets_errors_housekeeping() {
+fn the_sections_after_the_figures_are_since_pages_repos_targets_errors_housekeeping() {
     let html = html();
     let order = [
         "figures",
+        "since",
         "pages",
         "repos",
         "fix-once",
@@ -218,6 +219,7 @@ fn every_section_after_the_figures_starts_collapsed_under_its_heading() {
     let figures = section(&html, "figures");
     assert!(figures.contains("<h2>Figures</h2>") && !figures.contains("<details"));
     for id in [
+        "since",
         "pages",
         "repos",
         "fix-once",
@@ -742,8 +744,44 @@ fn the_anchors_removed_are_a_section_of_pages_with_their_dots() {
 }
 
 #[test]
+fn the_breakage_new_and_fixed_is_a_section_of_links_under_their_causes() {
+    let html = compared_html();
+    let s = section(&html, "since");
+    // Run 1 broke three links run 4's page 1 and 2 did not hold; the one run 4's
+    // page 1 had to the same 404 is broken in both.
+    assert!(s.contains("3 to a broken URL or a missing fragment are broken since run 4"));
+    assert!(s.contains("<span class=\"ttl\">Link added</span><span class=\"cnt\">3 links"));
+    assert!(!s.contains("Target removed"));
+    assert!(s.contains("<code>1&gt;2#nope</code>"));
+    assert!(s.contains("Linking page's source"));
+    assert_eq!(
+        s.matches("<td class=\"dot\"><span class=\"sev").count(),
+        3,
+        "a dot for each of the links"
+    );
+    assert!(s.contains("0 were fixed") && s.contains("<h3>Fixed</h3>\n<p class=\"muted\">None."));
+    assert!(html.contains("<a href=\"#since\">Since</a>"));
+}
+
+#[test]
+fn a_mended_link_is_listed_with_what_it_is_now() {
+    let html = crate::report::digest(
+        &crate::report::digest::tests::compared_with_a_fix(),
+        Some(RunId(1)),
+        crate::report::Against::Run(RunId(4)),
+    )
+    .unwrap()
+    .html();
+    let s = section(&html, "since");
+    assert!(s.contains("1 was fixed"));
+    assert!(s.contains("Broken then, not now"));
+    assert!(s.contains("<td>Link removed</td>"), "{s}");
+}
+
+#[test]
 fn with_nothing_to_compare_with_the_section_and_the_header_say_so() {
     let html = html();
+    assert!(section(&html, "since").contains("no earlier run to compare with"));
     assert!(html.contains("<dt>Compared with</dt><dd>no earlier run</dd>"));
     assert!(section(&html, "anchors-removed").contains("no earlier run to compare with"));
     assert!(

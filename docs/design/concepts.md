@@ -64,7 +64,7 @@ decisions each carries are cited in its module's doc.
   (`introduced`: a CI run against its baseline, D9) and the `inverse` check
   (what the change removed that pages outside the build link to, D56) each in their own child,
   the crawl run's digest (D64) in `digest`, its document in the `document` child, its sections' queries in `sections`,
-  the run it is compared with, and the anchors removed since, in `compare` (D73), its JSON in `json` and its HTML, with the stylesheet it holds, the severity dots in its `severity` child, the markup helpers they and the document share in `markup` and the comparison's header line, figure changes and section in its `compared` child, in `html`,
+  the run it is compared with, and the anchors removed since, in `compare` (D73), the breakage new and fixed since, each new link with its cause, in `cause` (D74), its JSON in `json` and its HTML, with the stylesheet it holds, the severity dots in its `severity` child, the markup helpers they and the document share in `markup` and the comparison's header line, figure changes and sections (the breakage new and fixed, the anchors removed) in its `compared` child, in `html`,
   the views they read in `views`, the table's
   text and JSON in `table` and the failures in `error`.
   It sits above `store`, whose `link_verdicts` its views join, and below

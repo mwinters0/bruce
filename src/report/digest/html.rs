@@ -33,6 +33,7 @@ impl Digest {
         head(&mut out, self);
         out.push_str("<main>\n");
         figures(&mut out, self);
+        compared::since_last_run(&mut out, self);
         let ids = pages(&mut out, self);
         repos(&mut out, self, &ids);
         fix_once(&mut out, self);
@@ -256,7 +257,7 @@ fn head(out: &mut String, d: &Digest) {
         );
     }
     out.push_str(
-        "<nav><a href=\"#figures\">Figures</a> <a href=\"#pages\">Pages</a> \
+        "<nav><a href=\"#figures\">Figures</a> <a href=\"#since\">Since</a> <a href=\"#pages\">Pages</a> \
          <a href=\"#repos\">Repos</a> <a href=\"#fix-once\">Targets</a> \
          <a href=\"#anchors-removed\">Anchors removed</a> <a href=\"#errors\">Errors</a> <a href=\"#housekeeping\">Housekeeping</a></nav>\n\
          </div></header>\n",

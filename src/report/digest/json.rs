@@ -104,6 +104,8 @@ fn render(d: &Digest) -> String {
         ("broken", json(&d.broken)),
         ("by_repo", json(&d.by_repo)),
         ("by_component", json(&d.by_component)),
+        ("new_breakage", json(&d.new_breakage)),
+        ("fixed_breakage", json(&d.fixed_breakage)),
         ("anchors_removed", json(&d.anchors_removed)),
         ("errors", json(&d.errors)),
         ("housekeeping", housekeeping),

@@ -35,8 +35,8 @@ fetched for.
 ## The comparison
 
 The digest compares its run with another, to say what changed: the header names
-that run, each figure shows its change since it, and the anchors removed since
-are a section. **By default** the other run is the finished crawl run before the
+that run, each figure shows its change since it, and the breakage new and fixed
+and the anchors removed since are sections. **By default** the other run is the finished crawl run before the
 digest's in the database; a `check-dir` run is never one. **`--from`** names
 another run of the database. **`--since`** names a baseline file, for a
 deployment that keeps no history: the digest imports its run, reads it, and
@@ -82,7 +82,14 @@ entries, the unchecked counts) have no dot. In this order:
    The first two of those are the broken links. Beneath each is its change since
    the compared run, as `+12`, `−3` or `no change`, in red where what is
    broken rose and green where it fell.
-3. **Pages, by the broken links on them**: each page that holds one, or a
+3. **Broken since the compared run**: the links broken in this run and not in
+   the compared one, each group under its cause ([below](#why-a-link-is-newly-broken)) a
+   closed drill-down of the links, with the page each is on, what it is written as
+   and names, and the source of the page answering for it (the target's, as the compared
+   run recorded it, for a target removed, moved or without the anchor, else the linking
+   page's), and the links the compared run had broken that are not, each with what it
+   is now. Empty, and says so, where there was no compared run.
+4. **Pages, by the broken links on them**: each page that holds one, or a
    link that errored, as a drill-down of those links, with its live page and
    its source. Its summary reads, for a page of 181 links to a broken URL or
    that errored and 2 to a missing fragment, "● 181 broken links, ● 2 missing
@@ -113,24 +120,24 @@ entries, the unchecked counts) have no dot. In this order:
    and *Problem* and *Status* what the target answered: `URL broken` or
    `fragment missing`. A page with an unresolved `xref:` that looks like a
    typo has a Hint column, the nearest page ID.
-4. **Repos, by the broken links on their pages**: the repos whose pages hold
-   broken links, ranked and counted as the pages are, each with links to its pages in section 3,
+5. **Repos, by the broken links on their pages**: the repos whose pages hold
+   broken links, ranked and counted as the pages are, each with links to its pages in section 4,
    which open that section where the browser opens a closed section for a
    link into it: Chrome 97, Firefox 139 and Safari 26.2 on. In an older one,
    open the pages first. A link counts against the repo of the page it is
-   written on, which may not be the repo section 5 names for its target.
-5. **Broken targets, by the links to them** ("fix once, fix many"): the
+   written on, which may not be the repo section 6 names for its target.
+6. **Broken targets, by the links to them** ("fix once, fix many"): the
    targets that more than one broken link names, from whatever pages, the
    most links first, each with the pages linking to it and the target's own
    source, where restoring a missing fragment mends every link in its row.
-   The targets one link names are not listed; their links are in section 3.
-6. **Anchors removed since the compared run**: the pages that had an anchor
+   The targets one link names are not listed; their links are in section 4.
+7. **Anchors removed since the compared run**: the pages that had an anchor
    in the compared run and lost it while links still name it, the most linked
    first, each with the links to it and the pages they are on, and the page's
    source: the links to a missing fragment that the page's own change
    broke, to restore in its source. An anchor no link names is no row.
-7. **Links that errored**, apart from the breakage.
-8. **Housekeeping**: the redirected links by where their targets land, each
+8. **Links that errored**, apart from the breakage.
+9. **Housekeeping**: the redirected links by where their targets land, each
    landing a closed drill-down of its own (its dot, the landing, its links and
    redirecting URLs, and inside the hops the first took and the pages the links are
    written on, listed one to a line so a phone has no wide table to scroll), those
@@ -164,6 +171,8 @@ and a count or status a number.
   "broken": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","landing":null,"fix":null,"fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"hint":null,"status":200}],
   "by_repo": [{"repo":"https://forge.example.org/docs","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0}],
   "by_component": [{"component":"handbook","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0}],
+  "new_breakage": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"status":200,"cause":"anchor_removed","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/b.adoc"}],
+  "fixed_breakage": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../old/","target":"https://docs.example.org/en-US/old/","fragment":null,"kind":"anchor","outcome":"broken_url","reason":null,"status":404,"became":"ok","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc"}],
   "anchors_removed": [{"page":"https://docs.example.org/en-US/b/","anchor":"nope","links":1,"pages":1,"linking_pages":["https://docs.example.org/en-US/a/"],"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc"}],
   "errors": [{"page":"https://docs.example.org/en-US/a/","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","raw_href":"https://slow.example.net/","target":"https://slow.example.net/","fragment":null,"kind":"anchor","reason":"server_error","status":503}],
   "housekeeping": {
@@ -197,6 +206,8 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order; a link that errored is in `errors`, where the HTML's drill-down finds it. `page` joins to `pages`. `hint` is, for an Antora `xref:` that names no page, the nearest page ID in the run, as `component:module:path` with an empty module for `ROOT`, where one is close enough to be a typo of it, else `null`. `landing` and `fix` are as in `broken_targets`. |
 | `by_repo` | Each repo the pages were built from, ranked as `pages` are, `through` the sum of its pages'; `repo` is `null` for the pages that record none. `pages` counts the repo's pages, `broken_pages` those holding a broken link or an error. |
 | `by_component` | The same by Antora component. A site with no Antora page has none. |
+| `new_breakage` | The links broken in `run` and not in `compared_with`, a link to a row: `outcome` is `broken_url` or `broken_anchor`, and `cause` is what the compared run held, [below](#why-a-link-is-newly-broken), the rows in that order and then `broken_url` first. `source_repo`, `source_path` and `source_url` are those of the page answering for it: the target page's, as the compared run recorded it, for `target_removed`, `target_moved` and `anchor_removed`, else the linking page's. Empty where `compared_with` is `null`. |
+| `fixed_breakage` | The links broken in `compared_with` and not in `run`, as `new_breakage`'s rows without a `cause`, with what each is in `run` as `became`: `ok`, `error` or `unchecked`; `link_removed`, the page no longer holding it; `page_removed`, the page not among the pages the roots cover; or `uncounted`, held on a page whose twin at a URL without the doubled slash answers for its links. The source is the linking page's, `run`'s where it holds the page, else the compared run's. Empty where `compared_with` is `null`. |
 | `anchors_removed` | The pages of `run` that lost an anchor since `compared_with`, links still naming it, one row to a `page` and `anchor`, the most `links` first and then the most `pages`: the links to it, the distinct pages they are on and those pages as `linking_pages`, over every kind of link. A page that landed a redirect is the page it landed on. Empty where `compared_with` is `null`. |
 | `errors` | Every link whose outcome is `error`, apart from breakage: the target could not be asked, not necessarily wrong. `source_url` is the linking page's. |
 | `housekeeping.redirects` | The redirected links by landing URL, the most `links` first: `urls` distinct URLs reached it, `chain` is the hops the first took, and `pages` the pages whose links they are. `reason` is `pedantic_trailing_slash` on a landing whose links name a URL that differs from it only by a final `/`, which comes after every other row, else `null`: such a landing has two rows where other links reach it too. |
@@ -207,6 +218,23 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `housekeeping.unchecked` | The `unchecked` links by `reason` ([below](#why-a-link-is-unchecked)), and the distinct `targets` they name. |
 | `housekeeping.unchecked_groups` | The same links by `reason` and by `group`, where they point, every group listed: the reasons in `unchecked`'s order, a reason's groups the most `links` first. A `group` is the scheme, as `mailto:`, for a URL that is not `http` or `https`; for `skipped`, the host and the path's last two segments, as `forge.example.org/…/issues/new`, the part a `skip` glob usually matches; on a root's host, the URL up to the path's first segment, as `https://docs.example.org/de/`, with the `/` after it where the path goes on; and else the host. It is `null` for a link the run stopped before asking about. |
 | `housekeeping.checked_hosts` | The hosts no root starts on whose links' targets were asked about, the most `links` first: the [`allowlist`](config.md#allowlist) as far as the pages link to it. The run records no configuration, so a host the allowlist names that no page links to is in no row. |
+
+## Why a link is newly broken
+
+A link is the same link in both runs when its page, its target and its fragment
+are. The digest reads the compared run for the first of these that holds, and
+never the pages' hashes, which would blame a page for a break its edit did not
+make:
+
+| `cause` | The link |
+|---|---|
+| `target_removed` | Was `ok` in the compared run, and its target now answers with an error, the page it redirects to included. |
+| `target_moved` | Was `ok` in the compared run, and its target now redirects somewhere else, where the link breaks. |
+| `anchor_removed` | Was `ok` in the compared run, whose page at the target had the fragment then and does not now: the links behind a row of `anchors_removed`. |
+| `link_added` | Is on a page the compared run checked, which did not hold the link. |
+| `new_page` | Is on a page the compared run did not check. |
+| `unexplained` | Was in the compared run, which judged it neither `ok`, `error` nor `unchecked`, or `ok` where nothing the comparison held explains the break, usually a rule that judges it differently since, as the doubled slash. |
+| `first_judged` | Was `error` or `unchecked` in the compared run, so is no regression: it is judged now. |
 
 ## Why a link is unchecked
 

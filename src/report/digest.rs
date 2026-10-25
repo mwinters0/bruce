@@ -10,6 +10,7 @@
 //! them and ranks nothing. Everything counts every kind of link (D13), and
 //! reads the pages a root covers alone.
 
+mod cause;
 mod compare;
 mod document;
 mod html;
@@ -84,10 +85,14 @@ fn build(conn: &Connection, read: &Read, from: Option<RunId>, file: bool) -> Res
         .transpose()?;
     let anchors_removed = match &compared {
         Some(c) => compare::anchors_removed(conn, c.run.id, id)?,
-        None => Table {
-            columns: Vec::new(),
-            rows: Vec::new(),
-        },
+        None => empty(),
+    };
+    let (new_breakage, fixed_breakage) = match &compared {
+        Some(c) => (
+            cause::new_breakage(conn, c.run.id, id)?,
+            cause::fixed_breakage(conn, c.run.id, id)?,
+        ),
+        None => (empty(), empty()),
     };
     Ok(Digest {
         run,
@@ -107,10 +112,20 @@ fn build(conn: &Connection, read: &Read, from: Option<RunId>, file: bool) -> Res
         unlisted: sections::unlisted(conn, id)?,
         sitemap_entries: sections::sitemap_entries(conn, id)?,
         anchors_removed,
+        new_breakage,
+        fixed_breakage,
         roots_without_sitemap: sections::roots_without_sitemap(conn, id)?,
         unfinished: read.unfinished,
         later_unfinished: read.later_unfinished,
     })
+}
+
+/// The section of a digest with nothing to compare with.
+fn empty() -> Table {
+    Table {
+        columns: Vec::new(),
+        rows: Vec::new(),
+    }
 }
 
 /// Puts `rows`' first column, a page, in the order `ranked` lists its own;

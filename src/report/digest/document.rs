@@ -93,6 +93,15 @@ pub struct Digest {
     /// `page`, `anchor`, `links`, `pages`, `linking_pages`, `source_repo` and
     /// `source_path`. Empty where `compared` is `None`.
     pub anchors_removed: Table,
+    /// The links broken in this run and not in the compared one, each with its
+    /// `cause` and the source of the page answering for it: `page`, `raw_href`,
+    /// `target`, `fragment`, `kind`, `outcome`, `reason`, `status`, `cause`,
+    /// `source_repo`, `source_path` and `source_url`. Empty where `compared` is
+    /// `None`.
+    pub new_breakage: Table,
+    /// The links broken in the compared run and not in this one: the same
+    /// columns but `cause`, and `became`, what the link is in this run.
+    pub fixed_breakage: Table,
     /// The roots that read no sitemap, which have no unlisted pages.
     pub roots_without_sitemap: Vec<String>,
     /// The run never finished, so the digest is incomplete.

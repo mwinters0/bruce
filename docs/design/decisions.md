@@ -11,7 +11,7 @@ frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' 
 **Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
 phase index.
 
-<!-- decision-watermark: D71 -->
+<!-- decision-watermark: D74 -->
 
 ## Scope and modes
 
@@ -369,6 +369,12 @@ Reopens: a measured yield on a full crawl, or a profile classifying (P7). Code: 
 Why: the imported run is a finished run later than the digest's, so left in place a bare `report` would read the baseline as the latest run (D59); a digest is written and the database is as it was.
 Rejected: attaching the file read-only, the views being bound to `main` (D52); leaving the import, a trap for the next report; comparing with the previous digest's JSON, which holds no hash or anchor (the spec); a `format_version` bump for `compared_with` going from always `null` to an object, no loader having read a value there.
 Reopens: a database too large to import into for a digest (the file grows by the import and reuses its blocks after, 33.6 to 55.3 MB on 8.14's, then 0.5 MB more). Code: `report::digest`, `report::digest::compare`, `store::baseline::import`. Evidence: `report::digest::compare::tests::a_baseline_file_is_imported_for_the_digest_and_removed_after`.
+
+### D74 A new break is attributed by the first thing the compared run held that explains it, and a link is keyed by its page, target and fragment
+A link broken in the digest's run and not in the compared one (`report_broken`, `diff`'s key without its `raw_href` or `kind`) has the first cause that holds: no crawled page there, `new_page`; the page without the key, `link_added`; the key `error` or `unchecked` there, `first_judged`; broken or uncounted there, `unexplained`; else, the key `ok` there, the target now `broken_url`, `target_removed`; now redirected where it was not or elsewhere, `target_moved`; its landing page having the fragment there, `anchor_removed`; else `unexplained`. The source shown is the target's as the compared run recorded it for the three target causes, else the linking page's. Rows are links, not keys; `fixed_breakage` is the converse with what each `became`. Maintainer, 2026-10-23: attribution by what the comparison held, never a hash (P8's spec).
+Why: the removal is tested before the move because a redirect onto a 404 is a page gone, and the move before the anchor because a page that moved lost the fragment by moving; `unexplained` is a rule that judges differently since (a doubled slash), which no table row names. On 8.14's crawl against 8.1's all 671 new breaks are `first_judged` (the figures' +569 and +102), none fixed: en-US drifted nowhere in a day.
+Rejected: "the linking page changed", read off the hash, which blames a page for a break its edit did not make; a `cause` for each reason (`doubled_slash`, `unresolved_xref`), the reason column already saying it; a row to a key, which hides the links a maintainer edits.
+Reopens: a real pair of runs that differ, where `unexplained` is large or `target_moved` is mostly removals. Code: `report::digest::cause`. Evidence: `report::digest::cause::tests::each_new_break_says_what_the_comparison_held`.
 
 ### D61 Live slots are shared among the hosts with work, and a build's reads have a budget of their own
 Each host holds at most the 64 slots divided by the hosts with a target waiting or running, taken in turn,
