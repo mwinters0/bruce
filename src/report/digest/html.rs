@@ -58,19 +58,24 @@ fn counted(n: i64, noun: &str) -> String {
     format!("{} {noun}{}", num(n), if n == 1 { "" } else { "s" })
 }
 
-/// A page's or a repo's summary count: its red links, those broken through a
-/// link to a URL that doubles a slash (D71) and its amber ones, each behind its
-/// dot and a level with none left out, and no total. Red is
-/// `broken_url` and `error`, amber `broken_anchor` (see
-/// [`severity::Level::of_link`]); the links broken through are red too.
-fn tally(red: i64, through: i64, amber: i64) -> String {
+/// A page's or a repo's summary count: its red links (`broken_url`, those
+/// broken through a link to a URL that doubles a slash, D71, and `error`, the
+/// links that could not be verified) and its amber ones (`broken_anchor`), each
+/// behind its dot, a count of none left out, and no total (see
+/// [`severity::Level::of_link`]).
+fn tally(broken: i64, through: i64, unverifiable: i64, amber: i64) -> String {
     let mut parts = Vec::new();
     for (level, n, words) in [
-        (Level::Broken, red, counted(red, "broken link")),
+        (Level::Broken, broken, counted(broken, "broken link")),
         (
             Level::Broken,
             through,
             format!("{} broken through it", num(through)),
+        ),
+        (
+            Level::Broken,
+            unverifiable,
+            format!("{} unverifiable", num(unverifiable)),
         ),
         (Level::Attention, amber, counted(amber, "missing fragment")),
     ] {
@@ -85,8 +90,9 @@ fn tally(red: i64, through: i64, amber: i64) -> String {
 /// are new where it is not new itself (D75).
 fn summary_count(r: &Row) -> String {
     let mut count = tally(
-        r.int("broken_url") + r.int("error"),
+        r.int("broken_url"),
         r.int("through"),
+        r.int("error"),
         r.int("broken_anchor"),
     );
     let new = r.int("new_links");

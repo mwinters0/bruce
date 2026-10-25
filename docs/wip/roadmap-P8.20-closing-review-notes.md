@@ -65,7 +65,14 @@ this session, the maintainer having handed it over: an `error` link reads
 "could not be verified", by what it means, the JSON's `error` and the
 section's `#errors` unchanged. **8.4.8.**
 
+## Finding 9: a summary counts its unverifiable links apart
+
+Maintainer, 2026-10-25, closing the decision 8.4.8 left for another look: a
+page's and a repo's summary count their `error` links apart from their broken
+ones, as "unverifiable": "● 3 broken links, ● 1 unverifiable". **It spawns
+8.4.9.**
+
 ## Verdict
 
 Maintainer, 2026-10-25, on the digest with findings 1 to 6 landed (8.8.2,
-8.8.3, 8.19.2, 8.21): reviewed and approved. Findings 7 and 8 came after.
+8.8.3, 8.19.2, 8.21): reviewed and approved. Findings 7 to 9 came after.

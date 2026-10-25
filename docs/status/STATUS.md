@@ -186,6 +186,10 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   an `error` link reads "could not be verified", in the figures, its section
   and the legend; earned by 8.20's findings 7 and 8.
   Notes: [`../wip/roadmap-P8.4.8-figure-words-notes.md`](../wip/roadmap-P8.4.8-figure-words-notes.md).
+- [x] **8.4.9** A page's and a repo's summary count their unverifiable links
+  apart from their broken ones, red with them and ranked as before; earned by
+  8.20's ninth finding.
+  Notes: [`../wip/roadmap-P8.4.9-unverifiable-notes.md`](../wip/roadmap-P8.4.9-unverifiable-notes.md).
 - [x] **8.19.2** Each figure coloured as its links' dots: the missing
   fragments' amber, the errored links' red; earned by 8.20's fourth finding.
   Notes: [`../wip/roadmap-P8.19.2-amber-figure-notes.md`](../wip/roadmap-P8.19.2-amber-figure-notes.md).
@@ -195,7 +199,7 @@ The spec is [`../wip/roadmap-P8-history.md`](../wip/roadmap-P8-history.md).
   Notes: [`../wip/roadmap-P8.21-new-marked-notes.md`](../wip/roadmap-P8.21-new-marked-notes.md).
 - [x] **8.20** The maintainer's closing review of the finished digest, the
   two-run sections included: no code, the verdict and what it spawns in the
-  notes. Approved, with findings 1 to 6 landed; 7 and 8 landed after.
+  notes. Approved, with findings 1 to 6 landed; 7 to 9 landed after.
   Notes: [`../wip/roadmap-P8.20-closing-review-notes.md`](../wip/roadmap-P8.20-closing-review-notes.md).
 
 ## Not started
@@ -221,10 +225,3 @@ reasoning goes beside the mechanism it governs first. Full rules:
   Chrome in `mise.toml` (the trial's `http:` backend, a checksum by hand) so
   `mise run shot` can render with it. Notes:
   [`../wip/roadmap-P8.9-servo-vs-chrome-notes.md`](../wip/roadmap-P8.9-servo-vs-chrome-notes.md).
-- **A page's and a repo's summary still count an unverified link among its
-  "broken links"**, red being `broken_url` and `error` together (P8's spec,
-  "What the document holds", 5 and 6), while 8.4.8's figures say such a link
-  is not broken. Left so, the spec's wording being the maintainer's.
-  Reconsidering: count it apart in the summary, "● 3 broken links, ● 1
-  unverified", red still and ranked as now. Notes:
-  [`../wip/roadmap-P8.4.8-figure-words-notes.md`](../wip/roadmap-P8.4.8-figure-words-notes.md).

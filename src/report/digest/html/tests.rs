@@ -115,8 +115,10 @@ fn pages_follow_their_rank_each_with_its_links_and_sources() {
     assert!(pages[two..].contains("<code>2&gt;10#</code>"));
     assert!(pages[one..two].contains(
         "<span class=\"cn\"><span class=\"sev broken\" role=\"img\" aria-label=\"Broken\"></span> \
-         3 broken links</span>, <span class=\"cn\"><span class=\"sev attention\" role=\"img\" \
-         aria-label=\"Attention\"></span> 1 missing fragment</span></span></summary>"
+         2 broken links</span>, <span class=\"cn\"><span class=\"sev broken\" role=\"img\" \
+         aria-label=\"Broken\"></span> 1 unverifiable</span>, <span class=\"cn\"><span \
+         class=\"sev attention\" role=\"img\" aria-label=\"Attention\"></span> 1 missing \
+         fragment</span></span></summary>"
     ));
 }
 
@@ -127,16 +129,24 @@ fn a_summary_counts_red_then_amber_and_leaves_out_a_level_with_no_links() {
         "<span class=\"cn\"><span class=\"sev broken\" role=\"img\" aria-label=\"Broken\"></span>";
     let amber = "<span class=\"cn\"><span class=\"sev attention\" role=\"img\" aria-label=\"Attention\"></span>";
     assert_eq!(
-        tally(181, 0, 2),
+        tally(181, 0, 0, 2),
         format!("{red} 181 broken links</span>, {amber} 2 missing fragments</span>")
     );
-    assert_eq!(tally(1, 0, 0), format!("{red} 1 broken link</span>"));
-    assert_eq!(tally(0, 0, 1), format!("{amber} 1 missing fragment</span>"));
-    // The links broken through a link are red, between the two.
+    assert_eq!(tally(1, 0, 0, 0), format!("{red} 1 broken link</span>"));
     assert_eq!(
-        tally(1, 579, 0),
-        format!("{red} 1 broken link</span>, {red} 579 broken through it</span>")
+        tally(0, 0, 0, 1),
+        format!("{amber} 1 missing fragment</span>")
     );
+    // The links broken through a link and those that could not be verified
+    // are red, in that order after the broken ones.
+    assert_eq!(
+        tally(1, 579, 2, 0),
+        format!(
+            "{red} 1 broken link</span>, {red} 579 broken through it</span>, {red} 2 \
+             unverifiable</span>"
+        )
+    );
+    assert_eq!(tally(0, 0, 1, 0), format!("{red} 1 unverifiable</span>"));
 }
 
 #[test]
@@ -152,16 +162,19 @@ fn a_page_lists_its_red_links_before_its_amber_ones_an_errored_link_among_the_re
         rows.matches("<td>error \u{b7} server_error</td>").count(),
         2
     );
-    assert!(rows.contains("2 broken links</span></span></summary>"));
+    assert!(rows.contains("2 unverifiable</span></span></summary>"));
     // Page 4: a broken URL, then the fragment.
     let rows = &pages[four..];
     let url = rows.find("<td>URL broken</td>").unwrap();
     let fragment = rows.find("<td>fragment missing</td>").unwrap();
     assert!(url < fragment);
-    // The repo of page 3 and 4 (none) counts both, errors among its red.
+    // The repo of page 3 and 4 (none) counts both, its errors apart.
     let repos = section(&html, "repos");
     assert!(repos.contains("No source recorded"));
-    assert!(repos.contains("3 broken links</span>, "), "{repos}");
+    assert!(
+        repos.contains("1 broken link</span>, ") && repos.contains("2 unverifiable</span>, "),
+        "{repos}"
+    );
 }
 
 #[test]

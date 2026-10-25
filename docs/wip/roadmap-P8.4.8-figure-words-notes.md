@@ -12,6 +12,5 @@ Earned by 8.20's findings 7 and 8.
   gave no verdict, an unchecked one was not asked. The nav reads "Unverified";
   the section keeps its id `errors`, and the JSON its `error`, a rename being
   one a loader would misread (D64).
-- **Left as it is**: a page's and a repo's summary count an unverified link
-  among its "broken links" (8.4.5); STATUS's "Decisions worth another look"
-  holds it.
+- **A page's and a repo's summary** count those links apart, as
+  "unverifiable": 8.4.9.

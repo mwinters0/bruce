@@ -105,9 +105,10 @@ new or all fixed. In this order:
    Left out, as section 3 is, where none was fixed.
 5. **Pages, by the broken links on them**: each page that holds one, or a
    link that could not be verified, as a drill-down of those links, with its live page and
-   its source. Its summary reads, for a page of 181 links to a broken URL or
-   that could not be verified and 2 to a missing fragment, "● 181 broken links, ● 2 missing
-   fragments", the dots red and amber, a level with no links left out. The pages rank by their red links, then their amber ones,
+   its source. Its summary reads, for a page of 181 links to a broken URL, 3
+   that could not be verified and 2 to a missing fragment, "● 181 broken links,
+   ● 3 unverifiable, ● 2 missing fragments", the first two dots red and the last
+   amber, a count of no links left out. The pages rank by their red links, then their amber ones,
    and the drill-down lists the red before the amber. A link is counted on the
    page it is written on. A link to a URL whose path doubles a slash is red,
    reason `doubled_slash`, whatever that URL answered and whether it was

@@ -136,8 +136,9 @@ digest; 8.6's notes, "Finding 9"): a row holds a page's or a repo's red links
 (`broken_url` and `error`) and amber ones (`broken_anchor`), "Severity is
 marked", and ranks by its red, then its amber; a page whose only findings are
 errors is a row too, its errors in its drill-down. In the HTML its summary reads
-"● 181 broken links, ● 2 missing fragments", the dots red and amber, a level
-with no links left out with its dot, and nothing more: no total (8.6's notes,
+"● 181 broken links, ● 3 unverifiable, ● 2 missing fragments", the errors
+counted apart from the broken links though red with them (8.20's notes,
+"Finding 9"), a count of no links left out with its dot, and nothing more: no total (8.6's notes,
 "Finding 12"), nor the links on the page, nor a repo's pages.
 7. **Anchors removed**: the pages that lost anchors links still name, in the
    JSON; the HTML has no section of them (8.20's notes, "Finding 2").
