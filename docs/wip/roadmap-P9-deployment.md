@@ -17,7 +17,7 @@ designed for a site of many locale roots, not for one.
 ## P9 follows P8
 
 Settled 2026-10-21 (maintainer). **P9 is specified and waits for P8**, the
-run-history reports. P8 changes the schema (`roadmap-P8-history.md`,
+run-history reports. P8 changes the schema (`../design/roadmap-P8-history.md`,
 "A hash records its scope"), and a 0.x release migrates nothing
 (D43), so a
 deployment before P8 would discard its history at the next release. P8 needs no
@@ -213,7 +213,7 @@ sliced; not yet a checklist.
 7. **9.7 The every-locale crawl**, on the maintainer's machine after 9.6's
    verdict, and the guide's locale figures; and its digest's size and
    rendering, reopening P8's every-row HTML where either is bad
-   (`roadmap-P8-history.md`, "Every row, until every locale is measured").
+   (`../design/roadmap-P8-history.md`, "Every row, until every locale is measured").
 8. **9.8 The release P9 closes on**, and the README's CI section corrected.
 
 Every tag push and every new repository (9.4, 9.5, 9.8) is the

@@ -1,8 +1,9 @@
 # P8 — Run-history reports
 
 What P8 does and why, settled in the grilling that began 2026-10-23. The
-decisions are in [`../design/decisions.md`](../design/decisions.md) and are
-cited here, never restated. The checklist is `../status/STATUS.md`'s.
+decisions are in [`decisions.md`](decisions.md) and are cited here, never
+restated. What the slices found is
+[`roadmap-P8-history-notes.md`](roadmap-P8-history-notes.md).
 
 ## Intent
 
@@ -112,13 +113,13 @@ The JSON keeps its own order.
 1. **The header**: the roots, the run's start, finish and duration, its id,
    the tool version, and the run compared with, or that there was none, as a
    sub-title under the title: its day, its time where another run started that
-   day, and its number (8.20's notes, "Finding 3").
+   day, and its number (`roadmap-P8-history-notes.md`, "8.20's Finding 3").
 2. **The headline figures**: pages and links checked, `broken_url`,
    `broken_anchor` and `error`, each with its change since the compared run.
 3. **Since the last run**: the breakage new and fixed, each new row saying
    why: the linking page changed, the target lost the anchor, or the target
    page is gone or moved, with the source link of the page responsible. The
-   HTML has two sections, the new and the fixed (8.20's notes, "Finding 1").
+   HTML has two sections, the new and the fixed (`roadmap-P8-history-notes.md`, "8.20's Finding 1").
 4. **Fix once, fix many**: the broken targets ranked by the broken links
    naming them, then by their pages, each with the target page's own source
    where the site holds it, the repo that would restore an anchor. On en-US it
@@ -132,16 +133,14 @@ The JSON keeps its own order.
    link to the repo and in-page links to its pages' rows in 5 (D17).
 
 **5 and 6 count and rank by severity** (maintainer, 2026-10-24, on 8.14's
-digest; 8.6's notes, "Finding 9"): a row holds a page's or a repo's red links
+digest; `roadmap-P8-history-notes.md`, "8.6's Finding 9"): a row holds a page's or a repo's red links
 (`broken_url` and `error`) and amber ones (`broken_anchor`), "Severity is
 marked", and ranks by its red, then its amber; a page whose only findings are
 errors is a row too, its errors in its drill-down. In the HTML its summary reads
 "● 181 broken links, ● 3 unverifiable, ● 2 missing fragments", the errors
-counted apart from the broken links though red with them (8.20's notes,
-"Finding 9"), a count of no links left out with its dot, and nothing more: no total (8.6's notes,
-"Finding 12"), nor the links on the page, nor a repo's pages.
+counted apart from the broken links though red with them (`roadmap-P8-history-notes.md`, "8.20's Finding 9"), a count of no links left out with its dot, and nothing more: no total (`roadmap-P8-history-notes.md`, "8.6's Finding 12"), nor the links on the page, nor a repo's pages.
 7. **Anchors removed**: the pages that lost anchors links still name, in the
-   JSON; the HTML has no section of them (8.20's notes, "Finding 2").
+   JSON; the HTML has no section of them (`roadmap-P8-history-notes.md`, "8.20's Finding 2").
 8. **Errors**, apart from breakage (D16).
 9. **Housekeeping**, collapsed: redirected links to update, the sitemap's
    entries no page was fetched for, orphans,
@@ -154,12 +153,12 @@ counted apart from the broken links though red with them (8.20's notes,
    landing and its counts, its redirecting URLs, first hops and linking pages
    inside. Placed by this session on the maintainer's finding that the table
    ran too wide to scroll on a phone, its lists of linking pages the cause
-   (8.6's notes, "Finding 9"); the other lists stay tables, none of their
+   (`roadmap-P8-history-notes.md`, "8.6's Finding 9"); the other lists stay tables, none of their
    cells a list.
 
 **What is new since the compared run is marked** in every section a reader
 acts on, a bar in the HTML and `new` in the JSON, and nothing on a digest with
-no comparison (D75; 8.20's notes, "Finding 5").
+no comparison (D75; `roadmap-P8-history-notes.md`, "8.20's Finding 5").
 
 **The digest counts every kind**, `kind` a column, where `report` counts
 `anchor` alone unless asked (D13): a broken image is on a page someone is
@@ -174,8 +173,7 @@ with a baseline file, `digest --since FILE|URL`**, imported as a run of its
 own (D21, D52): a deployment keeping no history compares with the baseline
 it published the day before. With no run to compare, the header says so
 and the JSON's `compared_with` is `null`; the HTML leaves out a two-run section
-that would list nothing, with no run to compare or none since (8.20's notes,
-"Finding 6"). Whether P9's nightly passes
+that would list nothing, with no run to compare or none since (`roadmap-P8-history-notes.md`, "8.20's Finding 6"). Whether P9's nightly passes
 `--since` is P9's script's, for its re-read. Rejected: comparing with the
 previous digest's JSON, which holds no hash or anchor; leaving a deployment
 without history with no comparison.
@@ -192,7 +190,7 @@ roots' `hash_root` and `hash_exclude`**: a schema change, to version 5
 (D43). A page whose scope differs between the two runs is listed as its
 scope changed, not as changed, and a page hashed `whole` under a root that
 sets `hash_root` is flagged as missed by it, the misconfiguration D15 keeps
-visible. P9's guide keeps the profile's region (`roadmap-P9-deployment.md`,
+visible. P9's guide keeps the profile's region (`../wip/roadmap-P9-deployment.md`,
 "The guide's hash scope is the profile's region"). Rejected: a note where
 `runs.config_hash` differs, which cannot tell a scope edit from a rate edit.
 
@@ -267,8 +265,7 @@ after Publish, which the unattended Publish forgets.
 
 ## A link that cannot work is broken
 
-Settled 2026-10-24 (maintainer), reviewing the en-US digest (8.6's notes,
-"Finding 4"). **An unchecked link that cannot work is broken, and every
+Settled 2026-10-24 (maintainer), reviewing the en-US digest (`roadmap-P8-history-notes.md`, "8.6's Finding 4"). **An unchecked link that cannot work is broken, and every
 report counts it so**, the gate included:
 
 - **A URL on a root's host in no root's scope is asked once, its links not
@@ -324,7 +321,7 @@ server at twice the rate it set.
 
 ## A trailing slash is pedantic
 
-Settled 2026-10-24 (maintainer), on 8.14's crawl (8.6's notes, "Finding 6"):
+Settled 2026-10-24 (maintainer), on 8.14's crawl (`roadmap-P8-history-notes.md`, "8.6's Finding 6"):
 a missing or extra final `/` is to be corrected, below a 404 or a missing
 fragment.
 
@@ -345,7 +342,7 @@ fragment.
   `doubled_slash`**, whatever it answered, as an unresolved xref is (D20),
   and whether the link names that URL or a redirect lands on it: the fault
   is the linking page's, never the page at that URL (maintainer, 2026-10-24;
-  8.6's notes, "Finding 10"). A link naming one is broken asked or not, off
+  `roadmap-P8-history-notes.md`, "8.6's Finding 10"). A link naming one is broken asked or not, off
   the allowlist, behind `robots` or matching a `skip`, the URL itself being
   the fault; a page's link to itself works for its reader and is judged as
   any (maintainer, 2026-10-24, reviewing 8.18). A `scheme://` inside a path
@@ -371,7 +368,7 @@ fragment.
 - **The doubled slash is shown where it is**: a link whose landing, not its
   URL, doubles one shows that landing under *Resolves to*, "→ lands on …",
   and the doubled slash is marked in the URL or the landing (maintainer,
-  2026-10-24; 8.6's notes, "Finding 11"). Rejected: a column of its own,
+  2026-10-24; `roadmap-P8-history-notes.md`, "8.6's Finding 11"). Rejected: a column of its own,
   widening the table 8.4.6 narrowed.
 - **The gate's introduced redirected links show each row's reason**,
   `pedantic_trailing_slash` last, and fail nothing, as no redirect there
@@ -384,7 +381,7 @@ fragment.
 
 Settled 2026-10-24 (maintainer, the design delegated): the digest is
 skimmed by severity. Its levels and the dots' placement were amended the same
-day on 8.14's digest (8.6's notes, "Finding 8").
+day on 8.14's digest (`roadmap-P8-history-notes.md`, "8.6's Finding 8").
 
 - **Three levels, read off a link's outcome and reason**: *broken*, a link
   that gets the reader nothing (`broken_url`, `error`), in `--bad`'s red;
@@ -394,7 +391,7 @@ day on 8.14's digest (8.6's notes, "Finding 8").
   none, and nor do the housekeeping's lists that are not links (orphans,
   unlisted pages, sitemap entries, unchecked counts). **These are defaults**:
   the classification of each kind belongs to the profile, P7's to give it
-  (maintainer, 2026-10-24; `../design/roadmap-P7-rules-inbox.md`), so P8
+  (maintainer, 2026-10-24; `roadmap-P7-rules-inbox.md`), so P8
   states it in one place.
 - **A dot marks one finding: the first column of every row naming a link or
   a target**, a column with no heading. Rejected: a dot on a section's
@@ -491,7 +488,7 @@ Found 2026-10-23.
   (`…/src/branch/f37/modules/…/Installation.adoc`), a link a report can
   print as it is (D36).
 - **P9's dev deployment keeps no history**: its nightly job crawls into a
-  fresh DB (`roadmap-P9-deployment.md`, "The scheduled job is one script,
+  fresh DB (`../wip/roadmap-P9-deployment.md`, "The scheduled job is one script,
   and history lives on a disk"), so a report there has no earlier run to
   compare with; the weekly every-locale crawl on the maintainer's machine
   keeps 30 runs.
@@ -499,7 +496,7 @@ Found 2026-10-23.
   `fetch()` of a `file://` URL, and Firefox since 68 gives each local file
   an origin of its own (`privacy.file_unique_origin`), so a page that loads
   its data at runtime works only when served over HTTP.
-- **No workflow may use a third-party action** (`../design/roadmap.md`,
+- **No workflow may use a third-party action** (`roadmap.md`,
   "Standing rules"), so a CI job has no `upload-artifact` step to keep a file
   it writes.
 </content>
