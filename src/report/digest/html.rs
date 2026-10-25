@@ -302,7 +302,7 @@ fn fix_once(out: &mut String, d: &Digest) {
     open_section(
         out,
         "fix-once",
-        "Broken targets, by the links to them",
+        "By: Link Target",
         None,
     );
     out.push_str(
@@ -371,13 +371,11 @@ fn fix_once(out: &mut String, d: &Digest) {
 type Ids = HashMap<String, String>;
 
 fn pages(out: &mut String, d: &Digest) -> Ids {
-    open_section(out, "pages", "Pages, by the broken links on them", None);
+    open_section(out, "pages", "By: Source Page", None);
     out.push_str(
-        "<p>The pages holding the most broken links first, those to a broken URL or that errored \
-         (red) before those to a missing fragment (amber), a link counted on the page it is \
-         written on. Open one for its links: <i>Written as</i> is the link in the page, <i>Resolves to</i> the \
-         URL it names, <i>Kind</i> the element holding it, <code>anchor</code> being an \
-         <code>&lt;a href&gt;</code>, and <i>Problem</i> and <i>Status</i> what the target \
+        "<i>Written as</i> is the link in the page. <i>Resolves to</i> is the URL it landed at. \
+         <i>Kind</i> is the type of element holding it (<code>anchor</code> is an <code>&lt;a \
+         href&gt;</code>). <i>Problem</i> and <i>Status</i> are what the target \
          answered.</p>\n\
          <p>A link to a URL with a doubled slash in its path is broken whatever the URL answered, \
          reason <code>doubled_slash</code>: the page linking there is the one to correct. The \
@@ -505,13 +503,8 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
     open_section(
         out,
         "repos",
-        "Repos, by the broken links on their pages",
+        "By: Source Page Repo",
         None,
-    );
-    out.push_str(
-        "<p>The repos whose pages hold the most broken links first, ranked as the pages are, a \
-         link counted against the repo of the page it is written on, which may not be the repo of \
-         its target. Open one for its pages.</p>\n",
     );
     let mut of_repo: HashMap<Option<&str>, Vec<(&str, &str)>> = HashMap::new();
     for p in rows(&d.pages) {

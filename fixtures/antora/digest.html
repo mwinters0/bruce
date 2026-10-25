@@ -160,8 +160,8 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </section>
 <section id="pages">
 <details class="sect">
-<summary><h2>Pages, by the broken links on them</h2></summary>
-<p>The pages holding the most broken links first, those to a broken URL or that errored (red) before those to a missing fragment (amber), a link counted on the page it is written on. Open one for its links: <i>Written as</i> is the link in the page, <i>Resolves to</i> the URL it names, <i>Kind</i> the element holding it, <code>anchor</code> being an <code>&lt;a href&gt;</code>, and <i>Problem</i> and <i>Status</i> what the target answered.</p>
+<summary><h2>By: Source Page</h2></summary>
+<i>Written as</i> is the link in the page. <i>Resolves to</i> is the URL it landed at. <i>Kind</i> is the type of element holding it (<code>anchor</code> is an <code>&lt;a href&gt;</code>). <i>Problem</i> and <i>Status</i> are what the target answered.</p>
 <p>A link to a URL with a doubled slash in its path is broken whatever the URL answered, reason <code>doubled_slash</code>: the page linking there is the one to correct. The doubled slash is marked, and where a redirect lands on it, the landing is under <i>Resolves to</i>. Its row also counts the links <i>broken through it</i>, the relative links on the pages such a link reaches, which the doubled slash breaks, and ranks by them; those pages count only their absolute links, or none where a page at the URL without the doubled slash was checked.</p>
 <p>A link to a URL that answered 404 where the same URL with its final <code>/</code> added or dropped answers is broken all the same, reason <code>wrong_trailing_slash</code>, and <i>Resolves to</i> names that URL to link to instead. Where a redirect lands on the 404, the landing is shown with its final <code>/</code> marked, and the URL named is the landing's with it toggled.</p>
 <details id="p1">
@@ -257,8 +257,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </section>
 <section id="repos">
 <details class="sect">
-<summary><h2>Repos, by the broken links on their pages</h2></summary>
-<p>The repos whose pages hold the most broken links first, ranked as the pages are, a link counted against the repo of the page it is written on, which may not be the repo of its target. Open one for its pages.</p>
+<summary><h2>By: Source Page Repo</h2></summary>
 <details>
 <summary><span class="rank">1</span><span class="ttl"><a href="https://github.com/bruce-fixture/tools">github.com/bruce-fixture/tools</a></span><span class="cnt"><span class="cn"><span class="sev broken" role="img" aria-label="Broken"></span> 10 broken links</span></span></summary>
 <ul>
@@ -286,7 +285,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </section>
 <section id="fix-once">
 <details class="sect">
-<summary><h2>Broken targets, by the links to them</h2></summary>
+<summary><h2>By: Link Target</h2></summary>
 <p>Fix once, fix many: each row is a target that more than one broken link names, from whatever pages, the most links first. Restoring the target in its own source, the last column, mends every link in its row.</p>
 <p class="muted">Targets named by more than one link: 3, holding 24 of the 25 broken links.</p>
 <div class="scroll"><table>
