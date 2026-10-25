@@ -196,7 +196,7 @@ DB, the old binary still reading the old one, so migrations wait for a release t
 `Store::install` replaces each at every open, so a changed view needs no bump and refuses no baseline. Rejected: recreating on mismatch,
 which destroys the history D2 keeps; migrations from day one, for no user; a one-off script rewriting an old DB, a migration in all but
 name; a notes file in the tag, or a hand edit after Publish, which an unattended Publish forgets. Code: `store::schema`, `store::Store::install`,
-`release.yml`'s "Name the schema change". Evidence: `scripts/test_workflows.py`, `SchemaStep`; the step has not yet run against GitHub, `-F body=@file` being `gh api`'s documented behaviour, asserted as text.
+`release.yml`'s "Name the schema change". Evidence: `scripts/test_workflows.py`, `SchemaStep`; `v0.2.0-rc.1`'s and `v0.2.0`'s bodies, each naming schema 5, changed from 4 in `v0.1.0` (`runs/release-v0.2.0/rc1-body.md`, `body.md`).
 
 ### D28 Fragment verdicts are computed in SQL after the crawl, not during it
 The crawler holds no anchor state and need not order fetches around targets. The verdict is a view, `link_verdicts`, computed at
@@ -552,9 +552,9 @@ A tag with a `-` suffix is a GitHub prerelease, so Latest never names one, and t
 is right; the bare tag follows. The repo's releases are immutable, so a fault in a published release's assets is fixed in the next patch,
 never in place, and a tag can move only while nothing has published from it (`v0.1.0` moved once, after two failed Publish runs). Every tag
 push is the maintainer's. Rejected: full releases from the start, each fix an immutable `v0.1.x`. Code: `.github/workflows/release.yml`.
-Evidence: `v0.1.0-rc.1` to `-rc.3` and `v0.1.0`, each downloaded, verified and run on `debian:trixie`, `fedora:44` and `fedora-minimal:42`
-by `runs/release-v0.1.0/recipe.sh <image> <tag>` (README's quickstart); logs in `runs/release-rc2/` and `runs/release-v0.1.0/`, and D23's
-static link in `runs/release-static/` (`build-a.log`, `build-b.log`: the two linker arguments that left it dynamic).
+Evidence: every tag from `v0.1.0-rc.1` to `v0.2.0`, each downloaded, verified and run on `debian:trixie`, `fedora:44` and `fedora-minimal:42`
+by `runs/release-v0.1.0/recipe.sh <image> <tag>` (README's quickstart), logs in `runs/release-rc2/`, `runs/release-v0.1.0/` and
+`runs/release-v0.2.0/`; D23's static link in `runs/release-static/` (`build-a.log`, `build-b.log`: the two arguments that left it dynamic).
 
 ### D63 The release workflow publishes the draft its create call returned, by id
 `gh api -X POST` creates the draft and its id is kept; both assets are uploaded to it with `curl`, the id is read back and must hold both, and
