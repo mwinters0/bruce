@@ -301,8 +301,8 @@ fn figures(out: &mut String, d: &Digest) {
     out.push_str("<section id=\"figures\">\n<h2>Figures</h2>\n<div class=\"figures\">\n");
     let changes = compared::changes(d);
     for (i, (label, n, class)) in [
-        ("Pages checked", t.pages, ""),
-        ("Links on them", t.links, ""),
+        ("Pages", t.pages, ""),
+        ("Links", t.links, ""),
         ("Links to a broken URL", t.broken_url, " bad"),
         ("Links to a missing fragment", t.broken_anchor, " warn"),
         ("Links that could not be verified", t.error, " bad"),
@@ -319,10 +319,8 @@ fn figures(out: &mut String, d: &Digest) {
     }
     w!(
         out,
-        "</div>\n<p class=\"muted\">Every figure but the first counts links on the pages \
-         checked. The {} broken links are those to a broken URL and those to a missing fragment. \
-         {} links were not checked; the housekeeping says why. A link that could not be \
-         verified was asked and refused, failed or not answered, which does not make it broken.{}</p>\n{}</section>\n",
+        "</div>\n<p class=\"muted\">{} total broken links. {} links were not checked (see: Housekeeping). \
+         {}</p>\n{}</section>\n",
         num(t.broken_url + t.broken_anchor),
         num(t.unchecked),
         compared::since(d),
@@ -332,11 +330,6 @@ fn figures(out: &mut String, d: &Digest) {
 
 fn fix_once(out: &mut String, d: &Digest) {
     open_section(out, "fix-once", "By: Link Target", None);
-    out.push_str(
-        "<p>Fix once, fix many: each row is a target that more than one broken link names, \
-         from whatever pages, the most links first. Restoring the target in its own source, the \
-         last column, mends every link in its row.</p>\n",
-    );
     let (many, single): (Vec<Row>, Vec<Row>) =
         rows(&d.broken_targets).partition(|r| r.int("links") > 1);
     if many.is_empty() {
@@ -403,21 +396,7 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
     out.push_str(
         "<i>Written as</i> is the link in the page. <i>Resolves to</i> is the URL it landed at. \
          <i>Kind</i> is the type of element holding it (<code>anchor</code> is an <code>&lt;a \
-         href&gt;</code>). <i>Problem</i> and <i>Status</i> are what the target \
-         answered.</p>\n\
-         <p>A link to a URL with a doubled slash in its path is broken whatever the URL answered, \
-         reason <code>doubled_slash</code>: the page linking there is the one to correct. The \
-         doubled slash is marked, and where a redirect lands on it, the landing is under \
-         <i>Resolves to</i>. Its \
-         row also counts the links <i>broken through it</i>, the relative links on the pages \
-         such a link reaches, which the doubled slash breaks, and ranks by them; those pages \
-         count only their absolute links, or none where a page at the URL without the doubled \
-         slash was checked.</p>\n\
-         <p>A link to a URL that answered 404 where the same URL with its final \
-         <code>/</code> added or dropped answers is broken all the same, reason \
-         <code>wrong_trailing_slash</code>, and <i>Resolves to</i> names that URL to link to \
-         instead. Where a redirect lands on the 404, the landing is shown with its final \
-         <code>/</code> marked, and the URL named is the landing's with it toggled.</p>\n",
+         href&gt;</code>). <i>Problem</i> and <i>Status</i> are what the target answered.</p>\n",
     );
     let mut links: HashMap<&str, Vec<Row>> = HashMap::new();
     for row in rows(&d.broken) {
@@ -585,9 +564,8 @@ fn errors(out: &mut String, d: &Digest) {
     open_section(out, "errors", "Links that could not be verified", None);
     out.push_str(
         "<p>Links whose target was asked and gave no verdict: it refused (401, 403, 429), \
-         failed (5xx, after retries) or did not answer (a timeout, TLS, the connection). The \
-         page may well be there, so they are apart from the broken links, whose target \
-         answered that it is not.</p>\n",
+         failed (5xx, after retries) or did not answer (a timeout, TLS, connection refused). \
+         The page may well be there, so they are separate from the broken links.</p>\n",
     );
     if d.errors.rows.is_empty() {
         out.push_str("<p>Every link asked could be verified.</p>\n");
@@ -843,9 +821,7 @@ fn unchecked(out: &mut String, d: &Digest) {
     out.push_str(
         "<p>Links this run did not check, grouped by why. They are not counted as broken, as \
          the run does not know whether they work; a link it knows cannot work is listed as \
-         broken instead. A run reads the pages under the roots named at the top, checks the \
-         links to the rest of their websites but their other languages, and checks links to \
-         other websites only when its <code>allowlist</code> names them.</p>\n",
+         broken instead.\n",
     );
     let mut groups: HashMap<&str, Vec<Row>> = HashMap::new();
     for row in rows(&d.unchecked_groups) {
