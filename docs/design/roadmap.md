@@ -17,8 +17,9 @@ never reused.
 | P1–P5 | **Struck** at the first keystone, 2026-10-21 | their decisions are [`decisions.md`](decisions.md)'s |
 | P6 — release | **Struck** at the second keystone, 2026-10-22 | its decisions are [`decisions.md`](decisions.md)'s |
 | P8 — run-history reports | **Struck** at the third keystone, 2026-10-25 | its decisions are [`decisions.md`](decisions.md)'s |
+| P7 — site policy in config | Current | [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md) |
 | P9 — the deployment guide | Specified; to be grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
-| P7 — declarative per-root rules | Sketched; not grilled | this file, below |
+| P10 — declarative extraction rules | Sketched; not grilled | this file, below |
 
 **A row's state is one of `Sketched`, `Specified`, `Current`, `Complete` or
 `Struck`.** The prose after it is a caption. Two states are set in the same
@@ -76,14 +77,18 @@ A standing rule is added only with the maintainer, and carries its check.
   `scripts/workflows.py`, which fails on a `uses:` (`mise run check` runs its
   tests over the real workflows).
 
+## P7 — Site policy in config
+
+Current: [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
+
 ## P9 — The deployment guide
 
 Specified: [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md).
 
-## P7 — Declarative per-root rules
+## P10 — Declarative extraction rules
 
 TOML rules that let a site extend extraction without writing Rust: a selector
 and attribute giving a fact, a content-region selector, and a URL regex giving
 a source (D33). They write the same key/value facts a compiled profile does
 (D37). Resolution logic stays code. Scheduled when a site outside the compiled
-profiles needs one.
+profiles needs one, its pages the first slice's evidence.

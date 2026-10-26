@@ -39,12 +39,33 @@ the gate's exit status and sections.
 The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball (D60).
 `.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), its body naming a schema change from the latest release's (D43), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
 
+## P7 progress
+
+The spec is [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
+
+- [ ] **7.1** Verdicts judged through a policy, defaults only:
+  `link_verdicts` a table macro and its view, no schema change; every report
+  and the digest's JSON byte-identical on the 2026-10-25 crawl's DB, the
+  digest's time measured.
+- [ ] **7.2** A run records its policy: `config/policy`, `[default]`
+  replacing `[rate]`, the schema change, the baseline file carrying it.
+- [ ] **7.3** The judging keys: `status`, `doubled_slash`,
+  `pedantic_trailing_slash`, `schemes`, `doubled_slash_reach`.
+- [ ] **7.4** Comparisons judged by the newer run's policy: the gate, the
+  digest's since, `diff`.
+- [ ] **7.5** The severity map, the gate's `fail` list, and the policy stated
+  in the digest's Housekeeping and JSON.
+- [ ] **7.6** `bruce report --config`, judging by a trial policy.
+- [ ] **7.7** The asking settings: per-host timeouts, retries, the
+  `Retry-After` ceiling and D72's probe, and the body cap.
+- [ ] **7.8** Antora leaves the output: `[digest]` `group_by`, the profile's
+  sitemap sentence, `report_broken`'s hint through Views.
+
 ## Not started
 
-No phase is current. Every phase in
-[`../design/roadmap.md`](../design/roadmap.md)'s index not `Complete` or
-`Struck`: P9 is specified, to be grilled again before it is sliced; P7 has
-not been grilled.
+Every phase in [`../design/roadmap.md`](../design/roadmap.md)'s index not
+`Current`, `Complete` or `Struck`: P9 is specified, to be grilled again
+before it is sliced, after P7; P10 has not been grilled.
 
 ## Decisions worth another look
 

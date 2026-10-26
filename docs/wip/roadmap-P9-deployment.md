@@ -24,6 +24,17 @@ evidence being local en-US crawls, and nothing P9 builds serves anyone before
 a deployment exists. When P9 is sliced, the grilling re-reads this spec
 against what they changed (below, "What the run-history reports left").
 
+## P9 follows P7
+
+Settled 2026-10-25 (maintainer, in P7's grilling). **P9 follows P7**, which
+extends the deployment's config (the gate's `fail` list, the severity map,
+the digest's grouping) and changes the schema, a run recording its policy:
+the guide is then written once, and a deployment is not stood up on a schema
+the next release discards (D43). **The guide's config sets `[digest]`
+`group_by = "antora.component"`**, the core grouping by nothing by default
+([`roadmap-P7-rules.md`](roadmap-P7-rules.md), "Antora leaves the core's
+output"). The re-grilling reads what P7 added.
+
 ## The guide's hash scope is the profile's region
 
 Settled 2026-10-21. **The guide's roots set neither `hash_root` nor
