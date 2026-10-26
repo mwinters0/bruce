@@ -72,8 +72,8 @@ fn the_title_carries_the_date_and_the_times_are_utc() {
 fn the_figures_are_the_totals() {
     let figures = section(&html(), "figures").to_owned();
     for (n, label) in [
-        (5, "Pages checked"),
-        (10, "Links on them"),
+        (5, "Pages"),
+        (10, "Links"),
         (3, "Links to a broken URL"),
         (1, "Links to a missing fragment"),
         (1, "Links that could not be verified"),
@@ -85,7 +85,7 @@ fn the_figures_are_the_totals() {
             "{label}"
         );
     }
-    assert!(figures.contains("The 4 broken links are those to a broken URL"));
+    assert!(figures.contains("4 total broken links."));
 }
 
 #[test]
@@ -720,8 +720,8 @@ fn the_header_names_the_run_compared_with_and_each_figure_its_change() {
     let figures = section(&html, "figures");
     // Run 4 held 2 pages and 1 link, 1 of them to a broken URL.
     for (n, label, change) in [
-        (5, "Pages checked", "<span class=\"d\">+3</span>"),
-        (10, "Links on them", "<span class=\"d\">+9</span>"),
+        (5, "Pages", "<span class=\"d\">+3</span>"),
+        (10, "Links", "<span class=\"d\">+9</span>"),
         (
             3,
             "Links to a broken URL",
@@ -781,9 +781,7 @@ fn a_fall_in_what_is_broken_is_for_the_better_and_no_change_is_left_out() {
     let figures = d.html();
     let figures = section(&figures, "figures");
     assert!(figures.contains("<span class=\"d better\">\u{2212}2</span>"));
-    assert!(
-        figures.contains("<span class=\"n\">5</span><span class=\"l\">Pages checked</span></div>")
-    );
+    assert!(figures.contains("<span class=\"n\">5</span><span class=\"l\">Pages</span></div>"));
     assert!(!figures.contains("no change"));
 }
 
