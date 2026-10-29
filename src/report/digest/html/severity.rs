@@ -5,6 +5,7 @@
 //! for pedantic, so the three read apart without their colours; each is named
 //! for a screen reader, the colour repeating the row's own text.
 
+use super::guide::Entry;
 use crate::store::PEDANTIC_TRAILING_SLASH;
 
 /// How much a link matters to whoever fixes the site, the least first.
@@ -93,7 +94,10 @@ pub(super) fn legend() -> String {
         ),
         item(
             Level::Pedantic,
-            "a redirect differing from its landing only by a final <code>/</code>"
+            &format!(
+                "a redirect differing from its landing only by a final <code>/</code>{}",
+                Entry::Pedantic.info()
+            )
         ),
     )
 }

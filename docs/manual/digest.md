@@ -61,8 +61,8 @@ a disk, from an archive or from a web server. It is the JSON's data laid out
 for a reader, and is dark on a screen and light in print, where every
 `<details>` is opened. At a phone's width its tables scroll sideways. Its
 times are UTC and its links absolute, those into the page excepted. The
-header and the figures are open; every section after them is closed under its
-heading, a click opening it. A dot marks each finding, a row that names a
+header and the figures are open; every section after them but the last is closed
+under its heading, a click opening it. A dot marks each finding, a row that names a
 link or a target, in a column with no heading, or first in a drill-down's
 summary; a heading has none. It is red
 and filled for a link to a broken URL or one that could not be verified, amber and filled for
@@ -163,6 +163,11 @@ new or all fixed. In this order:
    are the hosts no root starts on whose links were checked, the allowlist as
    far as the pages link to it. [Why a link is unchecked](#why-a-link-is-unchecked)
    says what each reason means precisely.
+10. **How to read this report**, open: what "broken through it" and a
+    doubled slash mean, and what a pedantic redirect is. An ⓘ beside the
+    term, after a page's or a repo's count broken through it, a
+    `doubled_slash` or `pedantic_trailing_slash` reason, and the legend's
+    pedantic level, links to its entry.
 
 The JSON holds every row the HTML lists and the targets it leaves out, and
 the by-component counts it has no section for.

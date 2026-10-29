@@ -12,6 +12,7 @@
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
+use self::guide::{Entry, guide, info_of};
 use self::markup::{
     Row, a, a_html, close_section, details, duration, esc, marked, num, open_section, rows, short,
     source, table, w, when,
@@ -22,6 +23,7 @@ use crate::report::table::Table;
 use crate::store::{DOUBLED_SLASH, WRONG_TRAILING_SLASH};
 
 mod compared;
+mod guide;
 mod markup;
 mod severity;
 
@@ -41,6 +43,7 @@ impl Digest {
         fix_once(&mut out, self);
         errors(&mut out, self);
         housekeeping(&mut out, self);
+        guide(&mut out);
         out.push_str("</main>\n");
         w!(
             out,
@@ -71,7 +74,11 @@ fn tally(broken: i64, through: i64, unverifiable: i64, amber: i64) -> String {
         (
             Level::Broken,
             through,
-            format!("{} broken through it", num(through)),
+            format!(
+                "{} broken through it{}",
+                num(through),
+                Entry::DoubledSlash.info()
+            ),
         ),
         (
             Level::Broken,
@@ -201,8 +208,9 @@ fn written_as(r: &Row) -> String {
     }
 }
 
-/// What a link's outcome and reason say, in words: a missing fragment is a
-/// fragment, `anchor` being the Kind column's `<a href>` as `--kind` names it.
+/// What a link's outcome and reason say, in words, and the ⓘ for a reason the
+/// guide explains: a missing fragment is a fragment, `anchor` being the Kind
+/// column's `<a href>` as `--kind` names it.
 fn problem(outcome: Option<&str>, reason: Option<&str>) -> String {
     let mut parts: Vec<String> = Vec::new();
     match outcome {
@@ -214,7 +222,7 @@ fn problem(outcome: Option<&str>, reason: Option<&str>) -> String {
     if let Some(reason) = reason {
         parts.push(reason.to_owned());
     }
-    esc(&parts.join(" \u{b7} "))
+    esc(&parts.join(" \u{b7} ")) + &info_of(reason)
 }
 
 fn status_cell(status: i64) -> String {
@@ -281,7 +289,8 @@ fn head(out: &mut String, d: &Digest) {
         out,
         "<nav><a href=\"#figures\">Figures</a> {}{}<a href=\"#pages\">Pages</a> \
          <a href=\"#repos\">Repos</a> <a href=\"#fix-once\">Targets</a> \
-         <a href=\"#errors\">Unverified</a> <a href=\"#housekeeping\">Housekeeping</a></nav>\n\
+         <a href=\"#errors\">Unverified</a> <a href=\"#housekeeping\">Housekeeping</a> \
+         <a href=\"#guide\">How to read</a></nav>\n\
          </div></header>\n",
         if broken {
             "<a href=\"#broken-since\">Broken since</a> "
@@ -632,7 +641,12 @@ fn redirect(out: &mut String, r: &Row) {
     );
     w!(out, "<p>Landing {}", a(landing, short(landing)));
     if let Some(reason) = r.text("reason") {
-        w!(out, " \u{b7} Reason <code>{}</code>", esc(reason));
+        w!(
+            out,
+            " \u{b7} Reason <code>{}</code>{}",
+            esc(reason),
+            info_of(Some(reason))
+        );
     }
     w!(
         out,
@@ -661,7 +675,9 @@ fn housekeeping(out: &mut String, d: &Digest) {
     let links = |t: &Table| format!("{} links", num(rows(t).map(|r| r.int("links")).sum()));
     let entries = |t: &Table| num(t.rows.len() as i64);
     fold(out, "Redirected links", &links(&d.redirects), |out| {
-        out.push_str("<p>The links whose target redirects, by where it lands, the most links first: update them to the landing. Open one for the redirecting URLs, the hops the first took and the pages the links are written on. A landing marked as a ring is reached by a URL differing from it only by a final <code>/</code>, and comes last.</p>\n");
+        out.push_str("<p>The links whose target redirects, by where it lands, the most links first: update them to the landing. Open one for the redirecting URLs, the hops the first took and the pages the links are written on. A landing marked as a ring is reached by a URL differing from it only by a final <code>/</code>, and comes last.");
+        out.push_str(&Entry::Pedantic.info());
+        out.push_str("</p>\n");
         if d.redirects.rows.is_empty() {
             out.push_str("<p class=\"muted\">None.</p>\n");
         }

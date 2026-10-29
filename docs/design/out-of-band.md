@@ -31,9 +31,10 @@ grilling, spec amendment and a numbered slice.
 **Ledger lines stay one line each.** The detail lives in the dated history
 entry each line points at.
 
-Allocated so far: M1–M21. <!-- out-of-band-watermark: M21 -->
+Allocated so far: M1–M22. <!-- out-of-band-watermark: M22 -->
 
 ## The ledger
 
 | Item | Date | What changed | Blocks | Why |
 |---|---|---|---|---|
+| M22 | 2026-10-29 | The digest's HTML ends with "How to read this report", its entries for a doubled slash and a pedantic redirect, and an ⓘ beside each term in the rows links to its entry | | [2026-10-29](../status/history/2026-10-29.md) |

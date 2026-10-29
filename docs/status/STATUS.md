@@ -50,11 +50,12 @@ The spec is [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
 - [ ] **7.2** A run records its policy: `config/policy`, `[default]`
   replacing `[rate]`, the schema change, the baseline file carrying it.
 - [ ] **7.3** The judging keys: `status`, `doubled_slash`,
-  `pedantic_trailing_slash`, `schemes`, `doubled_slash_reach`.
+  `pedantic_trailing_slash`, `schemes`, `doubled_slash_reach`, the guide's
+  entries following them.
 - [ ] **7.4** Comparisons judged by the newer run's policy: the gate, the
   digest's since, `diff`.
 - [ ] **7.5** The severity map, the gate's `fail` list, and the policy stated
-  in the digest's Housekeeping and JSON.
+  in the digest's Housekeeping, JSON and guide.
 - [ ] **7.6** `bruce report --config`, judging by a trial policy.
 - [ ] **7.7** The asking settings: per-host timeouts, retries, the
   `Retry-After` ceiling and D72's probe, and the body cap.

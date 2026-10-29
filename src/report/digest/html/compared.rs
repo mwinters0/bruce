@@ -6,6 +6,7 @@ use std::fmt::Write as _;
 
 use super::super::cause::CAUSES;
 use super::super::document::{Compared, Digest, Totals};
+use super::guide::info_of;
 use super::markup::{
     Row, a, close_section, day, esc, num, open_section, rows, short, source, table, w, when,
 };
@@ -158,14 +159,14 @@ fn target(r: &Row) -> String {
     }
 }
 
-/// What a link answers, in words.
+/// What a link answers, in words, and the ⓘ for a reason the guide explains.
 fn problem(r: &Row) -> String {
     let what = match r.text("outcome") {
         Some("broken_anchor") => "fragment missing",
         _ => "URL broken",
     };
     match r.text("reason") {
-        Some(reason) => format!("{what} \u{b7} {}", esc(reason)),
+        Some(reason) => format!("{what} \u{b7} {}{}", esc(reason), info_of(Some(reason))),
         None => what.to_owned(),
     }
 }

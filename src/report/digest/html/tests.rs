@@ -138,11 +138,13 @@ fn a_summary_counts_red_then_amber_and_leaves_out_a_level_with_no_links() {
         format!("{amber} 1 missing fragment</span>")
     );
     // The links broken through a link and those that could not be verified
-    // are red, in that order after the broken ones.
+    // are red, in that order after the broken ones, the first with the
+    // guide's ⓘ.
+    let info = super::guide::Entry::DoubledSlash.info();
     assert_eq!(
         tally(1, 579, 2, 0),
         format!(
-            "{red} 1 broken link</span>, {red} 579 broken through it</span>, {red} 2 \
+            "{red} 1 broken link</span>, {red} 579 broken through it{info}</span>, {red} 2 \
              unverifiable</span>"
         )
     );
@@ -201,7 +203,7 @@ fn errors_are_apart_from_the_breakage() {
 }
 
 #[test]
-fn the_sections_after_the_figures_are_broken_fixed_pages_repos_targets_errors_housekeeping() {
+fn the_sections_after_the_figures_are_broken_fixed_pages_repos_targets_errors_housekeeping_guide() {
     let html = fixed_html();
     let order = [
         "figures",
@@ -212,6 +214,7 @@ fn the_sections_after_the_figures_are_broken_fixed_pages_repos_targets_errors_ho
         "fix-once",
         "errors",
         "housekeeping",
+        "guide",
     ];
     let at: Vec<usize> = order
         .iter()
@@ -252,6 +255,44 @@ fn every_section_after_the_figures_starts_collapsed_under_its_heading() {
         assert!(s.ends_with("</details>\n"), "{id}");
     }
     assert!(!html.contains(" open"), "no `<details>` starts open");
+    // The guide is open, so an ⓘ lands on its entry in every browser.
+    let guide = section(&html, "guide");
+    assert!(guide.starts_with("<section id=\"guide\">\n<h2>How to read this report</h2>"));
+    assert!(!guide.contains("<details"));
+}
+
+#[test]
+fn each_term_the_guide_explains_links_to_its_entry() {
+    let html = of(&with_doubled_slashes()).html();
+    let guide = section(&html, "guide");
+    let ids = attributes(guide, "id");
+    assert_eq!(ids, ["guide", "guide-doubled-slash", "guide-pedantic"]);
+    // Every ⓘ links to an entry, and its question is what a screen reader reads.
+    let infos: Vec<&str> = html
+        .match_indices("<a class=\"info\"")
+        .map(|(at, _)| &html[at..])
+        .collect();
+    assert!(!infos.is_empty());
+    for info in &infos {
+        let href = attributes(info, "href")[0];
+        assert!(ids.contains(&&href[1..]) && href != "#guide", "{href}");
+        assert_eq!(
+            attributes(info, "title")[0],
+            attributes(info, "aria-label")[0]
+        );
+    }
+    // A page's count of links broken through it and a `doubled_slash` link's
+    // problem carry the entry's ⓘ; the legend's pedantic level carries its own.
+    let doubled = "href=\"#guide-doubled-slash\"";
+    let pages = section(&html, "pages");
+    assert!(pages.contains(&format!("broken through it <a class=\"info\" {doubled}")));
+    assert!(pages.contains(&format!(
+        "URL broken \u{b7} doubled_slash <a class=\"info\" {doubled}"
+    )));
+    assert!(section(&html, "figures").contains("href=\"#guide-pedantic\""));
+    // A reason the guide has no entry for carries none.
+    assert_eq!(super::guide::info_of(Some("wrong_trailing_slash")), "");
+    assert_eq!(super::guide::info_of(None), "");
 }
 
 #[test]

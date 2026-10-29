@@ -196,8 +196,9 @@ comparison's verdicts under another run's policy**, every view still taking
 none (D6; the macro earns its own `D<k>`). The asking settings sit where
 their constants do (`fetch/http/host`, `crawl/slash`, the body cap in
 `fetch`). `report` reads a run's recorded policy, never the file: the
-severity map in `digest/html/severity`, the `fail` list in `gate`,
-`group_by` in `digest/sections`. `report` and `crawl` consume the concept
+severity map in `digest/html/severity`, the guide's entries in
+`digest/html/guide`, the `fail` list in `gate`, `group_by` in
+`digest/sections`. `report` and `crawl` consume the concept
 and hold no part of it.
 
 ## The digest states its policy
@@ -206,6 +207,19 @@ Settled 2026-10-25 (maintainer). **The HTML's Housekeeping lists every
 setting differing from its default; the JSON carries the whole policy it
 judged by.** A judgement the reader cannot see is a broken experience of the
 report itself. Rejected: the JSON alone; neither.
+
+## The guide follows the policy
+
+Settled 2026-10-29 (maintainer). **The HTML's guide ("How to read this
+report") is P7's wherever its text states a judgement**: an entry is shown
+only while the reason it explains is judged, and the words stating a setting
+are read off the run's recorded policy, as the severity map is. The
+doubled-slash entry states `doubled_slash` and `doubled_slash_reach` (the
+link broken, the doubled page's relative links counted on the linking page),
+and lands with them in P7.3; the pedantic entry states
+`pedantic_trailing_slash` (P7.3) and the redirect's level and place under
+Housekeeping (P7.5). Rejected: the text left to P11's overrides, the guide
+false for a site's own digest from P7.3 until then.
 
 ## A report may judge by a trial policy
 
@@ -248,11 +262,11 @@ change.
    carrying the policy; judging unchanged.
 3. **P7.3 — The judging keys**: `status`, `doubled_slash`,
    `pedantic_trailing_slash`, `schemes`, `doubled_slash_reach`, one run
-   judged by its own policy.
+   judged by its own policy, the guide's entries following them.
 4. **P7.4 — Comparisons judged by the newer run's policy**: the gate, the
    digest's since, `diff`.
 5. **P7.5 — The severity map, the gate's `fail` list, and the policy
-   stated** in the Housekeeping and the JSON.
+   stated** in the Housekeeping, the JSON and the guide.
 6. **P7.6 — `bruce report --config`**, the trial.
 7. **P7.7 — The asking settings**: per-host timeouts, retries, the
    `Retry-After` ceiling and D72's probe, and the body cap.

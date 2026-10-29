@@ -20,6 +20,7 @@ never reused.
 | P7 — site policy in config | Current | [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md) |
 | P9 — the deployment guide | Specified; to be grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
 | P10 — declarative extraction rules | Sketched; not grilled | this file, below |
+| P11 — the digest's prose in config | Sketched; not grilled | this file, below |
 
 **A row's state is one of `Sketched`, `Specified`, `Current`, `Complete` or
 `Struck`.** The prose after it is a caption. Two states are set in the same
@@ -92,3 +93,14 @@ and attribute giving a fact, a content-region selector, and a URL regex giving
 a source (D33). They write the same key/value facts a compiled profile does
 (D37). Resolution logic stays code. Scheduled when a site outside the compiled
 profiles needs one, its pages the first slice's evidence.
+
+## P11 — The digest's prose in config
+
+A deployment replacing the digest's built-in text with its own, the guide
+that closes the HTML ("How to read this report") first: an entry's text
+overridden or an entry added, read from the deployment's config, not a
+compiled profile (D32), and perhaps a template filled from the run. The
+maintainer foresees more overrides and basic templating; which texts, and
+whether a template reads the run's recorded policy, is the grilling's.
+Follows P7, whose policy decides what the guide's text may claim, and P9,
+whose guide documents the config.
