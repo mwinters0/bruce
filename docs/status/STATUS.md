@@ -59,6 +59,9 @@ The spec is [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
   doubled-slash guide entry stating it. Split from 7.3: the reach is the digest's
   `through` and `counted`
   ([`history/2026-10-30.md`](history/2026-10-30.md)).
+- [ ] **7.3.2** A remapped status keeps the crawl's reason where its outcome is
+  the one the crawl stored, D79 amended. Earned by 7.3, which drops it
+  ([`history/2026-10-30.md`](history/2026-10-30.md)).
 - [ ] **7.4** Comparisons judged by the newer run's policy: the gate, the
   digest's since, `diff`.
 - [ ] **7.5** The severity map, the gate's `fail` list, and the policy stated
@@ -84,18 +87,3 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-- **`runs/headless-browser-trial/` (292 MB, Chrome's headless shell and the
-  libraries it loads) is kept, not deleted once Servo's renders had been
-  compared with Chrome's.** Servo cannot check a phone's tables or print
-  (`scripts/shot.py`), and the trial is the only Chrome on this machine, its
-  three system libraries absent otherwise. Reconsidering: delete it and accept
-  Servo's blind spots, or pin Chrome in `mise.toml` (the trial's `http:`
-  backend, a checksum by hand) so `mise run shot` can render with it. The
-  trial's `README.md` says how to render and print with it.
-- **A status is judged by the host that answered, `doubled_slash` by the host in
-  the link's URL, and `[default]`'s `status` is laid over the built-in map a code
-  at a time (D79).** The spec says "per host" and not which; a redirect onto a
-  forge's 403 is the forge's answer, and a doubled slash is written in the link.
-  Reconsidering: the linked host for a status is one line in the macro's `th` CTE,
-  and a `[default]` `status` replacing the map whole would make `{ 403 = "ok" }`
-  also unmap 401 and 429.

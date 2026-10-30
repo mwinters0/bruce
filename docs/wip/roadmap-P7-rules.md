@@ -69,6 +69,9 @@ top-level default; **severity is top-level**, the report's; **nothing is per
 root** unless it judges the root's own pages, which no P7 setting yet does.
 "Per-root" left the phase's name with the extraction rules (P10). Folds in
 the inbox's question whether a site can turn `doubled_slash` off: per host.
+Settled 2026-10-30 (maintainer): **the target's host is the one that
+answered for a status, and the one linked for a URL's shape**, whose URL or
+redirect wrote the doubled slash (D79).
 
 ## Severity: three fixed levels, the site mapping each kind
 
@@ -241,7 +244,10 @@ a target remapped to `ok` had no body read and is `unchecked`, reason
 outcome (`broken_url`, `broken_anchor`, `error`), `redirected`, or any
 reason, a reason's key beating its outcome's**, so `doubled_slash =
 "attention"` softens that `broken_url` alone; `unchecked` keeps no level
-(D76), and an unknown key is refused at load.
+(D76), and an unknown key is refused at load. Settled 2026-10-30
+(maintainer): **a remapped status keeps the crawl's reason where its outcome is
+the one the crawl stored**, so a map changing nothing erases no
+`wrong_trailing_slash` or `too_large`, and drops it otherwise.
 
 ## The slices
 
