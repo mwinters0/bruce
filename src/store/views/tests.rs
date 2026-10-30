@@ -427,22 +427,20 @@ fn a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic() {
     ] {
         expect(&got, label, outcome, reason);
     }
-    // The view is the macro called with its defaults (D77); a site switching the
-    // reason off keeps the verdicts and loses the reason.
+    // The view is the macro with each link judged by its own run's policy (D77).
     assert_eq!(got, verdicts_of(&store, "link_verdicts_with()"));
-    // The macro's defaults are the default policy a run records (D78).
-    let recorded = crate::config::Policy::default().pedantic_trailing_slash;
+    // A policy with the reason switched off keeps the verdicts and loses the
+    // reason, whichever run's policy is named.
+    let off = crate::config::Policy {
+        pedantic_trailing_slash: false,
+        ..crate::config::Policy::default()
+    };
+    store.begin_run(Mode::Crawl, "t", None, &[], &off).unwrap();
     assert_eq!(
         got,
-        verdicts_of(
-            &store,
-            &format!("link_verdicts_with(pedantic_trailing_slash := {recorded})")
-        )
+        verdicts_of(&store, "link_verdicts_with(policy_run := 1)")
     );
-    let off = verdicts_of(
-        &store,
-        "link_verdicts_with(pedantic_trailing_slash := false)",
-    );
+    let off = verdicts_of(&store, "link_verdicts_with(policy_run := 2)");
     for (label, outcome, reason) in [
         ("added", "ok", None),
         ("query", "ok", None),
@@ -451,6 +449,12 @@ fn a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic() {
     ] {
         expect(&off, label, outcome, reason);
     }
+    // A run with no row for the setting is at its default.
+    store
+        .connection()
+        .execute("DELETE FROM policy WHERE run_id = 1", [])
+        .unwrap();
+    assert_eq!(got, verdicts(&store));
 }
 
 /// A target of any outcome whose URL is `url`, that landed on `final_url` if
@@ -678,5 +682,281 @@ fn a_doubled_slash_page_linking_to_itself_is_judged_as_any_link() {
             ("#here".to_owned(), "ok".to_owned(), None, true),
             ("#nope".to_owned(), "broken_anchor".to_owned(), None, true),
         ]
+    );
+}
+
+/// Starts run 1 with `policy`.
+fn judged_by(policy: &crate::config::Policy) -> Store {
+    let store = open();
+    store
+        .begin_run(Mode::Crawl, "t", None, &[], policy)
+        .unwrap();
+    store
+}
+
+/// A target that answered `status`, and was classed `outcome` and `reason` by
+/// the crawl; it landed on `final_url` if it did.
+fn answered(
+    store: &Store,
+    id: u64,
+    url: &str,
+    status: u16,
+    outcome: &str,
+    reason: Option<&str>,
+    final_url: Option<&str>,
+) {
+    store
+        .connection()
+        .execute(
+            "INSERT INTO targets (answered_by, run_id, url_id, url, status, outcome, reason, final_url) \
+             VALUES ('live', 1, ?, ?, ?, ?, ?, ?)",
+            params![id, url, status, outcome, reason, final_url],
+        )
+        .unwrap();
+}
+
+#[test]
+fn a_status_the_policy_judges_is_read_over_the_outcome_the_crawl_stored() {
+    use crate::config::Answer;
+    let mut policy = crate::config::Policy::default();
+    policy.status.insert(403, Answer::Ok);
+    policy.status.insert(404, Answer::Error);
+    policy.hosts.insert(
+        "forge.test".to_string(),
+        crate::config::HostJudging {
+            doubled_slash: None,
+            status: [(403, Answer::BrokenUrl)].into(),
+        },
+    );
+    let store = judged_by(&policy);
+    let hundreds = |id, url: &str, status, outcome, reason, landing: Option<&str>| {
+        answered(&store, id, url, status, outcome, reason, landing)
+    };
+    hundreds(2, "https://a.test/x", 403, "error", None, None);
+    hundreds(3, "https://forge.test/x", 403, "error", None, None);
+    hundreds(4, "https://a.test/y", 404, "broken_url", None, None);
+    hundreds(5, "https://a.test/z", 500, "error", None, None);
+    hundreds(
+        6,
+        "https://short.test/r",
+        403,
+        "error",
+        None,
+        Some("https://forge.test/x"),
+    );
+    hundreds(
+        7,
+        "https://a.test/w",
+        404,
+        "broken_url",
+        Some("wrong_trailing_slash"),
+        None,
+    );
+    hundreds(
+        8,
+        "https://a.test/v",
+        302,
+        "broken_url",
+        Some("bad_redirect"),
+        None,
+    );
+    hundreds(9, "https://forge.test/y", 401, "error", None, None);
+    for (label, id, fragment) in [
+        ("default-403", 2, None),
+        ("forge-403", 3, None),
+        ("404", 4, None),
+        ("500", 5, None),
+        ("forge-landing", 6, None),
+        ("probed", 7, None),
+        ("hop", 8, None),
+        ("forge-401", 9, None),
+        ("fragment", 2, Some("x")),
+    ] {
+        link(&store, label, id, fragment, None);
+    }
+    let got = verdicts(&store);
+    for (label, outcome, reason) in [
+        // The file's default for every host, and a host's own over it.
+        ("default-403", "ok", None),
+        ("forge-403", "broken_url", None),
+        ("404", "error", None),
+        // A code no map names is judged as the crawl classed it.
+        ("500", "error", None),
+        ("forge-401", "error", None),
+        // The host that answered is the one judged, not the one linked.
+        ("forge-landing", "broken_url", None),
+        // A reason the crawl set for the class it saw goes with the class.
+        ("probed", "error", None),
+        // A redirect is a hop, whatever a map says.
+        ("hop", "broken_url", Some("bad_redirect")),
+        // An `ok` target with no body read has no anchors to check.
+        ("fragment", "unchecked", Some("no_anchors")),
+    ] {
+        expect(&got, label, outcome, reason);
+    }
+    // A comparison judges by another run's policy: run 2 has the defaults.
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
+    let under = verdicts_of(&store, "link_verdicts_with(policy_run := 2)");
+    for (label, outcome) in [
+        ("default-403", "error"),
+        ("forge-403", "error"),
+        ("404", "broken_url"),
+    ] {
+        expect(&under, label, outcome, None);
+    }
+}
+
+#[test]
+fn a_scheme_is_unchecked_where_the_policy_lists_it_and_broken_where_it_does_not() {
+    let mut policy = crate::config::Policy::default();
+    policy.schemes.push("matrix".to_string());
+    let store = judged_by(&policy);
+    // As the crawl classed them under that policy.
+    for (id, url, outcome, reason) in [
+        (2, "matrix:r/fedora:matrix.org", "unchecked", "scheme"),
+        (3, "mailto:me@e.test", "unchecked", "scheme"),
+        (4, "ssh://git@e.test/r.git", "broken_url", "bad_scheme"),
+    ] {
+        raw_target(&store, id, url, outcome, None);
+        store
+            .connection()
+            .execute(
+                "UPDATE targets SET reason = ? WHERE url_id = ?",
+                params![reason, id],
+            )
+            .unwrap();
+    }
+    for (label, id) in [("matrix", 2), ("mail", 3), ("ssh", 4)] {
+        link(&store, label, id, None, None);
+    }
+    let got = verdicts(&store);
+    expect(&got, "matrix", "unchecked", Some("scheme"));
+    expect(&got, "mail", "unchecked", Some("scheme"));
+    expect(&got, "ssh", "broken_url", Some("bad_scheme"));
+    // Under the defaults the same rows read the other way.
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
+    let under = verdicts_of(&store, "link_verdicts_with(policy_run := 2)");
+    expect(&under, "matrix", "broken_url", Some("bad_scheme"));
+    expect(&under, "mail", "unchecked", Some("scheme"));
+    expect(&under, "ssh", "broken_url", Some("bad_scheme"));
+}
+
+#[test]
+fn a_doubled_slash_is_a_fault_only_on_a_host_the_policy_judges_it_on() {
+    let mut policy = crate::config::Policy::default();
+    policy.hosts.insert(
+        "off.test".to_string(),
+        crate::config::HostJudging {
+            doubled_slash: Some(false),
+            status: Default::default(),
+        },
+    );
+    let store = judged_by(&policy);
+    raw_target(&store, 2, "https://on.test/a//b", "ok", None);
+    raw_target(&store, 3, "https://off.test/a//b", "ok", None);
+    raw_target(
+        &store,
+        4,
+        "https://off.test/c",
+        "ok",
+        Some("https://off.test/c//"),
+    );
+    raw_target(&store, 5, "https://off.test/d//e", "broken_url", None);
+    for (label, id) in [("on", 2), ("off", 3), ("off-landed", 4), ("off-404", 5)] {
+        link(&store, label, id, None, None);
+    }
+    let got = verdicts(&store);
+    expect(&got, "on", "broken_url", Some("doubled_slash"));
+    // The link then reads as what the target answered.
+    expect(&got, "off", "ok", None);
+    expect(&got, "off-landed", "ok", None);
+    expect(&got, "off-404", "broken_url", None);
+
+    // A page at a doubled URL answers for its relative links only where the
+    // slash is a fault: on `off.test` they count on the page that holds them.
+    raw_target(&store, 30, "https://off.test/p//q", "ok", None);
+    raw_target(&store, 32, "https://on.test/p//q", "ok", None);
+    raw_target(&store, 40, "https://e.test/gone", "broken_url", None);
+    for src in [30, 32] {
+        page(&store, 1, src, &[]);
+        link_from(&store, src, "../gone/", 40);
+    }
+    assert!(counted(&store, 30)["../gone/"].0);
+    assert!(!counted(&store, 32)["../gone/"].0);
+
+    // The default for every host is the file's `[default]` key, over which a
+    // host's own stands.
+    let mut policy = crate::config::Policy {
+        doubled_slash: false,
+        ..crate::config::Policy::default()
+    };
+    policy.hosts.insert(
+        "on.test".to_string(),
+        crate::config::HostJudging {
+            doubled_slash: Some(true),
+            status: Default::default(),
+        },
+    );
+    store
+        .begin_run(Mode::Crawl, "t", None, &[], &policy)
+        .unwrap();
+    let got = verdicts_of(&store, "link_verdicts_with(policy_run := 2)");
+    expect(&got, "on", "broken_url", Some("doubled_slash"));
+    expect(&got, "off", "ok", None);
+}
+
+/// The query UF2 describes, run by the watch test below in a process of its own.
+// upstream: UF2
+#[test]
+fn macro_parameter_in_a_join_condition_child() {
+    if std::env::var_os("BRUCE_UF2_CHILD").is_none() {
+        return;
+    }
+    let conn = duckdb::Connection::open_in_memory().unwrap();
+    conn.execute_batch(
+        "CREATE TABLE a (x INT); CREATE TABLE b (x INT, v VARCHAR);
+         CREATE MACRO m(r := NULL) AS TABLE
+             SELECT a.x, b.v FROM a LEFT JOIN b ON b.x = coalesce(r, a.x);
+         CREATE VIEW vv AS SELECT * FROM m();
+         SELECT * FROM vv;",
+    )
+    .unwrap();
+}
+
+/// A DuckDB built with assertions aborts on a macro parameter in a join
+/// condition; this fails at the release that does not (UF2).
+// upstream: UF2
+#[test]
+fn a_macro_parameter_in_a_join_condition_still_aborts_a_debug_duckdb() {
+    if !cfg!(debug_assertions) {
+        return;
+    }
+    let status = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "store::views::tests::macro_parameter_in_a_join_condition_child",
+        ])
+        .env("BRUCE_UF2_CHILD", "1")
+        .output()
+        .unwrap();
+    assert!(
+        !status.status.success(),
+        "the query now plans: remove the `pr` join (UF2)"
     );
 }

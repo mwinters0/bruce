@@ -519,6 +519,7 @@ fn a_run_records_its_whole_policy_beside_itself() {
     let store = Store::open_in_memory(&registry()).unwrap();
     let off = crate::config::Policy {
         pedantic_trailing_slash: false,
+        ..crate::config::Policy::default()
     };
     let first = store
         .begin_run(Mode::Crawl, "abc", None, &[], &off)
@@ -535,22 +536,52 @@ fn a_run_records_its_whole_policy_beside_itself() {
     let recorded = |run: RunId| -> Vec<(Option<String>, String, String)> {
         let mut stmt = store
             .connection()
-            .prepare("SELECT host, key, value FROM policy WHERE run_id = ? ORDER BY key")
+            .prepare(
+                "SELECT host, key, value FROM policy WHERE run_id = ? ORDER BY host, key, value",
+            )
             .unwrap();
         stmt.query_map([run.0], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
             .unwrap()
             .collect::<Result<_, _>>()
             .unwrap()
     };
-    let row = |value: &str| {
-        vec![(
-            None,
-            "pedantic_trailing_slash".to_string(),
-            value.to_string(),
-        )]
+    let pedantic = |rows: &[(Option<String>, String, String)]| {
+        rows.iter()
+            .find(|(_, key, _)| key == "pedantic_trailing_slash")
+            .map(|(_, _, value)| value.clone())
     };
-    assert_eq!(recorded(first), row("false"));
-    assert_eq!(recorded(second), row("true"));
+    let (first, second) = (recorded(first), recorded(second));
+    assert_eq!(pedantic(&first).as_deref(), Some("false"));
+    assert_eq!(pedantic(&second).as_deref(), Some("true"));
+    // Every setting is a row, the defaults too: twelve schemes, a status map.
+    assert_eq!(first.len(), 1 + 12 + 1 + 3);
+    assert!(first.iter().all(|(host, _, _)| host.is_none()));
+}
+
+#[test]
+fn a_hosts_own_settings_are_rows_carrying_the_host() {
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let mut policy = crate::config::Policy::default();
+    policy.hosts.insert(
+        "pagure.io".to_string(),
+        crate::config::HostJudging {
+            doubled_slash: Some(false),
+            status: [(403, crate::config::Answer::BrokenUrl)].into(),
+        },
+    );
+    let run = store
+        .begin_run(Mode::Crawl, "abc", None, &[], &policy)
+        .unwrap();
+    let mut stmt = store
+        .connection()
+        .prepare("SELECT key || '=' || value FROM policy WHERE run_id = ? AND host = 'pagure.io' ORDER BY key")
+        .unwrap();
+    let rows: Vec<String> = stmt
+        .query_map([run.0], |r| r.get(0))
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap();
+    assert_eq!(rows, ["doubled_slash=false", "status.403=broken_url"]);
 }
 
 #[test]

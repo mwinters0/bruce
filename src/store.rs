@@ -169,7 +169,7 @@ impl Store {
         // Each is created after what it binds: the `doubled_slash` view, the
         // macro joining it, the view calling the macro.
         store.install(views::FIRST)?;
-        store.conn.execute_batch(views::LINK_VERDICTS_WITH)?;
+        store.conn.execute_batch(&views::link_verdicts_with())?;
         store.install(views::LAST)?;
         for profile in profiles.iter() {
             store.install(profile.views())?;
@@ -238,11 +238,11 @@ impl Store {
                 params_from_iter(args),
             )
             .and_then(|_| {
-                policy.entries().iter().try_for_each(|(key, value)| {
+                policy.entries().iter().try_for_each(|row| {
                     self.conn
                         .execute(
-                            "INSERT INTO policy VALUES (?, NULL, ?, ?)",
-                            params![id, key, value],
+                            "INSERT INTO policy VALUES (?, ?, ?, ?)",
+                            params![id, row.host, row.key, row.value],
                         )
                         .map(drop)
                 })

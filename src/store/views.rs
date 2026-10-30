@@ -5,8 +5,10 @@
 //! link's outcome, reason and whether its target was redirected, read off
 //! `links`, its target, the target's landing target and the landing page's
 //! `anchors`. A column holds the link's own fields, so a report reads one
-//! relation. It is the call, with the defaults, of the table macro
-//! `link_verdicts_with` (D77). The first rule that applies decides:
+//! relation. It is the call, with the link's own run's policy, of the table
+//! macro `link_verdicts_with` (D77, D78). The target's answer is first read
+//! through the policy: a status code the policy judges, a scheme it counts
+//! unchecked or not. The first rule that applies then decides:
 //!
 //! 1. A link with `xref_refspec` that points at its own page, whose
 //!    fragment is the refspec, or whose target is `broken_url`, is
@@ -20,7 +22,8 @@
 //! 3. A link to a URL whose path doubles a slash, or to one that redirected
 //!    to such a URL, is `broken_url`, reason [`DOUBLED_SLASH`], whatever the
 //!    target answered and asked or not, bar a page's link to itself, a
-//!    `#fragment` link on a doubled-slash page being that page's (D71).
+//!    `#fragment` link on a doubled-slash page being that page's (D71), and
+//!    unless the policy turns it off for the host of the URL linked.
 //! 4. A target that is not `ok` gives its link its own outcome and reason: the
 //!    fragment is not looked at (D16).
 //! 5. No fragment, an empty one, and `top` in any case are `ok` (D12). `top`
@@ -35,8 +38,8 @@
 //!
 //! An `ok` link whose target was redirected to its own URL with a final `/`
 //! added or removed has the reason [`PEDANTIC_TRAILING_SLASH`], whatever the
-//! hops between (D70), unless the macro is called with
-//! `pedantic_trailing_slash := false`. It is not an outcome of its own.
+//! hops between (D70), unless the policy turns it off. It is not an outcome of
+//! its own.
 //!
 //! `relative` says the link's `raw_href` keeps its page's path: it is resolved
 //! against it (`../`, `committee/`) or is a `?query` on it. `counted` says the
@@ -44,9 +47,11 @@
 //! slash and whose twin, the URL with its slashes collapsed, is a page of the
 //! run, and not a broken or errored `relative` one on such a page without a twin, which
 //! the doubled slash breaks and the linking page answers for. `doubled_slash`
-//! lists the targets whose URL doubles a slash, or whose landing does, and for
-//! the first the page of the run at its twin's URL, `twin_id`.
+//! lists the targets whose URL doubles a slash, or whose landing does, with
+//! their `url`, and for the first the page of the run at its twin's URL,
+//! `twin_id`, whatever the policy says: the macro applies it.
 
+use crate::config::WORKING_SCHEMES;
 use crate::profile::View;
 
 /// The reason of an `ok` link whose redirect differs from its URL only by a
@@ -89,14 +94,14 @@ macro_rules! doubled {
 pub const TARGET_URL_DOUBLES: &str = doubled!("t.url");
 
 /// The targets whose URL doubles a slash (`own`) or that redirected to a URL
-/// that does, and for the first its `twin_id`, the page of the run at its
-/// URL with the slashes collapsed, if any (D71). It joins the few, not
-/// every target of the run, to look for the twin.
+/// that does, with their `url`, and for the first its `twin_id`, the page of
+/// the run at its URL with the slashes collapsed, if any (D71). It joins the
+/// few, not every target of the run, to look for the twin.
 const DOUBLED_SLASH_TARGETS: View = View {
     name: "doubled_slash",
     select: concat!(
         "\
-SELECT d.run_id, d.url_id, d.own, min(tp.url_id) AS twin_id
+SELECT d.run_id, d.url_id, d.url, d.own, min(tp.url_id) AS twin_id
 FROM (SELECT run_id, url_id, url, ",
         doubled!("url"),
         " AS own FROM targets WHERE ",
@@ -107,27 +112,87 @@ FROM (SELECT run_id, url_id, url, ",
 LEFT JOIN targets tt ON d.own AND tt.run_id = d.run_id
     AND tt.url = regexp_replace(d.url, '([^:/])/{2,}', '\\1/', 'g')
 LEFT JOIN pages tp ON tp.run_id = tt.run_id AND tp.url_id = tt.url_id
-GROUP BY d.run_id, d.url_id, d.own"
+GROUP BY d.run_id, d.url_id, d.url, d.own"
     ),
 };
 
-/// The table macro judging every link under a policy (D77), the body of
-/// `link_verdicts` (D28): each parameter is a judging setting a site may
-/// choose, defaulting to what `bruce` has always judged by, so the call with
-/// none is the view. The landing target is the one `final_url` names, and a
-/// target that was not redirected is its own landing page.
-pub(super) const LINK_VERDICTS_WITH: &str = "\
-CREATE OR REPLACE MACRO link_verdicts_with(pedantic_trailing_slash := true) AS TABLE
-WITH joined AS (
+/// The host of the URL `$url`, lower case, as a policy row's `host` names it.
+macro_rules! host {
+    ($url:literal) => {
+        concat!(
+            "lower(regexp_extract(",
+            $url,
+            r", '^https?://(?:[^/?#@]*@)?(\[[^\]]*\]|[^/?#:]*)', 1))"
+        )
+    };
+}
+
+/// The text of the table macro judging every link under a policy (D77, D78),
+/// the body of `link_verdicts` (D28). `policy_run` names the run whose
+/// recorded policy judges, the link's own where it is NULL; a setting with no
+/// row is at its default, so a run recorded before the setting existed, or by
+/// a test, is judged as `bruce` always has been. The landing target is the one
+/// `final_url` names, and a target that was not redirected is its own landing
+/// page.
+///
+/// A target is read as `answer`, an outcome and a reason: its stored ones, but
+/// for a `scheme` or `bad_scheme` one, judged by the policy's schemes, and for
+/// a response whose status the policy judges, on the host that answered,
+/// else on every host (a 3xx is a hop and never judged).
+pub(super) fn link_verdicts_with() -> String {
+    let schemes: Vec<String> = WORKING_SCHEMES.iter().map(|s| format!("'{s}'")).collect();
+    LINK_VERDICTS_WITH
+        .replace("$SCHEMES", &schemes.join(", "))
+        .replace("$ANSWERED_HOST", host!("coalesce(th.final_url, th.url)"))
+        .replace("$DOUBLED_HOST", host!("d.url"))
+}
+
+// upstream: UF2 -- `pr` maps each run to the one whose policy judges it, since
+// `policy_run` in a join condition aborts a DuckDB built with assertions.
+const LINK_VERDICTS_WITH: &str = r"
+CREATE OR REPLACE MACRO link_verdicts_with(policy_run := NULL) AS TABLE
+WITH pr AS (
+    SELECT run_id, coalesce(policy_run, run_id) AS prun FROM runs
+), th AS (
+    SELECT th.*, $ANSWERED_HOST AS answered_host FROM targets th
+), tj AS (
+    SELECT th.run_id, th.url_id, th.url, th.final_url,
+        CASE
+            WHEN th.reason IN ('scheme', 'bad_scheme') THEN
+                CASE WHEN list_contains(coalesce(sch.schemes, [$SCHEMES]),
+                        lower(regexp_extract(th.url, '^([A-Za-z][A-Za-z0-9+.-]*):', 1)))
+                    THEN ['unchecked', 'scheme'] ELSE ['broken_url', 'bad_scheme'] END
+            WHEN th.status NOT BETWEEN 300 AND 399 AND coalesce(hm.value, dm.value) IS NOT NULL
+                THEN [coalesce(hm.value, dm.value), NULL]
+            ELSE [th.outcome, th.reason]
+        END AS answer
+    FROM th
+    LEFT JOIN pr ON pr.run_id = th.run_id
+    LEFT JOIN (SELECT run_id, list(value) AS schemes FROM policy WHERE key = 'schemes'
+        GROUP BY run_id) sch ON sch.run_id = pr.prun
+    LEFT JOIN policy hm ON hm.run_id = pr.prun
+        AND hm.key = 'status.' || th.status::VARCHAR AND hm.host = th.answered_host
+    LEFT JOIN policy dm ON dm.run_id = pr.prun
+        AND dm.key = 'status.' || th.status::VARCHAR AND dm.host IS NULL
+), dsl AS (
+    SELECT d.run_id, d.url_id, d.own, d.twin_id
+    FROM doubled_slash d
+    LEFT JOIN pr ON pr.run_id = d.run_id
+    LEFT JOIN policy hp ON hp.run_id = pr.prun
+        AND hp.key = 'doubled_slash' AND hp.host = $DOUBLED_HOST
+    LEFT JOIN policy dp ON dp.run_id = pr.prun
+        AND dp.key = 'doubled_slash' AND dp.host IS NULL
+    WHERE coalesce(hp.value, dp.value, 'true') <> 'false'
+), joined AS (
     SELECT l.run_id, l.src_url_id, l.target_url_id, l.fragment, l.raw_href, l.kind,
         l.xref_refspec,
         t.url_id IS NOT NULL AS found,
-        t.outcome AS target_outcome,
-        t.reason AS target_reason,
+        t.answer[1] AS target_outcome,
+        t.answer[2] AS target_reason,
         t.final_url IS NOT NULL AS redirected,
         coalesce(t.final_url <> t.url
-            AND regexp_replace(t.final_url, '/([?].*)?$', '\\1')
-                = regexp_replace(t.url, '/([?].*)?$', '\\1'), false) AS slash_only,
+            AND regexp_replace(t.final_url, '/([?].*)?$', '\1')
+                = regexp_replace(t.url, '/([?].*)?$', '\1'), false) AS slash_only,
         p.url_id AS page_id,
         coalesce(try(url_decode(l.fragment)), l.fragment) AS decoded,
         d.url_id IS NOT NULL AS doubled,
@@ -135,9 +200,9 @@ WITH joined AS (
         sd.twin_id IS NOT NULL AS src_twin,
         NOT regexp_matches(l.raw_href, '^([A-Za-z][A-Za-z0-9+.-]*:|[/#]|$)') AS relative
     FROM links l
-    LEFT JOIN targets t ON t.run_id = l.run_id AND t.url_id = l.target_url_id
-    LEFT JOIN doubled_slash d ON d.run_id = t.run_id AND d.url_id = t.url_id
-    LEFT JOIN doubled_slash sd ON sd.run_id = l.run_id AND sd.url_id = l.src_url_id AND sd.own
+    LEFT JOIN tj t ON t.run_id = l.run_id AND t.url_id = l.target_url_id
+    LEFT JOIN dsl d ON d.run_id = t.run_id AND d.url_id = t.url_id
+    LEFT JOIN dsl sd ON sd.run_id = l.run_id AND sd.url_id = l.src_url_id AND sd.own
     LEFT JOIN targets landing ON landing.run_id = t.run_id AND landing.url = t.final_url
     LEFT JOIN pages p ON p.run_id = t.run_id AND p.url_id = coalesce(landing.url_id, t.url_id)
 ), judged AS (
@@ -160,17 +225,20 @@ WITH joined AS (
     END AS verdict
     FROM joined
 )
-SELECT run_id, src_url_id, target_url_id, fragment, raw_href, kind, xref_refspec,
-    verdict[1] AS outcome,
-    CASE WHEN verdict[1] = 'ok' AND slash_only AND pedantic_trailing_slash
+SELECT j.run_id, j.src_url_id, j.target_url_id, j.fragment, j.raw_href, j.kind, j.xref_refspec,
+    j.verdict[1] AS outcome,
+    CASE WHEN j.verdict[1] = 'ok' AND j.slash_only AND coalesce(pe.value, 'true') <> 'false'
             THEN 'pedantic_trailing_slash'
-        ELSE verdict[2] END AS reason,
-    redirected, relative,
-    NOT src_doubled OR (NOT src_twin
-        AND NOT (relative AND verdict[1] IN ('broken_url', 'broken_anchor', 'error'))) AS counted
-FROM judged";
+        ELSE j.verdict[2] END AS reason,
+    j.redirected, j.relative,
+    NOT j.src_doubled OR (NOT j.src_twin
+        AND NOT (j.relative AND j.verdict[1] IN ('broken_url', 'broken_anchor', 'error'))) AS counted
+FROM judged j
+LEFT JOIN pr ON pr.run_id = j.run_id
+LEFT JOIN policy pe ON pe.run_id = pr.prun AND pe.host IS NULL
+    AND pe.key = 'pedantic_trailing_slash'";
 
-/// A link and its verdict (D28), judged by the defaults (D77).
+/// A link and its verdict (D28), judged by its own run's policy (D77).
 const LINK_VERDICTS: View = View {
     name: "link_verdicts",
     select: "SELECT * FROM link_verdicts_with()",

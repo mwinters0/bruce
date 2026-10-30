@@ -8,6 +8,7 @@
 
 use std::fmt::Write as _;
 
+use super::super::document::Judged;
 use super::markup::w;
 use crate::store::{DOUBLED_SLASH, PEDANTIC_TRAILING_SLASH};
 
@@ -46,6 +47,25 @@ impl Entry {
         }
     }
 
+    /// Whether the run's policy judges the reason the entry explains, so that
+    /// the guide has the entry (D78).
+    fn judged(self, judged: Judged) -> bool {
+        match self {
+            Entry::DoubledSlash => judged.doubled_slash,
+            Entry::Pedantic => judged.pedantic_trailing_slash,
+        }
+    }
+
+    /// The ⓘ for text that states the entry's subject whatever the policy
+    /// says, nothing where the guide drops the entry.
+    pub(super) fn info_if(self, judged: Judged) -> String {
+        if self.judged(judged) {
+            self.info()
+        } else {
+            String::new()
+        }
+    }
+
     /// The ⓘ linking to the entry, its question its tooltip and what a screen
     /// reader reads.
     pub(super) fn info(self) -> String {
@@ -64,13 +84,17 @@ pub(super) fn info_of(reason: Option<&str>) -> String {
         .unwrap_or_default()
 }
 
-/// The guide, the document's last section.
-pub(super) fn guide(out: &mut String) {
+/// The guide, the document's last section: an entry for each reason the run's
+/// policy judges, there being no link to explain it otherwise.
+pub(super) fn guide(out: &mut String, judged: Judged) {
     out.push_str("<section id=\"guide\">\n<h2>How to read this report</h2>\n");
     for (entry, body) in [
         (Entry::DoubledSlash, DOUBLED_SLASH_ENTRY),
         (Entry::Pedantic, PEDANTIC_ENTRY),
     ] {
+        if !entry.judged(judged) {
+            continue;
+        }
         w!(
             out,
             "<h3 id=\"{}\">{}</h3>\n{body}",

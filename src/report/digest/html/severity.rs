@@ -5,6 +5,7 @@
 //! for pedantic, so the three read apart without their colours; each is named
 //! for a screen reader, the colour repeating the row's own text.
 
+use super::super::document::Judged;
 use super::guide::Entry;
 use crate::store::PEDANTIC_TRAILING_SLASH;
 
@@ -74,7 +75,7 @@ pub(super) fn mark(level: Option<Level>) -> String {
 
 /// The legend, one line naming the three, its dots hidden from a screen reader
 /// that reads the words beside them.
-pub(super) fn legend() -> String {
+pub(super) fn legend(judged: Judged) -> String {
     let item = |level: Level, what: &str| {
         format!(
             "<span class=\"sev {}\" aria-hidden=\"true\"></span> <b>{}</b>, {what}",
@@ -96,7 +97,7 @@ pub(super) fn legend() -> String {
             Level::Pedantic,
             &format!(
                 "a redirect differing from its landing only by a final <code>/</code>{}",
-                Entry::Pedantic.info()
+                Entry::Pedantic.info_if(judged)
             )
         ),
     )

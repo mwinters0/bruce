@@ -49,22 +49,6 @@ pub const SCHEME: &str = "scheme";
 /// follow, which is `broken_url` (D66).
 pub const BAD_SCHEME: &str = "bad_scheme";
 
-/// The schemes besides `http(s)` that work on a public web page (D66).
-pub const WORKING_SCHEMES: [&str; 12] = [
-    "mailto",
-    "tel",
-    "irc",
-    "ircs",
-    "xmpp",
-    "appstream",
-    "ftp",
-    "news",
-    "magnet",
-    "sms",
-    "data",
-    "javascript",
-];
-
 /// What a run does about a URL.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Plan {
@@ -225,7 +209,7 @@ impl Frontier {
     pub fn plan(&self, url: &Url, kind: Kind) -> (Plan, Canonical) {
         let scheme = url.scheme();
         if !matches!(scheme, "http" | "https") {
-            let plan = if WORKING_SCHEMES.contains(&scheme) {
+            let plan = if self.config.policy.schemes.iter().any(|s| s == scheme) {
                 Plan::Unchecked(SCHEME)
             } else {
                 Plan::Broken(BAD_SCHEME)

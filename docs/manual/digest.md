@@ -167,7 +167,8 @@ new or all fixed. In this order:
     doubled slash mean, and what a pedantic redirect is. An ⓘ beside the
     term, after a page's or a repo's count broken through it, a
     `doubled_slash` or `pedantic_trailing_slash` reason, and the legend's
-    pedantic level, links to its entry.
+    pedantic level, links to its entry. An entry is there only while the run's
+    [policy](config.md#judging) judges its reason.
 
 The JSON holds every row the HTML lists and the targets it leaves out, and
 the by-component counts it has no section for.
@@ -273,7 +274,7 @@ An `unchecked` link is not broken: the run did not learn whether it is. Its
 | `out_of_scope` | Names another locale's page: a URL on a host a root starts on, outside every root's scope ([Roots](config.md#roots)), under the path where a link in the language menu of a root's `antora` page leaves that page's own URL, as `/ar/` for the menu's `/ar/a11y/` on `/en-US/a11y/`. It is not requested. Any other URL on such a host outside every scope is asked once, as an allowlisted one is, and judged as any link. |
 | `host_not_allowlisted` | Names a URL on a host no root starts on and the [`allowlist`](config.md#allowlist) does not name. It is not requested. |
 | `skipped` | Names a URL a [`skip`](config.md#skip) glob matches, or one whose redirect leads to such a URL. |
-| `scheme` | Names a URL whose scheme is not `http` or `https` but one a public web page uses: `mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`, `magnet` or `sms`, or `data` or `javascript`, which work in the page itself, as an embedded image or a script's link. A link with any other scheme, as `file:` or a mistyped `hhttps:`, cannot work for a reader and is `broken_url`, reason `bad_scheme`. |
+| `scheme` | Names a URL whose scheme is not `http` or `https` but one a public web page uses: `mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`, `magnet` or `sms`, or `data` or `javascript`, which work in the page itself, as an embedded image or a script's link. A link with any other scheme, as `file:` or a mistyped `hhttps:`, cannot work for a reader and is `broken_url`, reason `bad_scheme`; [`judge.schemes`](config.md#judging) adds to the list. |
 | `robots` | Names a URL its host's `robots.txt` forbids, where that is obeyed ([Hosts](config.md#hosts)). |
 | `robots_unavailable` | Names a URL on a host that answered its `robots.txt` request with no file to read (a server error, a 429 that outlasts the retries, or redirects that lead nowhere), which leaves that scheme and port of the host unrequested for the rest of the run ([Hosts](config.md#hosts)). A host that gives no answer at all has its links `broken_url` or `error` instead. |
 | `externals_skipped` | In a `check-dir` run given `--externals skip`, names a URL on an allowlisted host, or on a root's host outside every scope and every other locale, that the baseline has no answer for, or that a redirect's hop reaches, and a redirect onto one ([`bruce check-dir`](check-dir.md)). |

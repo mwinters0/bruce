@@ -1,4 +1,5 @@
 use super::*;
+use crate::config::WORKING_SCHEMES;
 use crate::fetch::local::Site;
 
 fn frontier() -> Frontier {
@@ -89,6 +90,17 @@ fn a_scheme_a_public_web_page_uses_is_unchecked_and_any_other_broken() {
         assert_eq!(planned, Plan::Unchecked(SCHEME), "{url}");
     }
     assert_eq!(WORKING_SCHEMES.len(), 12, "each listed above");
+    // A scheme the file names is one more, and the plan follows the policy.
+    let config = Config::parse(
+        "[[root]]\nurl = \"https://docs.example.org/en-US/\"\n[judge]\nschemes = [\"Matrix\"]",
+    )
+    .unwrap();
+    let url = "matrix:r/fedora:matrix.org";
+    assert_eq!(
+        plan(&Frontier::new(config), url, Kind::Anchor).0,
+        Plan::Unchecked(SCHEME)
+    );
+    assert_eq!(plan(&f, url, Kind::Anchor).0, Plan::Broken(BAD_SCHEME));
     for url in [
         "file:///etc/hosts",
         "file://path/to/config.ign",

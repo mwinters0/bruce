@@ -122,6 +122,7 @@ fn a_run_policy_travels_in_the_baseline_file_and_into_the_run_that_imports_it() 
     let (dir, store) = source();
     let policy = crate::config::Policy {
         pedantic_trailing_slash: false,
+        ..crate::config::Policy::default()
     };
     let run = store
         .begin_run(Mode::Crawl, "abc", None, &[], &policy)
@@ -129,7 +130,7 @@ fn a_run_policy_travels_in_the_baseline_file_and_into_the_run_that_imports_it() 
     store.finish_run(run).unwrap();
     let out = dir.path().join("baseline.duckdb");
     store.export_baseline(None, &out, &registry()).unwrap();
-    let held = "SELECT key || '=' || value FROM policy WHERE host IS NULL";
+    let held = "SELECT key || '=' || value FROM policy WHERE host IS NULL AND key = 'pedantic_trailing_slash'";
     let file = Store::open(&out, &registry()).unwrap();
     let in_file: String = file.connection().query_row(held, [], |r| r.get(0)).unwrap();
     assert_eq!(in_file, "pedantic_trailing_slash=false");
@@ -155,7 +156,13 @@ fn a_run_policy_travels_in_the_baseline_file_and_into_the_run_that_imports_it() 
         .unwrap();
     assert_eq!(after, "pedantic_trailing_slash=false");
     ci.discard_import(imported).unwrap();
-    assert_eq!(count(&ci, "SELECT count(*) FROM policy"), 1);
+    assert_eq!(
+        count(&ci, "SELECT count(*) FROM policy"),
+        count(
+            &ci,
+            &format!("SELECT count(*) FROM policy WHERE run_id = {}", default.0)
+        )
+    );
 }
 
 #[test]

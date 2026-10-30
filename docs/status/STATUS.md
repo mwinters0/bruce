@@ -51,9 +51,14 @@ The spec is [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
 - [x] **7.2** A run records its policy: `config/policy`, `[default]`
   replacing `[rate]`, the schema change, the baseline file carrying it.
   Notes: [`../wip/roadmap-P7.2-policy-notes.md`](../wip/roadmap-P7.2-policy-notes.md).
-- [ ] **7.3** The judging keys: `status`, `doubled_slash`,
-  `pedantic_trailing_slash`, `schemes`, `doubled_slash_reach`, the guide's
-  entries following them.
+- [x] **7.3** The judging keys: `status`, `doubled_slash`,
+  `pedantic_trailing_slash`, `schemes`, the guide dropping an entry whose reason
+  is not judged. Notes:
+  [`../wip/roadmap-P7.3-judging-notes.md`](../wip/roadmap-P7.3-judging-notes.md).
+- [ ] **7.3.1** `doubled_slash_reach` (`full`, `immediate`, `off`), the
+  doubled-slash guide entry stating it. Split from 7.3: the reach is the digest's
+  `through` and `counted`
+  ([`history/2026-10-30.md`](history/2026-10-30.md)).
 - [ ] **7.4** Comparisons judged by the newer run's policy: the gate, the
   digest's since, `diff`.
 - [ ] **7.5** The severity map, the gate's `fail` list, and the policy stated
@@ -87,3 +92,10 @@ reasoning goes beside the mechanism it governs first. Full rules:
   Servo's blind spots, or pin Chrome in `mise.toml` (the trial's `http:`
   backend, a checksum by hand) so `mise run shot` can render with it. The
   trial's `README.md` says how to render and print with it.
+- **A status is judged by the host that answered, `doubled_slash` by the host in
+  the link's URL, and `[default]`'s `status` is laid over the built-in map a code
+  at a time (D79).** The spec says "per host" and not which; a redirect onto a
+  forge's 403 is the forge's answer, and a doubled slash is written in the link.
+  Reconsidering: the linked host for a status is one line in the macro's `th` CTE,
+  and a `[default]` `status` replacing the map whole would make `{ 403 = "ok" }`
+  also unmap 401 and 429.

@@ -41,6 +41,16 @@ pub struct Compared {
     pub shares_day: bool,
 }
 
+/// The reasons a run's recorded policy judges at all (D78), which decide the
+/// guide's entries. A reason switched off everywhere is a link none carries.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Judged {
+    /// A link to a URL doubling a slash is `doubled_slash` on some host (D71).
+    pub doubled_slash: bool,
+    /// A redirect that only toggles a final `/` is `pedantic_trailing_slash` (D70).
+    pub pedantic_trailing_slash: bool,
+}
+
 /// A crawl run's digest.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Digest {
@@ -48,6 +58,8 @@ pub struct Digest {
     /// The run compared with, or `None` where there was none to compare.
     pub compared: Option<Compared>,
     pub totals: Totals,
+    /// What the run's policy judges.
+    pub judged: Judged,
     /// The `unchecked` links by reason: `reason`, `links`, `targets`.
     pub unchecked: Table,
     /// The `unchecked` links by reason and by where they point: `reason`,

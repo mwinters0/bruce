@@ -43,7 +43,7 @@ impl Digest {
         fix_once(&mut out, self);
         errors(&mut out, self);
         housekeeping(&mut out, self);
-        guide(&mut out);
+        guide(&mut out, self.judged);
         out.push_str("</main>\n");
         w!(
             out,
@@ -333,7 +333,7 @@ fn figures(out: &mut String, d: &Digest) {
         num(t.broken_url + t.broken_anchor),
         num(t.unchecked),
         compared::since(d),
-        legend() + &compared::new_legend(d)
+        legend(d.judged) + &compared::new_legend(d)
     );
 }
 
@@ -676,7 +676,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
     let entries = |t: &Table| num(t.rows.len() as i64);
     fold(out, "Redirected links", &links(&d.redirects), |out| {
         out.push_str("<p>The links whose target redirects, by where it lands, the most links first: update them to the landing. Open one for the redirecting URLs, the hops the first took and the pages the links are written on. A landing marked as a ring is reached by a URL differing from it only by a final <code>/</code>, and comes last.");
-        out.push_str(&Entry::Pedantic.info());
+        out.push_str(&Entry::Pedantic.info_if(d.judged));
         out.push_str("</p>\n");
         if d.redirects.rows.is_empty() {
             out.push_str("<p class=\"muted\">None.</p>\n");

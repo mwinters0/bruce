@@ -61,6 +61,7 @@ fn left(store: &Store) -> Vec<u64> {
         .unwrap()
 }
 
+/// How many of the tables hold a row of `run`.
 fn rows_of(store: &Store, run: RunId) -> i64 {
     TABLES
         .iter()
@@ -68,13 +69,14 @@ fn rows_of(store: &Store, run: RunId) -> i64 {
             store
                 .connection()
                 .query_row(
-                    &format!("SELECT count(*) FROM {t} WHERE run_id = ?"),
+                    &format!("SELECT count(*) > 0 FROM {t} WHERE run_id = ?"),
                     [run.0],
-                    |r| r.get::<_, i64>(0),
+                    |r| r.get::<_, bool>(0),
                 )
                 .unwrap()
         })
-        .sum()
+        .filter(|held| *held)
+        .count() as i64
 }
 
 const DAY: u64 = 86_400;

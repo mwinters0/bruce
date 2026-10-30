@@ -3,8 +3,62 @@
 //! A site's judging settings live in config, and a run stores the policy it
 //! was judged by, so a report reads the run and never the file. Every setting
 //! has a default, today's value (D77); [`Policy::default`] is the policy of a
-//! run given no file. The settings are added as their slices land, each as
-//! one more [`Policy::entries`] row, so a new setting changes no schema.
+//! run given no file. A setting is a field and a row of [`Policy::entries`],
+//! so a new one changes no schema. A setting that is a host's own is a field
+//! of [`HostJudging`], its rows carrying the host.
+
+use std::collections::BTreeMap;
+
+use serde::Deserialize;
+
+/// The schemes besides `http(s)` that work on a public web page (D66), the
+/// first of [`Policy::schemes`].
+pub const WORKING_SCHEMES: [&str; 12] = [
+    "mailto",
+    "tel",
+    "irc",
+    "ircs",
+    "xmpp",
+    "appstream",
+    "ftp",
+    "news",
+    "magnet",
+    "sms",
+    "data",
+    "javascript",
+];
+
+/// What a status code is judged to be (D16): the outcomes a response can
+/// carry, `unchecked` being a link not asked about and `broken_anchor` a
+/// fragment's.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Answer {
+    Ok,
+    BrokenUrl,
+    Error,
+}
+
+impl Answer {
+    /// The outcome as the store spells it.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Answer::Ok => "ok",
+            Answer::BrokenUrl => "broken_url",
+            Answer::Error => "error",
+        }
+    }
+
+    fn parse(s: &str) -> Result<Answer, String> {
+        match s {
+            "ok" => Ok(Answer::Ok),
+            "broken_url" => Ok(Answer::BrokenUrl),
+            "error" => Ok(Answer::Error),
+            other => Err(format!(
+                "{other:?} is not an outcome a status may be judged to: ok, broken_url or error"
+            )),
+        }
+    }
+}
 
 /// The judging settings of a run, each at its default until config sets it.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -12,26 +66,191 @@ pub struct Policy {
     /// Whether a redirect that only adds or drops a final `/` is `ok`, reason
     /// `pedantic_trailing_slash`, rather than a redirect to correct (D70).
     pub pedantic_trailing_slash: bool,
+    /// The schemes besides `http(s)` counted `unchecked`, reason `scheme`,
+    /// rather than `broken_url`, reason `bad_scheme` (D66): the built-in
+    /// [`WORKING_SCHEMES`] first, then the file's.
+    pub schemes: Vec<String>,
+    /// Whether a link to a URL whose path doubles a slash is `broken_url`,
+    /// reason `doubled_slash`, where a host sets none (D71).
+    pub doubled_slash: bool,
+    /// What a status code is judged to be where a host sets none, a code
+    /// not here being judged as the crawl classed it (D16).
+    pub status: BTreeMap<u16, Answer>,
+    /// The hosts' own settings, by host as `Host` prints it, only those a
+    /// file names.
+    pub hosts: BTreeMap<String, HostJudging>,
+}
+
+/// The settings one host sets for itself, beside its politeness (D8).
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct HostJudging {
+    /// A link to a URL on this host, in place of [`Policy::doubled_slash`].
+    pub doubled_slash: Option<bool>,
+    /// What a code this host answered is judged to be, over [`Policy::status`].
+    pub status: BTreeMap<u16, Answer>,
+}
+
+/// One row of a run's recorded policy: `host` is `None` for the run-wide
+/// value (D78).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Entry {
+    pub host: Option<String>,
+    pub key: String,
+    pub value: String,
 }
 
 impl Default for Policy {
     fn default() -> Policy {
         Policy {
             pedantic_trailing_slash: true,
+            schemes: WORKING_SCHEMES.iter().map(|s| (*s).to_owned()).collect(),
+            doubled_slash: true,
+            // D16's class for these three, which the crawl records the same.
+            status: [401, 403, 429]
+                .into_iter()
+                .map(|code| (code, Answer::Error))
+                .collect(),
+            hosts: BTreeMap::new(),
         }
     }
 }
 
 impl Policy {
-    /// The run-wide settings as the `(key, value)` rows the store records:
-    /// every setting, the defaults included, so a run's policy is whole in its
-    /// own rows and a later default changes none (D78).
-    pub fn entries(&self) -> Vec<(&'static str, String)> {
-        vec![(
+    /// The settings as the rows the store records: every setting, the
+    /// defaults included, so a run's policy is whole in its own rows and a
+    /// later default changes none (D78). A status is the key `status.<code>`,
+    /// a list one row to an element.
+    pub fn entries(&self) -> Vec<Entry> {
+        let run = |key: &str, value: String| Entry {
+            host: None,
+            key: key.to_owned(),
+            value,
+        };
+        let mut rows = vec![run(
             "pedantic_trailing_slash",
             self.pedantic_trailing_slash.to_string(),
-        )]
+        )];
+        rows.extend(self.schemes.iter().map(|s| run("schemes", s.clone())));
+        rows.push(run("doubled_slash", self.doubled_slash.to_string()));
+        rows.extend(statuses(None, &self.status));
+        for (host, h) in &self.hosts {
+            if let Some(on) = h.doubled_slash {
+                rows.push(Entry {
+                    host: Some(host.clone()),
+                    key: "doubled_slash".to_owned(),
+                    value: on.to_string(),
+                });
+            }
+            rows.extend(statuses(Some(host), &h.status));
+        }
+        rows
     }
+
+    /// The policy a file's `[judge]`, `[default]` and `[host]` tables say,
+    /// each at its default where a key is left out.
+    pub(super) fn from_raw(
+        judge: RawJudge,
+        default: &RawJudging,
+        hosts: BTreeMap<String, HostJudging>,
+    ) -> Result<Policy, String> {
+        let mut policy = Policy::default();
+        if let Some(on) = judge.pedantic_trailing_slash {
+            policy.pedantic_trailing_slash = on;
+        }
+        for written in &judge.schemes {
+            let scheme = scheme(written).map_err(|e| format!("judge.schemes: {e}"))?;
+            if !policy.schemes.contains(&scheme) {
+                policy.schemes.push(scheme);
+            }
+        }
+        if let Some(on) = default.doubled_slash {
+            policy.doubled_slash = on;
+        }
+        policy
+            .status
+            .extend(statuses_of(&default.status).map_err(|e| format!("default.status: {e}"))?);
+        policy.hosts = hosts;
+        Ok(policy)
+    }
+}
+
+/// The rows of one map of statuses, `host` being theirs.
+fn statuses(host: Option<&String>, map: &BTreeMap<u16, Answer>) -> Vec<Entry> {
+    map.iter()
+        .map(|(code, answer)| Entry {
+            host: host.cloned(),
+            key: format!("status.{code}"),
+            value: answer.as_str().to_owned(),
+        })
+        .collect()
+}
+
+impl HostJudging {
+    /// The settings `[host."<name>"]` says, `name` as it is written there.
+    pub(super) fn from_raw(name: &str, raw: &RawJudging) -> Result<HostJudging, String> {
+        Ok(HostJudging {
+            doubled_slash: raw.doubled_slash,
+            status: statuses_of(&raw.status).map_err(|e| format!("host.\"{name}\".status: {e}"))?,
+        })
+    }
+}
+
+/// A scheme as a file writes it, in the form a URL has it: lower case, the
+/// characters RFC 3986 allows, and not one the crawl asks about.
+fn scheme(written: &str) -> Result<String, String> {
+    let scheme = written.to_ascii_lowercase();
+    let mut chars = scheme.chars();
+    let well_formed = chars.next().is_some_and(|c| c.is_ascii_lowercase())
+        && chars.all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || "+-.".contains(c));
+    if !well_formed {
+        return Err(format!(
+            "{written:?} is not a scheme (a letter, then letters, digits, + - .)"
+        ));
+    }
+    if matches!(scheme.as_str(), "http" | "https") {
+        return Err(format!("{scheme} is asked about, not unchecked"));
+    }
+    Ok(scheme)
+}
+
+/// A table of `"<code>" = "<outcome>"` as a file writes it. A code is one
+/// response's, and not a 3xx, which is a hop the crawl follows (D7).
+fn statuses_of(written: &BTreeMap<String, String>) -> Result<BTreeMap<u16, Answer>, String> {
+    let mut map = BTreeMap::new();
+    for (code, outcome) in written {
+        let n: u16 = code
+            .parse()
+            .ok()
+            .filter(|n| (100..=599).contains(n))
+            .ok_or_else(|| format!("{code:?} is not a status code, 100 to 599"))?;
+        if (300..=399).contains(&n) {
+            return Err(format!(
+                "{n} is a redirect, which the crawl follows, so its judging is not a setting"
+            ));
+        }
+        map.insert(
+            n,
+            Answer::parse(outcome).map_err(|e| format!("{code}: {e}"))?,
+        );
+    }
+    Ok(map)
+}
+
+/// A file's `[judge]` table (D77).
+#[derive(Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+pub(super) struct RawJudge {
+    pedantic_trailing_slash: Option<bool>,
+    #[serde(default)]
+    schemes: Vec<String>,
+}
+
+/// The judging keys of a `[default]` or `[host]` table, which the table's own
+/// shape reads (it refuses unknown keys, which a flattened one cannot).
+#[derive(Default)]
+pub(super) struct RawJudging {
+    pub doubled_slash: Option<bool>,
+    pub status: BTreeMap<String, String>,
 }
 
 #[cfg(test)]

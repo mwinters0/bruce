@@ -900,3 +900,22 @@ fn the_json_has_the_fields_the_manual_documents() {
     let json: Value = serde_json::from_str(&compared.json()).unwrap();
     same_shape(&documented, &json, "$");
 }
+
+#[test]
+fn a_run_judges_a_reason_unless_its_policy_turns_it_off_everywhere() {
+    let store = store();
+    let judged = || of(&store).judged;
+    // No row is the default.
+    assert!(judged().doubled_slash && judged().pedantic_trailing_slash);
+    let conn = store.connection();
+    conn.execute_batch(
+        "INSERT INTO policy VALUES (1, NULL, 'doubled_slash', 'false'), \
+         (1, NULL, 'pedantic_trailing_slash', 'false')",
+    )
+    .unwrap();
+    assert!(!judged().doubled_slash && !judged().pedantic_trailing_slash);
+    // A host that keeps it on is a link that can carry the reason.
+    conn.execute_batch("INSERT INTO policy VALUES (1, 'forge.test', 'doubled_slash', 'true')")
+        .unwrap();
+    assert!(judged().doubled_slash && !judged().pedantic_trailing_slash);
+}

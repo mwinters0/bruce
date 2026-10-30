@@ -13,7 +13,8 @@ report is where a link is judged: a link is `broken_url` where its target
 answered a 4xx but 401, 403 or 429, or does not exist, or where no reader could follow it, as a
 `file:` link, `broken_anchor` where the page is there and the `#fragment` is
 not, and `error` where the target could not be asked or refused access (a
-timeout, a 5xx after retries, a 401, 403 or 429).
+timeout, a 5xx after retries, a 401, 403 or 429). Those are the defaults: a
+run's [`status`](config.md#judging) map judges a code otherwise.
 
 ## Arguments
 
@@ -236,9 +237,9 @@ a redirect that only adds or drops a final `/`), and whether it is `counted`: th
 page whose URL doubles a slash and whose twin, the URL with the slashes collapsed, is a page of the run, and its
 broken relative links (`../`, `?query`) where it has no twin, which the doubled slash breaks and the linking page answers for
 ([the digest's *broken through it*](digest.md#the-html)). Each holds every run, so filter on `run_id`.
-`link_verdicts` is `SELECT * FROM link_verdicts_with()`, the table macro whose parameters are the
-judging settings, each defaulting to what the reports judge by: `link_verdicts_with(pedantic_trailing_slash := false)`
-leaves a redirect that only adds or drops a final `/` with no reason.
+`link_verdicts` is `SELECT * FROM link_verdicts_with()`, the table macro that judges each link by the
+policy its run recorded (the `policy` table, [Judging](config.md#judging)); `link_verdicts_with(policy_run := 2)`
+judges every link by run 2's.
 
 ## Exit status
 

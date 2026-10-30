@@ -6,7 +6,7 @@
 use duckdb::Connection;
 use url::Url;
 
-use super::document::{Run, Totals};
+use super::document::{Judged, Run, Totals};
 use crate::extract::Kind;
 use crate::report::error::Error;
 use crate::report::reach;
@@ -71,6 +71,26 @@ pub(super) struct PageCounts(());
 pub(super) fn page_counts(conn: &Connection, run: RunId) -> Result<PageCounts, Error> {
     conn.execute(PAGE_COUNTS, [run.0])?;
     Ok(PageCounts(()))
+}
+
+/// What the run's recorded policy judges (D78): a setting with no row is at its
+/// default, on.
+pub(super) fn judged(conn: &Connection, run: RunId) -> Result<Judged, Error> {
+    let (doubled_slash, pedantic_trailing_slash) = conn.query_row(
+        "SELECT \
+         coalesce(bool_or(value <> 'false') FILTER (WHERE key = 'doubled_slash' AND host IS NULL), true) \
+         OR coalesce(bool_or(value <> 'false') FILTER (WHERE key = 'doubled_slash' \
+             AND host IS NOT NULL), false), \
+         coalesce(bool_and(value <> 'false') FILTER (WHERE key = 'pedantic_trailing_slash' \
+             AND host IS NULL), true) \
+         FROM policy WHERE run_id = ?",
+        [run.0],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    )?;
+    Ok(Judged {
+        doubled_slash,
+        pedantic_trailing_slash,
+    })
 }
 
 /// The run's context, or why it has no digest.

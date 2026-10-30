@@ -202,6 +202,44 @@ precedence over it, and `[host]` (below) says when a host's own rate does.
 |---|---|---|
 | `default.per_second` | `2` | Requests a second to any one host. |
 | `default.concurrency` | `4` | Requests in flight to any one host at once. At the default rate it binds only on a host slow to answer. At least 1. |
+| `default.doubled_slash` | `true` | Whether a link to a URL that doubles a slash is broken, for a host that sets none ([Judging](#judging)). |
+| `default.status` | `{ 401 = "error", 403 = "error", 429 = "error" }` | What a status code is judged to be, for a host that sets none; the file's codes are laid over these, a code at a time ([Judging](#judging)). |
+
+## Judging
+
+A run **records the policy it was crawled with**, and a report reads the run,
+never the file: a run is judged by its own policy, and changing a key changes
+the runs that follow. Every key is at the value `bruce` has always judged by.
+
+```toml
+[judge]
+pedantic_trailing_slash = false
+schemes = ["matrix"]
+
+[default]
+status = { 403 = "ok" }
+
+[host."pagure.io"]
+doubled_slash = false
+status = { 403 = "broken_url" }
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `judge.pedantic_trailing_slash` | `true` | Whether a redirect that only adds or drops a final `/` is `ok`, reason `pedantic_trailing_slash`, rather than a redirect to correct. |
+| `judge.schemes` | `[]` | Schemes counted `unchecked`, reason `scheme`, besides the built-in `mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`, `magnet`, `sms`, `data` and `javascript`. Any other scheme but `http(s)` is `broken_url`, reason `bad_scheme`. Written in any case; `http` and `https` are refused. |
+
+**`doubled_slash`** is the setting of the host in the link's URL. Off, a link to
+`https://host/a//b` is judged by what the URL answered, and a page at such a URL
+counts its own links as any page does.
+
+**`status`** maps single codes, `"<code>" = "<outcome>"`, the outcome `ok`,
+`broken_url` or `error`. A class such as `4xx` is refused, and so is a 3xx,
+which is a hop the crawl follows. The host judged is the one that **answered**,
+the last of a redirect's hops. A code no table names is judged as it was
+crawled: a 4xx other than 401, 403 and 429 is `broken_url`, a 5xx `error`. A fragment on a URL judged `ok`
+by this map is `unchecked`, reason `no_anchors`, as on any `ok` URL whose body
+was not read.
 
 ## User agent
 
@@ -239,6 +277,8 @@ per_second = 10
 | `host."<host>".per_second` | none | Requests a second to that host. |
 | `host."<host>".concurrency` | `default.concurrency` | Requests in flight to that host at once. |
 | `host."<host>".robots` | `true` | Whether the host's `robots.txt` is obeyed, its `Crawl-delay` included. |
+| `host."<host>".doubled_slash` | `default.doubled_slash` | Whether a link to a URL on that host that doubles a slash is broken ([Judging](#judging)). |
+| `host."<host>".status` | `{}` | What a status code that host answered is judged to be, over `default.status` ([Judging](#judging)). |
 
 **Which rate applies** to a host:
 - With `robots = false`: its `per_second` if written, else `default.per_second`.

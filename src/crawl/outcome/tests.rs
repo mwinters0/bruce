@@ -58,3 +58,17 @@ fn a_toggled_slash_that_answers_names_a_broken_4xx_and_nothing_else() {
         assert_eq!(slash(other), status(other), "{other}");
     }
 }
+
+#[test]
+fn the_default_status_map_of_the_policy_is_the_class_given_here() {
+    // A run records the map whole (D78), and the macro reads it over the
+    // outcome stored: the default must change no code's outcome.
+    for (code, answer) in &crate::config::Policy::default().status {
+        let (outcome, reason) = status(*code);
+        assert_eq!(
+            (outcome.as_str(), reason),
+            (answer.as_str(), None),
+            "{code}"
+        );
+    }
+}

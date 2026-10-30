@@ -7,7 +7,8 @@
 //! and then validated into [`Config`]: URLs parsed, globs compiled, hosts
 //! normalised, numbers range-checked. Nothing past this module sees a string
 //! it would have to check again, but a profile's name, which only `cli` can
-//! check against the registry (D39).
+//! check against the registry (D39). The judging keys are read into
+//! [`Policy`], which the `policy` child holds.
 
 use std::collections::{BTreeMap, HashSet};
 use std::fmt;
@@ -21,7 +22,9 @@ use crate::url::{Canonical, canonical};
 
 mod policy;
 
-pub use policy::Policy;
+use policy::{RawJudge, RawJudging};
+
+pub use policy::{Answer, Entry, HostJudging, Policy, WORKING_SCHEMES};
 
 /// Requests a second to one host that no `Crawl-delay`, `[host]` or `[rate]`
 /// governs (D40).
@@ -265,14 +268,20 @@ impl Config {
             .user_agent
             .unwrap_or_else(|| DEFAULT_USER_AGENT.to_owned());
         let token = robots_token(&user_agent).map_err(|e| invalid(format!("user_agent: {e}")))?;
+        let default_judging = RawJudging {
+            doubled_slash: raw.default.doubled_slash,
+            status: raw.default.status.clone(),
+        };
+        let (hosts, judged) = host_settings(raw.host)?;
+        let policy = Policy::from_raw(raw.judge, &default_judging, judged).map_err(invalid)?;
         let config = Config {
             roots,
             allowlist,
             skip,
             rate: Rate::from_raw(raw.default)?,
-            policy: Policy::default(),
+            policy,
             user_agent,
-            hosts: host_settings(raw.host)?,
+            hosts,
             token,
         };
         // A file naming no root leaves one to the command line, which may
@@ -460,8 +469,15 @@ impl Rate {
     }
 }
 
-fn host_settings(raw: BTreeMap<String, RawHost>) -> Result<BTreeMap<String, HostSettings>, Error> {
+/// The hosts' politeness and, apart, the settings they judge by.
+type Hosts = (
+    BTreeMap<String, HostSettings>,
+    BTreeMap<String, HostJudging>,
+);
+
+fn host_settings(raw: BTreeMap<String, RawHost>) -> Result<Hosts, Error> {
     let mut hosts = BTreeMap::new();
+    let mut judged = BTreeMap::new();
     for (name, h) in raw {
         let key = host(&name).map_err(|e| invalid(format!("host: {e}")))?;
         if let Some(n) = h.per_second {
@@ -475,11 +491,22 @@ fn host_settings(raw: BTreeMap<String, RawHost>) -> Result<BTreeMap<String, Host
             concurrency: h.concurrency,
             robots: h.robots.unwrap_or(true),
         };
-        if hosts.insert(key, settings).is_some() {
+        let judging = HostJudging::from_raw(
+            &name,
+            &RawJudging {
+                doubled_slash: h.doubled_slash,
+                status: h.status,
+            },
+        )
+        .map_err(invalid)?;
+        if hosts.insert(key.clone(), settings).is_some() {
             return Err(invalid(format!("host: \"{name}\" is named twice")));
         }
+        if judging != HostJudging::default() {
+            judged.insert(key, judging);
+        }
     }
-    Ok(hosts)
+    Ok((hosts, judged))
 }
 
 impl Allowlist {
@@ -693,6 +720,8 @@ struct RawConfig {
     rate: Option<toml::Table>,
     #[serde(default)]
     default: RawRate,
+    #[serde(default)]
+    judge: RawJudge,
     user_agent: Option<String>,
     #[serde(default)]
     host: BTreeMap<String, RawHost>,
@@ -721,6 +750,9 @@ struct RawRoot {
 struct RawRate {
     per_second: Option<f64>,
     concurrency: Option<u32>,
+    doubled_slash: Option<bool>,
+    #[serde(default)]
+    status: BTreeMap<String, String>,
 }
 
 #[derive(Deserialize)]
@@ -729,6 +761,9 @@ struct RawHost {
     per_second: Option<f64>,
     concurrency: Option<u32>,
     robots: Option<bool>,
+    doubled_slash: Option<bool>,
+    #[serde(default)]
+    status: BTreeMap<String, String>,
 }
 
 #[cfg(test)]

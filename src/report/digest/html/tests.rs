@@ -296,6 +296,45 @@ fn each_term_the_guide_explains_links_to_its_entry() {
 }
 
 #[test]
+fn the_guide_has_an_entry_only_for_a_reason_the_policy_judges() {
+    use super::super::document::Judged;
+    let mut digest = of(&with_doubled_slashes());
+    let entries = |judged: Judged, digest: &mut crate::report::Digest| {
+        digest.judged = judged;
+        let html = digest.html();
+        let ids: Vec<String> = attributes(section(&html, "guide"), "id")
+            .iter()
+            .map(|id| (*id).to_owned())
+            .collect();
+        // The legend's ⓘ goes with its entry; a link's own reason is judged
+        // wherever it is written, and that is the data's.
+        let legend = section(&html, "figures");
+        assert_eq!(
+            legend.contains("href=\"#guide-pedantic\""),
+            ids.iter().any(|id| id == "guide-pedantic")
+        );
+        ids
+    };
+    let judged = |doubled_slash, pedantic_trailing_slash| Judged {
+        doubled_slash,
+        pedantic_trailing_slash,
+    };
+    assert_eq!(
+        entries(judged(true, true), &mut digest),
+        ["guide", "guide-doubled-slash", "guide-pedantic"]
+    );
+    assert_eq!(
+        entries(judged(false, true), &mut digest),
+        ["guide", "guide-pedantic"]
+    );
+    assert_eq!(
+        entries(judged(true, false), &mut digest),
+        ["guide", "guide-doubled-slash"]
+    );
+    assert_eq!(entries(judged(false, false), &mut digest), ["guide"]);
+}
+
+#[test]
 fn the_housekeeping_is_collapsed_and_holds_each_list() {
     let html = html();
     let house = section(&html, "housekeeping");
