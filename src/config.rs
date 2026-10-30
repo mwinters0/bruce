@@ -24,7 +24,7 @@ mod policy;
 
 use policy::{RawJudge, RawJudging};
 
-pub use policy::{Answer, Entry, HostJudging, Policy, WORKING_SCHEMES};
+pub use policy::{Answer, Entry, HostJudging, Policy, Reach, WORKING_SCHEMES};
 
 /// Requests a second to one host that no `Crawl-delay`, `[host]` or `[rate]`
 /// governs (D40).

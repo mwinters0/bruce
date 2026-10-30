@@ -33,12 +33,13 @@ fn the_default_policy_is_what_bruce_has_always_judged_by() {
 fn every_setting_is_an_entry_with_its_value_written_out() {
     let mut policy = Policy::default();
     let defaults = rows(&policy);
-    assert_eq!(defaults.len(), 1 + 12 + 1 + 3);
+    assert_eq!(defaults.len(), 1 + 12 + 1 + 1 + 3);
     for row in [
         "/pedantic_trailing_slash=true",
         "/schemes=mailto",
         "/schemes=javascript",
         "/doubled_slash=true",
+        "/doubled_slash_reach=full",
         "/status.403=error",
     ] {
         assert!(defaults.contains(&row.to_string()), "{row}");
@@ -53,6 +54,7 @@ fn a_file_sets_the_judging_keys_over_the_defaults() {
         r#"
         [judge]
         pedantic_trailing_slash = false
+        doubled_slash_reach = "immediate"
         schemes = ["Matrix", "mailto", "web+x"]
 
         [default]
@@ -69,6 +71,8 @@ fn a_file_sets_the_judging_keys_over_the_defaults() {
     )
     .unwrap();
     assert!(!policy.pedantic_trailing_slash && !policy.doubled_slash);
+    assert_eq!(policy.doubled_slash_reach, Reach::Immediate);
+    assert!(rows(&policy).contains(&"/doubled_slash_reach=immediate".to_string()));
     assert_eq!(policy.schemes.len(), 14);
     assert_eq!(&policy.schemes[12..], ["matrix", "web+x"]);
     // The file's codes are laid over the built-in ones, per code.
@@ -106,6 +110,10 @@ fn a_judging_key_that_cannot_mean_anything_is_refused_naming_it() {
         ("[judge]\nschemes = [\"http\"]", "judge.schemes"),
         ("[judge]\nschemes = [\"1x\"]", "judge.schemes"),
         ("[judge]\nschemes = [\"a b\"]", "judge.schemes"),
+        (
+            "[judge]\ndoubled_slash_reach = \"deep\"",
+            "judge.doubled_slash_reach",
+        ),
         ("[judge]\nunknown = 1", "unknown"),
     ] {
         let err = parse(extra).unwrap_err();

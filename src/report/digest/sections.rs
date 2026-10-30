@@ -7,6 +7,7 @@ use duckdb::Connection;
 use url::Url;
 
 use super::document::{Judged, Run, Totals};
+use crate::config::Reach;
 use crate::extract::Kind;
 use crate::report::error::Error;
 use crate::report::reach;
@@ -34,7 +35,9 @@ pub(super) const ON_CRAWLED: &str = " JOIN report_pages pg ON pg.run_id = b.run_
 /// the broken relative links on those pages (`brk`) are the linking page's,
 /// each counted once however many links of the page reach the same page, bar
 /// one whose copy on the page's twin, the same `raw_href` and kind, is broken
-/// too, which the twin's row counts.
+/// too, which the twin's row counts. The run's `doubled_slash_reach` (D80)
+/// stands in for `$REACH`: `immediate` leaves the recursion its first step and
+/// `off` not even that.
 const PAGE_COUNTS: &str = "CREATE OR REPLACE TEMP TABLE digest_page_counts AS \
      WITH RECURSIVE s AS (SELECT url_id, sum(links)::BIGINT AS links, \
      sum(broken_url)::BIGINT AS broken_url, sum(broken_anchor)::BIGINT AS broken_anchor, \
@@ -54,9 +57,9 @@ const PAGE_COUNTS: &str = "CREATE OR REPLACE TEMP TABLE digest_page_counts AS \
      AND c.kind = l.kind AND c.outcome IN ('broken_url', 'broken_anchor', 'error')) \
      GROUP BY l.src), \
      reach(page, dst) AS (SELECT src, dst FROM lv WHERE reason = 'doubled_slash' AND counted \
-     AND dst IN (SELECT url_id FROM dp) \
+     AND dst IN (SELECT url_id FROM dp) AND '$REACH' <> 'off' \
      UNION SELECT r.page, e.dst FROM reach r JOIN lv e ON e.src = r.dst \
-     WHERE e.relative AND e.dst IN (SELECT url_id FROM dp)), \
+     WHERE e.relative AND e.dst IN (SELECT url_id FROM dp) AND '$REACH' = 'full'), \
      th AS (SELECT r.page AS url_id, sum(b.n)::BIGINT AS through FROM reach r \
      JOIN brk b ON b.url_id = r.dst GROUP BY r.page) \
      SELECT s.url_id, s.links, s.broken_url, s.broken_anchor, s.error, \
@@ -69,8 +72,20 @@ pub(super) struct PageCounts(());
 
 /// Computes `run`'s page counts, once for the three sections that rank by them.
 pub(super) fn page_counts(conn: &Connection, run: RunId) -> Result<PageCounts, Error> {
-    conn.execute(PAGE_COUNTS, [run.0])?;
+    let reach = recorded_reach(conn, run)?;
+    conn.execute(&PAGE_COUNTS.replace("$REACH", reach.as_str()), [run.0])?;
     Ok(PageCounts(()))
+}
+
+/// The run's recorded `doubled_slash_reach` (D80), `full` where it has no row.
+fn recorded_reach(conn: &Connection, run: RunId) -> Result<Reach, Error> {
+    let value: Option<String> = conn.query_row(
+        "SELECT max(value) FROM policy WHERE run_id = ? AND host IS NULL \
+         AND key = 'doubled_slash_reach'",
+        [run.0],
+        |row| row.get(0),
+    )?;
+    Ok(Reach::from_row(value.as_deref()))
 }
 
 /// What the run's recorded policy judges (D78): a setting with no row is at its
@@ -90,6 +105,7 @@ pub(super) fn judged(conn: &Connection, run: RunId) -> Result<Judged, Error> {
     Ok(Judged {
         doubled_slash,
         pedantic_trailing_slash,
+        reach: recorded_reach(conn, run)?,
     })
 }
 

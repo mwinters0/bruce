@@ -60,6 +60,45 @@ impl Answer {
     }
 }
 
+/// How far the links broken by a doubled slash are counted on the page that
+/// wrote it (D71, D80): the broken relative links on the doubled-slash pages
+/// its link reaches.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Reach {
+    /// Every doubled-slash page the landing page's relative links reach.
+    Full,
+    /// The landing page alone.
+    Immediate,
+    /// None: those links are counted nowhere.
+    Off,
+}
+
+impl Reach {
+    /// The reach as the store spells it and a file writes it.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Reach::Full => "full",
+            Reach::Immediate => "immediate",
+            Reach::Off => "off",
+        }
+    }
+
+    /// The reach a policy row spells, `full` where it is missing or unknown.
+    pub fn from_row(value: Option<&str>) -> Reach {
+        [Reach::Immediate, Reach::Off]
+            .into_iter()
+            .find(|r| Some(r.as_str()) == value)
+            .unwrap_or(Reach::Full)
+    }
+
+    fn parse(s: &str) -> Result<Reach, String> {
+        [Reach::Full, Reach::Immediate, Reach::Off]
+            .into_iter()
+            .find(|r| r.as_str() == s)
+            .ok_or_else(|| format!("{s:?} is not a reach: full, immediate or off"))
+    }
+}
+
 /// The judging settings of a run, each at its default until config sets it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Policy {
@@ -73,6 +112,9 @@ pub struct Policy {
     /// Whether a link to a URL whose path doubles a slash is `broken_url`,
     /// reason `doubled_slash`, where a host sets none (D71).
     pub doubled_slash: bool,
+    /// How far the breakage a doubled slash causes is counted on the page that
+    /// wrote the link (D71, D80).
+    pub doubled_slash_reach: Reach,
     /// What a status code is judged to be where a host sets none, a code
     /// not here being judged as the crawl classed it (D16).
     pub status: BTreeMap<u16, Answer>,
@@ -105,6 +147,7 @@ impl Default for Policy {
             pedantic_trailing_slash: true,
             schemes: WORKING_SCHEMES.iter().map(|s| (*s).to_owned()).collect(),
             doubled_slash: true,
+            doubled_slash_reach: Reach::Full,
             // D16's class for these three, which the crawl records the same.
             status: [401, 403, 429]
                 .into_iter()
@@ -132,6 +175,10 @@ impl Policy {
         )];
         rows.extend(self.schemes.iter().map(|s| run("schemes", s.clone())));
         rows.push(run("doubled_slash", self.doubled_slash.to_string()));
+        rows.push(run(
+            "doubled_slash_reach",
+            self.doubled_slash_reach.as_str().to_owned(),
+        ));
         rows.extend(statuses(None, &self.status));
         for (host, h) in &self.hosts {
             if let Some(on) = h.doubled_slash {
@@ -156,6 +203,10 @@ impl Policy {
         let mut policy = Policy::default();
         if let Some(on) = judge.pedantic_trailing_slash {
             policy.pedantic_trailing_slash = on;
+        }
+        if let Some(reach) = &judge.doubled_slash_reach {
+            policy.doubled_slash_reach =
+                Reach::parse(reach).map_err(|e| format!("judge.doubled_slash_reach: {e}"))?;
         }
         for written in &judge.schemes {
             let scheme = scheme(written).map_err(|e| format!("judge.schemes: {e}"))?;
@@ -241,6 +292,7 @@ fn statuses_of(written: &BTreeMap<String, String>) -> Result<BTreeMap<u16, Answe
 #[serde(deny_unknown_fields)]
 pub(super) struct RawJudge {
     pedantic_trailing_slash: Option<bool>,
+    doubled_slash_reach: Option<String>,
     #[serde(default)]
     schemes: Vec<String>,
 }

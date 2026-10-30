@@ -20,8 +20,8 @@ D79; the DuckDB defect met on the way is UF2. The row landed without
   map is read time only: the crawl keeps D16's class in the row.
 - **The guide follows the policy**: `Digest.judged`, read off the run's rows,
   drops an entry whose reason no host judges, and the legend's and the redirects
-  list's ⓘ to the pedantic entry go with it. The doubled-slash entry states no
-  `doubled_slash_reach` yet.
+  list's ⓘ to the pedantic entry go with it. The doubled-slash entry states
+  `doubled_slash_reach` from P7.3.1.
 
 ## Evidence
 
@@ -37,11 +37,10 @@ pedantic setting) changed nothing measurable and was not kept.
 
 ## For P7.3.1 and P7.4
 
-- **P7.3.1 touches two places**: `counted` in the macro (reach `off` counts the
-  doubled pages' broken relative links nowhere) and the digest's `through`
-  (`report/digest/sections.rs`, `PAGE_COUNTS`, reach `immediate` stopping at the
-  landing page). The `doubled_slash` view is policy-free and carries `url`; the
-  macro filters it (`dsl`), so `PAGE_COUNTS` and `through` read all doubling
+- **P7.3.1 touches the digest's `through` alone** (`report/digest/sections.rs`,
+  `PAGE_COUNTS`, reach `immediate` stopping at the landing page, `off` at none),
+  not `counted` (D80). The `doubled_slash` view is policy-free and carries `url`;
+  the macro filters it (`dsl`), so `PAGE_COUNTS` and `through` read all doubling
   pages: they agree only because a policy-off host has no `doubled_slash` link
   to start from.
 - **Comparisons mix policies until P7.4.** `cause.rs` and the digest's since

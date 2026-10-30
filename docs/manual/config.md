@@ -227,11 +227,21 @@ status = { 403 = "broken_url" }
 | Key | Default | Meaning |
 |---|---|---|
 | `judge.pedantic_trailing_slash` | `true` | Whether a redirect that only adds or drops a final `/` is `ok`, reason `pedantic_trailing_slash`, rather than a redirect to correct. |
+| `judge.doubled_slash_reach` | `"full"` | How far the breakage a doubled slash causes is counted on the page that links to it (below): `"full"`, `"immediate"` or `"off"`. |
 | `judge.schemes` | `[]` | Schemes counted `unchecked`, reason `scheme`, besides the built-in `mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`, `magnet`, `sms`, `data` and `javascript`. Any other scheme but `http(s)` is `broken_url`, reason `bad_scheme`. Written in any case; `http` and `https` are refused. |
 
 **`doubled_slash`** is the setting of the host in the link's URL. Off, a link to
 `https://host/a//b` is judged by what the URL answered, and a page at such a URL
 counts its own links as any page does.
+
+**`doubled_slash_reach`** says what the digest counts on the page that writes a
+link to a URL that doubles a slash, as "broken through it". A page at such a URL
+with no twin in the run counts none of its broken relative links (`../`,
+`committee/`, `?query`), which the doubled slash breaks, whatever the reach.
+`full` counts them on the linking page for every such page its link reaches,
+following their relative links on; `immediate` counts those of the page the link
+lands on alone; `off` counts them nowhere, the link itself being the one red
+finding. The digest's guide states the reach the run was judged by.
 
 **`status`** maps single codes, `"<code>" = "<outcome>"`, the outcome `ok`,
 `broken_url` or `error`. A class such as `4xx` is refused, and so is a 3xx,

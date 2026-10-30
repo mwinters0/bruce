@@ -1,6 +1,7 @@
 //! The digest's document: the run, its figures and the sections, each section
 //! a [`Table`] already in the order a reader wants it.
 
+use crate::config::Reach;
 use crate::report::table::Table;
 use crate::store::RunId;
 
@@ -49,6 +50,9 @@ pub struct Judged {
     pub doubled_slash: bool,
     /// A redirect that only toggles a final `/` is `pedantic_trailing_slash` (D70).
     pub pedantic_trailing_slash: bool,
+    /// How far the links broken through a doubled slash are counted on the page
+    /// that wrote it (D80).
+    pub reach: Reach,
 }
 
 /// A crawl run's digest.

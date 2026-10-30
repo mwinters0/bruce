@@ -115,7 +115,8 @@ new or all fixed. In this order:
    asked, and the page that writes it also counts, as "● 579 broken through
    it", the broken relative links (`../`, `committee/`, `?query`) on the
    doubled-slash pages the link reaches, which the doubled slash breaks, each
-   page once and none that is broken on the page's twin too: "● 1 broken
+   page once and none that is broken on the page's twin too (`judge.doubled_slash_reach`
+   in [`config.md`](config.md) narrows that to the page the link lands on, or to none): "● 1 broken
    link, ● 579 broken through it", ranked with the red. A
    page at such a URL counts none of its links where the URL with its
    slashes collapsed is a page of the run, and else all but its broken

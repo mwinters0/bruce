@@ -494,6 +494,44 @@ fn the_links_broken_through_a_doubled_slash_count_on_the_linking_page() {
 }
 
 #[test]
+fn the_reach_says_how_far_the_links_broken_through_a_doubled_slash_are_counted() {
+    use crate::config::Reach;
+    let through = |reach: Option<&str>| {
+        let store = with_doubled_slashes();
+        if let Some(reach) = reach {
+            store
+                .connection()
+                .execute(
+                    "INSERT INTO policy VALUES (1, NULL, 'doubled_slash_reach', ?)",
+                    [reach],
+                )
+                .unwrap();
+        }
+        let d = of(&store);
+        let at = column(&d.pages, "page")
+            .iter()
+            .position(|p| p == "https://e.test/seven")
+            .unwrap();
+        let col = d.pages.columns.iter().position(|c| c == "through").unwrap();
+        (
+            d.pages.rows[at][col].clone(),
+            d.judged.reach,
+            d.totals.links,
+        )
+    };
+    // No row is `full`: 51's `a/` and `gone`, then 52's `gone2` and `../`.
+    assert_eq!(through(None), (Cell::Int(4), Reach::Full, 13));
+    assert_eq!(through(Some("full")), (Cell::Int(4), Reach::Full, 13));
+    // The landing page alone: page 51's two.
+    assert_eq!(
+        through(Some("immediate")),
+        (Cell::Int(2), Reach::Immediate, 13)
+    );
+    // None, and the links counted are the same: those pages never counted them.
+    assert_eq!(through(Some("off")), (Cell::Int(0), Reach::Off, 13));
+}
+
+#[test]
 fn a_doubled_slash_a_redirect_lands_on_is_the_links_landing() {
     let store = with_doubled_slashes();
     // A link naming a doubled-slash URL itself has none: the URL shows it.

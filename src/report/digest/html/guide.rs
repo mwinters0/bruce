@@ -10,6 +10,7 @@ use std::fmt::Write as _;
 
 use super::super::document::Judged;
 use super::markup::w;
+use crate::config::Reach;
 use crate::store::{DOUBLED_SLASH, PEDANTIC_TRAILING_SLASH};
 
 /// An entry of the guide.
@@ -89,8 +90,8 @@ pub(super) fn info_of(reason: Option<&str>) -> String {
 pub(super) fn guide(out: &mut String, judged: Judged) {
     out.push_str("<section id=\"guide\">\n<h2>How to read this report</h2>\n");
     for (entry, body) in [
-        (Entry::DoubledSlash, DOUBLED_SLASH_ENTRY),
-        (Entry::Pedantic, PEDANTIC_ENTRY),
+        (Entry::DoubledSlash, doubled_slash_entry(judged.reach)),
+        (Entry::Pedantic, PEDANTIC_ENTRY.to_owned()),
     ] {
         if !entry.judged(judged) {
             continue;
@@ -105,15 +106,35 @@ pub(super) fn guide(out: &mut String, judged: Judged) {
     out.push_str("</section>\n");
 }
 
-const DOUBLED_SLASH_ENTRY: &str = "<p>Sometimes page B is fine if you go there the right way, but \
+/// The doubled-slash entry, its last paragraph stating what the run's
+/// `doubled_slash_reach` counts on the page that wrote the link (D80).
+fn doubled_slash_entry(reach: Reach) -> String {
+    let counted = match reach {
+        Reach::Full => {
+            "the links on B that the extra slash breaks, and those on every other page at \
+             a doubled URL that B's relative links lead on to, are counted on page A as \
+             \"broken through it\""
+        }
+        Reach::Immediate => {
+            "the links on B that the extra slash breaks are counted on page A as \"broken \
+             through it\", though not those of the pages B's relative links lead on to"
+        }
+        Reach::Off => {
+            "the links on B that the extra slash breaks are counted nowhere, this report \
+             being set to blame page A's link alone"
+        }
+    };
+    format!(
+        "<p>Sometimes page B is fine if you go there the right way, but \
     page A links to it in a way that adds an extra slash, e.g. \
     <code>example.com/foo//page_B/</code> or <code>example.com/foo/page_B//</code>, or links to a \
     URL that redirects to one like it.</p>\n\
     <p>If you navigate from A to B that way, page B will work, but all of its relative links \
     (<code>../../blah</code>) are broken because of the extra slash in the path. They are not \
     counted against page B, because there's nothing wrong there: the problem is in page A. So \
-    A's link is listed as broken, with the reason <code>doubled_slash</code>, and the links on B \
-    that the extra slash breaks are counted on page A as \"broken through it\".</p>\n";
+    A's link is listed as broken, with the reason <code>doubled_slash</code>, and {counted}.</p>\n"
+    )
+}
 
 const PEDANTIC_ENTRY: &str = "<p>Humans generally write URLs like <code>example.com/foo</code> \
     but <em>technically</em> the correct form is <code>example.com/foo/</code>: notice the \

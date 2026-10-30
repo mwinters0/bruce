@@ -298,6 +298,7 @@ fn each_term_the_guide_explains_links_to_its_entry() {
 #[test]
 fn the_guide_has_an_entry_only_for_a_reason_the_policy_judges() {
     use super::super::document::Judged;
+    use crate::config::Reach;
     let mut digest = of(&with_doubled_slashes());
     let entries = |judged: Judged, digest: &mut crate::report::Digest| {
         digest.judged = judged;
@@ -318,6 +319,7 @@ fn the_guide_has_an_entry_only_for_a_reason_the_policy_judges() {
     let judged = |doubled_slash, pedantic_trailing_slash| Judged {
         doubled_slash,
         pedantic_trailing_slash,
+        reach: Reach::Full,
     };
     assert_eq!(
         entries(judged(true, true), &mut digest),
@@ -332,6 +334,22 @@ fn the_guide_has_an_entry_only_for_a_reason_the_policy_judges() {
         ["guide", "guide-doubled-slash"]
     );
     assert_eq!(entries(judged(false, false), &mut digest), ["guide"]);
+}
+
+#[test]
+fn the_guides_doubled_slash_entry_states_the_reach() {
+    use crate::config::Reach;
+    let mut digest = of(&with_doubled_slashes());
+    let entry = |reach: Reach, digest: &mut crate::report::Digest| {
+        digest.judged.reach = reach;
+        let html = digest.html();
+        section(&html, "guide").to_owned()
+    };
+    assert!(entry(Reach::Full, &mut digest).contains("every other page at a doubled URL"));
+    let immediate = entry(Reach::Immediate, &mut digest);
+    assert!(immediate.contains("though not those of the pages B's relative links lead on to"));
+    let off = entry(Reach::Off, &mut digest);
+    assert!(off.contains("counted nowhere") && !off.contains("counted on page A"));
 }
 
 #[test]

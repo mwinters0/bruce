@@ -55,10 +55,9 @@ The spec is [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
   `pedantic_trailing_slash`, `schemes`, the guide dropping an entry whose reason
   is not judged. Notes:
   [`../wip/roadmap-P7.3-judging-notes.md`](../wip/roadmap-P7.3-judging-notes.md).
-- [ ] **7.3.1** `doubled_slash_reach` (`full`, `immediate`, `off`), the
-  doubled-slash guide entry stating it. Split from 7.3: the reach is the digest's
-  `through` and `counted`
-  ([`history/2026-10-30.md`](history/2026-10-30.md)).
+- [x] **7.3.1** `doubled_slash_reach` (`full`, `immediate`, `off`), the
+  doubled-slash guide entry stating it. Notes:
+  [`../wip/roadmap-P7.3.1-reach-notes.md`](../wip/roadmap-P7.3.1-reach-notes.md).
 - [ ] **7.3.2** A remapped status keeps the crawl's reason where its outcome is
   the one the crawl stored, D79 amended. Earned by 7.3, which drops it
   ([`history/2026-10-30.md`](history/2026-10-30.md)).
