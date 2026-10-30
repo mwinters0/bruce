@@ -43,10 +43,11 @@ The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-P
 
 The spec is [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
 
-- [ ] **7.1** Verdicts judged through a policy, defaults only:
+- [x] **7.1** Verdicts judged through a policy, defaults only:
   `link_verdicts` a table macro and its view, no schema change; every report
   and the digest's JSON byte-identical on the 2026-10-25 crawl's DB, the
-  digest's time measured.
+  digest's time measured. Notes:
+  [`../wip/roadmap-P7.1-verdicts-notes.md`](../wip/roadmap-P7.1-verdicts-notes.md).
 - [ ] **7.2** A run records its policy: `config/policy`, `[default]`
   replacing `[rate]`, the schema change, the baseline file carrying it.
 - [ ] **7.3** The judging keys: `status`, `doubled_slash`,

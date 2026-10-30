@@ -5,7 +5,8 @@
 //! link's outcome, reason and whether its target was redirected, read off
 //! `links`, its target, the target's landing target and the landing page's
 //! `anchors`. A column holds the link's own fields, so a report reads one
-//! relation. The first rule that applies decides:
+//! relation. It is the call, with the defaults, of the table macro
+//! `link_verdicts_with` (D77). The first rule that applies decides:
 //!
 //! 1. A link with `xref_refspec` that points at its own page, whose
 //!    fragment is the refspec, or whose target is `broken_url`, is
@@ -34,7 +35,8 @@
 //!
 //! An `ok` link whose target was redirected to its own URL with a final `/`
 //! added or removed has the reason [`PEDANTIC_TRAILING_SLASH`], whatever the
-//! hops between (D70). It is not an outcome of its own.
+//! hops between (D70), unless the macro is called with
+//! `pedantic_trailing_slash := false`. It is not an outcome of its own.
 //!
 //! `relative` says the link's `raw_href` keeps its page's path: it is resolved
 //! against it (`../`, `committee/`) or is a `?query` on it. `counted` says the
@@ -59,8 +61,11 @@ pub const DOUBLED_SLASH: &str = "doubled_slash";
 /// the target's outcome and reason, and the fix is read off the URL.
 pub const WRONG_TRAILING_SLASH: &str = "wrong_trailing_slash";
 
-/// Every view the store ships, `doubled_slash` before the view that joins it.
-pub(super) const ALL: &[View] = &[DOUBLED_SLASH_TARGETS, LINK_VERDICTS];
+/// The `doubled_slash` view, created before the macro that joins it.
+pub(super) const FIRST: &[View] = &[DOUBLED_SLASH_TARGETS];
+
+/// The view calling the macro, created after it.
+pub(super) const LAST: &[View] = &[LINK_VERDICTS];
 
 /// A true expression where the path of the `http(s)` URL `$url` doubles a
 /// slash. A `scheme://` inside the path doubles none, nor does a query or a
@@ -106,11 +111,13 @@ GROUP BY d.run_id, d.url_id, d.own"
     ),
 };
 
-/// A link and its verdict (D28). The landing target is the one `final_url`
-/// names, and a target that was not redirected is its own landing page.
-const LINK_VERDICTS: View = View {
-    name: "link_verdicts",
-    select: "\
+/// The table macro judging every link under a policy (D77), the body of
+/// `link_verdicts` (D28): each parameter is a judging setting a site may
+/// choose, defaulting to what `bruce` has always judged by, so the call with
+/// none is the view. The landing target is the one `final_url` names, and a
+/// target that was not redirected is its own landing page.
+pub(super) const LINK_VERDICTS_WITH: &str = "\
+CREATE OR REPLACE MACRO link_verdicts_with(pedantic_trailing_slash := true) AS TABLE
 WITH joined AS (
     SELECT l.run_id, l.src_url_id, l.target_url_id, l.fragment, l.raw_href, l.kind,
         l.xref_refspec,
@@ -155,12 +162,18 @@ WITH joined AS (
 )
 SELECT run_id, src_url_id, target_url_id, fragment, raw_href, kind, xref_refspec,
     verdict[1] AS outcome,
-    CASE WHEN verdict[1] = 'ok' AND slash_only THEN 'pedantic_trailing_slash'
+    CASE WHEN verdict[1] = 'ok' AND slash_only AND pedantic_trailing_slash
+            THEN 'pedantic_trailing_slash'
         ELSE verdict[2] END AS reason,
     redirected, relative,
     NOT src_doubled OR (NOT src_twin
         AND NOT (relative AND verdict[1] IN ('broken_url', 'broken_anchor', 'error'))) AS counted
-FROM judged",
+FROM judged";
+
+/// A link and its verdict (D28), judged by the defaults (D77).
+const LINK_VERDICTS: View = View {
+    name: "link_verdicts",
+    select: "SELECT * FROM link_verdicts_with()",
 };
 
 #[cfg(test)]

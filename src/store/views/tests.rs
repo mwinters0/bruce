@@ -65,9 +65,16 @@ fn link(store: &Store, label: &str, target: u64, fragment: Option<&str>, xref: O
 type Verdict = (String, Option<String>, bool);
 
 fn verdicts(store: &Store) -> BTreeMap<String, Verdict> {
+    verdicts_of(store, "link_verdicts")
+}
+
+/// The verdicts of a relation: the view, or a call of the macro.
+fn verdicts_of(store: &Store, relation: &str) -> BTreeMap<String, Verdict> {
     let mut stmt = store
         .connection()
-        .prepare("SELECT raw_href, outcome, reason, redirected FROM link_verdicts")
+        .prepare(&format!(
+            "SELECT raw_href, outcome, reason, redirected FROM {relation}"
+        ))
         .unwrap();
     stmt.query_map([], |r| {
         Ok((r.get::<_, String>(0)?, (r.get(1)?, r.get(2)?, r.get(3)?)))
@@ -355,6 +362,21 @@ fn a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic() {
         ("broken", "broken_url", None),
     ] {
         expect(&got, label, outcome, reason);
+    }
+    // The view is the macro called with its defaults (D77); a site switching the
+    // reason off keeps the verdicts and loses the reason.
+    assert_eq!(got, verdicts_of(&store, "link_verdicts_with()"));
+    let off = verdicts_of(
+        &store,
+        "link_verdicts_with(pedantic_trailing_slash := false)",
+    );
+    for (label, outcome, reason) in [
+        ("added", "ok", None),
+        ("query", "ok", None),
+        ("doubled", "broken_url", Some("doubled_slash")),
+        ("no-anchor", "broken_anchor", None),
+    ] {
+        expect(&off, label, outcome, reason);
     }
 }
 

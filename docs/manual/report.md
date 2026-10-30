@@ -236,6 +236,9 @@ a redirect that only adds or drops a final `/`), and whether it is `counted`: th
 page whose URL doubles a slash and whose twin, the URL with the slashes collapsed, is a page of the run, and its
 broken relative links (`../`, `?query`) where it has no twin, which the doubled slash breaks and the linking page answers for
 ([the digest's *broken through it*](digest.md#the-html)). Each holds every run, so filter on `run_id`.
+`link_verdicts` is `SELECT * FROM link_verdicts_with()`, the table macro whose parameters are the
+judging settings, each defaulting to what the reports judge by: `link_verdicts_with(pedantic_trailing_slash := false)`
+leaves a redirect that only adds or drops a final `/` with no reason.
 
 ## Exit status
 

@@ -15,7 +15,7 @@ The en-US crawls the entries quote are named by their day: 2026-10-23's is `runs
 2026-10-24's `runs/p8.14-en-us-20261024-1322/`, and 2026-10-25's `runs/en-us-20261025-1301/`, run 2 of a copy of
 2026-10-24's database.
 
-<!-- decision-watermark: D76 -->
+<!-- decision-watermark: D77 -->
 
 ## Scope and modes
 
@@ -391,6 +391,12 @@ Reopens: a section whose key a run-to-run change moves wholesale (a site moving 
 Why: the colour repeats the row's text and never carries it alone, each dot named by its level for a screen reader, and the ring reads apart from the filled dots without colour and in print.
 Rejected: a `severity` field in the JSON, a second statement of the outcome and reason; a column of words, read where a dot is seen; a dot on a section's summary, a heading being no finding; keeping error-only pages out of the pages, which leaves a repo's red holding links no listed page shows.
 Reopens: a site's config classifying (P7). Code: `report::digest::html::severity`. Evidence: `report::digest::html::tests::a_level_is_read_off_a_links_outcome_and_reason`, `report::digest::tests::pages_and_repos_are_ranked_by_their_red_links_then_their_amber_ones`.
+
+### D77 Links are judged by a table macro whose parameters are the judging settings, and `link_verdicts` is its call with the defaults
+`link_verdicts_with(pedantic_trailing_slash := true)` holds the verdict SQL (D28), each parameter defaulting to what `bruce` has always judged by, and the view is `SELECT * FROM link_verdicts_with()`; a view takes no parameter (D6), and P7's comparisons judge both runs by the newer run's policy.
+Why: one copy of the judgement serves a run read by its own policy and a comparison under another's; the macro is inlined, so the view's reads cost what they did: the 2026-10-25 crawl's reports and digest came out byte-identical, the digest in 44.1 to 44.6 s of CPU before and 44.0 to 44.4 after.
+Rejected: a second copy of the SQL for comparisons, two judgements to keep equal; a view per setting.
+Reopens: a setting that is not one value for the run (a status map, a host's `doubled_slash`), which a scalar parameter cannot carry: the macro then reads the run's recorded policy (P7.2). Code: `store::views`. Evidence: `store::views::tests::a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic`, `runs/p7.1-verdicts/`.
 
 ### D61 Live slots are shared among the hosts with work, and a build's reads have a budget of their own
 Each host holds at most the 64 slots divided by the hosts with a target waiting or running, taken in turn,

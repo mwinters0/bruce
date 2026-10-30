@@ -165,7 +165,11 @@ impl Store {
             )?;
         }
         let store = Store { conn };
-        store.install(views::ALL)?;
+        // Each is created after what it binds: the `doubled_slash` view, the
+        // macro joining it, the view calling the macro.
+        store.install(views::FIRST)?;
+        store.conn.execute_batch(views::LINK_VERDICTS_WITH)?;
+        store.install(views::LAST)?;
         for profile in profiles.iter() {
             store.install(profile.views())?;
         }
