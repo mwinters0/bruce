@@ -209,7 +209,9 @@ precedence over it, and `[host]` (below) says when a host's own rate does.
 
 A run **records the policy it was crawled with**, and a report reads the run,
 never the file: a run is judged by its own policy, and changing a key changes
-the runs that follow. Every key is at the value `bruce` has always judged by.
+the runs that follow. A comparison (`check-dir`'s gate, `report diff`, a
+digest's changes since) judges both runs by the newer one's policy, so changing
+a key breaks nothing by itself. Every key is at the value `bruce` has always judged by.
 
 ```toml
 [judge]

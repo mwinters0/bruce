@@ -26,7 +26,7 @@ use duckdb::Connection;
 use super::error::Error;
 use super::run;
 use super::table::Table;
-use crate::store::{RunId, Store};
+use crate::store::{JudgedBy, RunId, Store};
 
 pub use document::{Compared, Digest};
 pub use json::FORMAT_VERSION;
@@ -77,6 +77,8 @@ struct Read {
 
 fn build(conn: &Connection, read: &Read, from: Option<RunId>, file: bool) -> Result<Digest, Error> {
     let id = read.id;
+    // The compared run is judged by this run's policy (D81).
+    let _judged = from.map(|_| JudgedBy::new(conn, id.0)).transpose()?;
     let run = sections::run(conn, id)?;
     let counts = sections::page_counts(conn, id)?;
     let pages = sections::pages(conn, id, counts)?;

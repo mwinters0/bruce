@@ -51,8 +51,35 @@
 //! their `url`, and for the first the page of the run at its twin's URL,
 //! `twin_id`, whatever the policy says: the macro applies it.
 
+use duckdb::Connection;
+
 use crate::config::WORKING_SCHEMES;
 use crate::profile::View;
+
+/// Every run read through `link_verdicts` is judged by one run's policy while
+/// this lives: the newer run's, in a comparison (D77). Dropping it puts each
+/// run back to its own. It sets the connection's session variable `judged_by`,
+/// which the macro reads where its `policy_run` is NULL, so the views, which
+/// take no parameter (D6), judge a comparison's older run by the newer's policy.
+#[must_use = "the policy judges only while the guard lives"]
+pub struct JudgedBy<'c> {
+    conn: &'c Connection,
+}
+
+impl<'c> JudgedBy<'c> {
+    /// Judges every run by the policy of run number `run`.
+    pub fn new(conn: &'c Connection, run: u64) -> Result<JudgedBy<'c>, duckdb::Error> {
+        conn.execute_batch(&format!("SET VARIABLE judged_by = {run}"))?;
+        Ok(JudgedBy { conn })
+    }
+}
+
+impl Drop for JudgedBy<'_> {
+    fn drop(&mut self) {
+        // A connection that cannot say so is gone, and its variable with it.
+        let _ = self.conn.execute_batch("SET VARIABLE judged_by = NULL");
+    }
+}
 
 /// The reason of an `ok` link whose redirect differs from its URL only by a
 /// final `/` (D70).
@@ -129,7 +156,8 @@ macro_rules! host {
 
 /// The text of the table macro judging every link under a policy (D77, D78),
 /// the body of `link_verdicts` (D28). `policy_run` names the run whose
-/// recorded policy judges, the link's own where it is NULL; a setting with no
+/// recorded policy judges, else the one [`JudgedBy`] names (D81), else the
+/// link's own; a setting with no
 /// row is at its default, so a run recorded before the setting existed, or by
 /// a test, is judged as `bruce` always has been. The landing target is the one
 /// `final_url` names, and a target that was not redirected is its own landing
@@ -153,7 +181,7 @@ pub(super) fn link_verdicts_with() -> String {
 const LINK_VERDICTS_WITH: &str = r"
 CREATE OR REPLACE MACRO link_verdicts_with(policy_run := NULL) AS TABLE
 WITH pr AS (
-    SELECT run_id, coalesce(policy_run, run_id) AS prun FROM runs
+    SELECT run_id, coalesce(policy_run, getvariable('judged_by')::UBIGINT, run_id) AS prun FROM runs
 ), th AS (
     SELECT th.*, $ANSWERED_HOST AS answered_host FROM targets th
 ), tj AS (

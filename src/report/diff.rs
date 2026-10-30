@@ -15,7 +15,7 @@ use super::error::Error;
 use super::request::Request;
 use super::sql::{Cols, Sql};
 use super::table::Table;
-use crate::store::RunId;
+use crate::store::{JudgedBy, RunId};
 
 /// The columns of both halves, in the order `broken` prints them after
 /// `change`.
@@ -31,6 +31,8 @@ pub(super) fn diff(
     to: RunId,
     request: &Request,
 ) -> Result<(Table, Vec<String>), Error> {
+    // Both runs are judged by `to`'s policy (D81).
+    let _judged = JudgedBy::new(conn, to.0)?;
     let mut sql = Sql::new("SELECT * FROM (");
     half(&mut sql, "new", to, from, request);
     sql.push(" UNION ALL ");

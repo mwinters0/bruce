@@ -240,3 +240,49 @@ fn a_run_that_names_no_baseline_is_refused() {
         Err(Error::NoBaseline(RunId(1)))
     ));
 }
+
+/// A 403 from page 1 in both runs, stored `error` by the crawl, and the CI run's
+/// policy making a 403 `broken_url`.
+fn forbidden(store: &Store, policy: bool) {
+    for run in [1, 2] {
+        target(store, run, 30, 403, "error", None);
+        link(store, run, 1, 30, None, "anchor");
+    }
+    if policy {
+        store
+            .connection()
+            .execute(
+                "INSERT INTO policy VALUES (2, NULL, 'status.403', 'broken_url')",
+                [],
+            )
+            .unwrap();
+    }
+}
+
+#[test]
+fn the_baseline_is_judged_by_the_ci_runs_policy() {
+    // Without the policy a 403 is an error in both runs: never introduced.
+    let plain = store();
+    forbidden(&plain, false);
+    let g = gate_of(&plain, |_| {});
+    assert!(!column(&g.introduced, "raw_href").contains(&"1>30#".to_owned()));
+    assert!(column(&g.errors, "raw_href").contains(&"1>30#".to_owned()));
+    // With it the link is broken in the CI run, and in the baseline too, which
+    // the policy reads as it reads the CI run: breakage already there, though
+    // the baseline run recorded no policy and judged it an error.
+    let judged = store();
+    forbidden(&judged, true);
+    let g = gate_of(&judged, |_| {});
+    assert!(!column(&g.introduced, "raw_href").contains(&"1>30#".to_owned()));
+    assert!(column(&g.already, "raw_href").contains(&"1>30#".to_owned()));
+    // The baseline is its own again once the gate is read.
+    let own: i64 = judged
+        .connection()
+        .query_row(
+            "SELECT count(*) FROM link_verdicts WHERE run_id = 1 AND outcome = 'error'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(own, 1);
+}

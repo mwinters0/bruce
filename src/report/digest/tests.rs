@@ -957,3 +957,31 @@ fn a_run_judges_a_reason_unless_its_policy_turns_it_off_everywhere() {
         .unwrap();
     assert!(judged().doubled_slash && !judged().pedantic_trailing_slash);
 }
+
+#[test]
+fn the_compared_run_is_judged_by_the_digests_policy() {
+    let store = compared();
+    let digest = || digest(&store, Some(RunId(1)), Against::Run(RunId(4))).unwrap();
+    assert_eq!(digest().compared.as_ref().unwrap().totals.broken_url, 1);
+    // Run 1 maps a 404 to `ok`; run 4, which recorded none, is read as run 1 is.
+    store
+        .connection()
+        .execute(
+            "INSERT INTO policy VALUES (1, NULL, 'status.404', 'ok')",
+            [],
+        )
+        .unwrap();
+    let digest = digest();
+    assert_eq!(digest.compared.as_ref().unwrap().totals.broken_url, 0);
+    assert_eq!(digest.totals.broken_url, 0);
+    // The run's own verdicts are its own again once the digest is built.
+    let own: i64 = store
+        .connection()
+        .query_row(
+            "SELECT count(*) FROM link_verdicts WHERE run_id = 4 AND outcome = 'broken_url'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(own, 1);
+}

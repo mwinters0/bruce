@@ -62,8 +62,9 @@ The spec is [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
   the one the crawl stored, D79 amended. Earned by 7.3, which dropped it
   ([`history/2026-10-30.md`](history/2026-10-30.md)). Notes:
   [`../wip/roadmap-P7.3.2-reason-notes.md`](../wip/roadmap-P7.3.2-reason-notes.md).
-- [ ] **7.4** Comparisons judged by the newer run's policy: the gate, the
-  digest's since, `diff`.
+- [x] **7.4** Comparisons judged by the newer run's policy: the gate, the
+  digest's since, `diff`. Notes:
+  [`../wip/roadmap-P7.4-comparisons-notes.md`](../wip/roadmap-P7.4-comparisons-notes.md).
 - [ ] **7.5** The severity map, the gate's `fail` list, and the policy stated
   in the digest's Housekeeping, JSON and guide.
 - [ ] **7.6** `bruce report --config`, judging by a trial policy.

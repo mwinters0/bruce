@@ -12,7 +12,7 @@ use super::run::Chosen;
 use super::sql::{PAGE, Sql};
 use super::table::{Cell, Table};
 use super::{anchors_removed, changed, diff, gate, inverse, reach, redirects};
-use crate::store::RunId;
+use crate::store::{JudgedBy, RunId};
 
 /// Runs the report, returning its table and the notes a text rendering adds.
 pub(super) fn run(
@@ -37,6 +37,7 @@ pub(super) fn run(
         }
         Report::Inverse => {
             let (base, date) = gate::baseline(conn, run)?;
+            let _judged = JudgedBy::new(conn, run.0)?;
             let table = inverse::inverse(conn, run, base, request)?;
             let (pages, groups) = inverse::counts(&table);
             let notes = vec![

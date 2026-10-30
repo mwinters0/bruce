@@ -21,7 +21,7 @@ use super::links::errors;
 use super::request::{InverseMode, Request};
 use super::sql::{Cols, Sql, pedantic};
 use super::table::{Format, Table, quoted};
-use crate::store::RunId;
+use crate::store::{JudgedBy, RunId};
 
 /// The filter columns of a `report_broken` or `report_redirects` row aliased `b`.
 const LINK: Cols = Cols {
@@ -160,6 +160,8 @@ pub(super) fn gate(conn: &Connection, run: RunId, request: &Request) -> Result<G
     // baseline, the inverse links and their inbound pages and components over
     // N rows at most; `stats` counts before it cuts. `check-dir` sets no limit.
     let (baseline, baseline_date) = baseline(conn, run)?;
+    // The baseline's links are judged by the CI run's policy (D81).
+    let _judged = JudgedBy::new(conn, run.0)?;
     Ok(Gate {
         run,
         baseline,

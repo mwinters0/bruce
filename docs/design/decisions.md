@@ -15,7 +15,7 @@ The en-US crawls the entries quote are named by their day: 2026-10-23's is `runs
 2026-10-24's `runs/p8.14-en-us-20261024-1322/`, and 2026-10-25's `runs/en-us-20261025-1301/`, run 2 of a copy of
 2026-10-24's database.
 
-<!-- decision-watermark: D80 -->
+<!-- decision-watermark: D81 -->
 
 ## Scope and modes
 
@@ -258,7 +258,7 @@ inverse check: pages outside the build linking to pages, files or anchors this c
 ### D9 CI fails only on breakage the change introduced
 A link is `(source URL, target URL, fragment)` of any kind (D13), with the build dir mapped to production URLs; only built
 pages' links count. It is introduced if it is broken here and the baseline's is not, or is absent. The inverse check fails by
-default; `--inverse=warn` turns it down (D27). Accepted noise: a renamed page's links all look new. `report introduced` judges
+default; `--inverse=warn` turns it down (D27). The baseline's links are judged by the CI run's policy (D81). Accepted noise: a renamed page's links all look new. `report introduced` judges
 every kind too, so re-reporting a CI run gives the rows that set its exit under `--inverse=fail`, which `report` assumes: in text,
 or in JSON as `report inverse`'s beside its own (D6). Rejected: failing on all breakage, which keeps CI permanently red;
 `check-dir --kind`, narrowing the gate, D50's `skip` silencing a noisy URL instead.
@@ -369,7 +369,7 @@ Rejected: a target row for the toggled URL, a page nothing links to counted and 
 Reopens: a site's config classifying (P7), or the probes showing on a crawl's long pole. Code: `crawl::slash`, `url::toggle_slash`, `report::digest::sections`. Evidence: `crawl::tests::a_404_whose_url_with_its_slash_toggled_answers_says_so`, `crawl::tests::a_redirect_onto_a_404_whose_url_toggled_answers_says_so`; none of 74 of the 2026-10-24 crawl's unredirected 4xx targets sampled has a toggle answering 2xx (`runs/d72-toggle-probe-20261024/`); the 2026-10-25 crawl's full yield is 5 targets of 764 probed, all landing on two wiki pages with a stray `/`.
 
 ### D73 A digest compares with the crawl run before it, a named run, or a baseline file imported for the digest and removed after
-`report digest` compares its run with `--from N`, else `--since FILE|URL` (`check-dir --baseline`'s file, `cli::file`), else the finished crawl run before it; with none the sub-title says so, and the HTML leaves out the two-run sections the JSON holds empty. A file's run is imported (D52) and its run deleted again once the document is built (`Store::discard_import`), unless the database already held it. `compared_with` in the JSON gives the run's start, finish, roots and totals, its `id` null for a file's run, the number being one the database held for a moment. Maintainer, 2026-10-23: a deployment with no history compares with the baseline it published the day before.
+`report digest` compares its run with `--from N`, else `--since FILE|URL` (`check-dir --baseline`'s file, `cli::file`), else the finished crawl run before it; with none the sub-title says so, and the HTML leaves out the two-run sections the JSON holds empty. A file's run is imported (D52) and its run deleted again once the document is built (`Store::discard_import`), unless the database already held it. `compared_with` in the JSON gives the run's start, finish, roots and totals, its `id` null for a file's run, the number being one the database held for a moment. Maintainer, 2026-10-23: a deployment with no history compares with the baseline it published the day before. The compared run is judged by the digest's run's policy (D81).
 Why: the imported run is a finished run later than the digest's, so left in place a bare `report` would read the baseline as the latest run (D59); a digest is written and the database is as it was.
 Rejected: attaching the file read-only, the views being bound to `main` (D52); leaving the import, a trap for the next report; comparing with the previous digest's JSON, which holds no hash or anchor; a `format_version` bump for `compared_with` going from always `null` to an object, no loader having read a value there.
 Reopens: a database too large to import into for a digest (the file grows by the import and reuses its blocks after, 33.6 to 55.3 MB on the 2026-10-24 crawl's, then 0.5 MB more). Code: `report::digest`, `report::digest::compare`, `store::baseline::import`. Evidence: `report::digest::compare::tests::a_baseline_file_is_imported_for_the_digest_and_removed_after`.
@@ -393,7 +393,7 @@ Rejected: a `severity` field in the JSON, a second statement of the outcome and 
 Reopens: a site's config classifying (P7). Code: `report::digest::html::severity`. Evidence: `report::digest::html::tests::a_level_is_read_off_a_links_outcome_and_reason`, `report::digest::tests::pages_and_repos_are_ranked_by_their_red_links_then_their_amber_ones`.
 
 ### D77 Links are judged by a table macro reading the recorded policy, and `link_verdicts` is its call with each link's own run's
-`link_verdicts_with(policy_run := NULL)` holds the verdict SQL (D28) and reads the policy rows (D78) of `policy_run`, else of the link's own run; a setting with no row is at today's default. The view is `SELECT * FROM link_verdicts_with()`; a view takes no parameter (D6), and P7's comparisons judge both runs by the newer run's policy by naming it.
+`link_verdicts_with(policy_run := NULL)` holds the verdict SQL (D28) and reads the policy rows (D78) of `policy_run`, else of the link's own run; a setting with no row is at today's default. The view is `SELECT * FROM link_verdicts_with()`; a view takes no parameter (D6), and a comparison judges both runs by the newer run's policy (D81).
 Why: one copy of the judgement serves a run read by its own policy and a comparison under another's; the macro is inlined, so a view's reads cost what they did: on the 2026-10-28 crawl the verdicts of one run cost 3 to 8 percent more, the digest 5 to 10 percent more CPU.
 Rejected: a second copy of the SQL for comparisons; a view per setting; a scalar parameter per setting, which a host's `doubled_slash` or a status map cannot be (P7.1's one parameter, `pedantic_trailing_slash`, was that).
 Reopens: a setting a stored fact cannot judge, which the crawl must keep (P7's rule), or the digest's cost mattering on a larger site.
@@ -416,6 +416,12 @@ Reopens: a site setting both a host's code and a landing's that disagree. Code: 
 Why: the broken relative links on a twinless doubled page are already no page's own count (D71), so a reach only decides whether the linking page is charged for them: `off` leaves them counted nowhere, as the spec says, and `counted` is the same under all three. A report that moved with the reach in the macro would change every report and the gate for a digest's attribution.
 Rejected: `off` counting those links on their own page, which blames a page for what its linking page wrote (D71); a reach per host, the attribution being the report's and not a host's.
 Reopens: a reach the gate should read, were the gate to fail on `through`. Code: `report::digest::sections`, `config::policy`, `report::digest::html::guide`. Evidence: `report::digest::tests::the_reach_says_how_far_the_links_broken_through_a_doubled_slash_are_counted`.
+
+### D81 A comparison judges both runs by the newer run's policy, through a session variable the macro reads
+`store::JudgedBy::new(conn, run)` sets the connection's DuckDB variable `judged_by` and resets it on drop; `link_verdicts_with` takes `policy_run`, else `judged_by`, else the link's own run (D77). The gate and `report inverse` hold it at the CI run, `diff` at `--to`, a digest with a comparison at its own run, for the whole read: the compared run's figures, its `new` marks and causes (D74, D75) and the baseline's links are judged as the newer run is, so a policy change shows as no breakage of its own.
+Why: every view the reports read takes no parameter (D6), and the digest re-queries eight sections of the compared run through them (D75); a variable reaches all of them with no second copy of any query, and a run's policy rows are the newer run's, whatever the older recorded.
+Rejected: naming `policy_run` in each comparison's SQL, which needs a parameterised copy of `report_broken` and every section; a table of overrides, a write in a read; each run judged by its own policy with the change named as a cause (D74), which fails a gate on a setting nobody broke.
+Reopens: readers sharing one connection (a variable is the connection's), or a comparison wanting the older run's own policy. Code: `store::views`, `report::gate`, `report::diff`, `report::digest`. Evidence: `report::gate::tests::the_baseline_is_judged_by_the_ci_runs_policy`, `report::diff::tests::both_runs_are_judged_by_the_newer_runs_policy`, `report::digest::tests::the_compared_run_is_judged_by_the_digests_policy`.
 
 ### D61 Live slots are shared among the hosts with work, and a build's reads have a budget of their own
 Each host holds at most the 64 slots divided by the hosts with a target waiting or running, taken in turn,

@@ -226,3 +226,24 @@ fn links_sharing_a_key_are_one_row() {
     let out = diff(&store, |r| r.repo = Some("r/one".into()));
     assert_eq!(changes(&out), ["new 1>12#", "new 1>2#nope", "fixed 1>11#"]);
 }
+
+#[test]
+fn both_runs_are_judged_by_the_newer_runs_policy() {
+    // A 403 stored `error` in both runs, run 2 alone judging it `broken_url`.
+    let store = store();
+    for run in [1, 2] {
+        target(&store, run, 30, 403, "error", None);
+        link(&store, run, 1, 30, None, "anchor");
+    }
+    assert!(!changes(&diff(&store, |_| {})).contains(&"new 1>30#".to_owned()));
+    store
+        .connection()
+        .execute(
+            "INSERT INTO policy VALUES (2, NULL, 'status.403', 'broken_url')",
+            [],
+        )
+        .unwrap();
+    let got = changes(&diff(&store, |_| {}));
+    assert!(!got.contains(&"new 1>30#".to_owned()), "{got:?}");
+    assert!(!got.contains(&"fixed 1>30#".to_owned()), "{got:?}");
+}
