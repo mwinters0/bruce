@@ -31,7 +31,7 @@ grilling, spec amendment and a numbered slice.
 **Ledger lines stay one line each.** The detail lives in the dated history
 entry each line points at.
 
-Allocated so far: M1–M23. <!-- out-of-band-watermark: M23 -->
+Allocated so far: M1–M24. <!-- out-of-band-watermark: M24 -->
 
 ## The ledger
 
@@ -39,3 +39,4 @@ Allocated so far: M1–M23. <!-- out-of-band-watermark: M23 -->
 |---|---|---|---|---|
 | M22 | 2026-10-29 | The digest's HTML ends with "How to read this report", its entries for a doubled slash and a pedantic redirect, and an ⓘ beside each term in the rows links to its entry | | [2026-10-29](../status/history/2026-10-29.md) |
 | M23 | 2026-10-30 | `mise run shot` renders with Chrome's headless shell in a pinned container, Servo unpinned and `runs/headless-browser-trial/` deleted | | [2026-10-30](../status/history/2026-10-30.md) |
+| M24 | | `mise run shot`'s phone render emulates a phone: `mobile=True` at 390 px, device scale 1 | P7 | [2026-10-30](../status/history/2026-10-30.md) |

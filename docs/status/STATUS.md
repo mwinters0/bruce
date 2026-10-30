@@ -86,10 +86,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **`shot.py` drives Chrome over DevTools with its own WebSocket client.** The
-  pinned `chromedp/headless-shell` image hangs on every one-shot flag, which the
-  M23 settlement assumed, so the script is about 150 lines longer than a flag
-  call. Reconsidering means another image or binary where the flags work, such
-  as Chrome for Testing in a `Containerfile` (rejected for its build step), and
-  `shot.py` shrinks to one command a render. Nothing else reads it.

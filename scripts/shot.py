@@ -24,11 +24,15 @@ the page rendering in a fallback font. **The renders are for a person to read**:
 nothing asserts on them.
 
 **The browser is `IMAGE`**, pinned by version tag and index digest, the daily
-builds being only partly kept. Chromium's one-shot flags (`--screenshot`,
-`--print-to-pdf`, `--dump-dom`) hang in it, so the page is driven over the
-DevTools protocol with the standard library, the browser's port published on
-127.0.0.1 only. A `--screenshot` of a URL with a fragment paints blank above
-the target, and a fragment naming an element inside a closed `<details>` opens
+builds being only partly kept. Its shell has no one-shot commands
+(`--screenshot`, `--print-to-pdf`, `--dump-dom`): the image's build imports
+Chromium's `build/args/headless.gn`, which sets `headless_enable_commands =
+false`, so the flags are ignored and the page stays open. The page is driven
+over the DevTools protocol with the standard library, the browser's port
+published on 127.0.0.1 only, which a build with the commands would still need:
+a flag cannot size a PNG to the page, wait on `document.fonts.ready`, or
+screenshot a URL with a fragment, which paints blank above the target. A
+fragment naming an element inside a closed `<details>` opens
 its ancestors, not the element (HTML's ancestor revealing algorithm: Chrome
 97), so read a reveal off the DOM. Rejected: Servo's `servoshell`, which has no
 paged media and lays a phone's tables out otherwise than Chrome; a
