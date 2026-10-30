@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """Unit tests for shot.py, run with `uv run python -m unittest test_shot`.
 
-Servo is not run here: `mise run shot` is the check that it renders.
+The browser is not run here: `mise run shot` is the check that it renders.
 `ThisRepo` holds the real page to the print copy.
 """
 
 from __future__ import annotations
 
+import os
+import socket
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import shot
 
@@ -49,25 +52,81 @@ class PrintCopy(unittest.TestCase):
             shot.print_copy("@media printer { a {} }")
 
 
-class Command(unittest.TestCase):
-    def test_the_window_and_the_file_url_are_named(self):
+class Runtime(unittest.TestCase):
+    def test_the_flag_beats_the_environment_and_is_split_as_a_command(self):
+        env = {shot.RUNTIME_ENV: "podman"}
+        self.assertEqual(
+            shot.runtime_command("sudo nerdctl", env, lambda r: False), ["sudo", "nerdctl"]
+        )
+
+    def test_the_environment_is_taken_as_given(self):
+        env = {shot.RUNTIME_ENV: "sudo nerdctl"}
+        self.assertEqual(shot.runtime_command(None, env, lambda r: False), ["sudo", "nerdctl"])
+
+    def test_the_first_runtime_that_answers_is_used(self):
+        self.assertEqual(shot.runtime_command(None, {}, lambda r: r == "docker"), ["docker"])
+        self.assertEqual(shot.runtime_command(None, {}, lambda r: True), ["podman"])
+
+    def test_none_answering_names_the_setting(self):
+        with self.assertRaisesRegex(shot.ShotError, shot.RUNTIME_ENV):
+            shot.runtime_command(None, {}, lambda r: False)
+
+
+class Container(unittest.TestCase):
+    def test_the_image_is_pinned_by_version_and_digest(self):
+        self.assertRegex(shot.IMAGE, r":\d+\.\d+\.\d+\.\d+@sha256:[0-9a-f]{64}$")
+
+    def test_the_port_is_local_only_and_the_mounts_read_only(self):
         with tempfile.TemporaryDirectory() as d:
-            page = Path(d) / "p q.html"
-            page.write_text("x", encoding="utf-8")
-            command = shot.render_command(Path("/bin/servoshell"), page, Path("o.png"), 390, 3200)
-        self.assertEqual(command[:3], ["/bin/servoshell", "-z", "-x"])
-        self.assertIn("--window-size=390x3200", command)
-        self.assertTrue(command[-1].startswith("file:///"))
-        self.assertTrue(command[-1].endswith("p%20q.html"))
+            command = shot.container_command(
+                ["sudo", "nerdctl"], "n", 4242, Path(d), Path(d), Path(d)
+            )
+        self.assertEqual(command[:3], ["sudo", "nerdctl", "run"])
+        self.assertNotIn("--rm", command)
+        self.assertIn("127.0.0.1:4242:9222", command)
+        self.assertIn("FONTCONFIG_FILE=/work/fonts.conf", command)
+        mounts = [c for c in command if c.endswith(":ro")]
+        self.assertEqual(len(mounts), 3)
+        self.assertEqual(command[-1], shot.IMAGE)
 
     def test_the_widths_are_a_desktop_a_phone_and_a4(self):
         self.assertEqual(dict(shot.WIDTHS), {"1280": 1280, "390": 390, "print": 794})
 
 
+class Frames(unittest.TestCase):
+    def roundtrip(self, payload: bytes) -> str:
+        a, b = socket.socketpair()
+        with a, b:
+            a.sendall(shot.encode_frame(payload))
+            return shot.WebSocket(b).receive()
+
+    def test_each_length_form_reads_back(self):
+        for n in (0, 125, 126, 70000):
+            text = "x" * n
+            self.assertEqual(self.roundtrip(text.encode()), text)
+
+    def test_a_masked_frame_is_masked_with_its_key(self):
+        frame = shot.encode_frame(b"hi", b"\x01\x02\x03\x04")
+        self.assertEqual(frame, bytes([0x81, 0x82, 1, 2, 3, 4, ord("h") ^ 1, ord("i") ^ 2]))
+
+    def test_fragments_are_joined(self):
+        a, b = socket.socketpair()
+        with a, b:
+            a.sendall(bytes([0x01, 2]) + b"he" + bytes([0x80, 3]) + b"llo")
+            self.assertEqual(shot.WebSocket(b).receive(), "hello")
+
+    def test_a_close_is_an_error(self):
+        a, b = socket.socketpair()
+        with a, b:
+            a.sendall(bytes([0x88, 0]))
+            with self.assertRaisesRegex(shot.ShotError, "closed"):
+                shot.WebSocket(b).receive()
+
+
 class Fonts(unittest.TestCase):
     def test_the_pinned_font_stands_behind_every_family(self):
-        conf = shot.fonts_conf(Path("/f/ttf"), Path("/c"))
-        self.assertIn("<dir>/f/ttf</dir>", conf)
+        conf = shot.fonts_conf("/fonts", "/c")
+        self.assertIn("<dir>/fonts</dir>", conf)
         self.assertIn("<cachedir>/c</cachedir>", conf)
         for family in ("ui-monospace", "monospace", "serif"):
             self.assertIn(f"<string>{family}</string>", conf)
@@ -75,17 +134,23 @@ class Fonts(unittest.TestCase):
 
 
 class Run(unittest.TestCase):
-    def test_a_missing_tool_names_it_and_exits_one(self):
+    def test_no_runtime_answering_exits_one(self):
         with tempfile.TemporaryDirectory() as d:
-            code = shot.run(
-                Path(d) / "p.html", Path(d) / "out", 100, Path(d) / "no-servoshell", Path(d)
-            )
+            with mock.patch.object(shot, "answers", lambda r: False), mock.patch.dict(
+                os.environ, {}, clear=True
+            ):
+                code = shot.run(Path(d) / "p.html", Path(d) / "out", 100, None, Path(d))
+        self.assertEqual(code, 1)
+
+    def test_a_missing_font_directory_names_it_and_exits_one(self):
+        with tempfile.TemporaryDirectory() as d:
+            code = shot.run(Path(d) / "p.html", Path(d) / "out", 100, "true", Path(d) / "nope")
         self.assertEqual(code, 1)
 
     def test_a_missing_page_is_a_shot_error(self):
         with tempfile.TemporaryDirectory() as d:
             with self.assertRaisesRegex(shot.ShotError, "p.html"):
-                shot.render(Path(d) / "p.html", Path(d) / "out", 100, Path(d), Path(d))
+                shot.render(Path(d) / "p.html", Path(d) / "out", 100, ["true"], Path(d))
 
 
 class ThisRepo(unittest.TestCase):

@@ -7,3 +7,6 @@ __pycache__/
 # graft local graph cache: regenerable, not committed.
 /graft/
 /sim
+
+# This machine's facts, `CLAUDE.local.md`.
+/CLAUDE.local.md

@@ -35,7 +35,7 @@ pages, chosen and saved by `scripts/fixtures.py`, and `fixtures/antora/`, a
 three-component Antora site, the Fedora UI bundle and seven built pages, which
 `mise run e2e` rebuilds and then crawls, exports and runs `check-dir` over, asserting
 the gate's exit status and sections.
-`mise run shot` renders a page of HTML headless with Servo to PNGs, for review.
+`mise run shot` renders a page of HTML in Chrome's headless shell, in a container, to PNGs and a printed PDF, for review.
 The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball (D60).
 `.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), its body naming a schema change from the latest release's (D43), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
 
@@ -87,3 +87,9 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
+- **`shot.py` drives Chrome over DevTools with its own WebSocket client.** The
+  pinned `chromedp/headless-shell` image hangs on every one-shot flag, which the
+  M23 settlement assumed, so the script is about 150 lines longer than a flag
+  call. Reconsidering means another image or binary where the flags work, such
+  as Chrome for Testing in a `Containerfile` (rejected for its build step), and
+  `shot.py` shrinks to one command a render. Nothing else reads it.
