@@ -138,7 +138,8 @@ macro_rules! host {
 /// A target is read as `answer`, an outcome and a reason: its stored ones, but
 /// for a `scheme` or `bad_scheme` one, judged by the policy's schemes, and for
 /// a response whose status the policy judges, on the host that answered,
-/// else on every host (a 3xx is a hop and never judged).
+/// else on every host (a 3xx is a hop and never judged). The crawl's reason
+/// stays where the judged outcome is the stored one, and goes otherwise (D79).
 pub(super) fn link_verdicts_with() -> String {
     let schemes: Vec<String> = WORKING_SCHEMES.iter().map(|s| format!("'{s}'")).collect();
     LINK_VERDICTS_WITH
@@ -163,7 +164,8 @@ WITH pr AS (
                         lower(regexp_extract(th.url, '^([A-Za-z][A-Za-z0-9+.-]*):', 1)))
                     THEN ['unchecked', 'scheme'] ELSE ['broken_url', 'bad_scheme'] END
             WHEN th.status NOT BETWEEN 300 AND 399 AND coalesce(hm.value, dm.value) IS NOT NULL
-                THEN [coalesce(hm.value, dm.value), NULL]
+                THEN [coalesce(hm.value, dm.value),
+                    CASE WHEN coalesce(hm.value, dm.value) = th.outcome THEN th.reason END]
             ELSE [th.outcome, th.reason]
         END AS answer
     FROM th

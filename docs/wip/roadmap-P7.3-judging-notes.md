@@ -52,8 +52,8 @@ pedantic setting) changed nothing measurable and was not kept.
   reach those.
 - **`policy_run` is `NULL` for a view and a number for P7.4's call**; the
   baseline run an `import_baseline` renumbers has its rows, as D78 says.
-- **A status judged `ok` loses the stored reason**, `too_large` among them, if a
-  site maps a 2xx; the manual does not forbid mapping one.
+- **A status mapped to a different outcome loses the stored reason**
+  (P7.3.2 keeps it where the outcome is the stored one).
 
 ## Negative results
 

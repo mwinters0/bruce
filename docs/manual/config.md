@@ -247,7 +247,9 @@ finding. The digest's guide states the reach the run was judged by.
 `broken_url` or `error`. A class such as `4xx` is refused, and so is a 3xx,
 which is a hop the crawl follows. The host judged is the one that **answered**,
 the last of a redirect's hops. A code no table names is judged as it was
-crawled: a 4xx other than 401, 403 and 429 is `broken_url`, a 5xx `error`. A fragment on a URL judged `ok`
+crawled: a 4xx other than 401, 403 and 429 is `broken_url`, a 5xx `error`. A map that gives
+the outcome the crawl stored keeps the crawl's reason (`wrong_trailing_slash`, `too_large`);
+any other drops it. A fragment on a URL judged `ok`
 by this map is `unchecked`, reason `no_anchors`, as on any `ok` URL whose body
 was not read.
 

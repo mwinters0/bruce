@@ -725,7 +725,7 @@ fn a_status_the_policy_judges_is_read_over_the_outcome_the_crawl_stored() {
         "forge.test".to_string(),
         crate::config::HostJudging {
             doubled_slash: None,
-            status: [(403, Answer::BrokenUrl)].into(),
+            status: [(403, Answer::BrokenUrl), (404, Answer::BrokenUrl)].into(),
         },
     );
     let store = judged_by(&policy);
@@ -761,6 +761,14 @@ fn a_status_the_policy_judges_is_read_over_the_outcome_the_crawl_stored() {
         None,
     );
     hundreds(9, "https://forge.test/y", 401, "error", None, None);
+    hundreds(
+        10,
+        "https://forge.test/k",
+        404,
+        "broken_url",
+        Some("wrong_trailing_slash"),
+        None,
+    );
     for (label, id, fragment) in [
         ("default-403", 2, None),
         ("forge-403", 3, None),
@@ -770,6 +778,7 @@ fn a_status_the_policy_judges_is_read_over_the_outcome_the_crawl_stored() {
         ("probed", 7, None),
         ("hop", 8, None),
         ("forge-401", 9, None),
+        ("kept", 10, None),
         ("fragment", 2, Some("x")),
     ] {
         link(&store, label, id, fragment, None);
@@ -785,8 +794,10 @@ fn a_status_the_policy_judges_is_read_over_the_outcome_the_crawl_stored() {
         ("forge-401", "error", None),
         // The host that answered is the one judged, not the one linked.
         ("forge-landing", "broken_url", None),
-        // A reason the crawl set for the class it saw goes with the class.
+        // A reason the crawl set goes with the class it saw, and stays where
+        // the map leaves the outcome as stored.
         ("probed", "error", None),
+        ("kept", "broken_url", Some("wrong_trailing_slash")),
         // A redirect is a hop, whatever a map says.
         ("hop", "broken_url", Some("bad_redirect")),
         // An `ok` target with no body read has no anchors to check.
