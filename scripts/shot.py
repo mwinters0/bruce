@@ -7,7 +7,10 @@ headless shell, run in a container so the host supplies no libraries and the
 browser is the same on every machine, at three sizes under `--out`:
 
 - `<stem>-1280.png`, a desktop's width;
-- `<stem>-390.png`, a phone's;
+- `<stem>-390.png`, a phone's: emulated as one (`mobile`, so the page's
+  `<meta name=viewport>` sets its layout width, as on a phone; a page with none
+  lays out 980 px wide) at a device scale of 1, a larger scale adding pixels and
+  nothing to a layout check;
 - `<stem>-print.png`, about A4's width (794 px), of `<stem>-print.html`, a copy
   of the page whose `@media print` reads `@media all` and whose every
   `<details>` is open: the print palette and the rules for the disclosures,
@@ -86,8 +89,9 @@ IMAGE = (
 RUNTIME_ENV = "BRUCE_SHOT_RUNTIME"
 #: The runtimes tried in turn when none is named.
 RUNTIMES = ("podman", "docker")
-#: Each PNG's name suffix and window width, in px; the print one is of the copy.
-WIDTHS = (("1280", 1280), ("390", 390), ("print", 794))
+#: Each PNG's name suffix, window width in px and whether it emulates a phone;
+#: the print one is of the copy.
+WIDTHS = (("1280", 1280, False), ("390", 390, True), ("print", 794, False))
 #: A page taller than this is cut, Chrome's texture limit being 16384.
 HEIGHT = 16000
 #: What a start, a load or a reply may take, in s; one that has not finished by
@@ -343,11 +347,11 @@ class Page:
                 self.events.append(message["method"])
         self.events.remove(event)
 
-    def load(self, url: str, width: int, height: int) -> None:
-        """Navigates to `url` in a window `width` by `height` and waits for the
-        page and its fonts."""
+    def load(self, url: str, width: int, height: int, mobile: bool = False) -> None:
+        """Navigates to `url` in a window `width` by `height`, a phone's if
+        `mobile`, and waits for the page and its fonts."""
         self.call("Emulation.setDeviceMetricsOverride",
-                  width=width, height=height, deviceScaleFactor=1, mobile=False)
+                  width=width, height=height, deviceScaleFactor=1, mobile=mobile)
         self.events.clear()
         self.call("Page.navigate", url=url)
         self.wait_for("Page.loadEventFired")
@@ -360,12 +364,13 @@ class Page:
                            returnByValue=True)
         return int(result["result"]["value"])
 
-    def png(self, url: str, width: int, cap: int) -> bytes:
-        """A screenshot of `url` at `width`, as tall as the page up to `cap`."""
-        self.load(url, width, 800)
+    def png(self, url: str, width: int, cap: int, mobile: bool = False) -> bytes:
+        """A screenshot of `url` at `width`, a phone's if `mobile`, as tall as
+        the page up to `cap`."""
+        self.load(url, width, 800, mobile)
         height = max(1, min(self.content_height(), cap))
         self.call("Emulation.setDeviceMetricsOverride",
-                  width=width, height=height, deviceScaleFactor=1, mobile=False)
+                  width=width, height=height, deviceScaleFactor=1, mobile=mobile)
         return base64.b64decode(self.call("Page.captureScreenshot", format="png")["data"])
 
     def pdf(self, url: str) -> bytes:
@@ -421,11 +426,11 @@ def render(page: Path, out: Path, height: int, runtime: list[str], fonts: Path) 
     tab = None
     try:
         tab = open_tab(port)
-        for suffix, width in WIDTHS:
+        for suffix, width, mobile in WIDTHS:
             url = f"file://{WORK_MOUNT}/{printed.name}" if suffix == "print" else (
                 f"file://{SRC_MOUNT}/{page.name}")
             png = out / f"{stem}-{suffix}.png"
-            png.write_bytes(tab.png(url, width, height))
+            png.write_bytes(tab.png(url, width, height, mobile))
             files.append(png)
         pdf = out / f"{stem}.pdf"
         pdf.write_bytes(tab.pdf(f"file://{SRC_MOUNT}/{page.name}"))

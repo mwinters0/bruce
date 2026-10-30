@@ -39,4 +39,4 @@ Allocated so far: M1–M24. <!-- out-of-band-watermark: M24 -->
 |---|---|---|---|---|
 | M22 | 2026-10-29 | The digest's HTML ends with "How to read this report", its entries for a doubled slash and a pedantic redirect, and an ⓘ beside each term in the rows links to its entry | | [2026-10-29](../status/history/2026-10-29.md) |
 | M23 | 2026-10-30 | `mise run shot` renders with Chrome's headless shell in a pinned container, Servo unpinned and `runs/headless-browser-trial/` deleted | | [2026-10-30](../status/history/2026-10-30.md) |
-| M24 | | `mise run shot`'s phone render emulates a phone: `mobile=True` at 390 px, device scale 1 | P7 | [2026-10-30](../status/history/2026-10-30.md) |
+| M24 | 2026-10-30 | `mise run shot`'s phone render emulates a phone: `mobile=True` at 390 px, device scale 1 | | [2026-10-30](../status/history/2026-10-30.md) |

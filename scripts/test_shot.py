@@ -89,8 +89,11 @@ class Container(unittest.TestCase):
         self.assertEqual(len(mounts), 3)
         self.assertEqual(command[-1], shot.IMAGE)
 
-    def test_the_widths_are_a_desktop_a_phone_and_a4(self):
-        self.assertEqual(dict(shot.WIDTHS), {"1280": 1280, "390": 390, "print": 794})
+    def test_the_widths_are_a_desktop_a_phone_and_a4_and_only_the_phone_is_mobile(self):
+        self.assertEqual(
+            list(shot.WIDTHS),
+            [("1280", 1280, False), ("390", 390, True), ("print", 794, False)],
+        )
 
 
 class Frames(unittest.TestCase):
