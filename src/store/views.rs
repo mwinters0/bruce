@@ -168,6 +168,12 @@ macro_rules! host {
 /// a response whose status the policy judges, on the host that answered,
 /// else on every host (a 3xx is a hop and never judged). The crawl's reason
 /// stays where the judged outcome is the stored one, and goes otherwise (D79).
+// deficiency: KD23 The answer is judged here and nowhere else, so a query
+// reading `targets.outcome` and `targets.reason` itself reads the crawl's:
+// `report::digest::cause`'s `target_removed` (a target a remapped status
+// breaks is `unexplained`), `report_sitemap`'s entries and `report_roots`'
+// `has_sitemap` (`report::views`), and the digest's `target_outcome`
+// (`report::digest::sections`). A comparison's guard (D81) reaches none of them.
 pub(super) fn link_verdicts_with() -> String {
     let schemes: Vec<String> = WORKING_SCHEMES.iter().map(|s| format!("'{s}'")).collect();
     LINK_VERDICTS_WITH

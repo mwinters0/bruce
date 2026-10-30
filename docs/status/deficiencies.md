@@ -91,4 +91,12 @@ roadmap's phase index.
   anyone meeting the refusal on a two-run report would promote it.
   Detail: `src/report/error.rs`
 
-<!-- deficiency-watermark: KD22 -->
+- **KD23** — A target's answer is judged by the policy only inside
+  `link_verdicts`, so the queries reading a target's stored outcome show the
+  crawl's: a link a remapped status breaks is a new break's `unexplained`, not
+  `target_removed`, and `report sitemap` and the digest's sitemap entries show
+  the status as the crawl judged it. **(c) unowned**: a judged view of
+  targets for those queries to read would promote it. Detail:
+  `src/store/views.rs`
+
+<!-- deficiency-watermark: KD23 -->

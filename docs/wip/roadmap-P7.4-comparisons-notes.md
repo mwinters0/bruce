@@ -20,11 +20,9 @@ What the next slice inherits. The decision is D81.
   guard (and the macro) to read a policy from something other than a run's rows,
   or to write the trial's rows under a scratch run. The variable is the one
   place judging is chosen for the views.
-- **Queries reading `targets.outcome` and `targets.reason` directly are not
-  judged by any policy**, a comparison's included: `cause.rs`'s `target_removed`,
-  the digest's external hosts and sitemap entries. A status remapped at read
-  time does not reach them (as P7.3's notes say). The severity map and `fail`
-  list of P7.5 read verdicts, not these.
+- **Queries reading a target's stored outcome are judged by no policy**, a
+  comparison's included: KD23. The severity map and `fail` list of P7.5 read
+  verdicts, not these.
 - The gate's `fail` list (P7.5) is the CI run's, which is the policy the gate now
   judges the baseline by.
 
