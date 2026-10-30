@@ -346,7 +346,13 @@ fn with_no_finished_run_a_report_says_so() {
     let store = Store::open_in_memory(&registry()).unwrap();
     store.install(VIEWS).unwrap();
     store
-        .begin_run(crate::store::Mode::Crawl, "h", None, &[])
+        .begin_run(
+            crate::store::Mode::Crawl,
+            "h",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
         .unwrap();
     let err = run(&store, &Request::new(Report::Broken)).unwrap_err();
     assert!(matches!(err, Error::NoFinishedRun));
@@ -359,7 +365,13 @@ pub(super) fn xrefs(refspecs: &[&str]) -> Store {
     let store = Store::open_in_memory(&registry()).unwrap();
     store.install(VIEWS).unwrap();
     let run = store
-        .begin_run(crate::store::Mode::Crawl, "h", None, &[])
+        .begin_run(
+            crate::store::Mode::Crawl,
+            "h",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
         .unwrap();
     for (id, component, module, rel_path) in [
         (1, "hb", "ROOT", "start.adoc"),

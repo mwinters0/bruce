@@ -36,7 +36,15 @@ fn dir_with_runs() -> (tempfile::TempDir, PathBuf) {
     let dir = tempfile::tempdir().unwrap();
     let db = dir.path().join("bruce.duckdb");
     let store = Store::open(&db, &registry()).unwrap();
-    let first = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+    let first = store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     store
         .connection()
         .execute(
@@ -46,7 +54,15 @@ fn dir_with_runs() -> (tempfile::TempDir, PathBuf) {
         )
         .unwrap();
     store.finish_run(first).unwrap();
-    store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+    store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     (dir, db)
 }
 

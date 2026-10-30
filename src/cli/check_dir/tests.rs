@@ -118,7 +118,13 @@ fn a_directory_and_a_prefix_are_required() {
 fn empty_baseline(path: &Path) {
     let store = Store::open(path, &registry()).unwrap();
     let run = store
-        .begin_run(crate::store::Mode::Crawl, "base", None, &[])
+        .begin_run(
+            crate::store::Mode::Crawl,
+            "base",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
         .unwrap();
     store.finish_run(run).unwrap();
 }

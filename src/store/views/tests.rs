@@ -96,8 +96,24 @@ fn expect(got: &BTreeMap<String, Verdict>, label: &str, outcome: &str, reason: O
 #[test]
 fn a_fragment_is_checked_against_the_page_the_target_landed_on() {
     let store = open();
-    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
-    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     // 2 is a page, 3 redirects to it, 4 is an ok asset, 5 redirects onto a
     // page robots.txt forbids.
     target(&store, 1, 2, "ok", None, None);
@@ -175,7 +191,15 @@ fn a_fragment_is_checked_against_the_page_the_target_landed_on() {
 #[test]
 fn a_target_that_is_not_ok_gives_its_link_its_own_outcome_and_reason() {
     let store = open();
-    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     target(&store, 1, 2, "broken_url", None, None);
     target(&store, 1, 3, "error", Some("timeout"), None);
     target(&store, 1, 4, "unchecked", Some("out_of_scope"), None);
@@ -197,7 +221,15 @@ fn a_target_that_is_not_ok_gives_its_link_its_own_outcome_and_reason() {
 #[test]
 fn an_unresolved_xref_is_broken_whatever_the_fragment_names() {
     let store = open();
-    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     target(&store, 1, 1, "ok", None, None);
     page(&store, 1, 1, &["comp::page.adoc"]);
     // Antora leaves the page itself as the target, the refspec its fragment.
@@ -218,7 +250,15 @@ fn an_unresolved_xref_is_broken_whatever_the_fragment_names() {
 #[test]
 fn an_unresolved_xref_is_told_by_its_fragment_where_a_base_href_moved_its_target() {
     let store = open();
-    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     target(&store, 1, 1, "ok", None, None);
     page(&store, 1, 1, &[]);
     // A `<base href>` made another page the target; the refspec is still the
@@ -240,7 +280,15 @@ fn an_unresolved_xref_is_told_by_its_fragment_where_a_base_href_moved_its_target
 #[test]
 fn a_resolved_xref_is_judged_as_any_link_to_its_target() {
     let store = open();
-    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     target(&store, 1, 1, "ok", None, None);
     page(&store, 1, 1, &[]);
     target(&store, 1, 2, "ok", None, None);
@@ -256,7 +304,15 @@ fn a_resolved_xref_is_judged_as_any_link_to_its_target() {
 #[test]
 fn a_resolved_xref_whose_url_is_broken_is_unresolved_and_one_not_known_to_be_is_not() {
     let store = open();
-    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     target(&store, 1, 1, "ok", None, None);
     page(&store, 1, 1, &[]);
     // The URL a refspec names (D57) that production answers 404, and others
@@ -304,7 +360,15 @@ fn slash_target(store: &Store, id: u64, url: &str, final_url: &str) {
 #[test]
 fn a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic() {
     let store = open();
-    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     let base = "https://e.test/a";
     slash_target(&store, 2, base, "https://e.test/a/");
     slash_target(&store, 3, "https://e.test/b/", "https://e.test/b");
@@ -366,6 +430,15 @@ fn a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic() {
     // The view is the macro called with its defaults (D77); a site switching the
     // reason off keeps the verdicts and loses the reason.
     assert_eq!(got, verdicts_of(&store, "link_verdicts_with()"));
+    // The macro's defaults are the default policy a run records (D78).
+    let recorded = crate::config::Policy::default().pedantic_trailing_slash;
+    assert_eq!(
+        got,
+        verdicts_of(
+            &store,
+            &format!("link_verdicts_with(pedantic_trailing_slash := {recorded})")
+        )
+    );
     let off = verdicts_of(
         &store,
         "link_verdicts_with(pedantic_trailing_slash := false)",
@@ -396,7 +469,15 @@ fn raw_target(store: &Store, id: u64, url: &str, outcome: &str, final_url: Optio
 #[test]
 fn a_link_to_a_url_with_a_doubled_slash_is_broken_whatever_it_answered() {
     let store = open();
-    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     raw_target(&store, 2, "https://e.test/a//b", "ok", None);
     raw_target(
         &store,
@@ -509,7 +590,15 @@ fn counted(store: &Store, src: u64) -> BTreeMap<String, (bool, bool)> {
 #[test]
 fn a_doubled_slash_page_counts_nothing_with_a_twin_and_its_absolute_links_without_one() {
     let store = open();
-    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     // 1 is a clean page. 30 doubles a slash and 31, its twin, is a page; 32
     // doubles one and its twin is not.
     for (id, url) in [
@@ -557,7 +646,15 @@ fn a_doubled_slash_page_counts_nothing_with_a_twin_and_its_absolute_links_withou
 #[test]
 fn a_doubled_slash_page_linking_to_itself_is_judged_as_any_link() {
     let store = open();
-    store.begin_run(Mode::Crawl, "t", None, &[]).unwrap();
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     raw_target(&store, 32, "https://e.test/f//g", "ok", None);
     page(&store, 1, 32, &["here"]);
     link_from(&store, 32, "#here", 32);

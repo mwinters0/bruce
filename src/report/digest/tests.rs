@@ -793,7 +793,13 @@ fn a_run_with_no_pages_has_empty_sections() {
     let store = Store::open_in_memory(&registry()).unwrap();
     store.install(VIEWS).unwrap();
     let id = store
-        .begin_run(crate::store::Mode::Crawl, "h", None, &[])
+        .begin_run(
+            crate::store::Mode::Crawl,
+            "h",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
         .unwrap();
     store.finish_run(id).unwrap();
     let d = digest(&store, None, Against::Previous).unwrap();

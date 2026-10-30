@@ -281,7 +281,7 @@ def bruce_config(port: int) -> str:
     fixture host is fetched fast, and no external host is on the allowlist, so
     nothing leaves the machine."""
     return (
-        "[rate]\nper_second = 500\nconcurrency = 8\n\n"
+        "[default]\nper_second = 500\nconcurrency = 8\n\n"
         '[host."127.0.0.1"]\nper_second = 500\n\n'
         f'[[root]]\nurl = "http://127.0.0.1:{port}{SITE_PATH}/"\n'
     )

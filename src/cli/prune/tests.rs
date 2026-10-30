@@ -48,7 +48,15 @@ fn prune_deletes_through_the_command_line() {
     {
         let store = Store::open(&path, &registry()).unwrap();
         for _ in 0..3 {
-            let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+            let run = store
+                .begin_run(
+                    Mode::Crawl,
+                    "abc",
+                    None,
+                    &[],
+                    &crate::config::Policy::default(),
+                )
+                .unwrap();
             store.finish_run(run).unwrap();
         }
     }

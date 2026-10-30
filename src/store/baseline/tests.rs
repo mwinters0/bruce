@@ -18,7 +18,13 @@ fn count(store: &Store, sql: &str) -> i64 {
 /// `STRUCT[]`), one page with a fact and an anchor, one link and one body.
 fn run(store: &Store, n: u64, baseline: Option<RunId>, finished: bool) -> RunId {
     let run = store
-        .begin_run(Mode::Crawl, "abc", baseline, &["https://a.test/".into()])
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            baseline,
+            &["https://a.test/".into()],
+            &crate::config::Policy::default(),
+        )
         .unwrap();
     let conn = store.connection();
     for id in 1..=n {
@@ -109,6 +115,47 @@ fn the_latest_finished_run_is_exported_alone_in_a_file_of_the_current_schema() {
     );
     assert_eq!(count(&file, "SELECT count(*) FROM bodies"), 0);
     assert_eq!(count(&file, "SELECT count(*) FROM link_verdicts"), 1);
+}
+
+#[test]
+fn a_run_policy_travels_in_the_baseline_file_and_into_the_run_that_imports_it() {
+    let (dir, store) = source();
+    let policy = crate::config::Policy {
+        pedantic_trailing_slash: false,
+    };
+    let run = store
+        .begin_run(Mode::Crawl, "abc", None, &[], &policy)
+        .unwrap();
+    store.finish_run(run).unwrap();
+    let out = dir.path().join("baseline.duckdb");
+    store.export_baseline(None, &out, &registry()).unwrap();
+    let held = "SELECT key || '=' || value FROM policy WHERE host IS NULL";
+    let file = Store::open(&out, &registry()).unwrap();
+    let in_file: String = file.connection().query_row(held, [], |r| r.get(0)).unwrap();
+    assert_eq!(in_file, "pedantic_trailing_slash=false");
+    let ci = Store::open_in_memory(&registry()).unwrap();
+    let default = ci
+        .begin_run(
+            Mode::Local,
+            "ci",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
+    let imported = ci.import_baseline(&out).unwrap();
+    assert_ne!(imported.run, default);
+    let after: String = ci
+        .connection()
+        .query_row(
+            &format!("{held} AND run_id = {}", imported.run.0),
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(after, "pedantic_trailing_slash=false");
+    ci.discard_import(imported).unwrap();
+    assert_eq!(count(&ci, "SELECT count(*) FROM policy"), 1);
 }
 
 #[test]
@@ -330,10 +377,22 @@ fn a_file_that_is_not_a_baseline_is_refused_and_left_alone() {
 fn two_runs() -> (Store, RunId, RunId) {
     let store = Store::open_in_memory(&registry()).unwrap();
     let from = store
-        .begin_run(Mode::Crawl, "abc", None, &["https://a.test/".into()])
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &["https://a.test/".into()],
+            &crate::config::Policy::default(),
+        )
         .unwrap();
     let to = store
-        .begin_run(Mode::Local, "abc", Some(from), &["https://a.test/".into()])
+        .begin_run(
+            Mode::Local,
+            "abc",
+            Some(from),
+            &["https://a.test/".into()],
+            &crate::config::Policy::default(),
+        )
         .unwrap();
     let conn = store.connection();
     for sql in [

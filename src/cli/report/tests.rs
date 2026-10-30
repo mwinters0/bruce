@@ -139,7 +139,13 @@ fn a_database_with_no_finished_run_fails_and_one_with_a_run_succeeds() {
         ExitCode::FAILURE
     );
     let id = store
-        .begin_run(crate::store::Mode::Crawl, "h", None, &[])
+        .begin_run(
+            crate::store::Mode::Crawl,
+            "h",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
         .unwrap();
     store.finish_run(id).unwrap();
     drop(store);
@@ -270,7 +276,13 @@ fn a_digest_since_a_baseline_file_compares_with_its_run_and_leaves_the_database_
         let db = dir.path().join(name);
         let store = crate::cli::db::open(&db, &registry).unwrap();
         let id = store
-            .begin_run(crate::store::Mode::Crawl, name, None, &[])
+            .begin_run(
+                crate::store::Mode::Crawl,
+                name,
+                None,
+                &[],
+                &crate::config::Policy::default(),
+            )
             .unwrap();
         store.finish_run(id).unwrap();
         (db, store, id)
@@ -319,7 +331,13 @@ fn a_digest_is_written_under_the_day_the_run_started() {
     let registry = crate::cli::registry();
     let store = crate::cli::db::open(&db, &registry).unwrap();
     let id = store
-        .begin_run(crate::store::Mode::Crawl, "h", None, &[])
+        .begin_run(
+            crate::store::Mode::Crawl,
+            "h",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
         .unwrap();
     store.finish_run(id).unwrap();
     drop(store);

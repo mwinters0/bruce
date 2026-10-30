@@ -245,6 +245,7 @@ fn check(args: &Args, registry: Registry) -> Result<Checked, String> {
             &hash,
             Some(imported.run),
             &RunRoot::of(&config),
+            &config.policy,
         )
         .map_err(in_db)?;
     let writer = Writer::start(store, WRITER_CAPACITY);

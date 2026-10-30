@@ -98,7 +98,7 @@ async fn disallowed_urls_are_told_apart_from_allowed_ones() {
         "User-agent: *\nDisallow: /everything\n\nUser-agent: probe\nDisallow: /private/\n",
     )
     .await;
-    let f = fetcher(&config(&server, "[rate]\nper_second = 1000"));
+    let f = fetcher(&config(&server, "[default]\nper_second = 1000"));
     // The group naming the token replaces `*`'s, whatever the UA's version.
     assert_eq!(
         f.access(&url_of(&server, "/private/x")).await,
@@ -116,7 +116,7 @@ async fn disallowed_urls_are_told_apart_from_allowed_ones() {
 async fn a_4xx_robots_txt_allows_everything() {
     let server = MockServer::start().await;
     robots(&server, 404, "").await;
-    let f = fetcher(&config(&server, "[rate]\nper_second = 1000"));
+    let f = fetcher(&config(&server, "[default]\nper_second = 1000"));
     assert_eq!(f.access(&url_of(&server, "/a")).await, Access::Allowed);
     assert_eq!(
         count(&server, "/robots.txt").await,
@@ -129,7 +129,7 @@ async fn a_4xx_robots_txt_allows_everything() {
 async fn a_5xx_robots_txt_closes_the_host_after_the_retries() {
     let server = MockServer::start().await;
     robots(&server, 503, "").await;
-    let f = fetcher(&config(&server, "[rate]\nper_second = 1000"));
+    let f = fetcher(&config(&server, "[default]\nper_second = 1000"));
     assert_eq!(f.access(&url_of(&server, "/a")).await, Access::Unavailable);
     assert_eq!(f.access(&url_of(&server, "/b")).await, Access::Unavailable);
     assert_eq!(
@@ -143,7 +143,7 @@ async fn a_5xx_robots_txt_closes_the_host_after_the_retries() {
 async fn a_429_robots_txt_does_not_open_the_host() {
     let server = MockServer::start().await;
     robots(&server, 429, "").await;
-    let f = fetcher(&config(&server, "[rate]\nper_second = 1000"));
+    let f = fetcher(&config(&server, "[default]\nper_second = 1000"));
     assert_eq!(f.access(&url_of(&server, "/a")).await, Access::Unavailable);
 }
 
@@ -161,7 +161,7 @@ async fn dead_port() -> u16 {
 async fn a_host_that_gives_no_response_fails_with_its_cause() {
     let port = dead_port().await;
     let config = Config::parse(&format!(
-        "[rate]\nper_second = 1000\n[[root]]\nurl = \"http://127.0.0.1:{port}/\"\n"
+        "[default]\nper_second = 1000\n[[root]]\nurl = \"http://127.0.0.1:{port}/\"\n"
     ))
     .unwrap();
     let f = fetcher(&config);
@@ -209,7 +209,7 @@ async fn a_robots_txt_redirected_onto_a_silent_host_fails_only_its_own_name() {
             )
             .mount(&server)
             .await;
-        let f = fetcher(&config(&server, "[rate]\nper_second = 1000"));
+        let f = fetcher(&config(&server, "[default]\nper_second = 1000"));
         let got = f.access(&url_of(&server, "/a")).await;
         assert_eq!(matches!(got, Access::Failed(_)), failed, "{to}: {got:?}");
         assert_eq!(got == Access::Unavailable, !failed, "{to}: {got:?}");
@@ -227,7 +227,7 @@ async fn robots_txt_redirects_are_followed_to_a_limit() {
         .respond_with(ResponseTemplate::new(200).set_body_string("User-agent: *\nDisallow: /x\n"))
         .mount(&server)
         .await;
-    let f = fetcher(&config(&server, "[rate]\nper_second = 1000"));
+    let f = fetcher(&config(&server, "[default]\nper_second = 1000"));
     assert_eq!(f.access(&url_of(&server, "/x")).await, Access::Disallowed);
 
     let looping = MockServer::start().await;
@@ -235,7 +235,7 @@ async fn robots_txt_redirects_are_followed_to_a_limit() {
         .respond_with(ResponseTemplate::new(302).insert_header("location", "/robots.txt"))
         .mount(&looping)
         .await;
-    let f = fetcher(&config(&looping, "[rate]\nper_second = 1000"));
+    let f = fetcher(&config(&looping, "[default]\nper_second = 1000"));
     assert_eq!(f.access(&url_of(&looping, "/x")).await, Access::Unavailable);
     assert_eq!(
         count(&looping, "/robots.txt").await,
@@ -277,7 +277,7 @@ async fn requests_to_a_host_are_spaced_by_its_rate() {
         .mount(&server)
         .await;
     // 10 a second: five requests, four gaps of 100 ms.
-    let f = fetcher(&config(&server, "[rate]\nper_second = 10"));
+    let f = fetcher(&config(&server, "[default]\nper_second = 10"));
     let started = StdInstant::now();
     for i in 0..5 {
         f.fetch(&url_of(&server, &format!("/p{i}")), Mode::Page)
@@ -302,7 +302,7 @@ async fn a_crawl_delay_sets_the_pace_once_robots_txt_is_in() {
     // The robots.txt fetch is paced at the default rate (the 1000 a second
     // here) and reserves the first page's slot at it; the second page waits
     // the Crawl-delay.
-    let f = fetcher(&config(&server, "[rate]\nper_second = 1000"));
+    let f = fetcher(&config(&server, "[default]\nper_second = 1000"));
     let url = url_of(&server, "/a");
     assert_eq!(f.access(&url).await, Access::Allowed);
     let started = StdInstant::now();
@@ -338,14 +338,15 @@ async fn concurrency_caps_the_requests_in_flight_to_a_host() {
             started.elapsed()
         }
     };
-    let one = timed("[rate]\nper_second = 1000\nconcurrency = 1").await;
-    let four = timed("[rate]\nper_second = 1000\nconcurrency = 4").await;
+    let one = timed("[default]\nper_second = 1000\nconcurrency = 1").await;
+    let four = timed("[default]\nper_second = 1000\nconcurrency = 4").await;
     assert!(one >= Duration::from_millis(800), "{one:?}");
     assert!(four < Duration::from_millis(600), "{four:?}");
     // A `[host]` number beats the default one.
-    let host =
-        timed("[rate]\nper_second = 1000\nconcurrency = 4\n[host.\"127.0.0.1\"]\nconcurrency = 1")
-            .await;
+    let host = timed(
+        "[default]\nper_second = 1000\nconcurrency = 4\n[host.\"127.0.0.1\"]\nconcurrency = 1",
+    )
+    .await;
     assert!(host >= Duration::from_millis(800), "{host:?}");
 }
 
@@ -359,7 +360,7 @@ async fn a_stop_ends_the_wait_for_a_hosts_place() {
         .mount(&server)
         .await;
     let stop = Stopper::default();
-    let f = fetcher(&config(&server, "[rate]\nper_second = 0.2")).with_stop(stop.clone());
+    let f = fetcher(&config(&server, "[default]\nper_second = 0.2")).with_stop(stop.clone());
     f.fetch(&url_of(&server, "/first"), Mode::Page)
         .await
         .unwrap();
@@ -388,7 +389,7 @@ async fn a_name_silent_on_one_origin_fails_only_that_origin() {
     let dead = Url::parse(&format!("http://127.0.0.1:{port}/a")).unwrap();
     let live = url_of(&server, "/a");
     for dead_first in [true, false] {
-        let f = fetcher(&config(&server, "[rate]\nper_second = 1000"));
+        let f = fetcher(&config(&server, "[default]\nper_second = 1000"));
         let (first, second) = if dead_first {
             (&dead, &live)
         } else {
@@ -420,7 +421,7 @@ async fn a_redirect_ending_at_another_origins_robots_txt_shares_its_read() {
         )
         .mount(&source)
         .await;
-    let f = fetcher(&config(&source, "[rate]\nper_second = 1000"));
+    let f = fetcher(&config(&source, "[default]\nper_second = 1000"));
     assert_eq!(
         f.access(&url_of(&source, "/x")).await,
         Access::Disallowed,
@@ -443,7 +444,7 @@ async fn a_redirect_ending_at_another_origins_robots_txt_shares_its_read() {
         )
         .mount(&silent)
         .await;
-    let f = fetcher(&config(&silent, "[rate]\nper_second = 1000"));
+    let f = fetcher(&config(&silent, "[default]\nper_second = 1000"));
     let dead = Url::parse(&format!("http://127.0.0.1:{port}/a")).unwrap();
     assert!(matches!(f.access(&dead).await, Access::Failed(_)));
     assert!(matches!(
@@ -466,7 +467,7 @@ async fn origins_redirecting_to_each_other_do_not_wait_for_ever() {
             .mount(from)
             .await;
     }
-    let f = fetcher(&config(&a, "[rate]\nper_second = 1000"));
+    let f = fetcher(&config(&a, "[default]\nper_second = 1000"));
     let (one, two) = (url_of(&a, "/x"), url_of(&b, "/x"));
     let both = async { tokio::join!(f.access(&one), f.access(&two)) };
     let got = tokio::time::timeout(Duration::from_secs(10), both)

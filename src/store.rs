@@ -20,6 +20,7 @@ use std::path::Path;
 use duckdb::{Connection, params, params_from_iter};
 use url::Url;
 
+use crate::config::Policy;
 use crate::profile::{BoxError, Lookup, Registry, View};
 
 pub use baseline::{BaselineIndex, Exported, Imported};
@@ -192,13 +193,15 @@ impl Store {
     /// Starts a run: the next number, recorded with the tool's version, a
     /// hash of the configuration it ran under and its roots (D2): their
     /// canonical URLs, so a root that crawled nothing still shows, and the
-    /// scope each hashed its pages under (D15).
+    /// scope each hashed its pages under (D15), and the `policy` it is judged
+    /// by, whole (D78).
     pub fn begin_run(
         &self,
         mode: Mode,
         config_hash: &str,
         baseline: Option<RunId>,
         roots: &[RunRoot],
+        policy: &Policy,
     ) -> Result<RunId, Error> {
         let id: u64 =
             self.conn
@@ -227,10 +230,30 @@ impl Store {
                 .collect();
             format!("[{}]", each.join(", "))
         };
-        self.conn.execute(
-            &format!("INSERT INTO runs VALUES (?, now(), NULL, ?, ?, ?, ?, {urls}, {scopes})"),
-            params_from_iter(args),
-        )?;
+        self.conn.execute_batch("BEGIN")?;
+        let begun = self
+            .conn
+            .execute(
+                &format!("INSERT INTO runs VALUES (?, now(), NULL, ?, ?, ?, ?, {urls}, {scopes})"),
+                params_from_iter(args),
+            )
+            .and_then(|_| {
+                policy.entries().iter().try_for_each(|(key, value)| {
+                    self.conn
+                        .execute(
+                            "INSERT INTO policy VALUES (?, NULL, ?, ?)",
+                            params![id, key, value],
+                        )
+                        .map(drop)
+                })
+            });
+        match begun {
+            Ok(()) => self.conn.execute_batch("COMMIT")?,
+            Err(e) => {
+                let _ = self.conn.execute_batch("ROLLBACK");
+                return Err(e.into());
+            }
+        }
         Ok(RunId(id))
     }
 

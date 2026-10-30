@@ -1,4 +1,4 @@
-//! The DuckDB schema (D26 as amended by D15, D28, D34, D35, D36, D37, D43 and D51) and
+//! The DuckDB schema (D26 as amended by D15, D28, D34, D35, D36, D37, D43, D51 and D78) and
 //! its version. Rows are append-only (D2), so only `runs.finished_at` is ever
 //! updated and only `Store::prune` and `Store::discard_import` delete; there are no primary keys on the
 //! bulk tables, which an appender would pay to check for nothing.
@@ -6,7 +6,7 @@
 /// The version this build writes and reads (D43). A schema change bumps it;
 /// a 0.x release migrates no database (D43). `release.yml` reads this line by
 /// its text, so it stays one `pub const SCHEMA_VERSION: u32 = N;` line.
-pub const SCHEMA_VERSION: u32 = 5;
+pub const SCHEMA_VERSION: u32 = 6;
 
 /// The `meta` key holding [`SCHEMA_VERSION`].
 pub const VERSION_KEY: &str = "schema_version";
@@ -42,6 +42,12 @@ CREATE TABLE runs (
     baseline_run UBIGINT,
     roots VARCHAR[] NOT NULL,
     hash_scopes {SCOPE}[] NOT NULL
+);
+CREATE TABLE policy (
+    run_id UBIGINT NOT NULL,
+    host VARCHAR,
+    key VARCHAR NOT NULL,
+    value VARCHAR NOT NULL
 );
 CREATE TABLE targets (
     run_id UBIGINT NOT NULL,

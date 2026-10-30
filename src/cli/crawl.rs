@@ -114,7 +114,13 @@ fn crawl(args: &Args, registry: Registry) -> Result<(RunId, Option<Summary>, Pre
         .map_err(|e| e.to_string())?;
     // Nothing after this fails before the crawl, so no run is begun idle.
     let run = store
-        .begin_run(Mode::Crawl, &hash, None, &RunRoot::of(&config))
+        .begin_run(
+            Mode::Crawl,
+            &hash,
+            None,
+            &RunRoot::of(&config),
+            &config.policy,
+        )
         .map_err(in_db)?;
     let writer = Writer::start(store, WRITER_CAPACITY);
     let crawl = Crawl::new(fetcher, config, registry, run, writer.handle());

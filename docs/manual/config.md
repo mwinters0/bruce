@@ -17,7 +17,7 @@ skip = [
 ]
 user_agent = "docs-example-bot/1.0 (+https://docs.example.org/bot)"
 
-[rate]
+[default]
 per_second = 2
 concurrency = 4
 
@@ -189,16 +189,19 @@ link that redirects to it.
 |---|---|---|
 | `skip` | `[]` | URL globs, such as `"https://github.com/*/*/issues/new*"` and `"https://github.com/*/*/issues/new*/**"`. |
 
-## Rate
+## Defaults
 
-Requests are limited per host. `rate.per_second` is the rate for a host that
+`[default]` holds the settings a host takes unless `[host]` (below) sets its own;
+a file with a `[rate]` table is refused, the table having been renamed.
+
+Requests are limited per host. `default.per_second` is the rate for a host that
 nothing else governs; a `Crawl-delay` in a host's `robots.txt` takes
 precedence over it, and `[host]` (below) says when a host's own rate does.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `rate.per_second` | `2` | Requests a second to any one host. |
-| `rate.concurrency` | `4` | Requests in flight to any one host at once. At the default rate it binds only on a host slow to answer. At least 1. |
+| `default.per_second` | `2` | Requests a second to any one host. |
+| `default.concurrency` | `4` | Requests in flight to any one host at once. At the default rate it binds only on a host slow to answer. At least 1. |
 
 ## User agent
 
@@ -234,16 +237,16 @@ per_second = 10
 | Key | Default | Meaning |
 |---|---|---|
 | `host."<host>".per_second` | none | Requests a second to that host. |
-| `host."<host>".concurrency` | `rate.concurrency` | Requests in flight to that host at once. |
+| `host."<host>".concurrency` | `default.concurrency` | Requests in flight to that host at once. |
 | `host."<host>".robots` | `true` | Whether the host's `robots.txt` is obeyed, its `Crawl-delay` included. |
 
 **Which rate applies** to a host:
-- With `robots = false`: its `per_second` if written, else `rate.per_second`.
+- With `robots = false`: its `per_second` if written, else `default.per_second`.
 - On a host a root starts on, a `per_second` beats the host's `Crawl-delay`.
   Write one only for a site you have permission to crawl faster.
 - On any other host, the slower of its `per_second` and its `Crawl-delay`.
 - With no `per_second` written, the `Crawl-delay` if there is one, else
-  `rate.per_second`.
+  `default.per_second`.
 
 `robots = false` is an error on a host that no root starts on: an external
 host's `robots.txt` is always obeyed.

@@ -295,7 +295,7 @@ the build lacks, a URL on the site new to the gate being the one most worth aski
 
 ### D5 Configuration is optional TOML, and no flag overrides a key; roots are separate from the allowlist
 `[[root]]` entries are crawled fully, each with include/exclude globs, its own sitemap URL and its
-profile (D35); `allowlist` lists hosts and domains (D68) checked one hop deep, `[rate]` holds the default limit and
+profile (D35); `allowlist` lists hosts and domains (D68) checked one hop deep, `[default]` holds the default limit and
 `[host."<h>"]` a host's own `per_second`, `concurrency` and `robots` (D8). Roots are configurable so the tool is not
 tied to Fedora, and every key but a root's `url` has a default (D40). `bruce crawl`'s URL stands in
 for a file's absent roots and nothing else; per-key flags wait for someone to ask (`cli::crawl`). Keys
@@ -396,7 +396,13 @@ Reopens: a site's config classifying (P7). Code: `report::digest::html::severity
 `link_verdicts_with(pedantic_trailing_slash := true)` holds the verdict SQL (D28), each parameter defaulting to what `bruce` has always judged by, and the view is `SELECT * FROM link_verdicts_with()`; a view takes no parameter (D6), and P7's comparisons judge both runs by the newer run's policy.
 Why: one copy of the judgement serves a run read by its own policy and a comparison under another's; the macro is inlined, so the view's reads cost what they did: the 2026-10-25 crawl's reports and digest came out byte-identical, the digest in 44.1 to 44.6 s of CPU before and 44.0 to 44.4 after.
 Rejected: a second copy of the SQL for comparisons, two judgements to keep equal; a view per setting.
-Reopens: a setting that is not one value for the run (a status map, a host's `doubled_slash`), which a scalar parameter cannot carry: the macro then reads the run's recorded policy (P7.2). Code: `store::views`. Evidence: `store::views::tests::a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic`, `runs/p7.1-verdicts/`.
+Reopens: a setting that is not one value for the run (a status map, a host's `doubled_slash`), which a scalar parameter cannot carry: the macro then reads the run's recorded policy (D78). Code: `store::views`. Evidence: `store::views::tests::a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic`, `runs/p7.1-verdicts/`.
+
+### D78 A run records the policy it was judged by, whole, as rows of a `policy` table
+`policy(run_id, host, key, value)`: one row per setting, a list one row per element, `host` NULL for the run-wide value and a host's name for that host's own, which only a host's settings write. `Store::begin_run` writes every setting, the defaults included, with the run in one transaction; the baseline file carries the rows (D21) and `prune` deletes them (D2). A key is a row, so a slice adding a setting changes no schema.
+Why: a report reads a run and never the file (P7), the macro must join a host's own value to the default, and the judging of a run must outlive a later default, so the rows hold the whole policy.
+Rejected: a `runs` column, a struct fixing the keys so each slice bumps the schema, or JSON, a feature `Cargo.toml` does not enable, giving the macro no join; only values differing from the default, which a later default would silently change.
+Reopens: a setting that is not text in a row. Code: `config::policy`, `store::Store::begin_run`, `store::schema`. Evidence: `store::tests::a_run_records_its_whole_policy_beside_itself`, `store::baseline::tests::a_run_policy_travels_in_the_baseline_file_and_into_the_run_that_imports_it`.
 
 ### D61 Live slots are shared among the hosts with work, and a build's reads have a budget of their own
 Each host holds at most the 64 slots divided by the hosts with a target waiting or running, taken in turn,

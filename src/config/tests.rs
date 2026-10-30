@@ -61,7 +61,7 @@ fn every_key_is_read() {
         skip = ["https://pagure.io/**/issues/new*"]
         user_agent = "Acme-Docs/2 (+https://acme.example/bot)"
 
-        [rate]
+        [default]
         per_second = 5
         concurrency = 8
 
@@ -120,13 +120,29 @@ fn every_key_is_read() {
 }
 
 #[test]
+fn the_renamed_rate_table_is_refused_naming_default() {
+    let err = Config::parse("[rate]\nper_second = 1").unwrap_err();
+    assert!(matches!(err, Error::Invalid(_)), "{err}");
+    assert!(err.to_string().contains("[default]"), "{err}");
+}
+
+#[test]
+fn a_run_given_no_policy_key_has_the_default_policy() {
+    assert_eq!(
+        Config::for_url("https://a.example/").unwrap().policy,
+        Policy::default()
+    );
+    assert_eq!(Config::parse("").unwrap().policy, Policy::default());
+}
+
+#[test]
 fn an_unknown_key_is_refused() {
     for text in [
         "allowlists = []",
-        "[rate]\nper_secnd = 1",
+        "[default]\nper_secnd = 1",
         "[[root]]\nurl = \"https://a.example/\"\nprofil = \"auto\"",
         "[host.\"a.example\"]\nper_second = 1\nburst = 2",
-        "[rate]\nhost.\"a.example\".per_second = 1",
+        "[default]\nhost.\"a.example\".per_second = 1",
         "[[root]]\nurl = \"https://a.example/\"\nrobots = false",
         "[[root]]\nurl = \"https://a.example/\"\ncrawl_delay = 1",
     ] {
@@ -190,8 +206,8 @@ fn bad_values_name_their_key() {
             "host: *.a.example: a host name holds no *",
         ),
         ("skip = [\"a[\"]", "skip:"),
-        ("[rate]\nper_second = 0", "rate.per_second:"),
-        ("[rate]\nconcurrency = 0", "rate.concurrency:"),
+        ("[default]\nper_second = 0", "default.per_second:"),
+        ("[default]\nconcurrency = 0", "default.concurrency:"),
         (
             "[host.\"a.example\"]\nconcurrency = 0",
             "host.\"a.example\".concurrency:",
@@ -672,14 +688,14 @@ fn manual_keys(manual: &str) -> BTreeMap<String, String> {
 #[test]
 fn every_key_the_config_reads_is_in_the_manual_with_its_default() {
     let documented = manual_keys(include_str!("../../docs/manual/config.md"));
-    // `root`, `rate` and `host` are tables, whose keys are rows of their own.
+    // `root`, `default` and `host` are tables, whose keys are rows of their own.
     let mut read: Vec<String> = keys::<RawConfig>()
         .iter()
-        .filter(|k| !matches!(**k, "root" | "rate" | "host"))
+        .filter(|k| !matches!(**k, "root" | "rate" | "default" | "host"))
         .map(|k| k.to_string())
         .collect();
     read.extend(keys::<RawRoot>().iter().map(|k| k.to_string()));
-    read.extend(keys::<RawRate>().iter().map(|k| format!("rate.{k}")));
+    read.extend(keys::<RawRate>().iter().map(|k| format!("default.{k}")));
     read.extend(
         keys::<RawHost>()
             .iter()

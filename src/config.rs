@@ -19,11 +19,15 @@ use url::{Host, Url};
 
 use crate::url::{Canonical, canonical};
 
+mod policy;
+
+pub use policy::Policy;
+
 /// Requests a second to one host that no `Crawl-delay`, `[host]` or `[rate]`
 /// governs (D40).
 pub const DEFAULT_PER_SECOND: f64 = 2.0;
 
-/// Requests in flight to one host at once, when neither `[host]` nor `[rate]`
+/// Requests in flight to one host at once, when neither `[host]` nor `[default]`
 /// says otherwise (D8). It binds only on a slow host: at the default rate and a response of
 /// a third of a second, one request is in flight.
 pub const DEFAULT_CONCURRENCY: u32 = 4;
@@ -47,8 +51,11 @@ pub struct Config {
     /// URL globs, on any host, whose links are never asked about: the target
     /// is `unchecked`, reason `skipped` (D50). Empty by default.
     pub skip: Patterns,
-    /// The rate no host setting or `Crawl-delay` overrides (D8).
+    /// The rate no host setting or `Crawl-delay` overrides (D8), from
+    /// `[default]`.
     pub rate: Rate,
+    /// What the run judges its links by, which it records (D78).
+    pub policy: Policy,
     /// Sent as `User-Agent`; its robots.txt token is [`Config::robots_token`].
     pub user_agent: String,
     /// Per-host settings, keyed as [`Host`] prints a host (D8). A host not
@@ -213,6 +220,7 @@ impl Config {
             allowlist: Allowlist::default(),
             skip: Patterns::default(),
             rate: Rate::default(),
+            policy: Policy::default(),
             user_agent: DEFAULT_USER_AGENT.to_owned(),
             hosts: BTreeMap::new(),
             token: robots_token(DEFAULT_USER_AGENT).expect("the default names a product"),
@@ -231,6 +239,11 @@ impl Config {
     /// Validates a configuration given as TOML text.
     pub fn parse(text: &str) -> Result<Config, Error> {
         let raw: RawConfig = toml::from_str(text).map_err(Error::Parse)?;
+        if raw.rate.is_some() {
+            return Err(invalid(
+                "rate: the table is renamed `[default]`, with the same keys",
+            ));
+        }
         let mut roots: Vec<Root> = Vec::with_capacity(raw.root.len());
         for (i, r) in raw.root.into_iter().enumerate() {
             let root = Root::from_raw(r).map_err(|e| invalid(format!("root[{i}]: {e}")))?;
@@ -256,7 +269,8 @@ impl Config {
             roots,
             allowlist,
             skip,
-            rate: Rate::from_raw(raw.rate)?,
+            rate: Rate::from_raw(raw.default)?,
+            policy: Policy::default(),
             user_agent,
             hosts: host_settings(raw.host)?,
             token,
@@ -436,9 +450,9 @@ impl Default for Rate {
 impl Rate {
     fn from_raw(raw: RawRate) -> Result<Rate, Error> {
         let per_second = raw.per_second.unwrap_or(DEFAULT_PER_SECOND);
-        positive(per_second).map_err(|e| invalid(format!("rate.per_second: {e}")))?;
+        positive(per_second).map_err(|e| invalid(format!("default.per_second: {e}")))?;
         let concurrency = raw.concurrency.unwrap_or(DEFAULT_CONCURRENCY);
-        at_least_one(concurrency).map_err(|e| invalid(format!("rate.concurrency: {e}")))?;
+        at_least_one(concurrency).map_err(|e| invalid(format!("default.concurrency: {e}")))?;
         Ok(Rate {
             per_second,
             concurrency,
@@ -675,8 +689,10 @@ struct RawConfig {
     allowlist: Vec<String>,
     #[serde(default)]
     skip: Vec<String>,
+    /// Refused, naming `[default]`, which replaced it.
+    rate: Option<toml::Table>,
     #[serde(default)]
-    rate: RawRate,
+    default: RawRate,
     user_agent: Option<String>,
     #[serde(default)]
     host: BTreeMap<String, RawHost>,

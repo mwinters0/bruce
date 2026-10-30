@@ -149,7 +149,13 @@ async fn check(
     let config = Config::parse(config).unwrap();
     let baseline_run = (baseline.run.0 > 0).then_some(baseline.run);
     let run = store
-        .begin_run(Mode::Local, "test", baseline_run, &RunRoot::of(&config))
+        .begin_run(
+            Mode::Local,
+            "test",
+            baseline_run,
+            &RunRoot::of(&config),
+            &config.policy,
+        )
         .unwrap();
     let writer = Writer::start(store, 16);
     let live = HttpFetcher::new(Settings::default(), Hosts::unlimited()).unwrap();

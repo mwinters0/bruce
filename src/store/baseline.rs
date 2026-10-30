@@ -16,7 +16,15 @@ use super::{Error, RunId, Store};
 use crate::profile::Registry;
 
 /// The tables a baseline carries, `runs` first, each filtered by its `run_id`.
-const TABLES: [&str; 6] = ["runs", "targets", "pages", "page_facts", "anchors", "links"];
+const TABLES: [&str; 7] = [
+    "runs",
+    "policy",
+    "targets",
+    "pages",
+    "page_facts",
+    "anchors",
+    "links",
+];
 
 /// What [`Store::export_baseline`] copied.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -86,7 +94,7 @@ impl Store {
     }
 
     fn copy_into(&self, run: RunId, out: &Path) -> Result<Exported, Error> {
-        let [_, targets, pages, facts, anchors, links] =
+        let [_, _, targets, pages, facts, anchors, links] =
             self.with_attached(out, "baseline_out", false, |store| {
                 store.copy_run("main", "baseline_out.main", run, run)
             })?;
@@ -134,9 +142,9 @@ impl Store {
         to: &str,
         from_run: RunId,
         to_run: RunId,
-    ) -> Result<[u64; 6], Error> {
+    ) -> Result<[u64; 7], Error> {
         self.conn.execute_batch("BEGIN")?;
-        let mut counts = [0; 6];
+        let mut counts = [0; 7];
         let copied = TABLES.iter().enumerate().try_for_each(|(i, table)| {
             let select = if *table == "runs" {
                 format!(

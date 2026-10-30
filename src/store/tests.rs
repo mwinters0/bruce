@@ -90,12 +90,28 @@ fn a_file_reopens_with_its_rows() {
     let path = dir.path().join("bruce.duckdb");
     let run = {
         let store = Store::open(&path, &registry()).unwrap();
-        store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap()
+        store
+            .begin_run(
+                Mode::Crawl,
+                "abc",
+                None,
+                &[],
+                &crate::config::Policy::default(),
+            )
+            .unwrap()
     };
     let store = Store::open(&path, &registry()).unwrap();
     assert_eq!(count(&store, "SELECT count(*) FROM runs"), 1);
     assert_eq!(
-        store.begin_run(Mode::Local, "abc", Some(run), &[]).unwrap(),
+        store
+            .begin_run(
+                Mode::Local,
+                "abc",
+                Some(run),
+                &[],
+                &crate::config::Policy::default()
+            )
+            .unwrap(),
         RunId(2)
     );
 }
@@ -150,9 +166,23 @@ fn a_profiles_views_are_created_on_open() {
 #[test]
 fn a_run_is_numbered_in_order_and_finished() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let first = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+    let first = store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     let second = store
-        .begin_run(Mode::Local, "abc", Some(first), &[])
+        .begin_run(
+            Mode::Local,
+            "abc",
+            Some(first),
+            &[],
+            &crate::config::Policy::default(),
+        )
         .unwrap();
     assert_eq!((first, second), (RunId(1), RunId(2)));
     store.finish_run(first).unwrap();
@@ -182,7 +212,15 @@ fn the_schema_refuses_an_outcome_outside_d16() {
 #[test]
 fn the_writer_appends_what_is_sent_and_returns_the_store() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+    let run = store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     let writer = Writer::start(store, 1);
     let handle = writer.handle();
     for url_id in 0..50 {
@@ -200,7 +238,15 @@ fn the_writer_appends_what_is_sent_and_returns_the_store() {
 #[test]
 fn senders_on_several_threads_share_one_writer() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+    let run = store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     let writer = Writer::start(store, 2);
     let threads: Vec<_> = (0..4u64)
         .map(|t| {
@@ -225,7 +271,15 @@ fn senders_on_several_threads_share_one_writer() {
 #[test]
 fn a_lookup_finds_the_pages_carrying_every_fact() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+    let run = store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     let conn = store.connection();
     for (id, url) in [(1, "https://a.test/one"), (2, "https://a.test/two")] {
         conn.execute(
@@ -322,7 +376,15 @@ fn hop(url: &str, status: u16, refresh: bool) -> Hop {
 #[test]
 fn a_target_records_where_its_answer_came_from() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+    let run = store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     let writer = Writer::start(store, 4);
     let h = writer.handle();
     let by = |id, chain, answered_by| {
@@ -355,7 +417,15 @@ fn a_target_records_where_its_answer_came_from() {
 #[test]
 fn a_targets_chain_keeps_each_hops_url_status_and_kind() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+    let run = store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     let writer = Writer::start(store, 4);
     let h = writer.handle();
     h.send(Row::Target(target(run, 1, Vec::new()))).unwrap();
@@ -409,7 +479,15 @@ fn a_targets_chain_keeps_each_hops_url_status_and_kind() {
 #[test]
 fn a_targets_time_and_outcome_round_trip_on_both_write_paths() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+    let run = store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     let at = UNIX_EPOCH + Duration::from_micros(1_700_000_000_123_456);
     let writer = Writer::start(store, 4);
     let h = writer.handle();
@@ -437,9 +515,56 @@ fn a_targets_time_and_outcome_round_trip_on_both_write_paths() {
 }
 
 #[test]
+fn a_run_records_its_whole_policy_beside_itself() {
+    let store = Store::open_in_memory(&registry()).unwrap();
+    let off = crate::config::Policy {
+        pedantic_trailing_slash: false,
+    };
+    let first = store
+        .begin_run(Mode::Crawl, "abc", None, &[], &off)
+        .unwrap();
+    let second = store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
+    let recorded = |run: RunId| -> Vec<(Option<String>, String, String)> {
+        let mut stmt = store
+            .connection()
+            .prepare("SELECT host, key, value FROM policy WHERE run_id = ? ORDER BY key")
+            .unwrap();
+        stmt.query_map([run.0], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
+            .unwrap()
+            .collect::<Result<_, _>>()
+            .unwrap()
+    };
+    let row = |value: &str| {
+        vec![(
+            None,
+            "pedantic_trailing_slash".to_string(),
+            value.to_string(),
+        )]
+    };
+    assert_eq!(recorded(first), row("false"));
+    assert_eq!(recorded(second), row("true"));
+}
+
+#[test]
 fn anchors_and_links_are_appended_with_their_kind() {
     let store = Store::open_in_memory(&registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+    let run = store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     let writer = Writer::start(store, 4);
     let h = writer.handle();
     h.send(Row::Anchor(AnchorRow {
@@ -516,8 +641,24 @@ fn a_run_records_its_roots_and_a_page_its_root() {
         },
         "https://b.test/".into(),
     ];
-    let run = store.begin_run(Mode::Crawl, "abc", None, &roots).unwrap();
-    let none = store.begin_run(Mode::Local, "abc", None, &[]).unwrap();
+    let run = store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &roots,
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
+    let none = store
+        .begin_run(
+            Mode::Local,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     let listed: String = store
         .connection()
         .query_row(

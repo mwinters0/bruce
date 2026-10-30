@@ -45,7 +45,13 @@ async fn crawl_config(server: &MockServer, config: &str, settings: Settings) -> 
     let config = Config::parse(config).unwrap();
     let store = Store::open_in_memory(&registry()).unwrap();
     let run = store
-        .begin_run(Mode::Crawl, "test", None, &RunRoot::of(&config))
+        .begin_run(
+            Mode::Crawl,
+            "test",
+            None,
+            &RunRoot::of(&config),
+            &config.policy,
+        )
         .unwrap();
     let writer = Writer::start(store, 16);
     let fetcher = HttpFetcher::new(settings, Hosts::unlimited()).unwrap();
@@ -1883,7 +1889,13 @@ async fn stop_at(server: &MockServer, at: &str, grace: Duration) -> (Done, Durat
     let config = Config::parse(&config).unwrap();
     let store = Store::open_in_memory(&registry()).unwrap();
     let run = store
-        .begin_run(Mode::Crawl, "test", None, &RunRoot::of(&config))
+        .begin_run(
+            Mode::Crawl,
+            "test",
+            None,
+            &RunRoot::of(&config),
+            &config.policy,
+        )
         .unwrap();
     let writer = Writer::start(store, 16);
     let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();
@@ -2000,7 +2012,13 @@ async fn a_stop_before_the_run_asks_about_nothing() {
     let config = Config::parse(&config).unwrap();
     let store = Store::open_in_memory(&registry()).unwrap();
     let run = store
-        .begin_run(Mode::Crawl, "test", None, &RunRoot::of(&config))
+        .begin_run(
+            Mode::Crawl,
+            "test",
+            None,
+            &RunRoot::of(&config),
+            &config.policy,
+        )
         .unwrap();
     let writer = Writer::start(store, 16);
     let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();
@@ -2044,7 +2062,13 @@ async fn an_abandoned_run_holds_the_page_it_was_writing_whole() {
     let config = Config::parse(&config).unwrap();
     let store = Store::open_in_memory(&registry()).unwrap();
     let run = store
-        .begin_run(Mode::Crawl, "test", None, &RunRoot::of(&config))
+        .begin_run(
+            Mode::Crawl,
+            "test",
+            None,
+            &RunRoot::of(&config),
+            &config.policy,
+        )
         .unwrap();
     let writer = Writer::start(store, 1);
     let fetcher = HttpFetcher::new(quick(), Hosts::unlimited()).unwrap();

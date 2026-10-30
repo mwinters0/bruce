@@ -16,8 +16,8 @@ Red means a repoint is due ([`../process.md`](../process.md),
 
 The `bruce` crate is D39's top-level modules, a binary whose subcommands
 are `bruce crawl`, `bruce check-dir`, `bruce report`, `bruce prune` and `bruce export-baseline`, and Rust 1.99.1 pinned in `mise.toml`. Eleven modules hold
-code: `cli`, the command line, the five subcommands and the profile registry; `config`, the loader; `store`, the DuckDB schema, its version check, the
-`link_verdicts` view, the deleting of old runs, the baseline export and import, the index of a baseline's targets and its pages' facts, the copy of a target's rows between runs, which the writer also runs on request, and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
+code: `cli`, the command line, the five subcommands and the profile registry; `config`, the loader and the policy a run is judged by; `store`, the DuckDB schema, its version check, the
+`link_verdicts` view, the policy a run records, the deleting of old runs, the baseline export and import, the index of a baseline's targets and its pages' facts, the copy of a target's rows between runs, which the writer also runs on request, and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views, Extract and Resolve; `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
 the profile's facts, the other locales its language menu names and the content hash with the scope it covered;
@@ -48,8 +48,9 @@ The spec is [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
   and the digest's JSON byte-identical on the 2026-10-25 crawl's DB, the
   digest's time measured. Notes:
   [`../wip/roadmap-P7.1-verdicts-notes.md`](../wip/roadmap-P7.1-verdicts-notes.md).
-- [ ] **7.2** A run records its policy: `config/policy`, `[default]`
+- [x] **7.2** A run records its policy: `config/policy`, `[default]`
   replacing `[rate]`, the schema change, the baseline file carrying it.
+  Notes: [`../wip/roadmap-P7.2-policy-notes.md`](../wip/roadmap-P7.2-policy-notes.md).
 - [ ] **7.3** The judging keys: `status`, `doubled_slash`,
   `pedantic_trailing_slash`, `schemes`, `doubled_slash_reach`, the guide's
   entries following them.

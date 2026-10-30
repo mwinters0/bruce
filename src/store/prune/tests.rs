@@ -13,7 +13,15 @@ fn store() -> Store {
 /// Starts a run holding one row in each table, begun `days` days ago and
 /// finished if `finished`.
 fn run(store: &Store, days: u32, finished: bool) -> RunId {
-    let run = store.begin_run(Mode::Crawl, "abc", None, &[]).unwrap();
+    let run = store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
     let conn = store.connection();
     let id = run.0;
     for sql in [
@@ -80,7 +88,7 @@ fn keep_deletes_every_run_older_than_the_latest_finished_n() {
     assert_eq!(s.prune(Rule::Keep(2)).unwrap(), [RunId(1), RunId(2)]);
     assert_eq!(left(&s), [3, 4]);
     assert_eq!(rows_of(&s, RunId(1)), 0);
-    assert_eq!(rows_of(&s, RunId(3)), 7);
+    assert_eq!(rows_of(&s, RunId(3)), TABLES.len() as i64);
 }
 
 #[test]
@@ -105,7 +113,7 @@ fn an_unfinished_run_after_the_latest_finished_one_is_kept() {
     run(&s, 0, false); // the last attempt
     assert_eq!(s.prune(Rule::Keep(1)).unwrap(), [RunId(1)]);
     assert_eq!(left(&s), [2, 3]);
-    assert_eq!(rows_of(&s, RunId(3)), 7);
+    assert_eq!(rows_of(&s, RunId(3)), TABLES.len() as i64);
 }
 
 #[test]
@@ -157,7 +165,7 @@ fn a_prune_with_nothing_to_delete_changes_nothing() {
     run(&s, 0, true);
     assert!(s.prune(Rule::Keep(1)).unwrap().is_empty());
     assert_eq!(left(&s), [1]);
-    assert_eq!(rows_of(&s, RunId(1)), 7);
+    assert_eq!(rows_of(&s, RunId(1)), TABLES.len() as i64);
 }
 
 #[test]
@@ -205,7 +213,7 @@ fn keep_spares_the_baseline_a_kept_run_names_and_does_not_count_it() {
     names(&s, ci, baseline);
     assert_eq!(s.prune(Rule::Keep(1)).unwrap(), [RunId(1), RunId(3)]);
     assert_eq!(left(&s), [2, 4]);
-    assert_eq!(rows_of(&s, baseline), 7);
+    assert_eq!(rows_of(&s, baseline), TABLES.len() as i64);
 }
 
 #[test]

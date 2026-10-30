@@ -9,12 +9,13 @@ use std::time::Duration;
 use super::{Error, RunId, Store};
 
 /// Every table with a `run_id`, `runs` last.
-const TABLES: [&str; 7] = [
+const TABLES: [&str; 8] = [
     "links",
     "anchors",
     "page_facts",
     "pages",
     "bodies",
+    "policy",
     "targets",
     "runs",
 ];

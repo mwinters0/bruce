@@ -144,7 +144,15 @@ fn check_dir(delay: Duration, tmp: &Path) -> (Bruce, Receiver<()>) {
     .unwrap();
     let baseline = tmp.join("baseline.duckdb");
     let store = Store::open(&baseline, &registry()).unwrap();
-    let run = store.begin_run(Mode::Crawl, "base", None, &[]).unwrap();
+    let run = store
+        .begin_run(
+            Mode::Crawl,
+            "base",
+            None,
+            &[],
+            &bruce::config::Policy::default(),
+        )
+        .unwrap();
     store.finish_run(run).unwrap();
     drop(store);
     let bruce = Bruce::spawn(&[
