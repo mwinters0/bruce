@@ -11,6 +11,12 @@ use std::collections::BTreeMap;
 
 use serde::Deserialize;
 
+pub use self::entry::Entry;
+pub use self::severity::{REASONS as SEVERITY_REASONS, Severity, SeverityMap};
+
+mod entry;
+mod severity;
+
 /// The schemes besides `http(s)` that work on a public web page (D66), the
 /// first of [`Policy::schemes`].
 pub const WORKING_SCHEMES: [&str; 12] = [
@@ -118,6 +124,8 @@ pub struct Policy {
     /// What a status code is judged to be where a host sets none, a code
     /// not here being judged as the crawl classed it (D16).
     pub status: BTreeMap<u16, Answer>,
+    /// How loudly the digest shows each kind of finding (D82).
+    pub severity: SeverityMap,
     /// The hosts' own settings, by host as `Host` prints it, only those a
     /// file names.
     pub hosts: BTreeMap<String, HostJudging>,
@@ -132,15 +140,6 @@ pub struct HostJudging {
     pub status: BTreeMap<u16, Answer>,
 }
 
-/// One row of a run's recorded policy: `host` is `None` for the run-wide
-/// value (D78).
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Entry {
-    pub host: Option<String>,
-    pub key: String,
-    pub value: String,
-}
-
 impl Default for Policy {
     fn default() -> Policy {
         Policy {
@@ -153,6 +152,7 @@ impl Default for Policy {
                 .into_iter()
                 .map(|code| (code, Answer::Error))
                 .collect(),
+            severity: SeverityMap::default(),
             hosts: BTreeMap::new(),
         }
     }
@@ -180,6 +180,7 @@ impl Policy {
             self.doubled_slash_reach.as_str().to_owned(),
         ));
         rows.extend(statuses(None, &self.status));
+        rows.extend(self.severity.entries());
         for (host, h) in &self.hosts {
             if let Some(on) = h.doubled_slash {
                 rows.push(Entry {
@@ -193,11 +194,12 @@ impl Policy {
         rows
     }
 
-    /// The policy a file's `[judge]`, `[default]` and `[host]` tables say,
+    /// The policy a file's `[judge]`, `[default]`, `[severity]` and `[host]` tables say,
     /// each at its default where a key is left out.
     pub(super) fn from_raw(
         judge: RawJudge,
         default: &RawJudging,
+        severity: &BTreeMap<String, String>,
         hosts: BTreeMap<String, HostJudging>,
     ) -> Result<Policy, String> {
         let mut policy = Policy::default();
@@ -220,6 +222,7 @@ impl Policy {
         policy
             .status
             .extend(statuses_of(&default.status).map_err(|e| format!("default.status: {e}"))?);
+        policy.severity = SeverityMap::from_raw(severity).map_err(|e| format!("severity: {e}"))?;
         policy.hosts = hosts;
         Ok(policy)
     }

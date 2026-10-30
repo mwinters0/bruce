@@ -554,7 +554,7 @@ fn a_run_records_its_whole_policy_beside_itself() {
     assert_eq!(pedantic(&first).as_deref(), Some("false"));
     assert_eq!(pedantic(&second).as_deref(), Some("true"));
     // Every setting is a row, the defaults too: twelve schemes, a status map.
-    assert_eq!(first.len(), 1 + 12 + 1 + 1 + 3);
+    assert_eq!(first.len(), 1 + 12 + 1 + 1 + 3 + 5);
     assert!(first.iter().all(|(host, _, _)| host.is_none()));
 }
 

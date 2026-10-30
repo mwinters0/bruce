@@ -8,9 +8,9 @@
 
 use std::fmt::Write as _;
 
-use super::super::document::Judged;
+use super::super::document::{Digest, Judged};
 use super::markup::w;
-use crate::config::Reach;
+use crate::config::{Reach, Severity, SeverityMap};
 use crate::store::{DOUBLED_SLASH, PEDANTIC_TRAILING_SLASH};
 
 /// An entry of the guide.
@@ -87,13 +87,16 @@ pub(super) fn info_of(reason: Option<&str>) -> String {
 
 /// The guide, the document's last section: an entry for each reason the run's
 /// policy judges, there being no link to explain it otherwise.
-pub(super) fn guide(out: &mut String, judged: Judged) {
+pub(super) fn guide(out: &mut String, d: &Digest) {
     out.push_str("<section id=\"guide\">\n<h2>How to read this report</h2>\n");
     for (entry, body) in [
-        (Entry::DoubledSlash, doubled_slash_entry(judged.reach)),
-        (Entry::Pedantic, PEDANTIC_ENTRY.to_owned()),
+        (Entry::DoubledSlash, doubled_slash_entry(d.judged.reach)),
+        (
+            Entry::Pedantic,
+            pedantic_entry(pedantic_marking(&d.severity)),
+        ),
     ] {
-        if !entry.judged(judged) {
+        if !entry.judged(d.judged) {
             continue;
         }
         w!(
@@ -136,7 +139,11 @@ fn doubled_slash_entry(reach: Reach) -> String {
     )
 }
 
-const PEDANTIC_ENTRY: &str = "<p>Humans generally write URLs like <code>example.com/foo</code> \
+/// The pedantic entry, its last words stating how the run's severity map marks
+/// such a redirect and where the digest lists it (D82).
+fn pedantic_entry(marking: &str) -> String {
+    format!(
+        "<p>Humans generally write URLs like <code>example.com/foo</code> \
     but <em>technically</em> the correct form is <code>example.com/foo/</code>: notice the \
     trailing slash. These are actually two separate web pages as far as most web servers are \
     concerned, and if you visit the first one the web server will helpfully tell your browser, \
@@ -144,5 +151,18 @@ const PEDANTIC_ENTRY: &str = "<p>Humans generally write URLs like <code>example.
     browser has to make a second request.</p>\n\
     <p>Should the \"wrong\" URL count as broken, considering that the reader eventually ends up \
     in the right place? It's debatable, but it is certainly lower priority than an actually \
-    broken link (a 404, say). These are not marked as broken: they are under Housekeeping's \
-    redirected links, marked as pedantic with a ring, after the other redirects.</p>\n";
+    broken link (a 404, say). These are not counted as broken: they are under Housekeeping's \
+    redirected links, {marking}, after the other redirects.</p>\n"
+    )
+}
+
+/// The words stating where the guide's pedantic entry puts such a redirect and
+/// how it marks it, read off the map.
+pub(super) fn pedantic_marking(map: &SeverityMap) -> &'static str {
+    match map.of_redirect(Some(crate::store::PEDANTIC_TRAILING_SLASH)) {
+        Severity::Pedantic => "marked as pedantic with a ring",
+        Severity::Attention => "marked as attention with an amber dot",
+        Severity::Broken => "marked as broken with a red dot",
+        Severity::None => "not marked",
+    }
+}

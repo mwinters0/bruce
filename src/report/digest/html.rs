@@ -17,14 +17,16 @@ use self::markup::{
     Row, a, a_html, close_section, details, duration, esc, marked, num, open_section, rows, short,
     source, table, w, when,
 };
-use self::severity::{Level, legend, mark};
+use self::severity::{figure_class, legend, mark, mark_before};
 use super::document::Digest;
+use crate::config::{Severity, SeverityMap};
 use crate::report::table::Table;
 use crate::store::{DOUBLED_SLASH, WRONG_TRAILING_SLASH};
 
 mod compared;
 mod guide;
 mod markup;
+mod policy;
 mod severity;
 
 const STYLE: &str = include_str!("html/style.css");
@@ -43,7 +45,7 @@ impl Digest {
         fix_once(&mut out, self);
         errors(&mut out, self);
         housekeeping(&mut out, self);
-        guide(&mut out, self.judged);
+        guide(&mut out, self);
         out.push_str("</main>\n");
         w!(
             out,
@@ -66,13 +68,17 @@ fn counted(n: i64, noun: &str) -> String {
 /// broken through a link to a URL that doubles a slash, D71, and `error`, the
 /// links that could not be verified) and its amber ones (`broken_anchor`), each
 /// behind its dot, a count of none left out, and no total (see
-/// [`severity::Level::of_link`]).
-fn tally(broken: i64, through: i64, unverifiable: i64, amber: i64) -> String {
+/// [`SeverityMap::of_link`]), each count at the level of its kind (D82).
+fn tally(sev: &SeverityMap, broken: i64, through: i64, unverifiable: i64, amber: i64) -> String {
     let mut parts = Vec::new();
     for (level, n, words) in [
-        (Level::Broken, broken, counted(broken, "broken link")),
         (
-            Level::Broken,
+            sev.of_link(Some("broken_url"), None),
+            broken,
+            counted(broken, "broken link"),
+        ),
+        (
+            sev.of_link(Some("broken_url"), Some(DOUBLED_SLASH)),
             through,
             format!(
                 "{} broken through it{}",
@@ -81,14 +87,21 @@ fn tally(broken: i64, through: i64, unverifiable: i64, amber: i64) -> String {
             ),
         ),
         (
-            Level::Broken,
+            sev.of_link(Some("error"), None),
             unverifiable,
             format!("{} unverifiable", num(unverifiable)),
         ),
-        (Level::Attention, amber, counted(amber, "missing fragment")),
+        (
+            sev.of_link(Some("broken_anchor"), None),
+            amber,
+            counted(amber, "missing fragment"),
+        ),
     ] {
         if n > 0 {
-            parts.push(format!("<span class=\"cn\">{} {words}</span>", level.dot()));
+            parts.push(format!(
+                "<span class=\"cn\">{}{words}</span>",
+                mark_before(level)
+            ));
         }
     }
     parts.join(", ")
@@ -96,8 +109,9 @@ fn tally(broken: i64, through: i64, unverifiable: i64, amber: i64) -> String {
 
 /// A page's or a repo's summary count, [`tally`]'s, and how many of its links
 /// are new where it is not new itself (D75).
-fn summary_count(r: &Row) -> String {
+fn summary_count(sev: &SeverityMap, r: &Row) -> String {
     let mut count = tally(
+        sev,
         r.int("broken_url"),
         r.int("through"),
         r.int("error"),
@@ -309,12 +323,25 @@ fn figures(out: &mut String, d: &Digest) {
     let t = &d.totals;
     out.push_str("<section id=\"figures\">\n<h2>Figures</h2>\n<div class=\"figures\">\n");
     let changes = compared::changes(d);
+    let class_of = |outcome| figure_class(d.severity.of_link(Some(outcome), None));
     for (i, (label, n, class)) in [
         ("Pages", t.pages, ""),
         ("Links", t.links, ""),
-        ("Links to a broken URL", t.broken_url, " bad"),
-        ("Links to a missing fragment", t.broken_anchor, " warn"),
-        ("Links that could not be verified", t.error, " bad"),
+        (
+            "Links to a broken URL",
+            t.broken_url,
+            class_of("broken_url"),
+        ),
+        (
+            "Links to a missing fragment",
+            t.broken_anchor,
+            class_of("broken_anchor"),
+        ),
+        (
+            "Links that could not be verified",
+            t.error,
+            class_of("error"),
+        ),
     ]
     .into_iter()
     .enumerate()
@@ -333,7 +360,7 @@ fn figures(out: &mut String, d: &Digest) {
         num(t.broken_url + t.broken_anchor),
         num(t.unchecked),
         compared::since(d),
-        legend(d.judged) + &compared::new_legend(d)
+        legend(d) + &compared::new_legend(d)
     );
 }
 
@@ -357,7 +384,7 @@ fn fix_once(out: &mut String, d: &Digest) {
             .iter()
             .map(|r| {
                 let cells = vec![
-                    mark(Level::of_link(r.text("outcome"), r.text("reason"))),
+                    mark(d.severity.of_link(r.text("outcome"), r.text("reason"))),
                     num(r.int("links")),
                     num(r.int("pages")),
                     target_cell(r, r.text("fragment")),
@@ -436,7 +463,7 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
              <span class=\"cnt\">{}</span></summary>\n",
             i + 1,
             esc(p.text("title").unwrap_or_else(|| short(url))),
-            summary_count(&p)
+            summary_count(&d.severity, &p)
         );
         w!(
             out,
@@ -453,11 +480,12 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
         let hinted = page_links.iter().any(|r| r.text("hint").is_some());
         // The red links together, an unverified link after the broken URLs,
         // then the amber ones.
-        let mut found: Vec<(Option<Level>, bool, Vec<String>)> = page_links
+        let mut found: Vec<(Severity, bool, Vec<String>)> = page_links
             .iter()
             .map(|r| {
+                let level = d.severity.of_link(r.text("outcome"), r.text("reason"));
                 let mut cells = vec![
-                    mark(Level::of_link(r.text("outcome"), r.text("reason"))),
+                    mark(level),
                     written_as(r),
                     target_cell(r, None),
                     r.text("fragment")
@@ -472,16 +500,13 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
                     ));
                 }
                 cells.push(status_cell(r.int("status")));
-                (
-                    Level::of_link(r.text("outcome"), r.text("reason")),
-                    r.is_new(),
-                    cells,
-                )
+                (level, r.is_new(), cells)
             })
             .collect();
         found.extend(page_errors.iter().map(|r| {
+            let level = d.severity.of_link(Some("error"), r.text("reason"));
             let mut cells = vec![
-                mark(Some(Level::Broken)),
+                mark(level),
                 format!("<code>{}</code>", esc(r.text("raw_href").unwrap_or(""))),
                 target_link(r.text("target").unwrap_or(""), None),
                 r.text("fragment")
@@ -493,7 +518,7 @@ fn pages(out: &mut String, d: &Digest) -> Ids {
                 cells.push("-".to_owned());
             }
             cells.push(status_cell(r.int("status")));
-            (Some(Level::Broken), r.is_new(), cells)
+            (level, r.is_new(), cells)
         }));
         found.sort_by_key(|(level, _, _)| std::cmp::Reverse(*level));
         let body: Vec<(bool, Vec<String>)> = found
@@ -546,7 +571,7 @@ fn repos(out: &mut String, d: &Digest, ids: &Ids) {
             "{open}\n<summary>{said}<span class=\"rank\">{}</span><span class=\"ttl\">{name}</span>\
              <span class=\"cnt\">{}</span></summary>\n<ul>\n",
             i + 1,
-            summary_count(&r)
+            summary_count(&d.severity, &r)
         );
         for (url, title) in of_repo.get(&repo).into_iter().flatten() {
             let label = esc(title);
@@ -583,7 +608,7 @@ fn errors(out: &mut String, d: &Digest) {
             .map(|r| {
                 let page = r.text("page").unwrap_or("");
                 let cells = vec![
-                    mark(Some(Level::Broken)),
+                    mark(d.severity.of_link(Some("error"), r.text("reason"))),
                     a(page, short(page)),
                     r.text("source_url")
                         .map_or_else(|| "-".to_owned(), |s| a(s, "source")),
@@ -628,13 +653,13 @@ fn fold(out: &mut String, title: &str, count: &str, inner: impl FnOnce(&mut Stri
 /// One landing of the redirected links as a `<details>` of its own: its summary
 /// the dot, the landing and its counts, inside the first hops and the pages the
 /// links are on, a list so that no cell grows as wide as the longest.
-fn redirect(out: &mut String, r: &Row) {
+fn redirect(out: &mut String, sev: &SeverityMap, r: &Row) {
     let landing = r.text("landing").unwrap_or("");
     let (open, said) = details(r.is_new(), None);
     w!(
         out,
         "{open}\n<summary>{said}{}<span class=\"ttl\">{}</span><span class=\"cnt\">{}, {}</span></summary>\n",
-        mark(Some(Level::of_redirect(r.text("reason")))),
+        mark(sev.of_redirect(r.text("reason"))),
         esc(short(landing)),
         counted(r.int("links"), "link"),
         counted(r.int("urls"), "redirecting URL")
@@ -670,7 +695,10 @@ fn housekeeping(out: &mut String, d: &Digest) {
         out,
         "housekeeping",
         "Housekeeping",
-        Some("Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links"),
+        Some(
+            "Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links, \
+             settings off their defaults",
+        ),
     );
     let links = |t: &Table| format!("{} links", num(rows(t).map(|r| r.int("links")).sum()));
     let entries = |t: &Table| num(t.rows.len() as i64);
@@ -682,7 +710,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
             out.push_str("<p class=\"muted\">None.</p>\n");
         }
         for r in rows(&d.redirects) {
-            redirect(out, &r);
+            redirect(out, &d.severity, &r);
         }
     });
     fold(
@@ -732,6 +760,12 @@ fn housekeeping(out: &mut String, d: &Digest) {
     fold(out, "Unchecked links", &links(&d.unchecked), |out| {
         unchecked(out, d)
     });
+    fold(
+        out,
+        "Settings off their defaults",
+        &num(policy::differing(d).len() as i64),
+        |out| policy::list(out, d),
+    );
     close_section(out);
 }
 

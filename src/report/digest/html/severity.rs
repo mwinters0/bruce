@@ -1,104 +1,122 @@
-//! The severity of a row, read off a link's outcome and reason, and the dot
-//! that marks it. HTML only: the JSON's outcome and reason decide the level,
-//! and it gains no field. A dot marks a finding, a row naming a link or a
+//! The severity of a row, read off a link's outcome and reason through the
+//! run's severity map (D82), and the dot that marks it. HTML only: the JSON's
+//! outcome and reason and its policy decide the level, and it gains no field. A dot marks a finding, a row naming a link or a
 //! target, and never a heading. A dot is filled for broken and attention and a ring
 //! for pedantic, so the three read apart without their colours; each is named
 //! for a screen reader, the colour repeating the row's own text.
 
-use super::super::document::Judged;
+use super::super::document::Digest;
 use super::guide::Entry;
-use crate::store::PEDANTIC_TRAILING_SLASH;
+use crate::config::Severity;
 
-/// How much a link matters to whoever fixes the site, the least first.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub(super) enum Level {
-    /// A redirect differing from its landing only by a final `/`.
-    Pedantic,
-    /// `broken_anchor`, or a redirect that is not pedantic.
-    Attention,
-    /// `broken_url` and `error`.
-    Broken,
+/// The class and name of a level that has a dot.
+fn class(level: Severity) -> &'static str {
+    match level {
+        Severity::None => "",
+        Severity::Pedantic => "pedantic",
+        Severity::Attention => "attention",
+        Severity::Broken => "broken",
+    }
 }
 
-impl Level {
-    /// The level a link's outcome and reason give it, `None` for an `unchecked`
-    /// one and for an `ok` link that is not a pedantic redirect.
-    pub(super) fn of_link(outcome: Option<&str>, reason: Option<&str>) -> Option<Level> {
-        match (outcome, reason) {
-            (Some("broken_url" | "error"), _) => Some(Level::Broken),
-            (Some("broken_anchor"), _) => Some(Level::Attention),
-            (Some("ok"), Some(PEDANTIC_TRAILING_SLASH)) => Some(Level::Pedantic),
-            _ => None,
-        }
-    }
-
-    /// The level of a redirected link, whose row has a reason and no outcome.
-    pub(super) fn of_redirect(reason: Option<&str>) -> Level {
-        if reason == Some(PEDANTIC_TRAILING_SLASH) {
-            Level::Pedantic
-        } else {
-            Level::Attention
-        }
-    }
-
-    fn class(self) -> &'static str {
-        match self {
-            Level::Pedantic => "pedantic",
-            Level::Attention => "attention",
-            Level::Broken => "broken",
-        }
-    }
-
-    fn name(self) -> &'static str {
-        match self {
-            Level::Pedantic => "Pedantic",
-            Level::Attention => "Attention",
-            Level::Broken => "Broken",
-        }
-    }
-
-    /// The dot, named by its level for a screen reader.
-    pub(super) fn dot(self) -> String {
-        format!(
-            "<span class=\"sev {}\" role=\"img\" aria-label=\"{}\"></span>",
-            self.class(),
-            self.name()
-        )
+fn name(level: Severity) -> &'static str {
+    match level {
+        Severity::None => "",
+        Severity::Pedantic => "Pedantic",
+        Severity::Attention => "Attention",
+        Severity::Broken => "Broken",
     }
 }
 
 /// The dot of `level`, a table's first cell or a drill-down summary's first
-/// child, nothing for none.
-pub(super) fn mark(level: Option<Level>) -> String {
-    level.map(Level::dot).unwrap_or_default()
+/// child, named by its level for a screen reader; nothing for none.
+pub(super) fn mark(level: Severity) -> String {
+    if level == Severity::None {
+        return String::new();
+    }
+    format!(
+        "<span class=\"sev {}\" role=\"img\" aria-label=\"{}\"></span>",
+        class(level),
+        name(level)
+    )
 }
 
-/// The legend, one line naming the three, its dots hidden from a screen reader
-/// that reads the words beside them.
-pub(super) fn legend(judged: Judged) -> String {
-    let item = |level: Level, what: &str| {
-        format!(
-            "<span class=\"sev {}\" aria-hidden=\"true\"></span> <b>{}</b>, {what}",
-            level.class(),
-            level.name()
-        )
-    };
+/// The dot of `level` and a space after it, nothing for none.
+pub(super) fn mark_before(level: Severity) -> String {
+    let dot = mark(level);
+    if dot.is_empty() { dot } else { dot + " " }
+}
+
+/// The level of a figure's class: `bad` for broken, `warn` for attention.
+pub(super) fn figure_class(level: Severity) -> &'static str {
+    match level {
+        Severity::Broken => " bad",
+        Severity::Attention => " warn",
+        _ => "",
+    }
+}
+
+/// What a kind of finding is called in the legend, `after` being the kinds
+/// already named at its level.
+fn kind_words(kind: &str, after: &[&str], d: &Digest) -> String {
+    match kind {
+        "broken_url" => "a link to a broken URL".to_owned(),
+        "broken_anchor" => "a link to a missing fragment".to_owned(),
+        "error"
+            if after
+                .iter()
+                .any(|k| ["broken_url", "broken_anchor"].contains(k)) =>
+        {
+            "one that could not be verified".to_owned()
+        }
+        "error" => "a link that could not be verified".to_owned(),
+        "redirected" => "a redirect to update".to_owned(),
+        "pedantic_trailing_slash" => format!(
+            "a redirect differing from its landing only by a final <code>/</code>{}",
+            Entry::Pedantic.info_if(d.judged)
+        ),
+        reason => format!("a link with the reason <code>{reason}</code>"),
+    }
+}
+
+/// `items` as prose: "a", "a, or b", "a, b, or c".
+fn listed(items: &[String]) -> String {
+    match items {
+        [] => String::new(),
+        [only] => only.clone(),
+        [a, b] => format!("{a}, or {b}"),
+        [init @ .., last] => format!("{}, or {last}", init.join(", ")),
+    }
+}
+
+/// The legend, one line naming each level some kind has, with the kinds at
+/// it, the dots hidden from a screen reader that reads the words beside them.
+pub(super) fn legend(d: &Digest) -> String {
+    let items: Vec<String> = [Severity::Broken, Severity::Attention, Severity::Pedantic]
+        .into_iter()
+        .filter_map(|level| {
+            let kinds = d.severity.kinds_at(level);
+            if kinds.is_empty() {
+                return None;
+            }
+            let words: Vec<String> = kinds
+                .iter()
+                .enumerate()
+                .map(|(i, kind)| kind_words(kind, &kinds[..i], d))
+                .collect();
+            Some(format!(
+                "<span class=\"sev {}\" aria-hidden=\"true\"></span> <b>{}</b>, {}",
+                class(level),
+                name(level),
+                listed(&words)
+            ))
+        })
+        .collect();
+    if items.is_empty() {
+        return String::new();
+    }
     format!(
-        "<p class=\"legend\">A dot marks the severity of a link or a target: {}; {}; {}.</p>\n",
-        item(
-            Level::Broken,
-            "a link to a broken URL, or one that could not be verified"
-        ),
-        item(
-            Level::Attention,
-            "a link to a missing fragment, or a redirect to update"
-        ),
-        item(
-            Level::Pedantic,
-            &format!(
-                "a redirect differing from its landing only by a final <code>/</code>{}",
-                Entry::Pedantic.info_if(judged)
-            )
-        ),
+        "<p class=\"legend\">A dot marks the severity of a link or a target: {}.</p>\n",
+        items.join("; ")
     )
 }

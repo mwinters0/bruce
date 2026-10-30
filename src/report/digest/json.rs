@@ -35,6 +35,24 @@ impl Digest {
     }
 }
 
+/// The run's whole recorded policy (D78): `host` (null for a run-wide
+/// setting), `key` and `value` of each row.
+fn policy(d: &Digest) -> String {
+    let rows: Vec<String> = d
+        .policy
+        .iter()
+        .map(|e| {
+            format!(
+                "{{\"host\":{},\"key\":{},\"value\":{}}}",
+                e.host.as_deref().map_or_else(|| "null".to_owned(), quoted),
+                quoted(&e.key),
+                quoted(&e.value)
+            )
+        })
+        .collect();
+    format!("[{}]", rows.join(","))
+}
+
 fn render(d: &Digest) -> String {
     let run = &d.run;
     let finished = run.finished.map(|at| utc(at).1);
@@ -109,5 +127,6 @@ fn render(d: &Digest) -> String {
         ("anchors_removed", json(&d.anchors_removed)),
         ("errors", json(&d.errors)),
         ("housekeeping", housekeeping),
+        ("policy", policy(d)),
     ])
 }

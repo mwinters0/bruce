@@ -1,4 +1,5 @@
 use super::super::tests::{compared, of, ranked, store, with_doubled_slashes, with_unchecked};
+use crate::config::{Severity, SeverityMap};
 use crate::report::table::Cell;
 use crate::report::tests::{registry, xrefs};
 use crate::store::RunId;
@@ -129,12 +130,15 @@ fn a_summary_counts_red_then_amber_and_leaves_out_a_level_with_no_links() {
         "<span class=\"cn\"><span class=\"sev broken\" role=\"img\" aria-label=\"Broken\"></span>";
     let amber = "<span class=\"cn\"><span class=\"sev attention\" role=\"img\" aria-label=\"Attention\"></span>";
     assert_eq!(
-        tally(181, 0, 0, 2),
+        tally(&SeverityMap::default(), 181, 0, 0, 2),
         format!("{red} 181 broken links</span>, {amber} 2 missing fragments</span>")
     );
-    assert_eq!(tally(1, 0, 0, 0), format!("{red} 1 broken link</span>"));
     assert_eq!(
-        tally(0, 0, 0, 1),
+        tally(&SeverityMap::default(), 1, 0, 0, 0),
+        format!("{red} 1 broken link</span>")
+    );
+    assert_eq!(
+        tally(&SeverityMap::default(), 0, 0, 0, 1),
         format!("{amber} 1 missing fragment</span>")
     );
     // The links broken through a link and those that could not be verified
@@ -142,13 +146,16 @@ fn a_summary_counts_red_then_amber_and_leaves_out_a_level_with_no_links() {
     // guide's ⓘ.
     let info = super::guide::Entry::DoubledSlash.info();
     assert_eq!(
-        tally(1, 579, 2, 0),
+        tally(&SeverityMap::default(), 1, 579, 2, 0),
         format!(
             "{red} 1 broken link</span>, {red} 579 broken through it{info}</span>, {red} 2 \
              unverifiable</span>"
         )
     );
-    assert_eq!(tally(0, 0, 1, 0), format!("{red} 1 unverifiable</span>"));
+    assert_eq!(
+        tally(&SeverityMap::default(), 0, 0, 1, 0),
+        format!("{red} 1 unverifiable</span>")
+    );
 }
 
 #[test]
@@ -569,25 +576,25 @@ fn each_unchecked_reason_is_explained_beside_where_its_links_point_most() {
 
 #[test]
 fn a_level_is_read_off_a_links_outcome_and_reason() {
-    use super::severity::Level;
+    let map = SeverityMap::default();
     let pedantic = Some(crate::store::PEDANTIC_TRAILING_SLASH);
+    assert_eq!(map.of_link(Some("broken_url"), None), Severity::Broken);
     assert_eq!(
-        Level::of_link(Some("broken_url"), None),
-        Some(Level::Broken)
+        map.of_link(Some("error"), Some("timeout")),
+        Severity::Broken
     );
     assert_eq!(
-        Level::of_link(Some("error"), Some("timeout")),
-        Some(Level::Broken)
+        map.of_link(Some("broken_anchor"), None),
+        Severity::Attention
     );
+    assert_eq!(map.of_link(Some("ok"), pedantic), Severity::Pedantic);
+    assert_eq!(map.of_link(Some("ok"), None), Severity::None);
     assert_eq!(
-        Level::of_link(Some("broken_anchor"), pedantic),
-        Some(Level::Attention)
+        map.of_link(Some("unchecked"), Some("robots")),
+        Severity::None
     );
-    assert_eq!(Level::of_link(Some("ok"), pedantic), Some(Level::Pedantic));
-    assert_eq!(Level::of_link(Some("ok"), None), None);
-    assert_eq!(Level::of_link(Some("unchecked"), Some("robots")), None);
-    assert_eq!(Level::of_redirect(pedantic), Level::Pedantic);
-    assert_eq!(Level::of_redirect(None), Level::Attention);
+    assert_eq!(map.of_redirect(pedantic), Severity::Pedantic);
+    assert_eq!(map.of_redirect(None), Severity::Attention);
 }
 
 #[test]
@@ -992,4 +999,139 @@ fn a_comparison_with_nothing_new_leaves_out_the_broken_since() {
     let html = d.html();
     assert!(!html.contains("broken-since") && !html.contains("fixed-since"));
     assert!(html.contains("<nav><a href=\"#figures\">Figures</a> <a href=\"#pages\">"));
+}
+
+/// `digest` judged by the policy `rows` of (`host`, `key`, `value`) record.
+fn with_policy(digest: &mut crate::report::Digest, rows: &[(&str, &str)]) {
+    digest.policy = rows
+        .iter()
+        .map(|(key, value)| crate::config::Entry {
+            host: None,
+            key: (*key).to_owned(),
+            value: (*value).to_owned(),
+        })
+        .collect();
+    digest.severity = SeverityMap::from_entries(&digest.policy);
+}
+
+#[test]
+fn the_severity_map_moves_the_dots_the_legend_and_the_figures() {
+    let mut digest = of(&store());
+    let default = digest.html();
+    let broken = "aria-label=\"Broken\"";
+    assert!(default.contains(broken));
+    assert!(
+        section(&default, "figures")
+            .contains("Broken</b>, a link to a broken URL, or one that could not be verified")
+    );
+    // Every kind quiet: no dot anywhere, and a legend naming no level.
+    with_policy(
+        &mut digest,
+        &[
+            ("severity.broken_url", "none"),
+            ("severity.error", "none"),
+            ("severity.broken_anchor", "none"),
+            ("severity.redirected", "none"),
+            ("severity.pedantic_trailing_slash", "none"),
+        ],
+    );
+    let quiet = digest.html();
+    assert!(!quiet.contains("class=\"sev "), "a dot remained");
+    assert!(!quiet.contains("A dot marks the severity"));
+    // A link to a broken URL softened to attention joins the amber kinds, and
+    // the broken level keeps the errors alone, worded to stand by itself.
+    with_policy(&mut digest, &[("severity.broken_url", "attention")]);
+    let soft = digest.html();
+    let figures = section(&soft, "figures");
+    assert!(figures.contains("Broken</b>, a link that could not be verified;"));
+    assert!(figures.contains(
+        "Attention</b>, a link to a broken URL, or a link to a missing fragment, or a redirect to update"
+    ) || figures.contains("a link to a broken URL, a link to a missing fragment, or a redirect to update"));
+    assert!(figures.contains("class=\"fig warn\"><span class=\"n\">"));
+}
+
+#[test]
+fn a_reasons_level_marks_its_rows_over_its_outcomes() {
+    let mut digest = of(&with_doubled_slashes());
+    let pages = |digest: &crate::report::Digest| section(&digest.html(), "pages").to_owned();
+    let before = pages(&digest);
+    assert!(before.contains("aria-label=\"Broken\""));
+    with_policy(&mut digest, &[("severity.doubled_slash", "pedantic")]);
+    let after = pages(&digest);
+    // The rows of that reason, and the counts broken through it, take the ring.
+    assert!(after.contains("aria-label=\"Pedantic\"></span> "));
+    assert!(
+        after.matches("aria-label=\"Pedantic\"").count()
+            > before.matches("aria-label=\"Pedantic\"").count()
+    );
+    let legend = section(&digest.html(), "figures").to_owned();
+    assert!(legend.contains(
+        "Pedantic</b>, a link with the reason <code>doubled_slash</code>, or a redirect differing \
+         from its landing only by a final <code>/</code>"
+    ));
+}
+
+#[test]
+fn the_pedantic_entry_says_how_the_run_marks_such_a_redirect() {
+    let mut digest = of(&store());
+    let entry = |digest: &crate::report::Digest| section(&digest.html(), "guide").to_owned();
+    assert!(
+        entry(&digest).contains(
+            "redirected links, marked as pedantic with a ring, after the other redirects"
+        )
+    );
+    for (level, words) in [
+        ("attention", "marked as attention with an amber dot"),
+        ("broken", "marked as broken with a red dot"),
+        ("none", "not marked"),
+    ] {
+        with_policy(&mut digest, &[("severity.pedantic_trailing_slash", level)]);
+        assert!(
+            entry(&digest).contains(&format!("redirected links, {words}, after")),
+            "{level}"
+        );
+    }
+}
+
+#[test]
+fn housekeeping_lists_the_settings_off_their_defaults() {
+    let mut digest = of(&store());
+    let fold = |digest: &crate::report::Digest| {
+        let html = digest.html();
+        let house = section(&html, "housekeeping");
+        house[house.find("Settings off their defaults</span>").unwrap()..].to_owned()
+    };
+    // A run that recorded the defaults, or none, differs from them in nothing.
+    assert!(fold(&digest).contains("<span class=\"cnt\">0</span>"));
+    assert!(fold(&digest).contains("every setting is at its default"));
+    digest.policy = crate::config::Policy::default().entries();
+    assert!(fold(&digest).contains("every setting is at its default"));
+    let mut policy = crate::config::Policy {
+        pedantic_trailing_slash: false,
+        ..Default::default()
+    };
+    policy.schemes.push("matrix".to_owned());
+    policy.severity = SeverityMap::from_entries(&[crate::config::Entry {
+        host: None,
+        key: "severity.doubled_slash".to_owned(),
+        value: "attention".to_owned(),
+    }]);
+    digest.policy = policy.entries();
+    digest.policy.push(crate::config::Entry {
+        host: Some("pagure.io".to_owned()),
+        key: "status.403".to_owned(),
+        value: "broken_url".to_owned(),
+    });
+    let listed = fold(&digest);
+    assert!(listed.contains("<span class=\"cnt\">4</span>"), "{listed}");
+    for line in [
+        "judge.pedantic_trailing_slash = false",
+        "judge.schemes += &quot;matrix&quot;",
+        "severity.doubled_slash = &quot;attention&quot;",
+        "host.&quot;pagure.io&quot;.status.403 = &quot;broken_url&quot;",
+    ] {
+        assert!(listed.contains(line), "{line}");
+    }
+    // A default row is not listed.
+    assert!(!listed.contains("severity.error"));
 }

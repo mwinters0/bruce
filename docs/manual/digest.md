@@ -64,14 +64,17 @@ times are UTC and its links absolute, those into the page excepted. The
 header and the figures are open; every section after them but the last is closed
 under its heading, a click opening it. A dot marks each finding, a row that names a
 link or a target, in a column with no heading, or first in a drill-down's
-summary; a heading has none. It is red
+summary; a heading has none. By default it is red
 and filled for a link to a broken URL or one that could not be verified, amber and filled for
 a link to a missing fragment or a redirect to update, and a grey ring for a
 redirect that differs from its landing only by a final `/`. The ring differs
 from the others in shape, so the three read apart in print and without
 colour, and every dot is named for a screen reader. The figures' legend names
-the three. Only the JSON's `outcome` and `reason` decide a level; it has no
-field for it. The lists that are not links (orphans, unlisted pages, sitemap
+the levels and the kinds at each; a site's [`[severity]`](config.md#severity)
+moves a kind to another level, or to none, which has no dot. Only the JSON's
+`outcome` and `reason` and its `policy` decide a level; it has no
+field for it. A page's and a repo's counts take the level of their kind, but
+the ranking stays by outcome, red kinds first. The lists that are not links (orphans, unlisted pages, sitemap
 entries, the unchecked counts) have no dot. **A bar at the left edge** marks a
 row or a drill-down that is new since the compared run, as the JSON's `new`
 says ([below](#the-json)), and a drill-down that is not new counts its new
@@ -156,7 +159,9 @@ new or all fixed. In this order:
    redirecting URLs, and inside the hops the first took and the pages the links are
    written on, listed one to a line so a phone has no wide table to scroll), those
    differing from their landing only by a final `/` last, the sitemap entries no page was fetched for, the orphans, the unlisted pages
-   and the unchecked links, each closed in its turn. The unchecked links are
+   and the unchecked links, each closed in its turn, then the settings of the
+   run's [policy](config.md#judging) that differ from the defaults, as the
+   configuration file writes them. The unchecked links are
    listed by reason, each with what its links are in plain words, the setting
    in the [configuration](config.md) that would check them where there is
    one, and where its links point most: the hosts, the parts of a root's
@@ -169,7 +174,8 @@ new or all fixed. In this order:
     term, after a page's or a repo's count broken through it, a
     `doubled_slash` or `pedantic_trailing_slash` reason, and the legend's
     pedantic level, links to its entry. An entry is there only while the run's
-    [policy](config.md#judging) judges its reason.
+    [policy](config.md#judging) judges its reason, and the pedantic entry says
+    how the run's severity marks such a redirect.
 
 The JSON holds every row the HTML lists and the targets it leaves out, and
 the by-component counts it has no section for.
@@ -204,7 +210,8 @@ and a count or status a number.
     "unchecked": [{"reason":"skipped","links":1,"targets":1}],
     "unchecked_groups": [{"reason":"skipped","group":"forge.example.org/…/issues/new","links":1,"targets":1}],
     "checked_hosts": [{"host":"slow.example.net","links":1,"targets":1}]
-  }
+  },
+  "policy": [{"host":null,"key":"pedantic_trailing_slash","value":"true"},{"host":null,"key":"severity.error","value":"broken"}]
 }
 ```
 
@@ -246,6 +253,7 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `housekeeping.roots_without_sitemap` | The roots that read no sitemap, whose pages cannot be unlisted. |
 | `housekeeping.unchecked` | The `unchecked` links by `reason` ([below](#why-a-link-is-unchecked)), and the distinct `targets` they name. |
 | `housekeeping.unchecked_groups` | The same links by `reason` and by `group`, where they point, every group listed: the reasons in `unchecked`'s order, a reason's groups the most `links` first. A `group` is the scheme, as `mailto:`, for a URL that is not `http` or `https`; for `skipped`, the host and the path's last two segments, as `forge.example.org/…/issues/new`, the part a `skip` glob usually matches; on a root's host, the URL up to the path's first segment, as `https://docs.example.org/de/`, with the `/` after it where the path goes on; and else the host. It is `null` for a link the run stopped before asking about. |
+| `policy` | The whole policy the run was judged by, as it recorded it ([`config.md`](config.md#judging)): a row to a setting, `host` `null` for a run-wide one and a host's name for its own, `key` as the store spells it (`status.403`, `severity.doubled_slash`, a `schemes` row to each scheme) and `value` its text. A setting the file leaves out is a row at its default. |
 | `housekeeping.checked_hosts` | The hosts no root starts on whose links' targets were asked about, the most `links` first: the [`allowlist`](config.md#allowlist) as far as the pages link to it. The run records no configuration, so a host the allowlist names that no page links to is in no row. |
 
 ## Why a link is newly broken

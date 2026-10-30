@@ -33,7 +33,7 @@ fn the_default_policy_is_what_bruce_has_always_judged_by() {
 fn every_setting_is_an_entry_with_its_value_written_out() {
     let mut policy = Policy::default();
     let defaults = rows(&policy);
-    assert_eq!(defaults.len(), 1 + 12 + 1 + 1 + 3);
+    assert_eq!(defaults.len(), 1 + 12 + 1 + 1 + 3 + 5);
     for row in [
         "/pedantic_trailing_slash=true",
         "/schemes=mailto",
@@ -119,4 +119,108 @@ fn a_judging_key_that_cannot_mean_anything_is_refused_naming_it() {
         let err = parse(extra).unwrap_err();
         assert!(err.contains(named), "{extra}: {err}");
     }
+}
+
+#[test]
+fn a_file_moves_a_kind_to_another_level_and_a_reason_beats_its_outcome() {
+    let policy = parse(
+        r#"
+        [severity]
+        broken_anchor = "pedantic"
+        doubled_slash = "attention"
+        pedantic_trailing_slash = "none"
+        "#,
+    )
+    .unwrap();
+    let map = &policy.severity;
+    assert_eq!(map.of_link(Some("broken_anchor"), None), Severity::Pedantic);
+    // The reason's level is that kind of `broken_url`'s alone.
+    assert_eq!(
+        map.of_link(Some("broken_url"), Some("doubled_slash")),
+        Severity::Attention
+    );
+    assert_eq!(map.of_link(Some("broken_url"), None), Severity::Broken);
+    assert_eq!(
+        map.of_redirect(Some("pedantic_trailing_slash")),
+        Severity::None
+    );
+    assert_eq!(map.of_redirect(None), Severity::Attention);
+    // The rows record the whole map, and a map read back from them is it.
+    let rows = policy.entries();
+    assert!(
+        rows.iter()
+            .any(|e| e.key == "severity.doubled_slash" && e.value == "attention")
+    );
+    assert!(
+        rows.iter()
+            .any(|e| e.key == "severity.error" && e.value == "broken")
+    );
+    assert_eq!(SeverityMap::from_entries(&rows), *map);
+    // Rows a run recorded before the map existed read as the default.
+    assert_eq!(SeverityMap::from_entries(&[]), SeverityMap::default());
+}
+
+#[test]
+fn a_severity_key_that_cannot_mean_anything_is_refused_naming_it() {
+    for (extra, named) in [
+        (
+            "[severity]\nunchecked = \"none\"",
+            "unchecked keeps no level",
+        ),
+        ("[severity]\nok = \"none\"", "\"ok\" is not"),
+        (
+            "[severity]\nout_of_scope = \"none\"",
+            "\"out_of_scope\" is not",
+        ),
+        (
+            "[severity]\nbroken_url = \"red\"",
+            "broken_url: \"red\" is not a level",
+        ),
+    ] {
+        let err = parse(extra).unwrap_err();
+        assert!(
+            err.contains("severity") && err.contains(named),
+            "{extra}: {err}"
+        );
+    }
+}
+
+#[test]
+fn a_setting_is_written_as_the_file_writes_it() {
+    let written = |host: Option<&str>, key: &str, value: &str| {
+        Entry {
+            host: host.map(str::to_owned),
+            key: key.to_owned(),
+            value: value.to_owned(),
+        }
+        .written_as()
+    };
+    assert_eq!(
+        written(None, "pedantic_trailing_slash", "false"),
+        "judge.pedantic_trailing_slash = false"
+    );
+    assert_eq!(
+        written(None, "schemes", "matrix"),
+        "judge.schemes += \"matrix\""
+    );
+    assert_eq!(
+        written(None, "doubled_slash_reach", "off"),
+        "judge.doubled_slash_reach = \"off\""
+    );
+    assert_eq!(
+        written(None, "status.403", "ok"),
+        "default.status.403 = \"ok\""
+    );
+    assert_eq!(
+        written(None, "doubled_slash", "false"),
+        "default.doubled_slash = false"
+    );
+    assert_eq!(
+        written(None, "severity.error", "none"),
+        "severity.error = \"none\""
+    );
+    assert_eq!(
+        written(Some("pagure.io"), "status.403", "broken_url"),
+        "host.\"pagure.io\".status.403 = \"broken_url\""
+    );
 }

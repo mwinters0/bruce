@@ -26,6 +26,7 @@ use duckdb::Connection;
 use super::error::Error;
 use super::run;
 use super::table::Table;
+use crate::config::SeverityMap;
 use crate::store::{JudgedBy, RunId, Store};
 
 pub use document::{Compared, Digest};
@@ -98,11 +99,14 @@ fn build(conn: &Connection, read: &Read, from: Option<RunId>, file: bool) -> Res
         ),
         None => (empty(), empty()),
     };
+    let policy = sections::policy(conn, id)?;
     let mut digest = Digest {
         run,
         compared,
         totals: sections::totals(conn, id)?,
         judged: sections::judged(conn, id)?,
+        severity: SeverityMap::from_entries(&policy),
+        policy,
         unchecked: sections::unchecked(conn, id)?,
         unchecked_groups: sections::unchecked_groups(conn, id)?,
         checked_hosts: sections::checked_hosts(conn, id)?,

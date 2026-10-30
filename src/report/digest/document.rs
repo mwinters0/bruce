@@ -1,7 +1,7 @@
 //! The digest's document: the run, its figures and the sections, each section
 //! a [`Table`] already in the order a reader wants it.
 
-use crate::config::Reach;
+use crate::config::{Entry, Reach, SeverityMap};
 use crate::report::table::Table;
 use crate::store::RunId;
 
@@ -64,6 +64,10 @@ pub struct Digest {
     pub totals: Totals,
     /// What the run's policy judges.
     pub judged: Judged,
+    /// The run's whole recorded policy, as its rows (D78).
+    pub policy: Vec<Entry>,
+    /// The severity of each kind of finding, read off `policy` (D82).
+    pub severity: SeverityMap,
     /// The `unchecked` links by reason: `reason`, `links`, `targets`.
     pub unchecked: Table,
     /// The `unchecked` links by reason and by where they point: `reason`,

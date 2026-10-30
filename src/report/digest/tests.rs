@@ -929,12 +929,15 @@ fn the_json_has_the_fields_the_manual_documents() {
     // A comparison fills `compared_with`, the breakage new and fixed and
     // `anchors_removed`, which a digest
     // of one run leaves null and empty.
-    let compared = digest(
-        &compared_with_a_fix(),
-        Some(RunId(1)),
-        Against::Run(RunId(4)),
-    )
-    .unwrap();
+    let store = compared_with_a_fix();
+    store
+        .connection()
+        .execute(
+            "INSERT INTO policy VALUES (1, NULL, 'schemes', 'matrix')",
+            [],
+        )
+        .unwrap();
+    let compared = digest(&store, Some(RunId(1)), Against::Run(RunId(4))).unwrap();
     let json: Value = serde_json::from_str(&compared.json()).unwrap();
     same_shape(&documented, &json, "$");
 }
@@ -984,4 +987,34 @@ fn the_compared_run_is_judged_by_the_digests_policy() {
         )
         .unwrap();
     assert_eq!(own, 1);
+}
+
+#[test]
+fn the_run_s_whole_recorded_policy_is_in_the_digest_and_its_json() {
+    let store = store();
+    store
+        .connection()
+        .execute_batch(
+            "INSERT INTO policy VALUES (1, NULL, 'severity.doubled_slash', 'attention'), \
+             (1, 'pagure.io', 'status.403', 'ok')",
+        )
+        .unwrap();
+    let digest = of(&store);
+    assert_eq!(digest.policy.len(), 2);
+    // The run-wide rows come first, and the map is read off them.
+    assert_eq!(digest.policy[0].host, None);
+    assert_eq!(
+        digest
+            .severity
+            .of_link(Some("broken_url"), Some("doubled_slash")),
+        crate::config::Severity::Attention
+    );
+    let json: Value = serde_json::from_str(&digest.json()).unwrap();
+    assert_eq!(
+        json["policy"],
+        serde_json::json!([
+            {"host": null, "key": "severity.doubled_slash", "value": "attention"},
+            {"host": "pagure.io", "key": "status.403", "value": "ok"}
+        ])
+    );
 }

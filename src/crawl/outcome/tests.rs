@@ -72,3 +72,35 @@ fn the_default_status_map_of_the_policy_is_the_class_given_here() {
         );
     }
 }
+
+#[test]
+fn every_reason_the_crawl_writes_takes_a_severity() {
+    use crate::config::SEVERITY_REASONS;
+    use crate::crawl::hops::Stop;
+    use crate::fetch::FailureKind;
+    use crate::store::{DOUBLED_SLASH, PEDANTIC_TRAILING_SLASH};
+    let written = [
+        FailureKind::NxDomain,
+        FailureKind::Timeout,
+        FailureKind::Tls,
+        FailureKind::Connect,
+        FailureKind::Reset,
+        FailureKind::Other,
+    ]
+    .map(FailureKind::as_str)
+    .into_iter()
+    .chain([Stop::Loop, Stop::TooMany].map(Stop::as_str))
+    .chain([
+        status(302).1.unwrap(),
+        answered(200, &Body::TooLarge, false).1.unwrap(),
+        answered(404, &Body::Unread, true).1.unwrap(),
+        crate::crawl::frontier::BAD_SCHEME,
+        "unresolved_xref",
+        DOUBLED_SLASH,
+        PEDANTIC_TRAILING_SLASH,
+    ]);
+    for reason in written {
+        assert!(SEVERITY_REASONS.contains(&reason), "{reason}");
+    }
+    assert_eq!(SEVERITY_REASONS.len(), 15);
+}

@@ -7,7 +7,7 @@ use duckdb::Connection;
 use url::Url;
 
 use super::document::{Judged, Run, Totals};
-use crate::config::Reach;
+use crate::config::{Entry, Reach};
 use crate::extract::Kind;
 use crate::report::error::Error;
 use crate::report::reach;
@@ -107,6 +107,22 @@ pub(super) fn judged(conn: &Connection, run: RunId) -> Result<Judged, Error> {
         pedantic_trailing_slash,
         reach: recorded_reach(conn, run)?,
     })
+}
+
+/// The rows of the run's recorded policy (D78), the run-wide ones first.
+pub(super) fn policy(conn: &Connection, run: RunId) -> Result<Vec<Entry>, Error> {
+    let mut stmt = conn.prepare(
+        "SELECT host, key, value FROM policy WHERE run_id = ? \
+         ORDER BY host NULLS FIRST, key, value",
+    )?;
+    let rows = stmt.query_map([run.0], |row| {
+        Ok(Entry {
+            host: row.get(0)?,
+            key: row.get(1)?,
+            value: row.get(2)?,
+        })
+    })?;
+    Ok(rows.collect::<Result<_, _>>()?)
 }
 
 /// The run's context, or why it has no digest.

@@ -255,6 +255,37 @@ any other drops it. A fragment on a URL judged `ok`
 by this map is `unchecked`, reason `no_anchors`, as on any `ok` URL whose body
 was not read.
 
+## Severity
+
+`[severity]` sets how loudly [the digest](digest.md#the-html) shows each kind of
+finding, with no effect on any outcome, any report or the gate. A level is
+`"broken"` (a red dot), `"attention"` (amber), `"pedantic"` (a grey ring) or
+`"none"` (no dot); the colours are fixed. A key is an outcome, `redirected` for
+a redirected link, or a reason, and a reason's level beats its outcome's, so
+`doubled_slash = "attention"` softens that kind of `broken_url` alone. `unchecked`
+keeps no level, and a key `bruce` does not know is refused. The run records the map
+with its other settings, and the digest's legend, its dots, its counts' dots and
+the guide's pedantic entry follow it. A page's and a repo's ranking stays by outcome.
+
+```toml
+[severity]
+doubled_slash = "attention"
+pedantic_trailing_slash = "none"
+```
+
+| Kind | Default level |
+|---|---|
+| `broken_url` | `"broken"` |
+| `error` | `"broken"` |
+| `broken_anchor` | `"attention"` |
+| `redirected` | `"attention"` |
+| `pedantic_trailing_slash` | `"pedantic"` |
+
+A reason not listed has no level of its own and takes its outcome's: `nxdomain`,
+`timeout`, `tls`, `connect`, `reset`, `other`, `redirect_loop`,
+`too_many_redirects`, `bad_redirect`, `too_large`, `unresolved_xref`,
+`bad_scheme`, `doubled_slash` and `wrong_trailing_slash`.
+
 ## User agent
 
 Every request names `bruce` and its version, `bruce/0.2.0`. `user_agent` names

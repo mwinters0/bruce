@@ -24,7 +24,10 @@ mod policy;
 
 use policy::{RawJudge, RawJudging};
 
-pub use policy::{Answer, Entry, HostJudging, Policy, Reach, WORKING_SCHEMES};
+pub use policy::{
+    Answer, Entry, HostJudging, Policy, Reach, SEVERITY_REASONS, Severity, SeverityMap,
+    WORKING_SCHEMES,
+};
 
 /// Requests a second to one host that no `Crawl-delay`, `[host]` or `[rate]`
 /// governs (D40).
@@ -273,7 +276,8 @@ impl Config {
             status: raw.default.status.clone(),
         };
         let (hosts, judged) = host_settings(raw.host)?;
-        let policy = Policy::from_raw(raw.judge, &default_judging, judged).map_err(invalid)?;
+        let policy = Policy::from_raw(raw.judge, &default_judging, &raw.severity, judged)
+            .map_err(invalid)?;
         let config = Config {
             roots,
             allowlist,
@@ -722,6 +726,8 @@ struct RawConfig {
     default: RawRate,
     #[serde(default)]
     judge: RawJudge,
+    #[serde(default)]
+    severity: BTreeMap<String, String>,
     user_agent: Option<String>,
     #[serde(default)]
     host: BTreeMap<String, RawHost>,

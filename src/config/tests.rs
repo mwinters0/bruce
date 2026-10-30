@@ -691,7 +691,12 @@ fn every_key_the_config_reads_is_in_the_manual_with_its_default() {
     // `root`, `default` and `host` are tables, whose keys are rows of their own.
     let mut read: Vec<String> = keys::<RawConfig>()
         .iter()
-        .filter(|k| !matches!(**k, "root" | "rate" | "default" | "host" | "judge"))
+        .filter(|k| {
+            !matches!(
+                **k,
+                "root" | "rate" | "default" | "host" | "judge" | "severity"
+            )
+        })
         .map(|k| k.to_string())
         .collect();
     read.extend(keys::<RawRoot>().iter().map(|k| k.to_string()));

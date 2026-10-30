@@ -64,7 +64,7 @@ decisions each carries are cited in its module's doc.
   (`introduced`: a CI run against its baseline, D9) and the `inverse` check
   (what the change removed that pages outside the build link to, D56) each in their own child,
   the crawl run's digest (D64) in `digest`, its document in the `document` child, its sections' queries in `sections`,
-  the run it is compared with, and the anchors removed since (in the JSON alone), in `compare` (D73), the breakage new and fixed since, each new link with its cause, in `cause` (D74), what is new since in each section in `novelty` (D75), its JSON in `json` and its HTML, with the stylesheet it holds, the severity dots in its `severity` child, the markup helpers it and `compared` share in `markup`, the guide closing it ("How to read this report") and the ⓘ linking a row's term to its entry in its `guide` child and the comparison's sub-title, figure changes, the legend's line for what is new and sections (the breakage new, the breakage fixed) in its `compared` child, in `html`,
+  the run it is compared with, and the anchors removed since (in the JSON alone), in `compare` (D73), the breakage new and fixed since, each new link with its cause, in `cause` (D74), what is new since in each section in `novelty` (D75), its JSON in `json` and its HTML, with the stylesheet it holds, the severity dots, and the legend that follows the run's severity map (D82), in its `severity` child, Housekeeping's settings off their defaults in its `policy` child, the markup helpers it and `compared` share in `markup`, the guide closing it ("How to read this report") and the ⓘ linking a row's term to its entry in its `guide` child and the comparison's sub-title, figure changes, the legend's line for what is new and sections (the breakage new, the breakage fixed) in its `compared` child, in `html`,
   the views they read in `views`, the table's
   text and JSON in `table` and the failures in `error`.
   It sits above `store`, whose `link_verdicts` its views join, and below
@@ -127,5 +127,5 @@ below `profile` (D39).
 
 - **bruce** — `config.rs`: the loader, its defaults and its validation, and
   the allowlist's matching of a host (D68), and `config/policy.rs`, the
-  judging settings a run is judged by and records, with their defaults (D78), at
+  judging settings a run is judged by and records, with their defaults (D78), a row of the record and how a file writes it in `config/policy/entry.rs`, and the severity map in `config/policy/severity.rs` (D82), at
   the bottom of the layering but for `url`, so every module may read a setting (D39).

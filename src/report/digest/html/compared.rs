@@ -10,7 +10,8 @@ use super::guide::info_of;
 use super::markup::{
     Row, a, close_section, day, esc, num, open_section, rows, short, source, table, w, when,
 };
-use super::severity::{Level, mark};
+use super::severity::mark;
+use crate::config::SeverityMap;
 use crate::report::table::Table;
 
 /// The header's sub-title: the day the compared run started, its time too
@@ -181,13 +182,13 @@ fn status(r: &Row) -> String {
 
 /// The links of a table of sections 3 and 4, one row each, `now` heading a column
 /// that says what a fixed link became, and `whose` the source shown.
-fn links(out: &mut String, rows: &[Row], now: bool, whose: &str) {
+fn links(out: &mut String, sev: &SeverityMap, rows: &[Row], now: bool, whose: &str) {
     let body: Vec<Vec<String>> = rows
         .iter()
         .map(|r| {
             let page = r.text("page").unwrap_or("");
             let mut cells = vec![
-                mark(Level::of_link(r.text("outcome"), r.text("reason"))),
+                mark(sev.of_link(r.text("outcome"), r.text("reason"))),
                 a(page, short(page)),
                 format!("<code>{}</code>", esc(r.text("raw_href").unwrap_or(""))),
                 target(r),
@@ -289,7 +290,7 @@ pub(super) fn broken_since(out: &mut String, d: &Digest) {
         let (title, meaning, whose) = cause_words(cause);
         fold(out, title, found.len(), |out| {
             w!(out, "<p>{meaning}</p>\n");
-            links(out, &found, false, whose);
+            links(out, &d.severity, &found, false, whose);
         });
     }
     close_section(out);
@@ -312,6 +313,6 @@ pub(super) fn fixed_since(out: &mut String, d: &Digest) {
         if fixed == 1 { "is" } else { "are" }
     );
     let all: Vec<Row> = rows(&d.fixed_breakage).collect();
-    links(out, &all, true, "Linking page's source");
+    links(out, &d.severity, &all, true, "Linking page's source");
     close_section(out);
 }

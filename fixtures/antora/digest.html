@@ -306,7 +306,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 </section>
 <section id="housekeeping">
 <details class="sect">
-<summary><h2>Housekeeping</h2><small>Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links</small></summary>
+<summary><h2>Housekeeping</h2><small>Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links, settings off their defaults</small></summary>
 <details>
 <summary><span class="ttl">Redirected links</span><span class="cnt">8 links</span></summary>
 <p>The links whose target redirects, by where it lands, the most links first: update them to the landing. Open one for the redirecting URLs, the hops the first took and the pages the links are written on. A landing marked as a ring is reached by a URL differing from it only by a final <code>/</code>, and comes last. <a class="info" href="#guide-pedantic" title="What is a &quot;pedantic&quot; link?" aria-label="What is a &quot;pedantic&quot; link?">i</a></p>
@@ -375,6 +375,11 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <p>The other websites whose links this run did check: those on its <code>allowlist</code> that these pages link to.</p>
 <p class="muted">None.</p>
 </details>
+<details>
+<summary><span class="ttl">Settings off their defaults</span><span class="cnt">0</span></summary>
+<p>The settings this run was judged by that differ from the defaults, as the configuration file writes them. A report judges the run by the policy it recorded, and a comparison judges both runs by the newer one's.</p>
+<p class="muted">None: every setting is at its default.</p>
+</details>
 </details>
 </section>
 <section id="guide">
@@ -384,7 +389,7 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <p>If you navigate from A to B that way, page B will work, but all of its relative links (<code>../../blah</code>) are broken because of the extra slash in the path. They are not counted against page B, because there's nothing wrong there: the problem is in page A. So A's link is listed as broken, with the reason <code>doubled_slash</code>, and the links on B that the extra slash breaks, and those on every other page at a doubled URL that B's relative links lead on to, are counted on page A as "broken through it".</p>
 <h3 id="guide-pedantic">What is a &quot;pedantic&quot; link?</h3>
 <p>Humans generally write URLs like <code>example.com/foo</code> but <em>technically</em> the correct form is <code>example.com/foo/</code>: notice the trailing slash. These are actually two separate web pages as far as most web servers are concerned, and if you visit the first one the web server will helpfully tell your browser, "Hey dummy, there's no page here, it's over at <code>example.com/foo/</code>". So your browser has to make a second request.</p>
-<p>Should the "wrong" URL count as broken, considering that the reader eventually ends up in the right place? It's debatable, but it is certainly lower priority than an actually broken link (a 404, say). These are not marked as broken: they are under Housekeeping's redirected links, marked as pedantic with a ring, after the other redirects.</p>
+<p>Should the "wrong" URL count as broken, considering that the reader eventually ends up in the right place? It's debatable, but it is certainly lower priority than an actually broken link (a 404, say). These are not counted as broken: they are under Housekeeping's redirected links, marked as pedantic with a ring, after the other redirects.</p>
 </section>
 </main>
 <footer>Written by bruce <span class="version">V</span>, document format 1. The JSON digest of this day holds the same data, and every broken and error row.</footer>
