@@ -88,8 +88,8 @@ the baseline's links on a page not built are not this change's.
 An `error` (a timeout, a 5xx, a refusal to answer) fails the check only where
 `gate.fail` names it, and a redirect never does. The list is the one the CI run
 recorded, which also judges the baseline's links. An outcome it leaves out
-fails nothing and is not listed here; `bruce report broken` and the digest
-list it.
+fails nothing and is not listed here; `bruce report broken --run N` over the
+same database lists it, and the digest reads no `check-dir` run.
 
 ### The inverse check
 

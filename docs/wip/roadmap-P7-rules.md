@@ -130,6 +130,27 @@ today's value, so a run with no new key judges as it does now.
    keeps one listed and quiet. `--inverse fail|warn` stays a flag, one
    content repo's job choosing rather than the site.
 
+   Settled 2026-10-31 (maintainer). **"Reported" means in `check-dir`'s own
+   output**, the only report a CI run has (the digest reads no `check-dir`
+   run): an introduced `broken_url` or `broken_anchor` the list leaves out is
+   listed in a section of its own that never fails, "introduced breakage not
+   failing" (JSON `introduced_not_failing`), beside the redirected links and
+   the errors, printed `none` where empty as every section is. The breakage
+   already in the baseline stays in the list's outcomes. **The inverse check
+   follows the list**: an inverse row fails only where the outcome its links
+   will have is on it, `page` and `file` `broken_url` and `anchor`
+   `broken_anchor`; the rest are "inverse breakage not failing" (JSON
+   `inverse_not_failing`), with their own pages-and-components count, so the
+   site's list says which outcomes fail and `--inverse warn` only ever
+   loosens it. A section's title says whether it fails, never a column.
+   **An empty list is "report only"**: everything listed, nothing failing,
+   status 2 still meaning the check could not run. Rejected: the left-out
+   outcome in no gate section, which leaves a CI author nothing to read; the
+   section printed only for a non-default list, a section and a JSON key that
+   come and go; an empty list refused, which sends a site's rollout into each
+   repo's job as an ignored exit status that hides status 2 too
+   ([`../status/history/2026-10-31.md`](../status/history/2026-10-31.md)).
+
 **Asking** (crawl time, recorded per run): per host, beside `per_second`, the
 connect and total timeouts (10 s, 30 s), the retries (three, at 1, 2 and
 4 s), the `Retry-After` ceiling (60 s, D16) and whether D72's probe is sent;

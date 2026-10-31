@@ -30,7 +30,8 @@ What the next slice inherits. The decision is D83.
 - Nothing measured: the gate's SQL gains an `IN` list and, with `error` named,
   a union of two inlined views.
 - An outcome left off the list is in no gate section. A section for it was not
-  built: `report broken` and the digest list it, and the gate's output then
+  built: `report broken --run` lists it (the digest reads no `check-dir` run),
+  and the gate's output then
   grows for every site to hold what a default list never leaves out.
 - An empty list is refused, not read as "never fail": a spelling for that
   (`--inverse warn` and no check at all being the alternatives) was not

@@ -77,6 +77,11 @@ The spec is [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
   ([`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md), "Severity: three
   fixed levels, the site mapping each kind"). Earned by 7.5
   ([`history/2026-10-31.md`](history/2026-10-31.md)).
+- [ ] **7.5.3** The gate lists what its `fail` list leaves out: "introduced
+  breakage not failing", the inverse check following the list with "inverse
+  breakage not failing", and an empty list "report only"
+  ([`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md), "What becomes a
+  setting"). Earned by 7.5.1 ([`history/2026-10-31.md`](history/2026-10-31.md)).
 - [ ] **7.6** `bruce report --config`, judging by a trial policy.
 - [ ] **7.7** The asking settings: per-host timeouts, retries, the
   `Retry-After` ceiling and D72's probe, and the body cap.
@@ -97,15 +102,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **A fail list leaves an outcome out of the gate's output, and cannot be empty
-  (7.5.1).** `[gate]` `fail` names the outcomes failing the gate; one it omits
-  is in no `check-dir` section (`report broken` and the digest still list it),
-  a list naming none is refused at load, and the inverse check stays
-  `--inverse`'s. Made that way because a default-list section for what the
-  default never omits grows every site's output, and the spec words the
-  setting as keeping a finding "reported and not failing", which the other
-  reports do already ([`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md),
-  "What becomes a setting"). Reconsidering (D83's Reopens) means a section for
-  the omitted outcomes, an empty list meaning "report only", or the inverse
-  check's `anchor` removals following `broken_anchor`.
