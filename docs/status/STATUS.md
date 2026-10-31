@@ -39,11 +39,33 @@ the gate's exit status and sections.
 The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball (D60).
 `.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), its body the annotated tag's release notes, drafted by `/release` from its template, with a schema change from the latest release's named in them (D43; a lightweight tag is refused), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
 
+## P10 progress
+
+The spec is [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.md).
+
+- [ ] **10.1** Evidence: docs.antora.org's and a Sphinx site's pages saved as
+  fixtures, and the "before" en-US crawl launched detached from a copy of
+  today's binary.
+- [ ] **10.2** Selectors compiled once per run, with no change of behaviour.
+- [ ] **10.3** A standalone declarative profile: `[profile.<name>]`'s
+  `region`, `generator`, fact rules and `edit_link`, the registry, the
+  `policy` rows, checked on the Sphinx fixture.
+- [ ] **10.4** Source rules before `forge::parse`, and **strikes `KD1` and
+  `KD2`**.
+- [ ] **10.5** `extends`, and a report's registry built from the run's
+  recorded profiles.
+- [ ] **10.6** Locale learning in the core, `locale_links`, and the guide's
+  `fedora` extension extracting what today's code does.
+- [ ] **10.7** Neutral help examples and palette.
+- [ ] **10.8** The "after" crawl compared with 10.1's: no fact, locale or
+  verdict differs.
+
 ## Not started
 
 Every phase in [`../design/roadmap.md`](../design/roadmap.md)'s index not
-`Current`, `Complete` or `Struck`: P10 and P11 have not been grilled; P9,
-which follows them, is specified, to be grilled again before it is sliced.
+`Current`, `Complete` or `Struck`: P11 has not been grilled; P9, which
+follows P10 and P11, is specified, to be grilled again before it is sliced;
+P12 and P13 have not been grilled.
 
 ## Decisions worth another look
 
