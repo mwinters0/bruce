@@ -10,12 +10,11 @@
 
 use std::cell::RefCell;
 
-use lol_html::element;
 use lol_html::html_content::Element;
 use url::Url;
 
 use super::attribute;
-use crate::profile::{ElementHandlers, Sink};
+use crate::profile::{ElementHandlers, Sink, element};
 
 /// What a link is, as `links.kind` stores it (D13).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -150,7 +149,7 @@ impl Links {
         sink: &'h RefCell<Sink>,
     ) -> (ElementHandlers<'h>, ElementHandlers<'h>) {
         let read = vec![
-            element!("base[href]", move |el| {
+            element("base[href]", move |el| {
                 let mut state = this.borrow_mut();
                 if !state.base_seen {
                     state.base_seen = true;
@@ -159,7 +158,7 @@ impl Links {
                 }
                 Ok(())
             }),
-            element!(READ, move |el| {
+            element(READ, move |el| {
                 // A tag left by a handler on some element that is no link
                 // is no link's.
                 sink.borrow_mut().take_link_tag();
@@ -174,7 +173,7 @@ impl Links {
                 Ok(())
             }),
         ];
-        let tag = vec![element!(READ, move |_| {
+        let tag = vec![element(READ, move |_| {
             let tag = sink.borrow_mut().take_link_tag();
             let mut state = this.borrow_mut();
             if let (Some(from), Some(tag)) = (state.mark.take(), tag) {

@@ -17,18 +17,18 @@ impl Profile for Stub {
 
     fn extract<'h>(&self, sink: &'h RefCell<Sink>) -> Extract<'h> {
         let mut extract = Extract::region(&["main"]);
-        extract.handlers.push(element!("html", move |el| {
+        extract.handlers.push(element("html", move |el| {
             if let Some(lang) = el.get_attribute("lang") {
                 sink.borrow_mut().fact("lang", lang);
             }
             Ok(())
         }));
-        extract.handlers.push(element!("a.prefer", move |el| {
+        extract.handlers.push(element("a.prefer", move |el| {
             sink.borrow_mut()
                 .prefer_edit_link(el.get_attribute("href").unwrap());
             Ok(())
         }));
-        extract.handlers.push(element!(".tagme", move |_| {
+        extract.handlers.push(element(".tagme", move |_| {
             sink.borrow_mut().tag_link("tag");
             Ok(())
         }));

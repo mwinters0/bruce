@@ -13,7 +13,7 @@ use std::cell::RefCell;
 use lol_html::html_content::Element;
 use lol_html::{ElementContentHandlers, HandlerResult, Selector};
 
-use crate::profile::ElementHandlers;
+use crate::profile::{ElementHandlers, compiled};
 
 /// Where on its page an anchor sits (D34), as `anchors.placement` stores it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -62,8 +62,8 @@ pub(super) struct Anchors {
     in_region: bool,
 }
 
-fn selector(text: &str) -> Selector {
-    text.parse()
+fn selector(text: &str) -> &'static Selector {
+    compiled(text)
         .unwrap_or_else(|e| panic!("a profile declared the region selector {text:?}: {e}"))
 }
 
@@ -72,7 +72,7 @@ fn with_element<'h>(
     handler: impl FnMut(&mut Element<'_, '_>) -> HandlerResult + 'h,
 ) -> (Cow<'static, Selector>, ElementContentHandlers<'h>) {
     (
-        Cow::Owned(selector(text)),
+        Cow::Borrowed(selector(text)),
         ElementContentHandlers::default().element(handler),
     )
 }

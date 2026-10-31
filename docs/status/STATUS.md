@@ -49,7 +49,8 @@ The spec is [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.m
   today's binary: finished, exit 0, in
   `runs/p10-before-20261031-1647/en-us.duckdb`
   ([notes](../wip/roadmap-P10.1-evidence-notes.md)).
-- [ ] **10.2** Selectors compiled once per run, with no change of behaviour.
+- [x] **10.2** Selectors compiled once per run, with no change of behaviour
+  ([notes](../wip/roadmap-P10.2-selectors-notes.md)).
 - [ ] **10.3** A standalone declarative profile: `[profile.<name>]`'s
   `region`, `generator`, fact rules and `edit_link`, the registry, the
   `policy` rows, checked on the Sphinx fixture.

@@ -7,6 +7,7 @@
 
 pub mod antora;
 pub mod generic;
+mod selectors;
 
 use std::borrow::Cow;
 use std::cell::RefCell;
@@ -16,6 +17,8 @@ use url::Url;
 
 use crate::config::ProfileChoice;
 use crate::forge::EditLink;
+
+pub use selectors::{compiled, element, text};
 
 /// An error a profile or the store behind its [`Lookup`] hands back.
 pub type BoxError = Box<dyn std::error::Error + Send + Sync>;

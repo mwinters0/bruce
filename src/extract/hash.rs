@@ -23,7 +23,7 @@ use lol_html::{ElementContentHandlers, Selector};
 use xxhash_rust::xxh3::Xxh3;
 
 use crate::config::HashScope;
-use crate::profile::ElementHandlers;
+use crate::profile::{ElementHandlers, compiled};
 
 /// Which scope a page's hash covered (D15): what `hash_root` or the
 /// profile's region matched, or the whole page where nothing did. A reader
@@ -83,9 +83,8 @@ fn roots<'a>(scope: &'a HashScope, region: &[&'a str]) -> Vec<&'a str> {
 fn selector(text: &str) -> Cow<'static, Selector> {
     // The loader parsed each one (config::selectors), and a region is a
     // profile's, so a failure is a bug.
-    Cow::Owned(
-        text.parse()
-            .unwrap_or_else(|e| panic!("the hash scope's selector {text:?}: {e}")),
+    Cow::Borrowed(
+        compiled(text).unwrap_or_else(|e| panic!("the hash scope's selector {text:?}: {e}")),
     )
 }
 

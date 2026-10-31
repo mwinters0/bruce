@@ -17,11 +17,10 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use lol_html::element;
 use percent_encoding::percent_decode_str;
 use url::Url;
 
-use super::{BoxError, Extract, Lookup, Profile, Settled, Sink, View};
+use super::{BoxError, Extract, Lookup, Profile, Settled, Sink, View, element};
 
 mod hints;
 mod resolve;
@@ -160,7 +159,7 @@ impl Profile for Antora {
         let page = Rc::new(RefCell::new(Page::default()));
         let mut extract = Extract::region(&["article.doc"]);
         let seen = Rc::clone(&page);
-        extract.handlers.push(element!(".nav-container", move |el| {
+        extract.handlers.push(element(".nav-container", move |el| {
             let mut page = seen.borrow_mut();
             if !std::mem::replace(&mut page.nav_container, true) {
                 let mut sink = sink.borrow_mut();
@@ -174,7 +173,7 @@ impl Profile for Antora {
             Ok(())
         }));
         let seen = Rc::clone(&page);
-        extract.handlers.push(element!(
+        extract.handlers.push(element(
             "script#search-ui-script[data-site-root-path]",
             move |el| {
                 let mut page = seen.borrow_mut();
@@ -182,19 +181,19 @@ impl Profile for Antora {
                     page.site_root_path = el.get_attribute("data-site-root-path");
                 }
                 Ok(())
-            }
+            },
         ));
         let seen = Rc::clone(&page);
         extract
             .handlers
-            .push(element!("a.language[href]", move |el| {
+            .push(element("a.language[href]", move |el| {
                 let href = el.get_attribute("href").unwrap_or_default();
                 seen.borrow_mut().languages.push(href);
                 Ok(())
             }));
         extract
             .handlers
-            .push(element!("a.xref.unresolved[href]", move |el| {
+            .push(element("a.xref.unresolved[href]", move |el| {
                 let href = el.get_attribute("href").unwrap_or_default();
                 if let Some(refspec) = href.strip_prefix('#') {
                     sink.borrow_mut().tag_link(refspec);

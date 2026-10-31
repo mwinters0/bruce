@@ -17,12 +17,13 @@ use std::cell::RefCell;
 
 use lol_html::errors::RewritingError;
 use lol_html::{HtmlRewriter, Settings};
-use lol_html::{element, text};
 use url::Url;
 
 use crate::config::{HashScope, ProfileChoice};
 use crate::forge::EditLink;
-use crate::profile::{ElementHandlers, Extract, Facts, Registry, Settled, Sink, UnknownProfile};
+use crate::profile::{
+    ElementHandlers, Extract, Facts, Registry, Settled, Sink, UnknownProfile, element, text,
+};
 
 pub use anchors::{Anchor, Placement};
 use anchors::{Anchors, attribute};
@@ -198,14 +199,14 @@ fn generator(html: &str) -> Result<Option<String>, Error> {
     let found = RefCell::new(None);
     let settings = Settings::new()
         .with_strict(false)
-        .append_element_content_handler(element!("meta[name=generator i]", |el| {
+        .append_element_content_handler(element("meta[name=generator i]", |el| {
             let mut found = found.borrow_mut();
             if found.is_none() {
                 *found = attribute(el, "content");
             }
             Ok(())
         }))
-        .append_element_content_handler(element!("body", |_| Err(Stop.into())));
+        .append_element_content_handler(element("body", |_| Err(Stop.into())));
     let mut rewriter = HtmlRewriter::new(settings, |_: &[u8]| {});
     match rewriter.write(html.as_bytes()) {
         Err(RewritingError::ContentHandlerError(e)) if e.is::<Stop>() => {}
@@ -231,11 +232,11 @@ impl Title {
     fn handlers<'h>(this: &'h RefCell<Title>) -> ElementHandlers<'h> {
         let mut handlers = Vec::new();
         for (selector, h) in [
-            element!("svg title", |_| {
+            element("svg title", |_| {
                 this.borrow_mut().in_svg = true;
                 Ok(())
             }),
-            element!("title", |_| {
+            element("title", |_| {
                 let mut t = this.borrow_mut();
                 t.elements += 1;
                 if t.chosen.is_none() && !t.in_svg {
@@ -244,7 +245,7 @@ impl Title {
                 t.in_svg = false;
                 Ok(())
             }),
-            text!("title", |chunk| {
+            text("title", |chunk| {
                 let mut t = this.borrow_mut();
                 if t.chosen == Some(t.elements) {
                     t.pending.push_str(chunk.as_str());

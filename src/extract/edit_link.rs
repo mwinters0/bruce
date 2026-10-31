@@ -14,13 +14,12 @@
 use std::cell::RefCell;
 
 use lol_html::html_content::Element;
-use lol_html::{element, text};
 use url::Url;
 
 use super::attribute;
 use super::links::Links;
 use crate::forge::EditLink;
-use crate::profile::ElementHandlers;
+use crate::profile::{ElementHandlers, element, text};
 
 /// The classes that mark an edit link in a theme that gives it none of
 /// `rel=edit`, a `title` or a phrase (I12).
@@ -59,13 +58,13 @@ impl EditLinks {
         links: &'h RefCell<Links>,
     ) -> ElementHandlers<'h> {
         vec![
-            element!("a[href]", move |el| {
+            element("a[href]", move |el| {
                 if let Some(link) = links.borrow().last_index() {
                     this.borrow_mut().candidates.push(candidate(el, link));
                 }
                 Ok(())
             }),
-            text!("a[href]", move |chunk| {
+            text("a[href]", move |chunk| {
                 if let Some(last) = this.borrow_mut().candidates.last_mut()
                     && last.text.len() < TEXT_LIMIT
                 {
