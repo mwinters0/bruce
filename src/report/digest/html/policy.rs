@@ -5,6 +5,7 @@
 
 use std::fmt::Write as _;
 
+use super::super::changes::Change;
 use super::super::document::Digest;
 use super::markup::{esc, w};
 use crate::config::{Entry, Policy};
@@ -62,8 +63,31 @@ pub(super) fn changes(out: &mut String, d: &Digest) {
         out.push_str("<p class=\"muted\">None: the runs recorded the same policy.</p>\n");
         return;
     }
+    let (judging, rest): (Vec<&Change>, Vec<&Change>) =
+        d.policy_changes.iter().partition(|c| c.judges());
+    changed(out, &rest);
+    if judging.is_empty() {
+        return;
+    }
+    let by = d.trial.as_deref().map_or_else(
+        || "this run's settings".to_owned(),
+        |file| format!("the judging settings of <code>{}</code>", esc(file)),
+    );
+    w!(
+        out,
+        "<p>These judging settings differ too, but both runs were judged by {by}, so they \
+         changed no verdict here:</p>\n"
+    );
+    changed(out, &judging);
+}
+
+/// One list of changes.
+fn changed(out: &mut String, changes: &[&Change]) {
+    if changes.is_empty() {
+        return;
+    }
     out.push_str("<ul>\n");
-    for change in &d.policy_changes {
+    for change in changes {
         let written = |e: &Option<Entry>| e.as_ref().map(|e| esc(&e.written_as()));
         match (written(&change.from), written(&change.to)) {
             (Some(was), Some(now)) => w!(

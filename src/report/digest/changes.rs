@@ -26,6 +26,13 @@ pub struct Change {
 }
 
 impl Change {
+    /// Whether a comparison judges by the row (D81): neither an asking setting
+    /// nor a profile's definition, so a difference in it changed no verdict
+    /// the comparison shows, both runs being judged by one policy.
+    pub fn judges(&self) -> bool {
+        self.listed().is_judged()
+    }
+
     /// The row the change is listed by: the digest's run's where it holds one.
     fn listed(&self) -> &Entry {
         self.to

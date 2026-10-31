@@ -55,7 +55,7 @@ fn policy(d: &Digest) -> String {
 
 /// The rows that differ between the runs compared (D91): the row the compared
 /// run recorded as `from` and the digest's run's as `to`, `null` where a run
-/// recorded none.
+/// recorded none, and whether the comparison judges by the row (D81).
 fn policy_changes(d: &Digest) -> String {
     let row = |e: &Option<crate::config::Entry>| {
         e.as_ref().map_or_else(
@@ -73,7 +73,14 @@ fn policy_changes(d: &Digest) -> String {
     let rows: Vec<String> = d
         .policy_changes
         .iter()
-        .map(|c| format!("{{\"from\":{},\"to\":{}}}", row(&c.from), row(&c.to)))
+        .map(|c| {
+            format!(
+                "{{\"from\":{},\"to\":{},\"judges\":{}}}",
+                row(&c.from),
+                row(&c.to),
+                c.judges()
+            )
+        })
         .collect();
     format!("[{}]", rows.join(","))
 }

@@ -1347,6 +1347,23 @@ fn a_comparison_lists_the_policy_rows_that_differ_between_its_runs() {
     assert_eq!(json["policy_changes"].as_array().unwrap().len(), 3);
     assert_eq!(json["policy_changes"][2]["to"], Value::Null);
     assert_eq!(json["policy_changes"][1]["from"]["value"], "30");
+    // A comparison judges both runs by one policy (D81): only the status row,
+    // a judging one, changed no verdict, and the HTML lists it apart.
+    let judges: Vec<bool> = json["policy_changes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|c| c["judges"].as_bool().unwrap())
+        .collect();
+    assert_eq!(judges, [false, false, true]);
+    let (before, after) = html
+        .split_once("changed no verdict here")
+        .expect("the judging rows are introduced by a sentence");
+    assert!(before.contains("default.timeout = 30"));
+    assert!(before.contains("profile.site.source.0.pattern"));
+    assert!(!before.contains("status.403"));
+    assert!(after.contains("status.403") && !after.contains("default.timeout"));
+    assert!(html.contains("both runs were judged by this run"));
     // A digest with nothing to compare with lists nothing and has no section.
     let alone = of(&store);
     assert!(alone.compared.is_none() && alone.policy_changes.is_empty());

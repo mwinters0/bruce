@@ -18,7 +18,7 @@ of one run is what it was, and a comparison gains a Housekeeping fold and a JSON
   keeping its own place in its key (`source.2.pattern` against `source.3.pattern`).
 - **`Digest::policy_changes`** is `Vec<Change { from, to: Option<Entry> }>`, sorted by `Entry::listed_order`
   (M38) on the digest's run's row else the compared run's. The JSON key is `policy_changes` (`from` and `to`,
-  each a `policy` row or `null`), empty without a comparison; `format_version` stays 2. The HTML fold
+  each a `policy` row or `null`, and `judges`), empty without a comparison; `format_version` stays 2. The HTML fold
   "Settings that differ between the runs" is shown only in a comparison.
 - **10.6** adds `locale_links` rows beside the others; they need nothing here, being plain `profile.<name>.*`.
 

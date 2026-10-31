@@ -230,7 +230,8 @@ path = "doc/${page}.rst"
 fact. A run records each profile's definition with its other settings
 (`profile.<name>.*`) and the digest's Housekeeping lists it. A digest compared
 with an earlier run also lists the rows that differ between the two runs, so a
-rule you edited is told from a site that changed; `--config` on a report tries
+rule you edited is told from a site that changed, the judging settings among them
+listed apart, both runs having been judged by one; `--config` on a report tries
 another file's judging settings and leaves the recorded profiles as they are.
 
 ## Allowlist
