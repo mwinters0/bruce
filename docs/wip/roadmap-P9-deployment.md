@@ -35,6 +35,14 @@ sets `[digest]` `group_by = "antora.component"`**, the core grouping by
 nothing by default (D86). When P9 is sliced, the grilling re-reads this spec
 against what the policy added (below, "What the site policy left").
 
+## P9 follows P10 and P11
+
+Settled 2026-10-31 (maintainer). **P9 follows the declarative extraction
+rules (P10) and the digest's prose in config (P11)**: the maintainer does not
+consider `bruce` ready for a content repo's CI until both have landed. The
+guide then documents their config once, as it does the site policy's. When P9
+is sliced, the grilling re-reads this spec against what they added.
+
 ## The guide's hash scope is the profile's region
 
 Settled 2026-10-21. **The guide's roots set neither `hash_root` nor
