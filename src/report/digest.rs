@@ -94,6 +94,10 @@ fn build(
     // Both runs are judged by the newer one's policy (D81): by run number, as
     // `compare::previous` orders them, and by this run's where the compared
     // one is a baseline file, imported later than anything and older in fact.
+    // deficiency: KD28 Every section, not only the comparison, reads the
+    // guard, while `policy`, `judged`, the reach and `group_by` read `id`'s
+    // rows, so a later `from` mixes two policies; `diff` holds `to` whatever
+    // the order. Holding it at `id` always closes it.
     let judge = match from {
         Some(from) if !file && from.0 > id.0 => from,
         _ => id,

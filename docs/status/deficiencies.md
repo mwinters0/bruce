@@ -114,4 +114,9 @@ roadmap's phase index.
   be read back. **(c) unowned**: anyone wanting a page's HTML kept beside its
   run would promote it. Detail: `src/store/writer.rs`
 
-<!-- deficiency-watermark: KD27 -->
+- **KD28** — A digest whose `--from` names a later run judges every section by
+  that run's policy, while its severity map, guide, reach and grouping read its
+  own run's, and `report diff` judges the same pair by the run it reports on.
+  **(b) owned by M30**. Detail: `src/report/digest.rs`
+
+<!-- deficiency-watermark: KD28 -->

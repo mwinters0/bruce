@@ -31,7 +31,7 @@ grilling, spec amendment and a numbered slice.
 **Ledger lines stay one line each.** The detail lives in the dated history
 entry each line points at.
 
-Allocated so far: M1–M29. <!-- out-of-band-watermark: M29 -->
+Allocated so far: M1–M30. <!-- out-of-band-watermark: M30 -->
 
 ## The ledger
 
@@ -45,3 +45,4 @@ Allocated so far: M1–M29. <!-- out-of-band-watermark: M29 -->
 | M27 | | Under `--externals=skip` a redirect's hop onto a URL on a root's host outside every scope asks nothing (KD25) | P9 | [2026-10-31](../status/history/2026-10-31.md) |
 | M28 | | `[severity]` names `invalid_url` (KD26) | P9 | [2026-10-31](../status/history/2026-10-31.md) |
 | M29 | | The page and message texts the P7 wrap's repoint found false: an empty baseline's refusal, the compared run's source columns, the digest's footer on the JSON | P9 | [2026-10-31](../status/history/2026-10-31.md) |
+| M30 | | A digest is judged by its own run's policy whatever `--from` names, as `report diff` is by `--to`, and D81 says a comparison is judged by the run it reports on (KD28) | P9 | [2026-10-31](../status/history/2026-10-31.md) |

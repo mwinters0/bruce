@@ -53,13 +53,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **A digest compared with a later run still lists its own run's policy.** M26
-  judges both runs by the later run number's policy, but `Digest.policy`,
-  `judged` and `severity` (Housekeeping's settings list, the guide's entries,
-  the dots) read the digest's own run's recorded policy, so under a later
-  `--from` whose judging settings differ the list is not what judged the
-  figures. Made so because listing the later run's rows in the JSON's `policy`
-  would change what the manual says that field holds, and "later" is by run
-  number, not start time. Reconsidering changes the judging rows of `policy`
-  and the guide to the judging run's, an asking row staying the digest's own.
