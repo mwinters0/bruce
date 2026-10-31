@@ -40,6 +40,6 @@ Allocated so far: M1–M36. <!-- out-of-band-watermark: M36 -->
 | M31 | 2026-10-31 | `[severity]` names `unreadable` and `not_built` (KD31) | | [2026-10-31](../status/history/2026-10-31.md) |
 | M32 | 2026-10-31 | The refusal of a run a later unfinished `check-dir` was checked against names the flag that answers it (KD22) | | [2026-10-31](../status/history/2026-10-31.md) |
 | M33 | 2026-10-31 | `<embed>`, `<object>`, `<input type=image>` and SVG's `<image>` and `<use>` yield links, as D13 says (KD30) | | [2026-10-31](../status/history/2026-10-31.md) |
-| M34 | | `report introduced` and `report inverse` under `--top N` count every row, printing N (KD20) | | [2026-10-31](../status/history/2026-10-31.md) |
+| M34 | 2026-10-31 | `report introduced` and `report inverse` under `--top N` count every row, printing N (KD20) | | [2026-10-31](../status/history/2026-10-31.md) |
 | M35 | | The digest under a `none` map: "By: Link Target" and sections 3 and 4 say the map left them empty (KD32) | | [2026-10-31](../status/history/2026-10-31.md) |
 | M36 | | The digest's JSON marks a row new as a finding under the report's map beside `new`, and the HTML marks from it; amends D75 (KD33) | | [2026-10-31](../status/history/2026-10-31.md) |

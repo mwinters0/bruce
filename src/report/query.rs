@@ -33,21 +33,22 @@ pub(super) fn run(
         Report::Introduced => {
             let gate = gate::gate(conn, run, request)?;
             let notes = vec![gate.baseline_line(), gate.rest(false)];
-            Ok((gate.introduced, notes))
+            Ok((gate.cut(&gate.introduced), notes))
         }
         Report::Inverse => {
             let (base, date) = gate::baseline(conn, run)?;
             let _judged = JudgedBy::new(conn, run.0)?;
             let table = inverse::inverse(conn, run, base, request)?;
             let (pages, groups) = inverse::counts(&table);
+            let links = table.rows.len();
             let notes = vec![
                 gate::baseline_line(base, &date),
                 format!(
-                    "{} links, {pages} inbound pages across {groups} components",
-                    table.rows.len()
+                    "{links} links, {pages} inbound pages across {groups} components{}",
+                    gate::listed(links, request.top)
                 ),
             ];
-            Ok((table, notes))
+            Ok((gate::cut(&table, request.top), notes))
         }
         Report::Diff | Report::Changed | Report::AnchorsRemoved => {
             let (from, _) = chosen

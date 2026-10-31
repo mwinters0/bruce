@@ -248,6 +248,36 @@ fn the_text_counts_the_inbound_pages_across_the_components_between_the_sections(
 }
 
 #[test]
+fn top_lists_some_inverse_rows_and_counts_all_of_them_and_their_pages() {
+    let g = gate_of(&store(), |r| r.top = Some(3));
+    assert_eq!(g.inverse.rows.len(), 7);
+    assert_eq!(counts(&g.inverse), (2, 2));
+    let text = g.text(false);
+    assert!(text.contains(
+        "inverse breakage: 7 links, 2 inbound pages across 2 components (first 3 listed)\n"
+    ));
+    assert!(text.contains("20>7#"));
+    assert!(!text.contains("1>3#"));
+    assert!(
+        g.json(false)
+            .contains("\"inverse\":{\"links\":7,\"pages\":2,\"components\":2},")
+    );
+}
+
+#[test]
+fn the_inverse_report_under_top_counts_every_row() {
+    let mut request = Request::new(Report::Inverse);
+    request.run = Some(RunId(2));
+    request.top = Some(3);
+    let out = run(&store(), &request).unwrap();
+    assert_eq!(out.table.rows.len(), 3);
+    assert_eq!(
+        out.notes[1],
+        "7 links, 2 inbound pages across 2 components (first 3 listed)"
+    );
+}
+
+#[test]
 fn the_filters_apply_to_the_linking_page() {
     let store = store();
     let g = gate_of(&store, |r| r.repo = Some("r/20".into()));

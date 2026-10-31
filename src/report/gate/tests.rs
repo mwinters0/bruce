@@ -214,10 +214,43 @@ fn json_is_one_object_whose_old_breakage_is_a_count_unless_asked_for() {
     assert!(json.starts_with(
         "{\"run\":2,\"baseline_run\":1,\"baseline_date\":\"2026-10-19\",\"introduced\":[{"
     ));
-    assert!(json.ends_with("\"already_broken\":{\"count\":1,\"links\":null}}"));
-    assert!(g.json(true).ends_with("\"links\":[{\"page\":\"https://e.test/1\",\"raw_href\":\"1>10#\",\
+    assert!(json.contains("\"already_broken\":{\"count\":1,\"links\":null},\"counts\":{"));
+    assert!(g.json(true).contains("\"links\":[{\"page\":\"https://e.test/1\",\"raw_href\":\"1>10#\",\
         \"target\":\"https://e.test/10\",\"fragment\":null,\"kind\":\"anchor\",\"outcome\":\"broken_url\",\
-        \"reason\":null,\"status\":404,\"source_repo\":\"r/one\",\"source_path\":\"1.adoc\"}]}}"));
+        \"reason\":null,\"status\":404,\"source_repo\":\"r/one\",\"source_path\":\"1.adoc\"}]},\"counts\":{"));
+}
+
+#[test]
+fn top_cuts_what_is_listed_and_every_count_stays_the_total() {
+    let g = gate_of(&store(), |r| r.top = Some(2));
+    assert_eq!(g.introduced.rows.len(), 5);
+    assert_eq!(g.already.rows.len(), 1);
+    let text = g.text(true);
+    assert!(text.contains("introduced breakage: 5 (first 2 listed)\n"));
+    // A section that fits under `--top` says nothing of it.
+    assert!(text.contains("errors: 1\n"));
+    assert!(text.contains("breakage already in the baseline: 1\n"));
+    assert!(
+        g.text(false)
+            .contains("breakage already in the baseline: 1 (--all lists them)")
+    );
+    assert!(g.fails());
+}
+
+#[test]
+fn top_cuts_the_json_arrays_beside_the_totals() {
+    let g = gate_of(&store(), |r| r.top = Some(2));
+    let json = g.json(false);
+    assert!(json.contains(
+        "\"counts\":{\"introduced\":5,\"introduced_not_failing\":0,\
+         \"inverse\":{\"links\":0,\"pages\":0,\"components\":0},\
+         \"inverse_not_failing\":{\"links\":0,\"pages\":0,\"components\":0},\
+         \"redirected\":1,\"errors\":1}"
+    ));
+    assert_eq!(json.matches("\"baseline\":").count(), 2);
+    let whole = gate_of(&store(), |_| {}).json(false);
+    assert_eq!(whole.matches("\"baseline\":").count(), 5);
+    assert!(whole.contains("\"counts\":{\"introduced\":5,"));
 }
 
 #[test]

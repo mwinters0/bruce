@@ -173,12 +173,13 @@ age.
 stderr, prefixed `bruce check-dir: `:
 
 ```json
-{"run":7,"baseline_run":1,"baseline_date":"2026-10-19","introduced":[],"introduced_not_failing":[],"inverse":[],"inverse_not_failing":[],"redirected":[],"errors":[],"already_broken":{"count":4,"links":null}}
+{"run":7,"baseline_run":1,"baseline_date":"2026-10-19","introduced":[],"introduced_not_failing":[],"inverse":[],"inverse_not_failing":[],"redirected":[],"errors":[],"already_broken":{"count":4,"links":null},"counts":{"introduced":0,"introduced_not_failing":0,"inverse":{"links":0,"pages":0,"components":0},"inverse_not_failing":{"links":0,"pages":0,"components":0},"redirected":0,"errors":0}}
 ```
 
 `introduced`, `introduced_not_failing`, `inverse`, `inverse_not_failing`, `redirected` and `errors` are arrays of objects whose field
 names are the columns above; `already_broken.links` is `null` unless `--all`
-is given.
+is given. `counts` is each section's number of rows, the inverse sections'
+inbound pages and components beside their links.
 
 The same sections are `bruce report introduced --run N` over the run in the
 database ([`report.md`](report.md)).

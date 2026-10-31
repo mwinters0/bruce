@@ -176,8 +176,7 @@ pub(super) fn inverse(
              QUALIFY row_number() OVER (PARTITION BY t.src_url_id, t.target, \
                 coalesce(t.fragment, '') ORDER BY t.raw_href, t.kind) = 1) \
              ORDER BY coalesce(component, source_repo), page, raw_href, fragment"
-        ))
-        .limit(request);
+        ));
     sql.fetch(conn)
 }
 

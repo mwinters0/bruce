@@ -17,7 +17,9 @@
 //! section is the baseline's links from pages outside the build to what the
 //! change removed (`inverse`): those whose outcome, once the change deploys,
 //! the list names fail the gate while the request's mode is `Fail`, the rest
-//! are listed apart.
+//! are listed apart. `--top` cuts what is printed and never what is counted:
+//! every section is read whole, and a heading under `--top` says how many rows
+//! it lists.
 
 use duckdb::Connection;
 
@@ -70,6 +72,9 @@ pub struct Gate {
     pub errors: Table,
     /// Failing here and in the baseline, in the outcomes of the same list.
     pub already: Table,
+    /// `--top`: every table above holds all its rows, and what is printed is
+    /// cut to this many, a section's count being its total.
+    pub top: Option<usize>,
 }
 
 impl Gate {
@@ -85,7 +90,7 @@ impl Gate {
     pub fn text(&self, all: bool) -> String {
         let mut out = self.baseline_line();
         out.push_str("\n\n");
-        out.push_str(&section("introduced breakage", &self.introduced, true));
+        out.push_str(&self.section("introduced breakage", &self.introduced, true));
         out.push_str("\n\n");
         out.push_str(&self.rest(all));
         out
@@ -104,16 +109,16 @@ impl Gate {
             InverseMode::Warn => "inverse breakage (warning only)",
         };
         [
-            section(
+            self.section(
                 "introduced breakage not failing",
                 &self.introduced_not_failing,
                 true,
             ),
-            inverse_section(title, &self.inverse),
-            inverse_section("inverse breakage not failing", &self.inverse_not_failing),
-            section("introduced redirected links", &self.redirected, true),
-            section("errors", &self.errors, true),
-            section("breakage already in the baseline", &self.already, all)
+            self.inverse_section(title, &self.inverse),
+            self.inverse_section("inverse breakage not failing", &self.inverse_not_failing),
+            self.section("introduced redirected links", &self.redirected, true),
+            self.section("errors", &self.errors, true),
+            self.section("breakage already in the baseline", &self.already, all)
                 + if all || self.already.rows.is_empty() {
                     ""
                 } else {
@@ -123,63 +128,105 @@ impl Gate {
         .join("\n\n")
     }
 
-    /// One JSON object holding every section; the breakage already in the
-    /// baseline is a count, and its links only with `all`.
+    /// One JSON object holding every section cut to `--top`, and `counts`, each
+    /// section's total; the breakage already in the baseline is a count, and
+    /// its links only with `all`.
     pub fn json(&self, all: bool) -> String {
         let links = if all {
-            self.already.render(Format::Json)
+            self.cut(&self.already).render(Format::Json)
         } else {
             "null".to_owned()
         };
+        let (pages, components) = counts(&self.inverse);
+        let (pages_nf, components_nf) = counts(&self.inverse_not_failing);
         format!(
             "{{\"run\":{},\"baseline_run\":{},\"baseline_date\":{},\"introduced\":{},\
              \"introduced_not_failing\":{},\"inverse\":{},\"inverse_not_failing\":{},\
-             \"redirected\":{},\"errors\":{},\"already_broken\":{{\"count\":{},\"links\":{}}}}}",
+             \"redirected\":{},\"errors\":{},\"already_broken\":{{\"count\":{},\"links\":{}}},\
+             \"counts\":{{\"introduced\":{},\"introduced_not_failing\":{},\
+             \"inverse\":{{\"links\":{},\"pages\":{pages},\"components\":{components}}},\
+             \"inverse_not_failing\":{{\"links\":{},\"pages\":{pages_nf},\
+             \"components\":{components_nf}}},\"redirected\":{},\"errors\":{}}}}}",
             self.run.0,
             self.baseline.0,
             quoted(&self.baseline_date),
-            self.introduced.render(Format::Json),
-            self.introduced_not_failing.render(Format::Json),
-            self.inverse.render(Format::Json),
-            self.inverse_not_failing.render(Format::Json),
-            self.redirected.render(Format::Json),
-            self.errors.render(Format::Json),
+            self.cut(&self.introduced).render(Format::Json),
+            self.cut(&self.introduced_not_failing).render(Format::Json),
+            self.cut(&self.inverse).render(Format::Json),
+            self.cut(&self.inverse_not_failing).render(Format::Json),
+            self.cut(&self.redirected).render(Format::Json),
+            self.cut(&self.errors).render(Format::Json),
             self.already.rows.len(),
             links,
+            self.introduced.rows.len(),
+            self.introduced_not_failing.rows.len(),
+            self.inverse.rows.len(),
+            self.inverse_not_failing.rows.len(),
+            self.redirected.rows.len(),
+            self.errors.rows.len(),
         )
     }
-}
 
-/// An inverse section: its links, and how many pages across how many
-/// components link to what was removed (D56).
-fn inverse_section(title: &str, table: &Table) -> String {
-    let links = table.rows.len();
-    if links == 0 {
-        return format!("{title}: none");
+    /// `table` cut to `--top` rows, which it keeps whole where there is none.
+    pub(super) fn cut(&self, table: &Table) -> Table {
+        cut(table, self.top)
     }
-    let (pages, groups) = counts(table);
-    format!(
-        "{title}: {links} links, {pages} inbound pages across {groups} components\n{}",
-        table.render(Format::Text)
-    )
+
+    /// An inverse section: its links, and how many pages across how many
+    /// components link to what was removed (D56), all of them however many
+    /// rows `--top` lists.
+    fn inverse_section(&self, title: &str, table: &Table) -> String {
+        let links = table.rows.len();
+        if links == 0 {
+            return format!("{title}: none");
+        }
+        let (pages, groups) = counts(table);
+        format!(
+            "{title}: {links} links, {pages} inbound pages across {groups} components{}\n{}",
+            listed(links, self.top),
+            self.cut(table).render(Format::Text)
+        )
+    }
+
+    /// A title and the number of rows, and with `rows` the table cut to `--top`.
+    fn section(&self, title: &str, table: &Table, rows: bool) -> String {
+        match table.rows.len() {
+            0 => format!("{title}: none"),
+            n if rows => format!(
+                "{title}: {n}{}\n{}",
+                listed(n, self.top),
+                self.cut(table).render(Format::Text)
+            ),
+            n => format!("{title}: {n}"),
+        }
+    }
 }
 
-/// A title and the number of rows, and with `rows` the table.
-fn section(title: &str, table: &Table, rows: bool) -> String {
-    match table.rows.len() {
-        0 => format!("{title}: none"),
-        n if rows => format!("{title}: {n}\n{}", table.render(Format::Text)),
-        n => format!("{title}: {n}"),
+/// `table`'s first `top` rows, all of them where `top` is none.
+pub(super) fn cut(table: &Table, top: Option<usize>) -> Table {
+    let mut cut = table.clone();
+    if let Some(top) = top {
+        cut.rows.truncate(top);
+    }
+    cut
+}
+
+/// What a heading says of a section of `total` rows that `--top` cuts, else nothing.
+pub(super) fn listed(total: usize, top: Option<usize>) -> String {
+    match top {
+        Some(top) if total > top => format!(" (first {top} listed)"),
+        _ => String::new(),
     }
 }
 
 /// The gate over `run`, the CI run, and the baseline run it names.
 pub(super) fn gate(conn: &Connection, run: RunId, request: &Request) -> Result<Gate, Error> {
-    // deficiency: KD20 Each section is fetched under `--top`'s limit and its
-    // counts are taken from the rows fetched, so `report introduced --top N`
-    // and `report inverse --top N` count the breakage already in the
-    // baseline, the inverse links and their inbound pages and components over
-    // N rows at most; `stats` counts before it cuts. `check-dir` sets no limit.
+    // Every section is read whole and cut where it is printed, so a count is its
+    // total (`--top` limits what is listed); `errors` is `report errors`' too.
+    let whole = Request {
+        top: None,
+        ..request.clone()
+    };
     let (baseline, baseline_date) = baseline(conn, run)?;
     // The baseline's links are judged by the CI run's policy (D81).
     let _judged = JudgedBy::new(conn, run.0)?;
@@ -196,8 +243,9 @@ pub(super) fn gate(conn: &Connection, run: RunId, request: &Request) -> Result<G
         inverse_not_failing,
         mode: request.inverse,
         redirected: redirected(conn, run, baseline, request)?,
-        errors: errors(conn, run, request)?,
+        errors: errors(conn, run, &whole)?,
         already: broken(conn, run, baseline, request, &fail, false)?,
+        top: request.top,
     })
 }
 
@@ -319,8 +367,7 @@ fn broken(
             ") QUALIFY row_number() OVER (PARTITION BY b.src_url_id, b.target, \
              coalesce(b.fragment, '') ORDER BY b.raw_href, b.kind) = 1) \
              ORDER BY outcome DESC, page, raw_href, fragment",
-        )
-        .limit(request);
+        );
     sql.fetch(conn)
 }
 
@@ -348,8 +395,7 @@ fn redirected(
              coalesce(b.fragment, '') ORDER BY b.raw_href, b.kind) = 1) ORDER BY ",
         )
         .push(&pedantic("reason"))
-        .push(", page, raw_href, fragment")
-        .limit(request);
+        .push(", page, raw_href, fragment");
     sql.fetch(conn)
 }
 

@@ -29,7 +29,7 @@ run's [`status`](config.md#judging) map judges a code otherwise.
 | `--repo REPO` | none | Only pages whose source file is in this repo, as the page records it (`https://forge.fedoraproject.org/fedora/docs`); for `broken`, `errors`, `stats`, `redirects`, `diff`, `introduced` and `inverse`, the links on those pages; for `changed` and `anchors-removed`, the page a row lists (for `inverse`, the baseline's pages outside the build). |
 | `--fact KEY=VALUE` | none | Only pages with this fact, such as `antora.component=fedora-docs`, or the links on them. Repeat to require several. |
 | `--kind KIND` | `anchor`; every kind for `introduced` and `inverse` | Count links of this kind. Repeat to add kinds; `all` is every kind. `sitemap`, `unlisted` and `changed` ignore it. |
-| `--top N` | all rows | Print the first N rows, in the report's order. `introduced`'s and `inverse`'s counts are then counted over those rows alone. |
+| `--top N` | all rows | Print the first N rows, in the report's order. `introduced`'s and `inverse`'s counts stay every row's, and a heading says how many of them it lists (`introduced breakage not failing: 50 (first 10 listed)`). |
 | `--format` | `text` | `text`, or `json`. |
 
 The kinds are `anchor` (`<a>` and `<area>`), `image` (`<img>`, `<picture>`'s

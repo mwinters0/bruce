@@ -80,12 +80,6 @@ roadmap's phase index.
   linking without a version to a page a later version removed would promote
   it. Detail: `src/profile/antora/resolve.rs`
 
-- **KD20** — `report introduced` and `report inverse` with `--top N` count
-  the breakage already in the baseline, the inverse links, and their inbound
-  pages and components over the N rows they print. **(c) unowned**: anyone
-  reading those counts under `--top` would promote it.
-  Detail: `src/report/gate.rs`
-
 - **KD23** — A target's answer is judged by the policy only inside
   `link_verdicts`, so the queries reading a target's stored outcome show the
   crawl's: a link a remapped status breaks is a new break's `unexplained`, not
