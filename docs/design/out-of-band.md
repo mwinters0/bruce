@@ -31,7 +31,7 @@ grilling, spec amendment and a numbered slice.
 **Ledger lines stay one line each.** The detail lives in the dated history
 entry each line points at.
 
-Allocated so far: M1–M25. <!-- out-of-band-watermark: M25 -->
+Allocated so far: M1–M29. <!-- out-of-band-watermark: M29 -->
 
 ## The ledger
 
@@ -41,3 +41,7 @@ Allocated so far: M1–M25. <!-- out-of-band-watermark: M25 -->
 | M23 | 2026-10-30 | `mise run shot` renders with Chrome's headless shell in a pinned container, Servo unpinned and `runs/headless-browser-trial/` deleted | | [2026-10-30](../status/history/2026-10-30.md) |
 | M24 | 2026-10-30 | `mise run shot`'s phone render emulates a phone: `mobile=True` at 390 px, device scale 1 | | [2026-10-30](../status/history/2026-10-30.md) |
 | M25 | | The digest's words under a severity map: a count part moved off its outcome's level names its reasons, the legend's *none* line and the manual stop saying the figures leave such a kind out, a list the map empties says so | | [2026-10-31](../status/history/2026-10-31.md) |
+| M26 | | A digest's comparison judges both runs by the newer run's policy when `--from` names a later run (KD24) | P9 | [2026-10-31](../status/history/2026-10-31.md) |
+| M27 | | Under `--externals=skip` a redirect's hop onto a URL on a root's host outside every scope asks nothing (KD25) | P9 | [2026-10-31](../status/history/2026-10-31.md) |
+| M28 | | `[severity]` names `invalid_url` (KD26) | P9 | [2026-10-31](../status/history/2026-10-31.md) |
+| M29 | | The page and message texts the P7 wrap's repoint found false: an empty baseline's refusal, the compared run's source columns, the digest's footer on the JSON | P9 | [2026-10-31](../status/history/2026-10-31.md) |
