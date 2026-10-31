@@ -113,4 +113,9 @@ roadmap's phase index.
   **(b) owned by M28**. Detail:
   `src/config/policy/severity.rs`
 
-<!-- deficiency-watermark: KD26 -->
+- **KD27** — No option asks a crawl to keep a page's HTML, so the opt-in,
+  prunable `bodies` table D15 provides is never written and no run's bodies can
+  be read back. **(c) unowned**: anyone wanting a page's HTML kept beside its
+  run would promote it. Detail: `src/store/writer.rs`
+
+<!-- deficiency-watermark: KD27 -->

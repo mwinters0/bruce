@@ -1,7 +1,7 @@
 //! The single writer (D28): one thread owns the [`Store`] and feeds DuckDB
 //! appenders from a bounded channel, so a slow disk pushes back on the
 //! crawl and DuckDB sees one writing process. It writes the rows of
-//! [`Row`], one table each but `bodies`, which waits for its option, and
+//! [`Row`], one table each but `bodies` (KD27), and
 //! copies a baseline's target into the run on request (D52).
 
 use std::fmt;
@@ -128,6 +128,10 @@ fn write_all(store: Store, rx: Receiver<Msg>) -> Result<Store, Error> {
 }
 
 /// An appender for each table the writer fills.
+// deficiency: KD27 `bodies` (D15) has no `Row` and no appender here, and no
+// option asks a crawl to keep a page's HTML, so the table is always empty and
+// a page's body is never stored. An option on `crawl`, a `Row` for a body and
+// an appender for it would close it.
 struct Tables<'a> {
     store: &'a Store,
     pages: Appender<'a>,

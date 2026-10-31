@@ -58,12 +58,12 @@ unresolvable; a version from the URL, no versioned component lacking one; the fa
 `data-component`, inert where that happens (I12). Code: `profile::antora`, `profile::antora::resolve`.
 
 ### D65 An unresolved xref's hint is the nearest page ID by edit distance, within three tenths of the longer, read in the page's own context
-The refspec is completed as Antora read it on its page and compared with the run's `component:module:rel_path` IDs. Why:
-Levenshtein finds the typo, the missing directory and the moved module, where Jaro-Winkler weighed the shared prefix;
-the completion lets a refspec with no component find its page. On the 2026-10-23
-crawl's 92, bounds 0.2, 0.25, 0.3, 0.35 and 0.4 hint 31, 41, 47, 49 and 83 links, 25, 30, 34, 36 and 48 the page meant
-(one reader). Rejected: a tighter bound, losing the `:w` typos; 0.4, whose 36 more hold 14 right; Jaro-Winkler; a hint
-naming a version, which the build may not hold (KD10). Reopens: wrong hints often enough on another site; Resolve taking
+The refspec is completed as Antora read it on its page, so a component-less one finds its page, then compared with the
+run's `component:module:rel_path` IDs. Why: Levenshtein finds typos, missing directories and moved modules, where
+Jaro-Winkler weighs the shared prefix. Of the 2026-10-23 crawl's 92, bounds 0.2 to 0.4 by 0.05 hint 31, 41, 47, 49 and
+83 links, 25, 30, 34, 36 and 48 the page meant (one reader). Rejected: a tighter bound, losing the `:w` typos; 0.35,
+two more right but one edit from ten `install-guide` refspecs wrongly hinted at 11/31; 0.4, whose 36 more hold 14
+right; a hint's version, which the build may lack (KD10). Reopens: wrong hints often on another site; Resolve taking
 over the refspec grammar (I21). Code: `profile::antora::hints`. Evidence:
 `report::tests::an_unresolved_xref_names_the_nearest_page_id_within_the_distance`.
 

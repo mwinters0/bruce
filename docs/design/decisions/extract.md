@@ -27,7 +27,7 @@ id in `content` (D15); a per-root region, which is D33's rules. Code: `extract::
 ### D15 Pages store metadata, a content hash and their profile's facts; bodies only on request
 The hash detects change, validators being unreliable (I3): xxh3-128, no adversary calling for BLAKE3, over what
 `hash_root`/`hash_exclude` scope, by default the profile's region. `bodies` is opt-in and prunable, and nothing writes
-it yet. A page records the scope its hash covered and a run its roots' keys, so `changed` tells a scope edit from
+it yet (KD27). A page records the scope its hash covered and a run its roots' keys, so `changed` tells a scope edit from
 changed content. Rejected: bodies by default, about 330 MB an en-US run (`runs/p5.2-en-us-20261020/`); raw bytes,
 docs.fp.o's `Last build:` moving every page every build (I19); a hash of the extracted record, blind to a prose edit; a
 set root matching nothing falling back to empty or the region, hiding the misconfiguration (`root_missed`);

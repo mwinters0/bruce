@@ -11,8 +11,9 @@ usual run to export; where the file is published is the deployment's choice.
 
 The file is an ordinary `bruce` database holding that one run, so
 [`bruce report`](report.md) reads it as it reads any other. It carries every
-table the run wrote but the saved page bodies, which a crawl keeps only on
-request, and it records no earlier run as the one it was compared against.
+table the run wrote but the table reserved for saved page bodies, which no
+crawl writes yet, and it records no earlier run as the one it was compared
+against.
 The run keeps its number.
 
 ## Arguments
