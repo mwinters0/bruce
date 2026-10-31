@@ -31,7 +31,7 @@ pub(super) fn list(out: &mut String, d: &Digest) {
         out.push_str(
             "<p>The settings this run was judged by and asked with that differ from the \
              defaults, as the configuration file writes them. A report judges the run by the policy it recorded, \
-             and a comparison judges both runs by the newer one's.</p>\n",
+             and a comparison judges both runs by the policy of the run it reports on.</p>\n",
         );
     }
     let differing = differing(d);

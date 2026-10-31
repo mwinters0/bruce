@@ -93,7 +93,7 @@ database, and 2026-10-28's `runs/en-us-20261028-1452/`.
 - **D77** Links are judged by a table macro reading the recorded policy, and `link_verdicts` is its call with each link's own run's
 - **D78** A run records the policy it was judged by, whole, as rows of a `policy` table
 - **D79** A status is judged by the host that answered, a URL's shape by the host linked, and a scheme by the URL
-- **D81** A comparison judges both runs by the newer run's policy, through a session variable the macro reads
+- **D81** A comparison judges both runs by the policy of the run it reports on, through a session variable the macro reads
 - **D84** A trial policy is a temporary table of the policy rows every reader asks for, one set per run
 
 ## CI mode

@@ -2,7 +2,7 @@
 
 P7 delivered site policy without Rust. A run records the policy it was judged
 by (schema 6), and every report judges it at read time through one table
-macro. A comparison judges both runs by the newer run's policy, and `report
+macro. A comparison judges both runs by the policy of the run it reports on, and `report
 --config` judges by a trial file. The judging keys are a status's outcome
 per host, `doubled_slash` and its reach, `pedantic_trailing_slash`, the
 schemes, the severity map and the gate's `fail` list. The asking keys are

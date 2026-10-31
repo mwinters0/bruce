@@ -59,7 +59,7 @@ use crate::config::WORKING_SCHEMES;
 use crate::profile::{Registry, View};
 
 /// Every run read through `link_verdicts` is judged by one run's policy while
-/// this lives: the newer run's, in a comparison (D77). Dropping it puts each
+/// this lives: the run a comparison reports on, in one (D81). Dropping it puts each
 /// run back to its own. It sets the connection's session variable `judged_by`,
 /// which the macro reads where its `policy_run` is NULL, so the views, which
 /// take no parameter (D6), judge a comparison's older run by the newer's policy.

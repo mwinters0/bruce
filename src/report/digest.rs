@@ -91,18 +91,9 @@ fn build(
     profiles: &Registry,
 ) -> Result<Digest, Error> {
     let id = read.id;
-    // Both runs are judged by the newer one's policy (D81): by run number, as
-    // `compare::previous` orders them, and by this run's where the compared
-    // one is a baseline file, imported later than anything and older in fact.
-    // deficiency: KD28 Every section, not only the comparison, reads the
-    // guard, while `policy`, `judged`, the reach and `group_by` read `id`'s
-    // rows, so a later `from` mixes two policies; `diff` holds `to` whatever
-    // the order. Holding it at `id` always closes it.
-    let judge = match from {
-        Some(from) if !file && from.0 > id.0 => from,
-        _ => id,
-    };
-    let _judged = from.map(|_| JudgedBy::new(conn, judge.0)).transpose()?;
+    // Both runs are judged by the policy of the run the digest reports on
+    // (D81), whichever `from` is, as `diff` holds `to`.
+    let _judged = from.map(|_| JudgedBy::new(conn, id.0)).transpose()?;
     let run = sections::run(conn, id)?;
     let counts = sections::page_counts(conn, id)?;
     let pages = sections::pages(conn, id, counts)?;
