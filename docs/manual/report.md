@@ -1,10 +1,10 @@
 # `bruce report`
 
 ```sh
-bruce report REPORT [--db FILE] [--run N | --from N --to N] [--repo REPO]
+bruce report REPORT [--db FILE] [--config FILE] [--run N | --from N --to N] [--repo REPO]
                     [--fact KEY=VALUE] [--kind KIND] [--top N] [--format text|json]
-bruce report digest --out DIR [--name STEM] [--db FILE] [--run N] [--from N | --since FILE|URL]
-                    [--format json|html|both]
+bruce report digest --out DIR [--name STEM] [--db FILE] [--config FILE] [--run N]
+                    [--from N | --since FILE|URL] [--format json|html|both]
 ```
 
 Prints one report over one **run** of a database that `bruce crawl` wrote
@@ -22,6 +22,7 @@ run's [`status`](config.md#judging) map judges a code otherwise.
 |---|---|---|
 | `REPORT` | required | `broken`, `errors`, `stats`, `inbound`, `sitemap`, `orphans`, `unlisted`, `redirects`, `diff`, `changed`, `anchors-removed`, `introduced` or `inverse`; or `digest`, which writes files and takes its own options, so [`digest.md`](digest.md) documents it. |
 | `--db FILE` | `bruce.duckdb` | The database to read. It must exist; a report never creates one. |
+| `--config FILE` | none | Judge by this file's judging settings, in place of the policy each run recorded: see [A trial policy](#a-trial-policy). |
 | `--run N` | the latest finished run | The run to read. See [Which run](#which-run). Not for `diff`, `changed` or `anchors-removed`. For `introduced` and `inverse`, a [`check-dir`](check-dir.md) run. |
 | `--from N` | the finished run before `--to` | `diff`, `changed` and `anchors-removed` only: the run to compare against. |
 | `--to N` | the latest finished run | `diff`, `changed` and `anchors-removed` only: the run to compare. |
@@ -56,6 +57,20 @@ finished runs; `--to N` alone compares run N with the finished run before it,
 and `--from N` alone compares run N with the latest finished run. Named runs
 may be unfinished, which `bruce report` says on stderr. `--run` with one of
 those, and `--from` or `--to` with any other report, are command-line errors.
+
+## A trial policy
+
+`--config FILE` judges the run, and any run compared with it, by the **judging
+settings** of a [configuration file](config.md#judging) (`[judge]`, `[severity]`,
+`[gate]`, and the `status` and `doubled_slash` of `[default]` and `[host]`), as
+if each run had recorded them. It is how to see what a severity map, a
+`status` map or a `fail` list does without a crawl, which takes 75 minutes for
+en-US. The file's asking settings are ignored, a run being unable to be asked
+again, and its roots are not read. The file stands in whole, as for any command
+([`config.md`](config.md)): a key it leaves out is at its default, not at the
+run's recorded value. Nothing is written to the database. The command says on
+stderr that it is judging by a trial, an invalid file is refused, and the
+[digest](digest.md#a-trial-policy) says so on its page and in its JSON.
 
 ## The reports
 

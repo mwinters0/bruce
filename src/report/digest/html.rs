@@ -246,6 +246,14 @@ fn head(out: &mut String, d: &Digest) {
             "<p class=\"warn-box\">This run never finished, so the digest is incomplete.</p>\n",
         );
     }
+    if let Some(file) = &d.trial {
+        w!(
+            out,
+            "<p class=\"warn-box\">A trial: judged by the judging settings of <code>{}</code>, \
+             not the policy the runs recorded.</p>\n",
+            esc(file)
+        );
+    }
     let (broken, fixed) = compared::shown(d);
     w!(
         out,

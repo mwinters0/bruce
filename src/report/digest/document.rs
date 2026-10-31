@@ -64,8 +64,12 @@ pub struct Digest {
     pub totals: Totals,
     /// What the run's policy judges.
     pub judged: Judged,
-    /// The run's whole recorded policy, as its rows (D78).
+    /// The run's whole recorded policy, as its rows (D78), or a trial's where
+    /// `trial` names one (D84).
     pub policy: Vec<Entry>,
+    /// The configuration file whose judging settings stood in for the runs'
+    /// own, which the caller that made the trial sets (D84).
+    pub trial: Option<String>,
     /// The severity of each kind of finding, read off `policy` (D82).
     pub severity: SeverityMap,
     /// The `unchecked` links by reason: `reason`, `links`, `targets`.

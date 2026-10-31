@@ -80,7 +80,7 @@ pub(super) fn page_counts(conn: &Connection, run: RunId) -> Result<PageCounts, E
 /// The run's recorded `doubled_slash_reach` (D80), `full` where it has no row.
 fn recorded_reach(conn: &Connection, run: RunId) -> Result<Reach, Error> {
     let value: Option<String> = conn.query_row(
-        "SELECT max(value) FROM policy WHERE run_id = ? AND host IS NULL \
+        "SELECT max(value) FROM policy_in_force WHERE run_id = ? AND host IS NULL \
          AND key = 'doubled_slash_reach'",
         [run.0],
         |row| row.get(0),
@@ -98,7 +98,7 @@ pub(super) fn judged(conn: &Connection, run: RunId) -> Result<Judged, Error> {
              AND host IS NOT NULL), false), \
          coalesce(bool_and(value <> 'false') FILTER (WHERE key = 'pedantic_trailing_slash' \
              AND host IS NULL), true) \
-         FROM policy WHERE run_id = ?",
+         FROM policy_in_force WHERE run_id = ?",
         [run.0],
         |row| Ok((row.get(0)?, row.get(1)?)),
     )?;
@@ -112,7 +112,7 @@ pub(super) fn judged(conn: &Connection, run: RunId) -> Result<Judged, Error> {
 /// The rows of the run's recorded policy (D78), the run-wide ones first.
 pub(super) fn policy(conn: &Connection, run: RunId) -> Result<Vec<Entry>, Error> {
     let mut stmt = conn.prepare(
-        "SELECT host, key, value FROM policy WHERE run_id = ? \
+        "SELECT host, key, value FROM policy_in_force WHERE run_id = ? \
          ORDER BY host NULLS FIRST, key, value",
     )?;
     let rows = stmt.query_map([run.0], |row| {

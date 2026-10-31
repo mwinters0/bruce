@@ -205,7 +205,7 @@ pub(super) fn gate(conn: &Connection, run: RunId, request: &Request) -> Result<G
 /// default where it has no row.
 fn recorded_fail(conn: &Connection, run: RunId) -> Result<Vec<FailOn>, Error> {
     let value: Option<String> = conn.query_row(
-        "SELECT max(value) FROM policy WHERE run_id = ? AND host IS NULL AND key = 'gate.fail'",
+        "SELECT max(value) FROM policy_in_force WHERE run_id = ? AND host IS NULL AND key = 'gate.fail'",
         [run.0],
         |row| row.get(0),
     )?;

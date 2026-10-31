@@ -6,7 +6,8 @@
 //! `links`, its target, the target's landing target and the landing page's
 //! `anchors`. A column holds the link's own fields, so a report reads one
 //! relation. It is the call, with the link's own run's policy, of the table
-//! macro `link_verdicts_with` (D77, D78). The target's answer is first read
+//! macro `link_verdicts_with` (D77, D78), which reads the `policy_in_force`
+//! view (D84). The target's answer is first read
 //! through the policy: a status code the policy judges, a scheme it counts
 //! unchecked or not. The first rule that applies then decides:
 //!
@@ -94,7 +95,14 @@ pub const DOUBLED_SLASH: &str = "doubled_slash";
 pub const WRONG_TRAILING_SLASH: &str = "wrong_trailing_slash";
 
 /// The `doubled_slash` view, created before the macro that joins it.
-pub(super) const FIRST: &[View] = &[DOUBLED_SLASH_TARGETS];
+pub(super) const FIRST: &[View] = &[POLICY_IN_FORCE, DOUBLED_SLASH_TARGETS];
+
+/// The policy rows the views and the reports read (D78): the stored `policy`,
+/// unless [`Store::try_policy`] has put a trial's rows in its place (D84).
+const POLICY_IN_FORCE: View = View {
+    name: "policy_in_force",
+    select: "SELECT * FROM policy",
+};
 
 /// The view calling the macro, created after it.
 pub(super) const LAST: &[View] = &[LINK_VERDICTS];
@@ -204,19 +212,19 @@ WITH pr AS (
         END AS answer
     FROM th
     LEFT JOIN pr ON pr.run_id = th.run_id
-    LEFT JOIN (SELECT run_id, list(value) AS schemes FROM policy WHERE key = 'schemes'
+    LEFT JOIN (SELECT run_id, list(value) AS schemes FROM policy_in_force WHERE key = 'schemes'
         GROUP BY run_id) sch ON sch.run_id = pr.prun
-    LEFT JOIN policy hm ON hm.run_id = pr.prun
+    LEFT JOIN policy_in_force hm ON hm.run_id = pr.prun
         AND hm.key = 'status.' || th.status::VARCHAR AND hm.host = th.answered_host
-    LEFT JOIN policy dm ON dm.run_id = pr.prun
+    LEFT JOIN policy_in_force dm ON dm.run_id = pr.prun
         AND dm.key = 'status.' || th.status::VARCHAR AND dm.host IS NULL
 ), dsl AS (
     SELECT d.run_id, d.url_id, d.own, d.twin_id
     FROM doubled_slash d
     LEFT JOIN pr ON pr.run_id = d.run_id
-    LEFT JOIN policy hp ON hp.run_id = pr.prun
+    LEFT JOIN policy_in_force hp ON hp.run_id = pr.prun
         AND hp.key = 'doubled_slash' AND hp.host = $DOUBLED_HOST
-    LEFT JOIN policy dp ON dp.run_id = pr.prun
+    LEFT JOIN policy_in_force dp ON dp.run_id = pr.prun
         AND dp.key = 'doubled_slash' AND dp.host IS NULL
     WHERE coalesce(hp.value, dp.value, 'true') <> 'false'
 ), joined AS (
@@ -271,7 +279,7 @@ SELECT j.run_id, j.src_url_id, j.target_url_id, j.fragment, j.raw_href, j.kind, 
         AND NOT (j.relative AND j.verdict[1] IN ('broken_url', 'broken_anchor', 'error'))) AS counted
 FROM judged j
 LEFT JOIN pr ON pr.run_id = j.run_id
-LEFT JOIN policy pe ON pe.run_id = pr.prun AND pe.host IS NULL
+LEFT JOIN policy_in_force pe ON pe.run_id = pr.prun AND pe.host IS NULL
     AND pe.key = 'pedantic_trailing_slash'";
 
 /// A link and its verdict (D28), judged by its own run's policy (D77).

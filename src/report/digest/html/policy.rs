@@ -17,11 +17,22 @@ pub(super) fn differing(d: &Digest) -> Vec<&Entry> {
 
 /// The list: each setting as a file writes it, or that there is none.
 pub(super) fn list(out: &mut String, d: &Digest) {
-    out.push_str(
-        "<p>The settings this run was judged by that differ from the defaults, as the \
-         configuration file writes them. A report judges the run by the policy it recorded, \
-         and a comparison judges both runs by the newer one's.</p>\n",
-    );
+    if let Some(file) = &d.trial {
+        w!(
+            out,
+            "<p><strong>A trial.</strong> This report was judged by the judging settings of \
+             <code>{}</code>, in place of those the runs recorded; nothing was crawled again. \
+             The settings it was judged by that differ from the defaults, as the configuration \
+             file writes them:</p>\n",
+            esc(file)
+        );
+    } else {
+        out.push_str(
+            "<p>The settings this run was judged by that differ from the defaults, as the \
+             configuration file writes them. A report judges the run by the policy it recorded, \
+             and a comparison judges both runs by the newer one's.</p>\n",
+        );
+    }
     let differing = differing(d);
     if differing.is_empty() {
         out.push_str("<p class=\"muted\">None: every setting is at its default.</p>\n");

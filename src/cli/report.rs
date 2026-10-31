@@ -5,6 +5,10 @@
 //! [--run n] [--from n | --since file|url] [--format json|html|both]` writes a
 //! crawl run's dated digest instead (D64), compared with another run (D73).
 //!
+//! `--config FILE` judges the run, and any run compared with it, by the judging
+//! settings of that file in place of those each run recorded, writing nothing
+//! to the database (D84).
+//!
 //! A report reads a database a crawl wrote and never creates one; opening it
 //! installs the views, so a database from before them gains them here.
 //! Finding rows is not a failure: the exit status is 1 only where the report
@@ -20,6 +24,7 @@ use clap::{Arg, ArgAction, ArgMatches, Command, value_parser};
 
 use super::db;
 use super::file::BaselineFile;
+use crate::config::Config;
 use crate::extract::Kind;
 use crate::profile::Registry;
 use crate::report::{self, Against, Digest, Format, Report, Request};
@@ -40,6 +45,8 @@ const ALL_KINDS: &str = "all";
 pub struct Args {
     pub request: Request,
     pub db: Option<PathBuf>,
+    /// The file whose judging settings stand in for the runs' own.
+    pub config: Option<PathBuf>,
     pub format: Format,
 }
 
@@ -81,6 +88,8 @@ impl DigestFormat {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DigestArgs {
     pub db: Option<PathBuf>,
+    /// The file whose judging settings stand in for the runs' own.
+    pub config: Option<PathBuf>,
     pub run: Option<RunId>,
     /// The run to compare with: `--from`, else a baseline file `--since`
     /// names, else the finished crawl run before the digest's.
@@ -103,6 +112,7 @@ impl From<&ArgMatches> for DigestArgs {
     fn from(m: &ArgMatches) -> DigestArgs {
         DigestArgs {
             db: m.get_one::<String>("db").map(PathBuf::from),
+            config: m.get_one::<String>("config").map(PathBuf::from),
             run: m.get_one::<u64>("run").map(|&n| RunId(n)),
             against: match (m.get_one::<u64>("from"), m.get_one::<String>("since")) {
                 (Some(&n), _) => Compare::Run(RunId(n)),
@@ -158,6 +168,7 @@ impl From<&ArgMatches> for Args {
         Args {
             request,
             db: m.get_one::<String>("db").map(PathBuf::from),
+            config: m.get_one::<String>("config").map(PathBuf::from),
             format,
         }
     }
@@ -218,6 +229,10 @@ pub fn command() -> Command {
                 .value_name("FILE")
                 .help("The database to read [default: bruce.duckdb]"),
         )
+        .arg(Arg::new("config").long("config").value_name("FILE").help(
+            "Judge by this configuration's judging settings in place of the runs' recorded \
+             ones, its asking settings ignored",
+        ))
         .arg(
             Arg::new("run")
                 .long("run")
@@ -306,8 +321,8 @@ pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
         ))
     };
     if name == Some(DIGEST) {
-        let whole = "the digest is of a whole run; it takes --run, --from, --since, --db, --out, \
-                     --name and --format";
+        let whole = "the digest is of a whole run; it takes --run, --from, --since, --db, --config, \
+                     --out, --name and --format";
         for (id, flag) in [
             ("to", "--to"),
             ("repo", "--repo"),
@@ -405,12 +420,30 @@ pub fn run(job: &Job, registry: Registry) -> ExitCode {
 
 /// The database `db` names, which must exist, and its path as the messages
 /// name it.
-fn open(db: Option<&Path>, registry: &Registry) -> Result<(Store, PathBuf), String> {
+fn open(
+    db: Option<&Path>,
+    config: Option<&Path>,
+    registry: &Registry,
+) -> Result<(Store, PathBuf), String> {
     let db = db::path(db);
     if !db.exists() {
         return Err(format!("{}: no such database", db.display()));
     }
     let store = db::open(db, registry).map_err(|e| format!("{}: {e}", db.display()))?;
+    if let Some(path) = config {
+        let config = Config::load(path).map_err(|e| match e {
+            // A read error names its file already.
+            crate::config::Error::Read { .. } => format!("--config {e}"),
+            e => format!("--config {}: {e}", path.display()),
+        })?;
+        store
+            .try_policy(&config.policy)
+            .map_err(|e| format!("{}: {e}", db.display()))?;
+        eprintln!(
+            "bruce report: judging by the trial policy in {}; its asking settings are ignored",
+            path.display()
+        );
+    }
     Ok((store, db.to_owned()))
 }
 
@@ -438,7 +471,7 @@ fn warn_incomplete(
 }
 
 fn report(args: &Args, registry: &Registry) -> Result<(), String> {
-    let (store, db) = open(args.db.as_deref(), registry)?;
+    let (store, db) = open(args.db.as_deref(), args.config.as_deref(), registry)?;
     let output =
         report::run(&store, &args.request).map_err(|e| format!("{}: {e}", db.display()))?;
     warn_incomplete(
@@ -462,7 +495,7 @@ fn report(args: &Args, registry: &Registry) -> Result<(), String> {
 /// Writes the digest of the run named, as `DIR/STEM-YYYY-MM-DD.json`, `.html`
 /// or both as `--format` says, and prints the path of each (D64).
 fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
-    let (store, db) = open(args.db.as_deref(), registry)?;
+    let (store, db) = open(args.db.as_deref(), args.config.as_deref(), registry)?;
     // The file outlives the digest, which reads the run imported from it.
     let file = match &args.against {
         Compare::Since(spec) => {
@@ -479,8 +512,9 @@ fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
         (_, Some(file)) => Against::File(file.path()),
         _ => Against::Previous,
     };
-    let digest: Digest =
+    let mut digest: Digest =
         report::digest(&store, args.run, against).map_err(|e| format!("{}: {e}", db.display()))?;
+    digest.trial = args.config.as_ref().map(|p| p.display().to_string());
     let compared = digest
         .compared
         .as_ref()

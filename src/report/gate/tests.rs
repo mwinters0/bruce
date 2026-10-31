@@ -377,6 +377,24 @@ fn an_empty_list_is_report_only() {
 }
 
 #[test]
+fn a_trial_policy_names_the_list_in_place_of_the_ci_runs_own() {
+    let store = store();
+    let by_run = gate_of(&store, |_| {});
+    assert!(by_run.fails());
+    let trial = crate::config::Policy {
+        gate_fail: Vec::new(),
+        ..crate::config::Policy::default()
+    };
+    store.try_policy(&trial).unwrap();
+    let g = gate_of(&store, |_| {});
+    assert!(!g.fails());
+    assert_eq!(
+        column(&g.introduced_not_failing, "raw_href"),
+        ["1>11#", "1>12#", "1>15#", "2>13#", "1>2#nope"]
+    );
+}
+
+#[test]
 fn an_error_the_baseline_had_is_already_there_where_the_list_names_it() {
     let store = store();
     for run in [1, 2] {

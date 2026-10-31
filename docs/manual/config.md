@@ -212,6 +212,8 @@ never the file: a run is judged by its own policy, and changing a key changes
 the runs that follow. A comparison (`check-dir`'s gate, `report diff`, a
 digest's changes since) judges both runs by the newer one's policy, so changing
 a key breaks nothing by itself. Every key is at the value `bruce` has always judged by.
+To see what a key does to a run already crawled, [`bruce report --config`](report.md#a-trial-policy)
+judges it by a file's keys instead, writing nothing.
 
 ```toml
 [judge]

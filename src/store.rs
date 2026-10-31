@@ -11,6 +11,7 @@ mod baseline;
 mod prune;
 mod rows;
 mod schema;
+mod trial;
 mod views;
 mod writer;
 

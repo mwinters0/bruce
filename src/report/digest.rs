@@ -107,6 +107,7 @@ fn build(conn: &Connection, read: &Read, from: Option<RunId>, file: bool) -> Res
         judged: sections::judged(conn, id)?,
         severity: SeverityMap::from_entries(&policy),
         policy,
+        trial: None,
         unchecked: sections::unchecked(conn, id)?,
         unchecked_groups: sections::unchecked_groups(conn, id)?,
         checked_hosts: sections::checked_hosts(conn, id)?,

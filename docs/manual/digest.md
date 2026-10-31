@@ -1,7 +1,7 @@
 # `bruce report digest`
 
 ```sh
-bruce report digest --out DIR [--name STEM] [--db FILE] [--run N] [--from N | --since FILE|URL] [--format json|html|both]
+bruce report digest --out DIR [--name STEM] [--db FILE] [--config FILE] [--run N] [--from N | --since FILE|URL] [--format json|html|both]
 ```
 
 Writes one **digest** of a crawl run: the run's figures, the broken links
@@ -27,6 +27,7 @@ fetched for.
 | `--out DIR` | required | The directory the files are written to, created where it is missing. |
 | `--name STEM` | `bruce` | The file name's first part, so the digests of an en-US crawl and an every-locale crawl share a directory. It holds no `/`. |
 | `--db FILE` | `bruce.duckdb` | The database to read. It must exist. |
+| `--config FILE` | none | Judge by this file's judging settings in place of the policy the runs recorded: [a trial](#a-trial-policy). |
 | `--run N` | the latest finished run | The run to digest, as [`bruce report`](report.md#which-run) chooses it. A run that never finished is digested with a warning on stderr. A run that [`bruce check-dir`](check-dir.md) made has no digest. |
 | `--from N` | the finished crawl run before `--run` | The run to [compare with](#the-comparison): a crawl run of the database, finished or not. |
 | `--since FILE\|URL` | none | Compare with the run of a baseline file, as [`bruce check-dir`](check-dir.md)'s `--baseline` takes one: a path or an `http(s)` URL, gzipped or not. It holds one finished run, which [`bruce export-baseline`](export-baseline.md) writes. Not with `--from`. |
@@ -45,6 +46,16 @@ removes it again, so the database holds the runs it held before and a bare
 database that holds no earlier run, given neither, says so in the header, has
 neither section, and has `null` for `compared_with`. The comparison is of two runs
 of one site: a run of other roots shows as pages gained and lost.
+
+## A trial policy
+
+`--config FILE` writes the digest as if the run had been crawled under that
+file's judging settings ([`report.md`](report.md#a-trial-policy)): the severity
+map, the `status` map, `doubled_slash` and the rest, and the comparison's run
+judged by them too. The HTML opens with a line naming the file, and
+Housekeeping's settings list is the file's. The JSON's `policy` is the file's
+rows and its `trial` the file's path as given. Name a trial's digest apart
+(`--name`) from the digests to keep: its figures are not a run's.
 
 ## The files
 
@@ -213,7 +224,8 @@ and a count or status a number.
     "unchecked_groups": [{"reason":"skipped","group":"forge.example.org/…/issues/new","links":1,"targets":1}],
     "checked_hosts": [{"host":"slow.example.net","links":1,"targets":1}]
   },
-  "policy": [{"host":null,"key":"pedantic_trailing_slash","value":"true"},{"host":null,"key":"severity.error","value":"broken"}]
+  "policy": [{"host":null,"key":"pedantic_trailing_slash","value":"true"},{"host":null,"key":"severity.error","value":"broken"}],
+  "trial": null
 }
 ```
 
@@ -256,6 +268,7 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `housekeeping.unchecked` | The `unchecked` links by `reason` ([below](#why-a-link-is-unchecked)), and the distinct `targets` they name. |
 | `housekeeping.unchecked_groups` | The same links by `reason` and by `group`, where they point, every group listed: the reasons in `unchecked`'s order, a reason's groups the most `links` first. A `group` is the scheme, as `mailto:`, for a URL that is not `http` or `https`; for `skipped`, the host and the path's last two segments, as `forge.example.org/…/issues/new`, the part a `skip` glob usually matches; on a root's host, the URL up to the path's first segment, as `https://docs.example.org/de/`, with the `/` after it where the path goes on; and else the host. It is `null` for a link the run stopped before asking about. |
 | `policy` | The whole policy the run was judged by, as it recorded it ([`config.md`](config.md#judging)): a row to a setting, `host` `null` for a run-wide one and a host's name for its own, `key` as the store spells it (`status.403`, `severity.doubled_slash`, a `schemes` row to each scheme) and `value` its text. A setting the file leaves out is a row at its default. |
+| `trial` | The path of the configuration file the digest was judged by in place of the run's recorded policy ([a trial](#a-trial-policy)), as `--config` gave it, else `null`; `policy` is then that file's. |
 | `housekeeping.checked_hosts` | The hosts no root starts on whose links' targets were asked about, the most `links` first: the [`allowlist`](config.md#allowlist) as far as the pages link to it. The run records no configuration, so a host the allowlist names that no page links to is in no row. |
 
 ## Why a link is newly broken

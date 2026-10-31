@@ -128,5 +128,9 @@ fn render(d: &Digest) -> String {
         ("errors", json(&d.errors)),
         ("housekeeping", housekeeping),
         ("policy", policy(d)),
+        (
+            "trial",
+            d.trial.as_deref().map_or_else(|| "null".to_owned(), quoted),
+        ),
     ])
 }

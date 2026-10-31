@@ -115,6 +115,7 @@ fn args_for(db: &std::path::Path) -> Args {
     Args {
         request: Request::new(Report::Broken),
         db: Some(db.to_owned()),
+        config: None,
         format: Format::Text,
     }
 }
@@ -198,6 +199,7 @@ fn the_digest_takes_a_directory_a_name_and_a_run() {
         d,
         DigestArgs {
             db: Some("d".into()),
+            config: None,
             run: Some(RunId(4)),
             against: Compare::Previous,
             out: "o".into(),
@@ -297,6 +299,7 @@ fn a_digest_since_a_baseline_file_compares_with_its_run_and_leaves_the_database_
     drop(store);
     let args = DigestArgs {
         db: Some(today.clone()),
+        config: None,
         run: None,
         against: Compare::Since(baseline.display().to_string()),
         out: dir.path().join("out"),
@@ -343,6 +346,7 @@ fn a_digest_is_written_under_the_day_the_run_started() {
     drop(store);
     let args = DigestArgs {
         db: Some(db),
+        config: None,
         run: None,
         against: Compare::Previous,
         out: out.clone(),
@@ -391,6 +395,7 @@ fn a_digest_of_a_database_that_is_not_there_is_refused() {
     let dir = TempDir::new().unwrap();
     let args = DigestArgs {
         db: Some(dir.path().join("none.duckdb")),
+        config: None,
         run: None,
         against: Compare::Previous,
         out: dir.path().join("out"),
@@ -402,4 +407,155 @@ fn a_digest_of_a_database_that_is_not_there_is_refused() {
         ExitCode::FAILURE
     );
     assert!(!dir.path().join("out").exists());
+}
+
+#[test]
+fn a_trial_config_is_taken_by_a_report_and_by_the_digest() {
+    assert_eq!(
+        parse(&["broken", "--config", "site.toml"]).unwrap().config,
+        Some("site.toml".into())
+    );
+    let Job::Digest(d) = job(&["digest", "--out", "o", "--config", "site.toml"]).unwrap() else {
+        panic!("a digest")
+    };
+    assert_eq!(d.config, Some("site.toml".into()));
+    assert_eq!(parse(&["broken"]).unwrap().config, None);
+}
+
+/// A database holding one finished run, which recorded the default policy and
+/// links to a 404 and a 403, and a file judging the 404 `ok` and the 403 a
+/// break.
+fn a_run_and_a_trial(dir: &TempDir) -> (PathBuf, PathBuf) {
+    let db = dir.path().join("a.duckdb");
+    let registry = crate::cli::registry();
+    let store = crate::cli::db::open(&db, &registry).unwrap();
+    let id = store
+        .begin_run(
+            crate::store::Mode::Crawl,
+            "h",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
+    let conn = store.connection();
+    conn.execute_batch(
+        "INSERT INTO targets (answered_by, run_id, url_id, url, status, outcome) VALUES \
+         ('live', 1, 1, 'https://a.test/p', 200, 'ok'), \
+         ('live', 1, 2, 'https://a.test/gone', 404, 'broken_url'), \
+         ('live', 1, 3, 'https://a.test/login', 403, 'error'); \
+         INSERT INTO pages VALUES (1, 1, 'P', 'text/html', 5, NULL, 'whole', 'generic', NULL, \
+         NULL, NULL, NULL, true, false, 'https://a.test/'); \
+         INSERT INTO links VALUES (1, 1, 2, NULL, '/gone', 'anchor', NULL), \
+         (1, 1, 3, NULL, '/login', 'anchor', NULL)",
+    )
+    .unwrap();
+    store.finish_run(id).unwrap();
+    drop(store);
+    let file = dir.path().join("site.toml");
+    std::fs::write(
+        &file,
+        "[default]\nstatus = { 404 = \"ok\", 403 = \"broken_url\" }\n\
+         [severity]\ndoubled_slash = \"attention\"\n",
+    )
+    .unwrap();
+    (db, file)
+}
+
+#[test]
+fn a_report_judged_by_a_trial_config_leaves_the_database_as_it_was() {
+    let dir = TempDir::new().unwrap();
+    let (db, file) = a_run_and_a_trial(&dir);
+    let registry = crate::cli::registry();
+    let broken = |config: Option<&PathBuf>| -> Vec<String> {
+        let args = Args {
+            config: config.cloned(),
+            ..args_for(&db)
+        };
+        let (store, _) = open(args.db.as_deref(), args.config.as_deref(), &registry).unwrap();
+        let output = report::run(&store, &args.request).unwrap();
+        output.table.rows.iter().map(|r| format!("{r:?}")).collect()
+    };
+    let recorded = broken(None);
+    let trial = broken(Some(&file));
+    assert_eq!(
+        recorded.len(),
+        1,
+        "the 404 is broken, the 403 an error: {recorded:?}"
+    );
+    assert_eq!(trial.len(), 1, "the 403 is broken, the 404 ok: {trial:?}");
+    assert_ne!(recorded, trial);
+    // Nothing was written: the recorded policy answers again.
+    assert_eq!(broken(None), recorded);
+    let (store, _) = open(Some(&db), None, &registry).unwrap();
+    let ok_404: i64 = store
+        .connection()
+        .query_row(
+            "SELECT count(*) FROM policy WHERE key = 'status.404' AND value = 'ok'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(ok_404, 0);
+}
+
+#[test]
+fn a_digest_judged_by_a_trial_config_names_the_file() {
+    let dir = TempDir::new().unwrap();
+    let (db, file) = a_run_and_a_trial(&dir);
+    let args = DigestArgs {
+        db: Some(db),
+        config: Some(file.clone()),
+        run: None,
+        against: Compare::Previous,
+        out: dir.path().join("out"),
+        name: "t".into(),
+        format: DigestFormat::Both,
+    };
+    assert_eq!(
+        run(&Job::Digest(args.clone()), crate::cli::registry()),
+        ExitCode::SUCCESS
+    );
+    let read = |extension: &str| {
+        let path = std::fs::read_dir(&args.out)
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .find(|p| p.extension().is_some_and(|e| e == extension))
+            .unwrap();
+        std::fs::read_to_string(path).unwrap()
+    };
+    let json: serde_json::Value = serde_json::from_str(&read("json")).unwrap();
+    assert_eq!(json["trial"], file.display().to_string());
+    let keys: Vec<&str> = json["policy"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|r| r["key"].as_str().unwrap())
+        .collect();
+    assert!(keys.contains(&"status.403") && keys.contains(&"severity.doubled_slash"));
+    // The 403 the file breaks is the run's one broken target.
+    assert_eq!(json["totals"]["broken_url"], 1);
+    let page = read("html");
+    assert!(page.contains("A trial"), "{page}");
+    assert!(page.contains("site.toml"));
+    assert!(page.contains("severity.doubled_slash = &quot;attention&quot;"));
+}
+
+#[test]
+fn a_trial_config_that_cannot_be_read_or_is_invalid_refuses_the_report() {
+    let dir = TempDir::new().unwrap();
+    let (db, _) = a_run_and_a_trial(&dir);
+    let registry = crate::cli::registry();
+    let bad = dir.path().join("bad.toml");
+    std::fs::write(&bad, "[severity]\nnosuch = \"none\"\n").unwrap();
+    for config in [bad, dir.path().join("missing.toml")] {
+        let args = Args {
+            config: Some(config),
+            ..args_for(&db)
+        };
+        let Err(e) = open(args.db.as_deref(), args.config.as_deref(), &registry) else {
+            panic!("refused")
+        };
+        assert!(e.starts_with("--config "), "{e}");
+    }
 }

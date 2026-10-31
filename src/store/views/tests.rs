@@ -971,3 +971,59 @@ fn a_macro_parameter_in_a_join_condition_still_aborts_a_debug_duckdb() {
         "the query now plans: remove the `pr` join (UF2)"
     );
 }
+
+#[test]
+fn a_trial_policy_judges_every_run_and_writes_nothing_to_the_database() {
+    use crate::config::Answer;
+    let dir = std::env::temp_dir().join(format!("bruce-trial-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("t.duckdb");
+    let registry = Registry::new(Box::new(Generic));
+    let store = Store::open(&file, &registry).unwrap();
+    for _ in 0..2 {
+        store
+            .begin_run(
+                Mode::Crawl,
+                "t",
+                None,
+                &[],
+                &crate::config::Policy::default(),
+            )
+            .unwrap();
+    }
+    answered(&store, 2, "https://a.test/x", 404, "broken_url", None, None);
+    link(&store, "404", 2, None, None);
+    let stored = |store: &Store| -> i64 {
+        store
+            .connection()
+            .query_row("SELECT count(*) FROM policy", [], |r| r.get(0))
+            .unwrap()
+    };
+    let before = stored(&store);
+    expect(&verdicts(&store), "404", "broken_url", None);
+
+    let mut trial = crate::config::Policy::default();
+    trial.status.insert(404, Answer::Ok);
+    store.try_policy(&trial).unwrap();
+    // The view, the macro and a query of the table itself read the trial's.
+    expect(&verdicts(&store), "404", "ok", None);
+    let under = verdicts_of(&store, "link_verdicts_with(policy_run := 2)");
+    expect(&under, "404", "ok", None);
+    let rows: i64 = store
+        .connection()
+        .query_row(
+            "SELECT count(*) FROM policy_in_force WHERE key = 'status.404' AND value = 'ok'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(rows, 2, "a row for each run");
+    assert_eq!(stored(&store), before);
+
+    drop(store);
+    // The file was never written, so a new connection finds the crawl's.
+    let store = Store::open(&file, &registry).unwrap();
+    expect(&verdicts(&store), "404", "broken_url", None);
+    drop(store);
+    std::fs::remove_dir_all(&dir).unwrap();
+}
