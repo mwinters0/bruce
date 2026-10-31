@@ -17,7 +17,7 @@ never reused.
 | P1–P5 | **Struck** at the first keystone, 2026-10-21 | their decisions are [`decisions.md`](decisions.md)'s |
 | P6 — release | **Struck** at the second keystone, 2026-10-22 | its decisions are [`decisions.md`](decisions.md)'s |
 | P8 — run-history reports | **Struck** at the third keystone, 2026-10-25 | its decisions are [`decisions.md`](decisions.md)'s |
-| P7 — site policy in config | Current | [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md) |
+| P7 — site policy in config | **Complete**, 2026-10-31 | [`roadmap-P7-rules.md`](roadmap-P7-rules.md), its notes [`roadmap-P7-rules-notes.md`](roadmap-P7-rules-notes.md) |
 | P9 — the deployment guide | Specified; to be grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
 | P10 — declarative extraction rules | Sketched; not grilled | this file, below |
 | P11 — the digest's prose in config | Sketched; not grilled | this file, below |
@@ -80,7 +80,10 @@ A standing rule is added only with the maintainer, and carries its check.
 
 ## P7 — Site policy in config
 
-Current: [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
+Complete: [`roadmap-P7-rules.md`](roadmap-P7-rules.md) and its notes,
+[`roadmap-P7-rules-notes.md`](roadmap-P7-rules-notes.md). A run's policy
+recorded and judged at read time, a trial policy, the asking settings, and
+Antora out of the core's output.
 
 ## P9 — The deployment guide
 

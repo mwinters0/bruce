@@ -39,64 +39,11 @@ the gate's exit status and sections.
 The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball (D60).
 `.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), its body naming a schema change from the latest release's (D43), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
 
-## P7 progress
-
-The spec is [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
-
-- [x] **7.1** Verdicts judged through a policy, defaults only:
-  `link_verdicts` a table macro and its view, no schema change; every report
-  and the digest's JSON byte-identical on the 2026-10-25 crawl's DB, the
-  digest's time measured. Notes:
-  [`../wip/roadmap-P7.1-verdicts-notes.md`](../wip/roadmap-P7.1-verdicts-notes.md).
-- [x] **7.2** A run records its policy: `config/policy`, `[default]`
-  replacing `[rate]`, the schema change, the baseline file carrying it.
-  Notes: [`../wip/roadmap-P7.2-policy-notes.md`](../wip/roadmap-P7.2-policy-notes.md).
-- [x] **7.3** The judging keys: `status`, `doubled_slash`,
-  `pedantic_trailing_slash`, `schemes`, the guide dropping an entry whose reason
-  is not judged. Notes:
-  [`../wip/roadmap-P7.3-judging-notes.md`](../wip/roadmap-P7.3-judging-notes.md).
-- [x] **7.3.1** `doubled_slash_reach` (`full`, `immediate`, `off`), the
-  doubled-slash guide entry stating it. Notes:
-  [`../wip/roadmap-P7.3.1-reach-notes.md`](../wip/roadmap-P7.3.1-reach-notes.md).
-- [x] **7.3.2** A remapped status keeps the crawl's reason where its outcome is
-  the one the crawl stored, D79 amended. Earned by 7.3, which dropped it
-  ([`history/2026-10-30.md`](history/2026-10-30.md)). Notes:
-  [`../wip/roadmap-P7.3.2-reason-notes.md`](../wip/roadmap-P7.3.2-reason-notes.md).
-- [x] **7.4** Comparisons judged by the newer run's policy: the gate, the
-  digest's since, `diff`. Notes:
-  [`../wip/roadmap-P7.4-comparisons-notes.md`](../wip/roadmap-P7.4-comparisons-notes.md).
-- [x] **7.5** The severity map and the policy stated in the digest's
-  Housekeeping, JSON and guide. Split: the gate's `fail` list is **7.5.1**.
-  Notes: [`../wip/roadmap-P7.5-severity-notes.md`](../wip/roadmap-P7.5-severity-notes.md).
-- [x] **7.5.1** The gate's `fail` list: `[gate]` `fail`, recorded, read by the
-  gate and `report introduced`/`inverse` for the CI run, stated like any
-  setting. Earned by 7.5 ([`history/2026-10-30.md`](history/2026-10-30.md)).
-  Notes: [`../wip/roadmap-P7.5.1-fail-notes.md`](../wip/roadmap-P7.5.1-fail-notes.md).
-- [x] **7.5.2** The map ranks: the HTML's page and repo counts by level and
-  ranked by them, and a kind at `none` out of its lists, counts and ranking.
-  Earned by 7.5 ([`history/2026-10-31.md`](history/2026-10-31.md)). Notes:
-  [`../wip/roadmap-P7.5.2-ranking-notes.md`](../wip/roadmap-P7.5.2-ranking-notes.md).
-- [x] **7.5.3** The gate lists what its `fail` list leaves out: "introduced
-  breakage not failing", the inverse check following the list with "inverse
-  breakage not failing", and an empty list "report only"
-  ([`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md), "What becomes a
-  setting"). Earned by 7.5.1 ([`history/2026-10-31.md`](history/2026-10-31.md)).
-  Notes: [`../wip/roadmap-P7.5.3-notlisted-notes.md`](../wip/roadmap-P7.5.3-notlisted-notes.md).
-- [x] **7.6** `bruce report --config`, judging by a trial policy: every report
-  and the digest, the digest naming the file (D84). Notes:
-  [`../wip/roadmap-P7.6-trial-notes.md`](../wip/roadmap-P7.6-trial-notes.md).
-- [x] **7.7** The asking settings: per-host timeouts, retries, the
-  `Retry-After` ceiling and D72's probe, and the body cap (D85). Notes:
-  [`../wip/roadmap-P7.7-asking-notes.md`](../wip/roadmap-P7.7-asking-notes.md).
-- [x] **7.8** Antora leaves the output: `[digest]` `group_by`, the profile's
-  sitemap sentence, `report_broken`'s hint through Views (D86, D87). Notes:
-  [`../wip/roadmap-P7.8-antora-notes.md`](../wip/roadmap-P7.8-antora-notes.md).
-
 ## Not started
 
 Every phase in [`../design/roadmap.md`](../design/roadmap.md)'s index not
 `Current`, `Complete` or `Struck`: P9 is specified, to be grilled again
-before it is sliced, after P7; P10 has not been grilled.
+before it is sliced; P10 and P11 have not been grilled.
 
 ## Decisions worth another look
 

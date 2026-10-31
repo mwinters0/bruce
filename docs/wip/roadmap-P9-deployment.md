@@ -32,7 +32,7 @@ the digest's grouping) and changes the schema, a run recording its policy:
 the guide is then written once, and a deployment is not stood up on a schema
 the next release discards (D43). **The guide's config sets `[digest]`
 `group_by = "antora.component"`**, the core grouping by nothing by default
-([`roadmap-P7-rules.md`](roadmap-P7-rules.md), "Antora leaves the core's
+([`../design/roadmap-P7-rules.md`](../design/roadmap-P7-rules.md), "Antora leaves the core's
 output"). The re-grilling reads what P7 added.
 
 ## The guide's hash scope is the profile's region

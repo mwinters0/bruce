@@ -1,7 +1,7 @@
 # P7 — Site policy in config
 
 What P7 does and why, settled in the grilling of 2026-10-25 and 26. The
-decisions are in [`../design/decisions.md`](../design/decisions.md) and are
+decisions are in [`decisions.md`](decisions.md) and are
 cited here, never restated. Its inbox, the maintainer's rulings from the
 2026-10-24 digest review on severity (D76) and the doubled slash (D71), is
 folded in below and deleted.
@@ -172,7 +172,7 @@ finding from every report to stop it failing CI.
 
 Settled 2026-10-25 (maintainer). P9's guide documents the config P7 extends,
 and P7 changes the schema, so P9 follows it
-([`roadmap-P9-deployment.md`](roadmap-P9-deployment.md), "P9 follows P7").
+([`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md), "P9 follows P7").
 
 ## Antora leaves the core's output
 
