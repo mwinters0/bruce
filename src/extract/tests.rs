@@ -279,6 +279,27 @@ fn every_kind_is_read_in_document_order_d13() {
 }
 
 #[test]
+fn embedded_resources_and_svg_references_are_links() {
+    let html = r##"<embed src="/e.pdf"><object data="o.swf"></object>
+        <input type="IMAGE" src="b.png"><input type="text" src="no.png"><input src="no2.png">
+        <svg><image href="i.png" xlink:href="old.png"/><image xlink:href="legacy.png"/>
+        <use href="#icon"/><use xlink:href="sprite.svg#x"/><use href=" "/></svg>
+        <embed src=""><object data=" "></object>"##;
+    assert_eq!(
+        links(html),
+        [
+            link("/e.pdf", "https://example.org/e.pdf", "embed"),
+            link("o.swf", "https://example.org/a/o.swf", "embed"),
+            link("b.png", "https://example.org/a/b.png", "image"),
+            link("i.png", "https://example.org/a/i.png", "image"),
+            link("legacy.png", "https://example.org/a/legacy.png", "image"),
+            link("#icon", "https://example.org/a/#icon", "use"),
+            link("sprite.svg#x", "https://example.org/a/sprite.svg#x", "use"),
+        ]
+    );
+}
+
+#[test]
 fn an_href_is_kept_raw_and_resolved_against_the_page() {
     let html = r##"<a href="#frag">1</a><a href="">2</a><a href="?q=1">3</a><a href="//cdn.example.net/x">4</a>
         <a href="mailto:me@example.org">5</a><a href="http://[bad">6</a><a href="x&amp;y">7</a>

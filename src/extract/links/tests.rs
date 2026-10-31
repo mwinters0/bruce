@@ -65,6 +65,13 @@ fn sitemap_entries_and_files_have_kinds_no_page_yields() {
 }
 
 #[test]
+fn a_kind_says_what_the_resource_is() {
+    assert_eq!(Kind::Embed.as_str(), "embed");
+    assert_eq!(Kind::Use.as_str(), "use");
+    assert_eq!(Kind::ALL.len(), 14);
+}
+
+#[test]
 fn a_refresh_delay_is_the_number_it_starts_with() {
     assert_eq!(refresh_delay("0; url=/x"), Some(0.0));
     assert_eq!(refresh_delay(" 0.0,/x"), Some(0.0));

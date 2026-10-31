@@ -32,9 +32,10 @@ run's [`status`](config.md#judging) map judges a code otherwise.
 | `--top N` | all rows | Print the first N rows, in the report's order. `introduced`'s and `inverse`'s counts are then counted over those rows alone. |
 | `--format` | `text` | `text`, or `json`. |
 
-The kinds are `anchor` (`<a>` and `<area>`), `image`, `canonical`,
-`stylesheet`, `icon`, `link`, `script`, `frame`, `media`, `refresh`,
-`sitemap` and `sitemap_file`. A report counts `anchor` links alone unless
+The kinds are `anchor` (`<a>` and `<area>`), `image` (`<img>`, `<picture>`'s
+sources, `<input type=image>` and SVG's `<image>`), `canonical`, `stylesheet`,
+`icon`, `link`, `script`, `frame`, `media`, `embed` (`<embed>` and `<object>`),
+`use` (SVG's `<use>`), `refresh`, `sitemap` and `sitemap_file`. A report counts `anchor` links alone unless
 `--kind` says more, since a broken image or script is a different job from a
 broken link. `introduced` and `inverse` are the gate's, which judge every kind unless
 `--kind` narrows them.

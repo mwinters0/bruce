@@ -22,7 +22,8 @@ use crate::profile::{ElementHandlers, Sink};
 pub enum Kind {
     /// `a[href]` and `area[href]`: the kind reports default to.
     Anchor,
-    /// `img[src]`, every `srcset` URL, `source[srcset]`.
+    /// `img[src]`, every `srcset` URL, `source[srcset]`, `input[type=image][src]`
+    /// and SVG's `image` (`href` or `xlink:href`).
     Image,
     /// `link[rel~=canonical]`.
     Canonical,
@@ -38,6 +39,10 @@ pub enum Kind {
     Frame,
     /// `src` on `video`, `audio`, `source` and `track`; `poster`.
     Media,
+    /// `embed[src]` and `object[data]`.
+    Embed,
+    /// SVG's `use`, by `href` or `xlink:href`.
+    Use,
     /// The `url=` of `meta[http-equiv=refresh]`.
     Refresh,
     /// An entry of a sitemap naming a page, its source the sitemap file. The
@@ -51,7 +56,7 @@ pub enum Kind {
 
 impl Kind {
     /// Every kind, in declaration order.
-    pub const ALL: [Kind; 12] = [
+    pub const ALL: [Kind; 14] = [
         Kind::Anchor,
         Kind::Image,
         Kind::Canonical,
@@ -61,6 +66,8 @@ impl Kind {
         Kind::Script,
         Kind::Frame,
         Kind::Media,
+        Kind::Embed,
+        Kind::Use,
         Kind::Refresh,
         Kind::Sitemap,
         Kind::SitemapFile,
@@ -78,6 +85,8 @@ impl Kind {
             Kind::Script => "script",
             Kind::Frame => "frame",
             Kind::Media => "media",
+            Kind::Embed => "embed",
+            Kind::Use => "use",
             Kind::Refresh => "refresh",
             Kind::Sitemap => "sitemap",
             Kind::SitemapFile => "sitemap_file",
@@ -117,13 +126,8 @@ pub(super) struct Links {
 }
 
 /// The elements read for a URL.
-// deficiency: KD30 A browser also loads `<embed src>`, `<object data>`,
-// `<input type=image src>` and SVG's `<image>` and `<use>` (`href` or
-// `xlink:href`), which this selector leaves out, so a broken one is no link:
-// D13's every element that names a URL a browser loads or follows. Reading
-// them, each under a kind of its own, is the fix.
 const READ: &str = "a[href], area[href], img, source, link, script[src], iframe[src], \
-                    video, audio, track, meta";
+                    video, audio, track, meta, embed[src], object[data], input, image, use";
 
 impl Links {
     pub(super) fn new(page: &Url, site_root: Option<&Url>) -> Links {
@@ -251,6 +255,26 @@ fn references(el: &Element) -> Vec<(String, Kind)> {
             out.extend(get("poster").map(|v| (v, Kind::Media)));
         }
         "audio" | "track" => out.extend(get("src").map(|v| (v, Kind::Media))),
+        "embed" => out.extend(get("src").map(|v| (v, Kind::Embed))),
+        "object" => out.extend(get("data").map(|v| (v, Kind::Embed))),
+        "input" => {
+            let image =
+                attribute(el, "type").is_some_and(|v| v.trim().eq_ignore_ascii_case("image"));
+            if image {
+                out.extend(get("src").map(|v| (v, Kind::Image)));
+            }
+        }
+        // SVG2: `href` wins over the legacy `xlink:href`.
+        "image" => out.extend(
+            get("href")
+                .or_else(|| get("xlink:href"))
+                .map(|v| (v, Kind::Image)),
+        ),
+        "use" => out.extend(
+            get("href")
+                .or_else(|| get("xlink:href"))
+                .map(|v| (v, Kind::Use)),
+        ),
         "meta" => {
             let refresh = attribute(el, "http-equiv")
                 .is_some_and(|v| v.trim().eq_ignore_ascii_case("refresh"));

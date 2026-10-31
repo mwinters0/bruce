@@ -105,11 +105,6 @@ roadmap's phase index.
   unowned**: a CI run whose redirects reach another locale would promote it.
   Detail: `src/crawl/frontier.rs`
 
-- **KD30** — `<embed src>`, `<object data>`, `<input type=image src>` and SVG's
-  `<image>` and `<use>` hrefs yield no link, so a broken one is found nowhere
-  (D13). **(c) unowned**: a site whose pages load a resource through one would
-  promote it. Detail: `src/extract/links.rs`
-
 - **KD32** — "By: Link Target" says no broken target is named by more than one
   link where the severity map puts every such target at `none`, and the
   sections since the compared run are left out where it empties them, where

@@ -6,7 +6,7 @@ reference kind, the anchors a browser would scroll to, the placement of each, an
 pass; a profile hands it its region and handlers.
 
 ### D13 Every reference kind is extracted, each target fetched once per run
-Every element that names a URL a browser loads or follows yields a link with its `kind` (but KD30), so a broken image or
+Every element that names a URL a browser loads or follows yields a link with its `kind`, so a broken image or
 canonical is found, not only a broken `<a>`; an asset is asked HEAD with a GET fallback. Reports default to `kind =
 anchor`, the gate (D9) to every kind. A scheme other than `http(s)` is never requested (D66); the first `<base href>`
 resolves every href after it. Rejected: `<a href>` only, missing broken images and canonicals; ignoring `<base>`, which
