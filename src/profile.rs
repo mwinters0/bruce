@@ -13,12 +13,13 @@ mod selectors;
 
 use std::borrow::Cow;
 use std::cell::RefCell;
+use std::sync::Arc;
 
 use lol_html::{ElementContentHandlers, Selector};
 use url::Url;
 
 use crate::config::ProfileChoice;
-use crate::forge::EditLink;
+use crate::forge::{Rule, Source};
 
 pub use selectors::{compiled, element, text};
 
@@ -141,6 +142,9 @@ pub struct Extract<'h> {
     /// share what the profile's handlers gathered (an `Rc`), which is how a
     /// handler's reading reaches it.
     pub finish: Option<Finish>,
+    /// Source rules tried in order before the edit link is parsed (D93);
+    /// none for a profile that states none.
+    pub sources: Arc<[Rule]>,
 }
 
 impl Extract<'_> {
@@ -150,6 +154,7 @@ impl Extract<'_> {
             region,
             handlers: Vec::new(),
             finish: None,
+            sources: Arc::default(),
         }
     }
 }
@@ -167,7 +172,10 @@ pub struct Settled<'a> {
     pub resolve: &'a dyn Fn(&str) -> Option<Url>,
     /// The page's edit link, the core's ranked choice or the profile's own
     /// preference (D36); `None` where the page has none.
-    pub edit_link: Option<&'a EditLink>,
+    pub edit_link: Option<&'a Url>,
+    /// The page's source file: the first of the profile's source rules to give
+    /// one, else what the edit link parses to (D93).
+    pub source: Option<&'a Source>,
 }
 
 /// What a profile's handlers and finish step write to (D38): the page's

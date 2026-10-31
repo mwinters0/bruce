@@ -10,6 +10,7 @@ use bruce::cli::registry;
 use bruce::config::{HashScope, ProfileChoice};
 use bruce::extract::{Extracted, Kind, Placement, extract};
 use common::{Fixture, fixtures};
+use url::Url;
 
 fn run(f: &Fixture) -> Extracted {
     run_as(f, &f.html, &HashScope::default())
@@ -49,15 +50,15 @@ fn summary(x: &Extracted) -> String {
         .iter()
         .map(|(k, v)| format!("  {k} = {v}"))
         .collect();
-    let edit = match &x.edit_link {
-        None => "-".to_string(),
-        Some(e) => match &e.source {
-            None => format!("{} (no forge shape)", e.url),
-            Some(s) => format!(
-                "{} (repo {}, ref {}, path {})",
-                e.url, s.repo, s.git_ref, s.path
-            ),
-        },
+    let edit = match (&x.edit_link, &x.source) {
+        (None, _) => "-".to_string(),
+        (Some(url), None) => format!("{url} (no forge shape)"),
+        (Some(url), Some(s)) => format!(
+            "{url} (repo {}, ref {}, path {})",
+            s.repo,
+            s.git_ref.as_deref().unwrap_or("-"),
+            s.path
+        ),
     };
     format!(
         "profile: {}\ntitle: {}\nedit: {edit}\nanchors: {} (content {}, chrome {}, unknown {})\nby tag: {}\nlinks: {} ({})\nhash: {:032x}\nfacts:{}\n",
@@ -223,9 +224,11 @@ fn a_canonical_is_absolute_and_may_name_another_page() {
     );
 }
 
-fn edit_link(path: &str) -> Option<bruce::forge::EditLink> {
+/// The edit link and the source file it parses to, of the fixture at `path`.
+fn edit_link(path: &str) -> Option<(Url, Option<bruce::forge::Source>)> {
     let f = fixtures().into_iter().find(|f| f.path == path).unwrap();
-    run(&f).edit_link
+    let x = run(&f);
+    x.edit_link.map(|url| (url, x.source))
 }
 
 /// D36, I8: "Edit this Page" is picked from "Page history" and "Report an
@@ -238,17 +241,17 @@ fn docs_fp_o_edit_links_are_the_edit_this_page_title() {
         .iter()
         .filter(|f| f.path.starts_with("docs-fp-o/"))
     {
-        let edit = run(f).edit_link;
+        let x = run(f);
         if f.path.ends_with("404.html") {
-            assert!(edit.is_none(), "{}", f.path);
+            assert!(x.edit_link.is_none(), "{}", f.path);
             continue;
         }
-        let edit = edit.unwrap_or_else(|| panic!("{}: no edit link", f.path));
-        let source = edit
-            .source
-            .unwrap_or_else(|| panic!("{}: {}", f.path, edit.url));
-        assert!(source.path.ends_with(".adoc"), "{}: {}", f.path, edit.url);
-        assert!(edit.url.as_str().ends_with(&source.path));
+        let edit = x
+            .edit_link
+            .unwrap_or_else(|| panic!("{}: no edit link", f.path));
+        let source = x.source.unwrap_or_else(|| panic!("{}: {edit}", f.path));
+        assert!(source.path.ends_with(".adoc"), "{}: {edit}", f.path);
+        assert!(edit.as_str().ends_with(&source.path));
         forges.insert(source.repo.split('/').nth(2).unwrap().to_string());
     }
     // The survey's three hosts: Forgejo, GitHub and GitLab.
@@ -306,13 +309,13 @@ fn each_generators_edit_link_is_found_by_its_own_signal() {
             "pages/edit-candidates.md",
         ),
     ] {
-        let edit = edit_link(path).unwrap_or_else(|| panic!("{path}: no edit link"));
-        let source = edit.source.as_ref().unwrap();
-        assert_eq!(edit.url.as_str(), url, "{path}");
+        let (edit, source) = edit_link(path).unwrap_or_else(|| panic!("{path}: no edit link"));
+        let source = source.unwrap();
+        assert_eq!(edit.as_str(), url, "{path}");
         assert_eq!(
             (
                 source.repo.as_str(),
-                source.git_ref.as_str(),
+                source.git_ref.as_deref().unwrap(),
                 source.path.as_str()
             ),
             (repo, git_ref, file),
@@ -352,7 +355,7 @@ fn antora_coordinates_come_from_the_nav_container_url_and_edit_link() {
         let under_root = f.url.path().strip_prefix("/en-US/").unwrap();
         let first = under_root.split('/').next().unwrap();
         assert_eq!(fact(&x, "antora.component"), Some(first), "{}", f.path);
-        let edit = x.edit_link.as_ref().unwrap().source.as_ref().unwrap();
+        let edit = x.source.as_ref().unwrap();
         let module = fact(&x, "antora.module").unwrap();
         let rel_path = fact(&x, "antora.rel_path").unwrap();
         assert!(

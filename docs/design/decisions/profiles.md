@@ -16,11 +16,11 @@ cannot express.
 ### D33 Profiles are compiled in, or declared in config as a `[[profile]]` array
 A compiled profile is a module behind a trait, so a new generator is a PR. A declarative one is that trait built from
 config, an array of tables named by `name`: a content region, a `generator` pattern, fact rules (a selector, an
-attribute or the text, a regex whose one capture is the value; the first element yielding a value, an empty attribute
-being one and empty text not) and an edit-link selector, writing key/value facts (D37). Resolve and Views stay
-empty and resolution stays code. Rejected: WASM or out-of-process plugins, a burden for no second user; a table keyed
-by name, TOML not ordering keys where D35 tries profiles in file order; rules per root, a profile being what D35
-chooses by; the first match alone, leaving `pattern` no way to choose. Code: `config::profile`,
+attribute or the text, a regex whose one capture is the value; the first element yielding one, an empty attribute
+being one and empty text not), source rules (D93) and an edit-link selector, writing key/value facts (D37). Resolve and
+Views stay empty, resolution staying code. Rejected: WASM or out-of-process plugins, no second user; a
+table keyed by name, TOML not ordering keys where D35 tries profiles in file order; rules per root, a profile being
+what D35 chooses by; the first match alone, leaving `pattern` no way to choose. Code: `config::profile`,
 `profile::declarative`. Evidence: `profile::declarative::tests`.
 
 ### D35 A root's profile defaults to `auto`, which picks one per page by its generator meta
@@ -34,9 +34,18 @@ root spanning generators; config only, which makes every Antora user opt in. Cod
 ### D36 The page → source tie-back is core: an edit-link heuristic and forge URL shapes
 Every generator's edit link points at a forge, so any site gets page → file with no config. A link earning no tier
 (`extract::edit_link`) is none, so a plain repository link never wins by being the only one; a forge shape parses on any
-host, its ref one segment (KD1). docs.fp.o needs no override (I8). Rejected: discovery in the Antora profile only, which
-leaves routing a breakage to its repo (D17) to one generator; a `title` match in `antora`, a docs.fp.o quirk in a
-generator profile (D32). Code: `extract::edit_link`, `forge::parse`.
+host, its ref one segment, which a source rule overrides (D93). docs.fp.o needs no override (I8). Rejected: discovery
+in the Antora profile only, which leaves routing a breakage to its repo (D17) to one generator; a `title` match in
+`antora`, a docs.fp.o quirk in a generator profile (D32). Code: `extract::edit_link`, `forge::parse`.
+
+### D93 A profile's source rules are tried in file order before an edit link is parsed, each a regex with templates over its captures
+A `[[profile.source]]` is `from = "url" | "edit_link"` and a regex whose captures `repo`, `ref` and `path`, or
+`${name}` templates over them, give a source; the first rule giving a repo and a path wins, and `forge::parse` reads the
+edit link only where none does. Why: a site with no edit link has only its URL, which names neither the repo nor the
+file's extension (Sphinx's `/en/<ref>/<page>.html`), and the parse cannot tell a ref holding `/` from the path without
+a forge call per repo (I23). An expansion that is no source is passed over. Rejected: captures alone, stating no
+literal; a rule per root, a profile being what D35 chooses by. Reopens: a site mixing formats under one profile, the
+first match too coarse. Code: `forge::rule`, `config::profile`. Evidence: `forge::rule::tests`.
 
 ### D17 Each page stores its source file and repo, read from its edit link
 This routes a breakage to the repo and file that own it, and groups more precisely than component (some repos supply

@@ -976,7 +976,7 @@ where
         let url_id = form.id();
         let whole = matches!(plan, Plan::Page { .. });
         let edit = e.edit_link.as_ref().filter(|_| whole);
-        let source = edit.and_then(|l| l.source.as_ref());
+        let source = e.source.as_ref().filter(|_| whole);
         self.pages.fetch_add(1, Ordering::Relaxed);
         self.rows.send(Row::Page(PageRow {
             run_id: self.run.0,
@@ -987,9 +987,9 @@ where
             content_hash: Some(e.hash.to_be_bytes().to_vec()),
             hash_scope: e.covered.as_str(),
             profile: e.profile.to_owned(),
-            source_url: edit.map(|l| l.url.to_string()),
+            source_url: edit.map(Url::to_string),
             source_repo: source.map(|s| s.repo.clone()),
-            source_ref: source.map(|s| s.git_ref.clone()),
+            source_ref: source.and_then(|s| s.git_ref.clone()),
             source_path: source.map(|s| s.path.clone()),
             in_sitemap: item.in_sitemap,
             via_links: item.via_links,

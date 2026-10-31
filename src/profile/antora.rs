@@ -72,8 +72,7 @@ impl Page {
                 sink.fact("component", component);
             }
         }
-        let source = settled.edit_link.and_then(|e| e.source.as_ref());
-        if let Some((module, rel_path)) = source.and_then(|s| module_and_path(&s.path)) {
+        if let Some((module, rel_path)) = settled.source.and_then(|s| module_and_path(&s.path)) {
             sink.fact("module", module);
             sink.fact("rel_path", rel_path);
         }

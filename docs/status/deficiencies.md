@@ -26,17 +26,6 @@ The full rules, striking and slice pairing included, are
 markers, against [`STATUS.md`](STATUS.md)'s slice checklist, and against the
 roadmap's phase index.
 
-- **KD1** — A forge edit URL whose ref holds a `/` (a branch `feature/x`) parses
-  into the wrong ref and path, though `source_repo` and `source_url` stay right.
-  **(b) owned by P10, struck at 10.4**, a source rule being the remedy where
-  telling them apart would take one forge API call per repo. Detail:
-  `src/forge.rs`
-- **KD2** — A forge edit URL whose repo or group is named for a shape's marker
-  (`edit`, `blob`) parses at that name, giving the wrong repo, ref and path.
-  **(b) owned by P10, struck at 10.4**, a source rule being the remedy where
-  the right-to-left scan that avoids it misreads a file path holding such a
-  directory, which is likelier. Detail: `src/forge.rs`
-
 - **KD4** — The first link to a URL asked live (an allowlisted one, one on a
   root's host outside every scope, or one a build lacks) decides how it is asked, so a URL named by an image before an
   anchor link has no anchors to check that link's fragment against.

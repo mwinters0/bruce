@@ -716,8 +716,13 @@ fn every_key_the_config_reads_is_in_the_manual_with_its_default() {
     read.extend(
         keys::<profile::RawProfile>()
             .iter()
-            .filter(|k| **k != "fact")
+            .filter(|k| !matches!(**k, "fact" | "source"))
             .map(|k| format!("profile.{k}")),
+    );
+    read.extend(
+        keys::<profile::RawSource>()
+            .iter()
+            .map(|k| format!("profile.source.{k}")),
     );
     read.extend(
         keys::<profile::RawFact>()

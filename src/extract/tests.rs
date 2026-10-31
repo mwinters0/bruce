@@ -35,7 +35,7 @@ impl Profile for Stub {
         extract.finish = Some(Box::new(|settled, sink| {
             sink.fact("host", settled.url.host_str().unwrap());
             if let Some(edit) = settled.edit_link {
-                sink.fact("edit", edit.url.as_str());
+                sink.fact("edit", edit.as_str());
             }
         }));
         extract
@@ -379,10 +379,11 @@ type Shape = (String, String, String);
 /// The edit link's URL and the repo, ref and path it parses to, against
 /// `https://example.org/a/`.
 fn edit(html: &str) -> Option<(String, Option<Shape>)> {
-    auto(html).edit_link.map(|e| {
+    let x = auto(html);
+    x.edit_link.map(|url| {
         (
-            e.url.to_string(),
-            e.source.map(|s| (s.repo, s.git_ref, s.path)),
+            url.to_string(),
+            x.source.map(|s| (s.repo, s.git_ref.unwrap(), s.path)),
         )
     })
 }
@@ -496,7 +497,7 @@ fn a_profile_may_prefer_a_link_over_the_ranking_d36() {
         <a rel="edit" href="/ranked">e</a><a class="prefer" href="src.md">p</a>"#;
     let x = auto(html);
     assert_eq!(
-        x.edit_link.unwrap().url.as_str(),
+        x.edit_link.unwrap().as_str(),
         "https://example.org/a/src.md"
     );
     let edit = x.facts.pairs().iter().find(|(k, _)| k == "stub.edit");

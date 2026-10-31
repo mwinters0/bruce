@@ -9,7 +9,7 @@
 //! Inside a tier a URL that parses as a forge shape comes first, then document
 //! order. A link in no tier is no candidate, so a plain repository link never
 //! wins by being the only link to a forge. A profile may prefer a link over
-//! the ranking, through the sink (D38), which no profile does today.
+//! the ranking, through the sink (D38).
 
 use std::cell::RefCell;
 
@@ -18,7 +18,7 @@ use url::Url;
 
 use super::attribute;
 use super::links::Links;
-use crate::forge::EditLink;
+use crate::forge;
 use crate::profile::{ElementHandlers, element, text};
 
 /// The classes that mark an edit link in a theme that gives it none of
@@ -78,8 +78,8 @@ impl EditLinks {
     /// The page's edit link: `preferred`, an href resolved as a link read
     /// after the page's `<base>` is, if the profile gave one that names a web
     /// page; else the best candidate.
-    pub(super) fn choose(self, links: &Links, preferred: Option<&str>) -> Option<EditLink> {
-        let page = |url: Url| matches!(url.scheme(), "http" | "https").then(|| EditLink::new(url));
+    pub(super) fn choose(self, links: &Links, preferred: Option<&str>) -> Option<Url> {
+        let page = |url: Url| matches!(url.scheme(), "http" | "https").then_some(url);
         if let Some(link) = preferred.and_then(|raw| links.resolve(raw)).and_then(page) {
             return Some(link);
         }
@@ -90,7 +90,12 @@ impl EditLinks {
             .filter_map(|(order, c)| {
                 let tier = c.tier()?;
                 let link = page(found[c.link].url.clone()?)?;
-                Some((tier, link.source.is_some(), std::cmp::Reverse(order), link))
+                Some((
+                    tier,
+                    forge::parse(&link).is_some(),
+                    std::cmp::Reverse(order),
+                    link,
+                ))
             })
             .max_by(|a, b| (a.0, a.1, a.2).cmp(&(b.0, b.1, b.2)))
             .map(|(.., link)| link)

@@ -116,8 +116,9 @@ below `profile` (D39).
 
 ## Forge edit-URL shapes
 
-- **bruce** — `forge.rs`: the shape parse and the edit link it parses, below
-  `profile` so the finish step can read it (D39).
+- **bruce** — `forge.rs`: the shape parse and the source it gives, and `forge/rule.rs`, the source
+  rules a config states, tried before it (D93), below `config`, which builds one to check it, and
+  `profile`, so the finish step can read the source (D39).
 
 ## Canonical URLs and IDs
 

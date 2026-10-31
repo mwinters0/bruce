@@ -1,7 +1,7 @@
 use super::*;
 
 fn parsed(url: &str) -> Option<(String, String, String)> {
-    parse(&Url::parse(url).unwrap()).map(|s| (s.repo, s.git_ref, s.path))
+    parse(&Url::parse(url).unwrap()).map(|s| (s.repo, s.git_ref.unwrap(), s.path))
 }
 
 fn shape(repo: &str, git_ref: &str, path: &str) -> Option<(String, String, String)> {
@@ -69,7 +69,7 @@ fn github_and_pagure_shapes() {
 
 #[test]
 fn a_ref_with_a_slash_splits_at_its_first_segment() {
-    // KD1: the parse cannot know where the ref ends.
+    // The parse cannot know where the ref ends (the module's second limit).
     assert_eq!(
         parsed("https://github.com/o/r/edit/feature/x/docs/a.md"),
         shape("https://github.com/o/r", "feature", "x/docs/a.md")
@@ -78,7 +78,7 @@ fn a_ref_with_a_slash_splits_at_its_first_segment() {
 
 #[test]
 fn a_repo_named_for_a_marker_is_read_as_one() {
-    // KD2: the leftmost marker decides, and a path's own `edit` does not.
+    // The leftmost marker decides, and a path's own `edit` does not.
     assert_eq!(
         parsed("https://github.com/o/edit/blob/main/a.md"),
         shape("https://github.com/o", "blob", "main/a.md")
@@ -103,12 +103,4 @@ fn a_url_without_a_shape_or_without_a_file_is_none() {
     ] {
         assert_eq!(parsed(url), None, "{url}");
     }
-}
-
-#[test]
-fn an_edit_link_keeps_the_whole_url_with_or_without_a_shape() {
-    let url = Url::parse("https://forge.example.org/docs/site/issues/new?x=1").unwrap();
-    let link = EditLink::new(url.clone());
-    assert_eq!(link.url, url);
-    assert_eq!(link.source, None);
 }

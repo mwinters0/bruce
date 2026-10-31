@@ -4,7 +4,8 @@
 //! The loader refuses what the profile built from it could not run: a name
 //! that is no namespace, a regex that does not compile or a `pattern` without
 //! exactly one capture, a selector lol_html cannot stream, a `region` entry
-//! that is not one compound selector. A name a compiled profile holds is
+//! that is not one compound selector, a source rule that builds no
+//! `forge::Rule`. A name a compiled profile holds is
 //! `cli`'s to refuse, this module naming none (D39).
 
 use std::collections::BTreeSet;
@@ -13,6 +14,7 @@ use regex::Regex;
 use serde::Deserialize;
 
 use super::selector::selectors;
+use crate::forge;
 
 /// The profile value that picks one per page by its generator meta (D35).
 pub const AUTO_PROFILE: &str = "auto";
@@ -35,6 +37,26 @@ pub struct Definition {
     pub edit_link: Option<String>,
     /// The facts the profile reads, in file order.
     pub facts: Vec<Fact>,
+    /// The source rules, tried in file order before an edit link is parsed
+    /// (D93).
+    pub sources: Vec<SourceRule>,
+}
+
+/// One source rule (D93): a regex over the page's URL or its edit link whose
+/// captures, or templates over them, give the page's source file.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SourceRule {
+    /// What the regex is matched against: `url` or `edit_link`.
+    pub from: String,
+    /// The regex, with the named captures `repo`, `ref` and `path`.
+    pub pattern: String,
+    /// A template for the repo, `${name}` expanding a capture; none takes
+    /// the capture `repo`.
+    pub repo: Option<String>,
+    /// A template for the ref; none takes the capture `ref` if there is one.
+    pub git_ref: Option<String>,
+    /// A template for the file's path; none takes the capture `path`.
+    pub path: Option<String>,
 }
 
 /// One fact rule: the first element matching `selector` that gives a value
@@ -62,6 +84,8 @@ pub(in crate::config) struct RawProfile {
     edit_link: Option<String>,
     #[serde(default)]
     fact: Vec<RawFact>,
+    #[serde(default)]
+    source: Vec<RawSource>,
 }
 
 #[derive(Deserialize)]
@@ -71,6 +95,32 @@ pub(in crate::config) struct RawFact {
     selector: String,
     attr: Option<String>,
     pattern: Option<String>,
+}
+
+impl SourceRule {
+    /// The rule compiled. `Err` names what makes it no rule (`forge::Rule::new`),
+    /// `from:` leading a `from` that is neither `url` nor `edit_link`.
+    pub fn build(&self) -> Result<forge::Rule, String> {
+        let over = forge::Over::parse(&self.from).map_err(|e| format!("from: {e}"))?;
+        forge::Rule::new(
+            over,
+            &self.pattern,
+            self.repo.as_deref(),
+            self.git_ref.as_deref(),
+            self.path.as_deref(),
+        )
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(in crate::config) struct RawSource {
+    from: String,
+    pattern: String,
+    repo: Option<String>,
+    #[serde(rename = "ref")]
+    git_ref: Option<String>,
+    path: Option<String>,
 }
 
 /// The `[[profile]]` array validated, in the order the file writes it (D35),
@@ -150,19 +200,35 @@ impl Definition {
                 pattern: fact.pattern,
             });
         }
+        let mut sources = Vec::with_capacity(raw.source.len());
+        for (i, rule) in raw.source.into_iter().enumerate() {
+            let at = |e: String| format!("source[{i}]: {e}");
+            let rule = SourceRule {
+                from: rule.from,
+                pattern: rule.pattern,
+                repo: rule.repo,
+                git_ref: rule.git_ref,
+                path: rule.path,
+            };
+            rule.build().map_err(at)?;
+            sources.push(rule);
+        }
         Ok(Definition {
             name: raw.name,
             generator: raw.generator,
             region,
             edit_link: raw.edit_link,
             facts,
+            sources,
         })
     }
 
     /// The definition as the rows a run records (D78), keys under
     /// `profile.<name>.`: `generator` always, empty for none, `region` a row
-    /// to an entry, `edit_link`, and each fact's `selector`, `attr` and
-    /// `pattern` under `fact.<key>.`.
+    /// to an entry, `edit_link`, each fact's `selector`, `attr` and
+    /// `pattern` under `fact.<key>.`, and each source rule's `from`,
+    /// `pattern` and the templates it states under `source.<i>.`, `i` its
+    /// place in the file from 0.
     pub fn rows(&self) -> Vec<(String, String)> {
         let row =
             |key: String, value: &str| (format!("profile.{}.{key}", self.name), value.to_owned());
@@ -182,6 +248,20 @@ impl Definition {
             }
             if let Some(pattern) = &fact.pattern {
                 rows.push(row(format!("fact.{key}.pattern"), pattern));
+            }
+        }
+        for (i, rule) in self.sources.iter().enumerate() {
+            let at = |field: &str| format!("source.{i}.{field}");
+            rows.push(row(at("from"), &rule.from));
+            rows.push(row(at("pattern"), &rule.pattern));
+            for (field, template) in [
+                ("repo", &rule.repo),
+                ("ref", &rule.git_ref),
+                ("path", &rule.path),
+            ] {
+                if let Some(template) = template {
+                    rows.push(row(at(field), template));
+                }
             }
         }
         rows

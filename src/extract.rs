@@ -20,7 +20,7 @@ use lol_html::{HtmlRewriter, Settings};
 use url::Url;
 
 use crate::config::{HashScope, ProfileChoice};
-use crate::forge::EditLink;
+use crate::forge::{self, Source};
 use crate::profile::{
     ElementHandlers, Extract, Facts, Registry, Settled, Sink, UnknownProfile, element, text,
 };
@@ -45,9 +45,11 @@ pub struct Extracted {
     pub anchors: Vec<Anchor>,
     /// Each link in document order (D13).
     pub links: Vec<Link>,
-    /// The page's edit link and what it parses to (D36); `None` where the
-    /// page has none.
-    pub edit_link: Option<EditLink>,
+    /// The page's edit link (D36); `None` where the page has none.
+    pub edit_link: Option<Url>,
+    /// The page's source file: what the profile's source rules give, else
+    /// what its edit link parses to (D36, D93); `None` where neither does.
+    pub source: Option<Source>,
     /// The profile's facts about the page (D37).
     pub facts: Facts,
     /// Where the page's other locales are, as its profile read them: each a
@@ -131,6 +133,7 @@ pub fn extract_under(
         region,
         handlers,
         finish,
+        sources,
     } = profile.extract(&sink);
 
     let (read, tag) = Links::handlers(&links, &sink);
@@ -157,11 +160,13 @@ pub fn extract_under(
     let edit_link = edit_links
         .into_inner()
         .choose(&links, sink.preferred_edit_link());
+    let source = forge::source(&sources, url, edit_link.as_ref());
     if let Some(finish) = finish {
         let settled = Settled {
             url,
             resolve: &|href| links.resolve(href),
             edit_link: edit_link.as_ref(),
+            source: source.as_ref(),
         };
         finish(&settled, &mut sink);
     }
@@ -173,6 +178,7 @@ pub fn extract_under(
         anchors: anchors.into_inner().finish(),
         links: links.finish(),
         edit_link,
+        source,
         facts: sink.into_facts(),
         other_locales,
         hash,

@@ -1,4 +1,5 @@
-//! Forge edit-URL shapes, read back to a source repo, ref and path (D36).
+//! Forge edit-URL shapes, read back to a source repo, ref and path (D36), and
+//! the source rules a config states before them ([`rule`], D93).
 //!
 //! A shape is recognised by its path on any host, since a forge may sit on a
 //! host nothing else names. The markers, with `<ref>` one path segment:
@@ -14,7 +15,21 @@
 //! path decides. Pagure's is tried before GitHub's, whose `/blob\|edit/<ref>/f/…`
 //! it shadows. Query and fragment are dropped, and the path is kept as the
 //! URL spells it, percent-encoding included.
+//!
+//! Two limits of that reading are properties, a source rule being their
+//! remedy where a site meets one. The ref is one segment, so a ref holding a
+//! `/` (a branch `feature/x`) splits into the ref `feature` and a path
+//! `x/<path>`: telling them apart takes the forge's API, one call per repo,
+//! which a parse of the URL cannot make. And the scan runs from the left, so a
+//! repo or group named for a marker (`https://github.com/o/edit/blob/main/a.md`)
+//! is read as one, giving the repo `https://github.com/o` and the ref `blob`;
+//! scanning from the right would misread a file path holding an `edit` or
+//! `blob` directory, which is likelier than a repo named so. In both
+//! `source_url` keeps the whole URL, and `source_repo` is right for the first.
 
+mod rule;
+
+pub use rule::{Over, Rule, source};
 use url::Url;
 
 /// What a forge edit URL names.
@@ -25,36 +40,16 @@ pub struct Source {
     /// `https`, `ftp`, `ws` or `wss`, nor a `blob:` of one, which takes its
     /// inner URL's) gives `null` for the origin.
     pub repo: String,
-    /// The ref, one segment.
-    pub git_ref: String,
+    /// The ref; one segment where [`parse`] read it, none where a rule states
+    /// no ref.
+    pub git_ref: Option<String>,
     /// The file's path in the repo.
     pub path: String,
-}
-
-/// A page's edit link: the URL, and what it parses to where it has a forge's
-/// shape. `source_url` is the whole URL either way (D36).
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EditLink {
-    pub url: Url,
-    pub source: Option<Source>,
-}
-
-impl EditLink {
-    /// The edit link at `url`, parsed.
-    pub fn new(url: Url) -> EditLink {
-        let source = parse(&url);
-        EditLink { url, source }
-    }
 }
 
 /// The repo, ref and path `url` names, if its path has a forge's shape.
 pub fn parse(url: &Url) -> Option<Source> {
     let segments: Vec<&str> = url.path_segments()?.collect();
-    // deficiency: KD2 The scan runs from the left, so a repo or group named
-    // for a marker (`https://github.com/o/edit/blob/main/a.md`) is read as
-    // one, giving the repo `https://github.com/o` and the ref `blob`.
-    // Deliberate: scanning from the right would misread a file path holding
-    // an `edit` or `blob` directory, which is likelier than a repo named so.
     for at in 1..segments.len() {
         let rest = &segments[at..];
         let (marker, pagure) = match rest {
@@ -63,11 +58,6 @@ pub fn parse(url: &Url) -> Option<Source> {
             ["blob" | "edit", ..] => (1, false),
             _ => continue,
         };
-        // deficiency: KD1 The ref is one segment, so a ref holding a `/` (a
-        // branch `feature/x`) splits into the ref `feature` and a path
-        // `x/<path>`. Telling the two apart takes the forge's API, one call per
-        // repo, which a parse of the URL cannot make. Deliberate: `source_url`
-        // keeps the whole URL and `source_repo` is right either way.
         let [git_ref, path @ ..] = &rest[marker..] else {
             continue;
         };
@@ -81,7 +71,7 @@ pub fn parse(url: &Url) -> Option<Source> {
                 url.origin().ascii_serialization(),
                 segments[..at].join("/")
             ),
-            git_ref: (*git_ref).to_string(),
+            git_ref: Some((*git_ref).to_string()),
             path,
         });
     }

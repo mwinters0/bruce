@@ -1,5 +1,5 @@
 //! A declarative profile (D33): a profile a config defines, with a content
-//! region, fact rules, an edit link and a generator pattern, and no
+//! region, fact rules, source rules, an edit link and a generator pattern, and no
 //! resolution or views (D38), as `generic` has none.
 //!
 //! The name and region outlive the registry that holds them, because
@@ -27,6 +27,7 @@ use super::{
     text,
 };
 use crate::config::{Definition, Fact};
+use crate::forge;
 
 /// A profile built from a [`Definition`].
 pub struct Declarative {
@@ -35,6 +36,7 @@ pub struct Declarative {
     region: &'static [&'static str],
     edit_link: Option<String>,
     facts: Arc<[Rule]>,
+    sources: Arc<[forge::Rule]>,
 }
 
 /// One fact rule with its patterns compiled.
@@ -81,12 +83,19 @@ impl Declarative {
             .iter()
             .map(Rule::new)
             .collect::<Result<_, _>>()?;
+        let sources: Vec<forge::Rule> = definition
+            .sources
+            .iter()
+            .enumerate()
+            .map(|(i, rule)| rule.build().map_err(|e| format!("source[{i}]: {e}")))
+            .collect::<Result<_, _>>()?;
         Ok(Declarative {
             name: interned::text(&definition.name),
             generator,
             region,
             edit_link: definition.edit_link.clone(),
             facts: facts.into(),
+            sources: sources.into(),
         })
     }
 }
@@ -146,6 +155,7 @@ impl Profile for Declarative {
 
     fn extract<'h>(&self, sink: &'h RefCell<Sink>) -> Extract<'h> {
         let mut extract = Extract::region(self.region);
+        extract.sources = Arc::clone(&self.sources);
         let readings: Rc<RefCell<Vec<Reading>>> = Rc::new(RefCell::new(
             self.facts.iter().map(|_| Reading::default()).collect(),
         ));

@@ -307,7 +307,7 @@ not as an error.
   behind sign-in. GitLab: `/<group…>/<r>/-/blob|edit/<ref>/<path>`; a bare `/blob/` is served as it is, a
   bare `/edit/` is a 301 to `/-/edit/`. GitHub: `/<o>/<r>/blob|edit/<ref>/<path>`. Pagure:
   `/[<ns>/]<r>/blob|edit/<ref>/f/<path>`, also under `/fork/<user>/`. Everywhere ref and path are one glob,
-  so a ref holding `/` is not told apart by the URL (KD1). Antora's default edit URL is `edit` on github.com
+  so a ref holding `/` is not told apart by the URL. Antora's default edit URL is `edit` on github.com
   and gitlab.com for a branch (`blob` for a tag) and `/<r>/blob/<ref>/f/<path>` on pagure.io.
 - **Proof.** Upstream source: Forgejo `v15.0.0` `routers/web/web.go`; GitLab `config/routes/repository.rb`
   and `repository_deprecated.rb`; Pagure `pagure/ui/repo.py`; `@antora/content-aggregator`
@@ -315,7 +315,7 @@ not as an error.
 - **Scope limit.** pagure.io was sunset in 2026 and is a static snapshot, its blob URLs 404. Bitbucket's
   `/src/<ref>/<path>` and Forgejo's deprecated `/src/<ref>/…` are no shape `forge::parse` reads.
 - **Verified against.** forge.fedoraproject.org, gitlab.com, github.com, pagure.io and the sources above, 2026-10-21.
-- **Relied on by.** D36, KD1, KD2 (`forge::parse`).
+- **Relied on by.** D36, D93 (`forge::parse`).
 - **Re-verify.** `for u in forge.fedoraproject.org/docs/quick-docs/src/branch/main/site.yml gitlab.com/fedora/docs/docs-website/ui-bundle/-/blob/HEAD/src/partials/body.hbs gitlab.com/fedora/docs/docs-website/ui-bundle/edit/HEAD/src/partials/body.hbs github.com/rust-lang/rust/blob/main/README.md; do curl -s -o /dev/null -w "%{http_code} %{redirect_url} $u\n" https://$u; sleep 1; done`
 
 ### I24 A CI runner cancels a job with SIGINT then SIGTERM (GitHub Actions) or SIGTERM alone (GitLab), and kills it soon after

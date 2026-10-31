@@ -12,7 +12,7 @@ entries quote are named by their day (2026-10-23, 2026-10-24, 2026-10-25, run 2 
 2026-10-28). Their databases predate schema 6 and are no longer kept: a figure stands as recorded, and a new crawl
 remeasures it.
 
-<!-- decision-watermark: D92 -->
+<!-- decision-watermark: D93 -->
 
 ## Modes, commands and deployment
 [`decisions/modes.md`](decisions/modes.md)
@@ -65,6 +65,7 @@ remeasures it.
 - **D33** Profiles are compiled in, or declared in config as a `[[profile]]` array
 - **D35** A root's profile defaults to `auto`, which picks one per page by its generator meta
 - **D36** The page → source tie-back is core: an edit-link heuristic and forge URL shapes
+- **D93** A profile's source rules are tried in file order before an edit link is parsed, each a regex with templates over its captures
 - **D17** Each page stores its source file and repo, read from its edit link
 - **D37** Profile facts live in one core table, `page_facts`, under namespaced keys
 - **D38** A profile has four hooks: detect, extract, resolve, views

@@ -91,6 +91,75 @@ fn a_definition_is_recorded_as_rows_under_its_name() {
     );
 }
 
+const SOURCED: &str = r#"
+[[profile]]
+name = "sphinx"
+
+[[profile.source]]
+from = "url"
+pattern = '^https://s\.org/en/(?P<ref>[^/]+)/(?P<page>.+)\.html$'
+repo = "https://github.com/o/r"
+path = "doc/${page}.rst"
+
+[[profile.source]]
+from = "edit_link"
+pattern = '^(?P<repo>https://g\.org/o/r)/edit/(?P<ref>feature/x)/(?P<path>.+)$'
+"#;
+
+#[test]
+fn source_rules_are_read_in_order_and_recorded_as_rows_by_place() {
+    let d = &profiles(SOURCED)[0];
+    assert_eq!(d.sources.len(), 2);
+    assert_eq!(d.sources[0].from, "url");
+    assert_eq!(d.sources[0].repo.as_deref(), Some("https://github.com/o/r"));
+    assert_eq!(d.sources[0].git_ref, None);
+    assert_eq!(d.sources[1].from, "edit_link");
+    let rows: Vec<(String, String)> = d.rows();
+    let keys: Vec<&str> = rows.iter().map(|(k, _)| k.as_str()).collect();
+    assert_eq!(
+        keys,
+        [
+            "profile.sphinx.generator",
+            "profile.sphinx.source.0.from",
+            "profile.sphinx.source.0.pattern",
+            "profile.sphinx.source.0.repo",
+            "profile.sphinx.source.0.path",
+            "profile.sphinx.source.1.from",
+            "profile.sphinx.source.1.pattern",
+        ]
+    );
+}
+
+#[test]
+fn what_makes_no_source_rule_is_refused_where_it_is() {
+    let rule = |body: &str| format!("[[profile]]\nname = \"x\"\n[[profile.source]]\n{body}\n");
+    for (body, expect) in [
+        (
+            "from = \"page\"\npattern = \"^x$\"",
+            "profile.x: source[0]: from: \"page\" is not `url` or `edit_link`",
+        ),
+        (
+            "from = \"url\"\npattern = \"(\"\nrepo = \"https://h.org/o/r\"\npath = \"a\"",
+            "profile.x: source[0]: pattern:",
+        ),
+        (
+            "from = \"url\"\npattern = \"^x$\"\npath = \"a\"",
+            "source[0]: repo: the pattern has no capture named `repo`",
+        ),
+        (
+            "from = \"url\"\npattern = \"^(?P<path>.)$\"\nrepo = \"github.com/o/r\"",
+            "source[0]: repo: \"github.com/o/r\" is not an http(s) URL",
+        ),
+        (
+            "from = \"url\"\npattern = \"^(?P<path>.)$\"\nrepo = \"https://h.org/o/r\"\nref = \"${x}\"",
+            "source[0]: ref: \"${x}\" names `x`",
+        ),
+    ] {
+        let msg = refused(&rule(body));
+        assert!(msg.contains(expect), "{body}: {msg}");
+    }
+}
+
 #[test]
 fn a_profile_with_nothing_but_a_name_is_still_a_row() {
     let rows = Config::parse("[[profile]]\nname = \"bare\"\n")

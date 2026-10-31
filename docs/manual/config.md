@@ -165,7 +165,29 @@ Each `[[profile.fact]]` table, written under the `[[profile]]` it belongs to, re
 | `profile.fact.pattern` | none | A regular expression with exactly one capture group, which is the value. An element it does not match gives nothing. |
 
 The first element that gives a value gives the fact; a page with none records
-no fact. Selectors are the ones `hash_root` takes, and a regular expression is
+no fact. Each `[[profile.source]]` table, written under its `[[profile]]` too,
+tells `bruce` where a page's source file is:
+
+| Key | Default | Meaning |
+|---|---|---|
+| `profile.source.from` | required | What `pattern` is matched against: `url`, the page's own URL, for a site with no edit link; or `edit_link`, the page's edit link, for a forge or a ref `bruce` does not read right. |
+| `profile.source.pattern` | required | A regular expression with the named captures `repo`, `ref` and `path`. |
+| `profile.source.repo` | the capture `repo` | A template for the repo's URL, `https://host/org/repo`. |
+| `profile.source.ref` | the capture `ref`, or none | A template for the branch or tag. |
+| `profile.source.path` | the capture `path` | A template for the file's path in the repo. |
+
+A template is text in which `${name}` stands for the capture of that name, and
+`$$` for a `$`. A template left out takes the capture of its name, and a rule
+with neither a `repo` or `path` template nor a capture of that name is refused,
+as is a `repo` that cannot be an `http` or `https` URL. A page's source is the
+first of its profile's rules, in the order the file writes them, that matches
+and gives a repo and a path; if none does, `bruce` reads the edit link as before, which takes a ref to be one path
+segment (a branch `feature/x` is read as the ref `feature`) and a repo named
+`edit` or `blob` to be a marker. A rule over `edit_link` states those cases; one
+over `url` asserts one format for every page it matches, so a site mixing formats
+writes a pattern for each, or leaves the rest to its edit links.
+
+Selectors are the ones `hash_root` takes, and a regular expression is
 Rust's [`regex`](https://docs.rs/regex) syntax, unanchored, so write `^` and `$`
 where you mean them.
 
@@ -184,6 +206,12 @@ attr = "content"
 key = "heading"
 selector = "h1"
 pattern = '^(.*?)\s*¶?$'
+
+[[profile.source]]
+from = "url"
+pattern = '^https://www\.sphinx-doc\.org/en/(?P<ref>[^/]+)/(?P<page>.+)\.html$'
+repo = "https://github.com/sphinx-doc/sphinx"
+path = "doc/${page}.rst"
 ```
 
 `[digest]` `group_by = "sphinx.version"` then groups the digest's pages by the

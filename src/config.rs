@@ -33,7 +33,7 @@ pub use policy::{
     Policy, Reach, Reason, Severity, SeverityMap, WORKING_SCHEMES, backoff, expand_reasons,
     group_by_from_row,
 };
-pub use profile::{AUTO_PROFILE, Definition, Fact};
+pub use profile::{AUTO_PROFILE, Definition, Fact, SourceRule};
 
 /// Requests a second to one host that no `Crawl-delay`, `[host]` or
 /// `[default]` governs (D40).

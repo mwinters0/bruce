@@ -18,10 +18,10 @@ The `bruce` crate is D39's top-level modules, a binary whose subcommands
 are `bruce crawl`, `bruce check-dir`, `bruce report`, `bruce prune` and `bruce export-baseline`, and Rust 1.99.1 pinned in `mise.toml`. Eleven modules hold
 code: `cli`, the command line, the five subcommands and the profile registry; `config`, the loader, the policy a run is judged by and asks with, and the declarative profiles a file defines; `store`, the DuckDB schema, its version check, the
 `link_verdicts` view, the guard naming the run a comparison judges by, `link_hints`, the policy a run records and a trial one in its place, the deleting of old runs, the baseline export and import, the index of a baseline's targets and its pages' facts, the copy of a target's rows between runs, which the writer also runs on request, and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry, the
-`generic` and `antora` profiles' Detect, Views, Extract and Resolve and the declarative profile a config's `[[profile]]` builds (region, generator pattern, fact rules, edit link); `extract`, the pass over one page, which yields its
+`generic` and `antora` profiles' Detect, Views, Extract and Resolve and the declarative profile a config's `[[profile]]` builds (region, generator pattern, fact rules, source rules, edit link); `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
 the profile's facts, the other locales its language menu names and the content hash with the scope it covered;
-`forge`, the edit-URL shape parse;
+`forge`, the edit-URL shape parse and the source rules a profile states, tried before it (D93);
 `url`, the canonical form, `url_id` and a final `/` toggled;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, the body decoding, the local fetcher over a map of URLs to files and the router that sends a URL the build holds to it and any other to HTTP;
 `crawl`, the frontier with the other locales learned and the URLs on a root's host outside every scope waiting on them, the hops of a redirect, D16's outcomes, the ask of a broken 4xx's URL, or of the broken 4xx a redirect lands on, with its final `/` toggled (D72), the schedule that gives a build's reads a budget of their own and each live host its share of the run's other slots (D61), sitemaps, the run that writes a target's rows and its stop, and a run from seeds checked against a baseline: the component-versions the build holds, `not_built`, the baseline's rows copied for what it lacks, and the xrefs into a component the build lacks resolved to the baseline's pages or the URLs they name;
@@ -59,8 +59,8 @@ The spec is [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.m
   tried in its order, a name given twice refused, and toml's `preserve_order`
   dropped; D33's syntax, the manual's Profiles section and the loader's tests
   follow ([notes](../wip/roadmap-P10.3.1-profile-array-notes.md)).
-- [ ] **10.4** Source rules before `forge::parse`, and **strikes `KD1` and
-  `KD2`**.
+- [x] **10.4** Source rules before `forge::parse`, and struck `KD1` and `KD2`
+  ([notes](../wip/roadmap-P10.4-source-rules-notes.md)).
 - [ ] **10.5** `extends`, and a report's registry built from the run's
   recorded profiles.
 - [ ] **10.6** Locale learning in the core, `locale_links`, and the guide's
@@ -85,3 +85,9 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
+- **Source rules are recorded under their place in the file** (10.4): `profile.<name>.source.<i>.from`,
+  `.pattern`, `.repo`, `.ref`, `.path`, `i` counting from 0, because a rule has no name to key it by and its
+  order is its meaning. Deleting or inserting a rule renumbers every later one, so 10.5's naming of a rule
+  that differs between two runs will report them all as changed after it. Reconsider by giving a rule an
+  optional `name` the rows key on, which adds a config key; or by recording each rule as one row holding its
+  whole definition, which cannot say which field changed.

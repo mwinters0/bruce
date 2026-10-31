@@ -111,6 +111,64 @@ fn a_regions_selector_replaces_generics() {
     assert_eq!(inherited, generic, "no region takes generic's");
 }
 
+const SPHINX_SOURCE: &str = r#"
+[[profile.source]]
+from = "url"
+pattern = '^https://www\.sphinx-doc\.org/en/(?P<ref>[^/]+)/(?P<page>.+)\.html$'
+repo = "https://github.com/sphinx-doc/sphinx"
+path = "doc/${page}.rst"
+"#;
+
+fn source(x: &Extracted) -> Option<(&str, Option<&str>, &str)> {
+    x.source
+        .as_ref()
+        .map(|s| (s.repo.as_str(), s.git_ref.as_deref(), s.path.as_str()))
+}
+
+#[test]
+fn a_source_rule_gives_a_sphinx_page_its_source_with_no_edit_link() {
+    let (url, html) = sphinx_page();
+    let toml = format!("[[profile]]\nname = \"x\"\n{SPHINX_SOURCE}");
+    let x = extract(
+        &html,
+        &url,
+        &ProfileChoice::Named("x".into()),
+        &HashScope::default(),
+        &registry(&toml),
+    )
+    .unwrap();
+    assert_eq!(x.edit_link, None);
+    assert_eq!(
+        source(&x),
+        Some((
+            "https://github.com/sphinx-doc/sphinx",
+            Some("master"),
+            "doc/usage/quickstart.rst"
+        ))
+    );
+    let plain = named("[[profile]]\nname = \"x\"\n", &html);
+    assert_eq!(plain.source, None, "without a rule the page has none");
+}
+
+#[test]
+fn a_source_rule_beats_the_edit_links_parse_and_a_page_it_misses_keeps_it() {
+    let html =
+        "<main><a rel=edit href=\"https://github.com/o/r/edit/feature/x/docs/a.md\">e</a></main>";
+    let toml = "[[profile]]\nname = \"x\"\n\
+                [[profile.source]]\nfrom = \"edit_link\"\n\
+                pattern = '^(?P<repo>https://github\\.com/o/r)/edit/(?P<ref>feature/x)/(?P<path>.+)$'\n";
+    assert_eq!(
+        source(&named(toml, html)),
+        Some(("https://github.com/o/r", Some("feature/x"), "docs/a.md"))
+    );
+    let other = html.replace("feature/x", "main");
+    assert_eq!(
+        source(&named(toml, &other)),
+        Some(("https://github.com/o/r", Some("main"), "docs/a.md")),
+        "no rule matches, so the heuristic reads it"
+    );
+}
+
 #[test]
 fn a_page_with_none_of_the_markup_gives_no_fact() {
     let x = named(SPHINX, "<html><body><p>nothing</p></body></html>");
@@ -231,10 +289,10 @@ fn an_edit_link_selector_names_the_link_no_tier_earns() {
     let x = named(toml, html);
     let edit = x.edit_link.expect("the profile named it");
     assert_eq!(
-        edit.url.as_str(),
+        edit.as_str(),
         "https://codeberg.org/o/r/src/branch/main/docs/a.rst"
     );
-    assert_eq!(edit.source.unwrap().repo, "https://codeberg.org/o/r");
+    assert_eq!(x.source.unwrap().repo, "https://codeberg.org/o/r");
 }
 
 #[test]
@@ -242,7 +300,7 @@ fn the_first_edit_link_the_selector_matches_is_the_one() {
     let toml = "[[profile]]\nname = \"x\"\nedit_link = \"a.e\"\n";
     let html = "<a class=e>no href</a><a class=e href=\"https://example.org/one\">1</a><a class=e href=\"https://example.org/two\">2</a>";
     let x = named(toml, html);
-    assert_eq!(x.edit_link.unwrap().url.as_str(), "https://example.org/one");
+    assert_eq!(x.edit_link.unwrap().as_str(), "https://example.org/one");
 }
 
 #[test]
@@ -255,6 +313,16 @@ fn a_selector_that_cannot_be_built_is_refused_by_name() {
     definition.region = vec!["p:has(a)".to_owned()];
     let e = Declarative::new(&definition).err().unwrap();
     assert!(e.starts_with("region: \"p:has(a)\""), "{e}");
+    definition.region.clear();
+    definition.sources = vec![crate::config::SourceRule {
+        from: "url".to_owned(),
+        pattern: "^x$".to_owned(),
+        repo: None,
+        git_ref: None,
+        path: None,
+    }];
+    let e = Declarative::new(&definition).err().unwrap();
+    assert!(e.starts_with("source[0]: repo:"), "{e}");
 }
 
 #[test]
