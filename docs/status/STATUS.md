@@ -101,17 +101,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **A kind a map splits over two levels prints two counts that word alike.**
-  With `doubled_slash = "attention"` a page's broken-URL links are "3 broken
-  links" red and "2 broken links" amber, the dots telling them apart, because a
-  count is kept per kind and level so a level still says which kinds it holds
-  ([`../wip/roadmap-P7.5.2-ranking-notes.md`](../wip/roadmap-P7.5.2-ranking-notes.md)).
-  Counting by level alone, or naming the reason in the amber count, would read
-  better and lose or add words per setting; the choice is `standing::tally`.
-- **A redirect at `none` is not listed, and the legend names what `none` leaves
-  out.** The spec says a `none` kind leaves "the link lists" and the legend
-  states policy; neither names the Housekeeping redirects or a legend line. They
-  follow from the rule rather than from a sentence of it. Reconsidering makes a
-  `redirected = "none"` site list its redirects undotted, or the legend silent
-  about a hidden kind (`html.rs` `housekeeping`, `html/severity.rs` `legend`).
