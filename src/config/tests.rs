@@ -717,12 +717,12 @@ fn every_key_the_config_reads_is_in_the_manual_with_its_default() {
         keys::<profile::RawProfile>()
             .iter()
             .filter(|k| **k != "fact")
-            .map(|k| format!("profile.<name>.{k}")),
+            .map(|k| format!("profile.{k}")),
     );
     read.extend(
         keys::<profile::RawFact>()
             .iter()
-            .map(|k| format!("profile.<name>.fact.{k}")),
+            .map(|k| format!("profile.fact.{k}")),
     );
     read.extend(
         keys::<RawHost>()

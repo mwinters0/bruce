@@ -1,4 +1,4 @@
-//! `[profile.<name>]`: a declarative profile as the file defines it (D33), and
+//! `[[profile]]`: a declarative profile as the file defines it (D33), and
 //! the rows a run records it as (D78).
 //!
 //! The loader refuses what the profile built from it could not run: a name
@@ -11,7 +11,6 @@ use std::collections::BTreeSet;
 
 use regex::Regex;
 use serde::Deserialize;
-use serde::de::{MapAccess, Visitor};
 
 use super::selector::selectors;
 
@@ -53,35 +52,10 @@ pub struct Fact {
     pub pattern: Option<String>,
 }
 
-/// The `[profile]` table, its profiles in the order the file writes them.
-#[derive(Default)]
-pub(super) struct Profiles(Vec<(String, RawProfile)>);
-
-impl<'de> Deserialize<'de> for Profiles {
-    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Profiles, D::Error> {
-        struct InOrder;
-        impl<'de> Visitor<'de> for InOrder {
-            type Value = Profiles;
-
-            fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                f.write_str("a table of profiles")
-            }
-
-            fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<Profiles, A::Error> {
-                let mut profiles = Vec::new();
-                while let Some(entry) = map.next_entry::<String, RawProfile>()? {
-                    profiles.push(entry);
-                }
-                Ok(Profiles(profiles))
-            }
-        }
-        d.deserialize_map(InOrder)
-    }
-}
-
-#[derive(Deserialize, Default)]
+#[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(in crate::config) struct RawProfile {
+    name: String,
     generator: Option<String>,
     #[serde(default)]
     region: Vec<String>,
@@ -99,20 +73,25 @@ pub(in crate::config) struct RawFact {
     pattern: Option<String>,
 }
 
-impl Profiles {
-    /// Each profile validated, `profile.<name>` leading its refusal.
-    pub(super) fn validate(self) -> Result<Vec<Definition>, String> {
-        self.0
-            .into_iter()
-            .map(|(name, raw)| {
-                Definition::from_raw(&name, raw).map_err(|e| format!("profile.{name}: {e}"))
-            })
-            .collect()
+/// The `[[profile]]` array validated, in the order the file writes it (D35),
+/// `profile.<name>` leading each refusal and a name given twice refused.
+pub(super) fn validate(raw: Vec<RawProfile>) -> Result<Vec<Definition>, String> {
+    let mut defined: Vec<Definition> = Vec::with_capacity(raw.len());
+    for profile in raw {
+        let name = profile.name.clone();
+        let definition =
+            Definition::from_raw(profile).map_err(|e| format!("profile.{name}: {e}"))?;
+        if defined.iter().any(|d| d.name == name) {
+            return Err(format!("profile.{name}: the name of an earlier profile"));
+        }
+        defined.push(definition);
     }
+    Ok(defined)
 }
 
 impl Definition {
-    fn from_raw(name: &str, raw: RawProfile) -> Result<Definition, String> {
+    fn from_raw(raw: RawProfile) -> Result<Definition, String> {
+        let name = raw.name.as_str();
         if !is_name(name) {
             return Err(format!(
                 "{name:?} is not a profile name (a letter, then letters, digits, - _), which \
@@ -172,7 +151,7 @@ impl Definition {
             });
         }
         Ok(Definition {
-            name: name.to_owned(),
+            name: raw.name,
             generator: raw.generator,
             region,
             edit_link: raw.edit_link,

@@ -1,11 +1,11 @@
 # P10.3 — A standalone declarative profile: notes
 
-Read at `0c33470` on 2026-10-31. With no `[profile]` table every crawl, report and
+Read at `0c33470` on 2026-10-31. With no `[[profile]]` every crawl, report and
 extraction is what it was: the 30-page snapshots and the bench corpus pass untouched.
 
 ## What the next slice inherits
 
-- **`config::profile`** parses `[profile.<name>]` into `Definition` (name, `generator`,
+- **`config::profile`** parses `[[profile]]` into `Definition` (name, `generator`,
   `region`, `edit_link`, `Fact` rules), refusing at load what the built profile could not
   run, and writes the rows a run records (`Definition::entries`, `profile.<name>.…`).
   They live on `Policy::profiles`, so `Config::policy` is the one place a run's
@@ -26,8 +26,7 @@ extraction is what it was: the 30-page snapshots and the bench corpus pass untou
   `config.rs`, and `AUTO_PROFILE` sits in `config::profile`: `module_graph.py` counts a child
   naming its parent as an edge, so `policy` → `profile` → `config` was a cycle until neither
   reached up. `Definition::rows` returns pairs for the same reason (`Policy` makes the `Entry`s).
-- **File order needed `toml`'s `preserve_order`**: deserialising `[profile]` into a map
-  sorted it, and the `Profiles` visitor only keeps the order the parser gives.
+- **File order is the array's**: `[[profile]]` entries named by `name`, so `toml` runs without `preserve_order`.
 - **`Profile::name` and the region stay `'static`**: `Declarative::new` takes the name
   and the region slice from `profile::interned`, which leaks each distinct text once, as
   `selectors::compiled` does its selectors, so the trait and every consumer of

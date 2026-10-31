@@ -18,7 +18,7 @@ The `bruce` crate is D39's top-level modules, a binary whose subcommands
 are `bruce crawl`, `bruce check-dir`, `bruce report`, `bruce prune` and `bruce export-baseline`, and Rust 1.99.1 pinned in `mise.toml`. Eleven modules hold
 code: `cli`, the command line, the five subcommands and the profile registry; `config`, the loader, the policy a run is judged by and asks with, and the declarative profiles a file defines; `store`, the DuckDB schema, its version check, the
 `link_verdicts` view, the guard naming the run a comparison judges by, `link_hints`, the policy a run records and a trial one in its place, the deleting of old runs, the baseline export and import, the index of a baseline's targets and its pages' facts, the copy of a target's rows between runs, which the writer also runs on request, and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry, the
-`generic` and `antora` profiles' Detect, Views, Extract and Resolve and the declarative profile a config's `[profile.<name>]` builds (region, generator pattern, fact rules, edit link); `extract`, the pass over one page, which yields its
+`generic` and `antora` profiles' Detect, Views, Extract and Resolve and the declarative profile a config's `[[profile]]` builds (region, generator pattern, fact rules, edit link); `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
 the profile's facts, the other locales its language menu names and the content hash with the scope it covered;
 `forge`, the edit-URL shape parse;
@@ -51,14 +51,14 @@ The spec is [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.m
   ([notes](../wip/roadmap-P10.1-evidence-notes.md)).
 - [x] **10.2** Selectors compiled once per run, with no change of behaviour
   ([notes](../wip/roadmap-P10.2-selectors-notes.md)).
-- [x] **10.3** A standalone declarative profile: `[profile.<name>]`'s
+- [x] **10.3** A standalone declarative profile: `[[profile]]`'s
   `region`, `generator`, fact rules and `edit_link`, the registry, the
   `policy` rows, checked on the Sphinx fixture
   ([notes](../wip/roadmap-P10.3-declarative-notes.md)).
-- [ ] **10.3.1** Declared profiles as a `[[profile]]` array named by `name`,
+- [x] **10.3.1** Declared profiles as a `[[profile]]` array named by `name`,
   tried in its order, a name given twice refused, and toml's `preserve_order`
-  dropped; D33's and D35's syntax, the manual's Profiles section and the
-  loader's tests follow.
+  dropped; D33's syntax, the manual's Profiles section and the loader's tests
+  follow ([notes](../wip/roadmap-P10.3.1-profile-array-notes.md)).
 - [ ] **10.4** Source rules before `forge::parse`, and **strikes `KD1` and
   `KD2`**.
 - [ ] **10.5** `extends`, and a report's registry built from the run's

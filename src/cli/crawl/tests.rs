@@ -209,10 +209,11 @@ fn a_db_that_cannot_be_opened_fails_before_any_request() {
 }
 
 const SITE_PROFILE: &str = r#"
-[profile.site]
+[[profile]]
+name = "site"
 generator = "^SiteGen"
 
-[[profile.site.fact]]
+[[profile.fact]]
 key = "section"
 selector = "meta[name=section]"
 attr = "content"
@@ -306,7 +307,7 @@ fn a_root_may_name_a_profile_the_file_defines_and_a_name_a_compiled_one_holds_is
     configured(None, Some(&f)).unwrap();
     for name in ["generic", "antora"] {
         let f = file(&format!(
-            "[[root]]\nurl = \"https://docs.example.org/\"\n[profile.{name}]\n"
+            "[[root]]\nurl = \"https://docs.example.org/\"\n[[profile]]\nname = \"{name}\"\n"
         ));
         let e = configured(None, Some(&f)).unwrap_err();
         assert!(

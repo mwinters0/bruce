@@ -298,7 +298,7 @@ impl Config {
         )
         .map_err(invalid)?;
         let policy = Policy {
-            profiles: raw.profile.validate().map_err(invalid)?,
+            profiles: profile::validate(raw.profile).map_err(invalid)?,
             ..policy
         };
         let config = Config {
@@ -728,7 +728,7 @@ struct RawConfig {
     #[serde(default)]
     host: BTreeMap<String, RawHost>,
     #[serde(default)]
-    profile: profile::Profiles,
+    profile: Vec<profile::RawProfile>,
 }
 
 #[derive(Deserialize, Default)]

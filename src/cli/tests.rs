@@ -133,7 +133,7 @@ fn the_antora_view_pivots_a_pages_facts() {
 #[test]
 fn a_defined_profile_is_tried_under_auto_before_the_compiled_ones() {
     let defined = crate::config::Config::parse(
-        "[profile.mine]\ngenerator = \"^Antora\"\n[profile.other]\ngenerator = \"^Antora\"\n",
+        "[[profile]]\nname = \"mine\"\ngenerator = \"^Antora\"\n[[profile]]\nname = \"other\"\ngenerator = \"^Antora\"\n",
     )
     .unwrap()
     .policy

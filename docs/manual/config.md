@@ -141,26 +141,28 @@ report can tell an edit to the scope from an edit to the page.
 ## Profiles
 
 A **profile** the file defines reads a site generator that `generic` and
-`antora` do not know, with no change to `bruce`. A `[profile.<name>]` table
-names it, and a root's `profile = "<name>"` (or a generator pattern, below)
+`antora` do not know, with no change to `bruce`. A `[[profile]]` table names it
+with `name`, and a root's `profile = "<name>"` (or a generator pattern, below)
 picks it. The name is a letter, then letters, digits, `-` and `_`; `auto`,
-`generic` and `antora` are taken. It starts every fact the profile records:
-`<name>.<key>`.
+`generic` and `antora` are taken, and a name given twice is refused. It starts
+every fact the profile records: `<name>.<key>`. Under `"auto"`, the profiles are
+tried in the order the file writes them, before `antora`.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `profile.<name>.generator` | none | A regular expression. Under `"auto"`, a page whose `<meta name="generator">` it matches is read by this profile. Without one, only a root naming the profile picks it. |
-| `profile.<name>.region` | `generic`'s: `main`, `[role=main]` | Selectors for the elements holding a page's content. Anchors there count as content, and the [content hash](#roots) covers them by default. Each entry is one selector with no space or combinator, as `div.document`. |
-| `profile.<name>.edit_link` | none | A selector for the link that is the page's edit link, for a site whose link `bruce` does not recognise. The first match with an `href` is taken. |
+| `profile.name` | required | What a root's `profile` names, and the start of each fact's key. |
+| `profile.generator` | none | A regular expression. Under `"auto"`, a page whose `<meta name="generator">` it matches is read by this profile. Without one, only a root naming the profile picks it. |
+| `profile.region` | `generic`'s: `main`, `[role=main]` | Selectors for the elements holding a page's content. Anchors there count as content, and the [content hash](#roots) covers them by default. Each entry is one selector with no space or combinator, as `div.document`. |
+| `profile.edit_link` | none | A selector for the link that is the page's edit link, for a site whose link `bruce` does not recognise. The first match with an `href` is taken. |
 
-Each `[[profile.<name>.fact]]` table reads one fact from a page:
+Each `[[profile.fact]]` table, written under the `[[profile]]` it belongs to, reads one fact from a page:
 
 | Key | Default | Meaning |
 |---|---|---|
-| `profile.<name>.fact.key` | required | The fact's name: letters, digits, `-` and `_`. One fact to a key. |
-| `profile.<name>.fact.selector` | required | The elements to read. |
-| `profile.<name>.fact.attr` | none | The attribute to read, as written, an empty one included. Without it the value is the element's text, trimmed. |
-| `profile.<name>.fact.pattern` | none | A regular expression with exactly one capture group, which is the value. An element it does not match gives nothing. |
+| `profile.fact.key` | required | The fact's name: letters, digits, `-` and `_`. One fact to a key. |
+| `profile.fact.selector` | required | The elements to read. |
+| `profile.fact.attr` | none | The attribute to read, as written, an empty one included. Without it the value is the element's text, trimmed. |
+| `profile.fact.pattern` | none | A regular expression with exactly one capture group, which is the value. An element it does not match gives nothing. |
 
 The first element that gives a value gives the fact; a page with none records
 no fact. Selectors are the ones `hash_root` takes, and a regular expression is
@@ -168,16 +170,17 @@ Rust's [`regex`](https://docs.rs/regex) syntax, unanchored, so write `^` and `$`
 where you mean them.
 
 ```toml
-[profile.sphinx]
+[[profile]]
+name = "sphinx"
 generator = "^Sphinx"
 region = ["div.document"]
 
-[[profile.sphinx.fact]]
+[[profile.fact]]
 key = "version"
 selector = "meta[name=readthedocs-version-slug]"
 attr = "content"
 
-[[profile.sphinx.fact]]
+[[profile.fact]]
 key = "heading"
 selector = "h1"
 pattern = '^(.*?)\s*¶?$'
