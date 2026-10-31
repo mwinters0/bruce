@@ -286,3 +286,55 @@ fn the_baseline_is_judged_by_the_ci_runs_policy() {
         .unwrap();
     assert_eq!(own, 1);
 }
+
+/// The CI run's `gate.fail` row.
+fn fail_on(store: &Store, list: &str) {
+    store
+        .connection()
+        .execute(
+            "INSERT INTO policy VALUES (2, NULL, 'gate.fail', ?)",
+            [list],
+        )
+        .unwrap();
+}
+
+#[test]
+fn the_ci_runs_fail_list_says_which_outcomes_are_introduced() {
+    // Without `broken_url`, what a missing page answers fails nothing; the
+    // anchor still does.
+    let anchors = store();
+    fail_on(&anchors, "broken_anchor");
+    let g = gate_of(&anchors, |_| {});
+    assert_eq!(column(&g.introduced, "raw_href"), ["1>2#nope"]);
+    assert!(g.fails());
+    // The breakage already there is read by the same list.
+    assert!(g.already.rows.is_empty());
+    // A list naming neither leaves no introduced link, and the gate passes.
+    let errors = store();
+    fail_on(&errors, "error");
+    let g = gate_of(&errors, |_| {});
+    assert_eq!(column(&g.introduced, "raw_href"), ["1>14#"]);
+    assert_eq!(column(&g.introduced, "baseline"), ["new"]);
+    assert!(g.already.rows.is_empty());
+    // The errors stay listed beside, whether or not they fail.
+    assert_eq!(column(&g.errors, "raw_href"), ["1>14#"]);
+    let quiet = store();
+    fail_on(&quiet, "broken_anchor");
+    let g = gate_of(&quiet, |r| r.repo = Some("r/two".into()));
+    assert!(!g.fails());
+}
+
+#[test]
+fn an_error_the_baseline_had_is_already_there_where_the_list_names_it() {
+    let store = store();
+    for run in [1, 2] {
+        target(&store, run, 30, 503, "error", Some("server_error"));
+        link(&store, run, 1, 30, None, "anchor");
+    }
+    fail_on(&store, "broken_url,broken_anchor,error");
+    let g = gate_of(&store, |_| {});
+    assert!(column(&g.already, "raw_href").contains(&"1>30#".to_owned()));
+    assert!(!column(&g.introduced, "raw_href").contains(&"1>30#".to_owned()));
+    // The new 503 (14) is introduced, an error first.
+    assert_eq!(column(&g.introduced, "raw_href")[0], "1>14#");
+}

@@ -78,14 +78,18 @@ not on the allowlist) stays `unchecked`:
 
 A link is the page it is on, the URL it points at and its fragment, of every
 kind: a broken image or script fails the check as a broken link does. It is
-**introduced** when it is `broken_url` or `broken_anchor` in this run and the
-baseline has the same link as anything else: absent, `ok`, `unchecked` or
-`error`. A link the baseline never asked about can then fail CI, since it is
+**introduced** when its outcome is one of [`gate.fail`](config.md#the-gate)
+(`broken_url` and `broken_anchor` by default) in this run and the baseline has
+the same link as anything else: absent, `ok`, `unchecked`, `error` or an
+outcome the list leaves out. A link the baseline never asked about can then fail CI, since it is
 new to what the baseline knows. Only the links on pages the build holds count:
 the baseline's links on a page not built are not this change's.
 
-An `error` (a timeout, a 5xx, a refusal to answer) never fails the check, and
-a redirect never does.
+An `error` (a timeout, a 5xx, a refusal to answer) fails the check only where
+`gate.fail` names it, and a redirect never does. The list is the one the CI run
+recorded, which also judges the baseline's links. An outcome it leaves out
+fails nothing and is not listed here; `bruce report broken` and the digest
+list it.
 
 ### The inverse check
 
@@ -107,7 +111,8 @@ Text lists, in order:
 1. **Introduced breakage**: a row for each link, with the columns
    [`report.md`](report.md)'s `broken` has but `hint`, and one more, `baseline`, naming
    what the baseline had for it: `new` where it had no such link, else the
-   outcome it had (`ok`, `unchecked`, `error`).
+   outcome it had (`ok`, `unchecked`, `error`, or a `broken_url` or
+   `broken_anchor` that `gate.fail` leaves out).
 2. **Inverse breakage**: the baseline's links from pages outside the build to
    what the change removed, with the columns [`report.md`](report.md)'s
    `inverse` has. They fail the check unless `--inverse=warn`.
@@ -118,9 +123,11 @@ Text lists, in order:
    landing differs from the target only by a final `/` added or removed, and
    those links are listed last.
 4. **Errors**: the links whose outcome is `error` in this run, with `broken`'s
-   columns.
+   columns, whether or not `gate.fail` names `error`, which also lists them as
+   introduced or already there.
 5. **Breakage already in the baseline**: a count, and with `--all` the links,
-   which never fail the check.
+   those in the outcomes of `gate.fail` that the baseline had too, which never
+   fail the check.
 
 ```text
 run 7: 23 targets, 3 pages

@@ -12,9 +12,12 @@ use std::collections::BTreeMap;
 use serde::Deserialize;
 
 pub use self::entry::Entry;
+pub(in crate::config) use self::gate::RawGate;
+pub use self::gate::{DEFAULT_FAIL, FailOn};
 pub use self::severity::{REASONS as SEVERITY_REASONS, Severity, SeverityMap};
 
 mod entry;
+mod gate;
 mod severity;
 
 /// The schemes besides `http(s)` that work on a public web page (D66), the
@@ -126,6 +129,8 @@ pub struct Policy {
     pub status: BTreeMap<u16, Answer>,
     /// How loudly the digest shows each kind of finding (D82).
     pub severity: SeverityMap,
+    /// The outcomes that fail the gate, in [`FailOn`]'s order (D83).
+    pub gate_fail: Vec<FailOn>,
     /// The hosts' own settings, by host as `Host` prints it, only those a
     /// file names.
     pub hosts: BTreeMap<String, HostJudging>,
@@ -153,6 +158,7 @@ impl Default for Policy {
                 .map(|code| (code, Answer::Error))
                 .collect(),
             severity: SeverityMap::default(),
+            gate_fail: DEFAULT_FAIL.to_vec(),
             hosts: BTreeMap::new(),
         }
     }
@@ -181,6 +187,7 @@ impl Policy {
         ));
         rows.extend(statuses(None, &self.status));
         rows.extend(self.severity.entries());
+        rows.push(run("gate.fail", FailOn::row(&self.gate_fail)));
         for (host, h) in &self.hosts {
             if let Some(on) = h.doubled_slash {
                 rows.push(Entry {
@@ -194,12 +201,13 @@ impl Policy {
         rows
     }
 
-    /// The policy a file's `[judge]`, `[default]`, `[severity]` and `[host]` tables say,
+    /// The policy a file's `[judge]`, `[default]`, `[severity]`, `[gate]` and `[host]` tables say,
     /// each at its default where a key is left out.
     pub(super) fn from_raw(
         judge: RawJudge,
         default: &RawJudging,
         severity: &BTreeMap<String, String>,
+        gate: &RawGate,
         hosts: BTreeMap<String, HostJudging>,
     ) -> Result<Policy, String> {
         let mut policy = Policy::default();
@@ -223,6 +231,9 @@ impl Policy {
             .status
             .extend(statuses_of(&default.status).map_err(|e| format!("default.status: {e}"))?);
         policy.severity = SeverityMap::from_raw(severity).map_err(|e| format!("severity: {e}"))?;
+        if let Some(fail) = &gate.fail {
+            policy.gate_fail = FailOn::from_raw(fail).map_err(|e| format!("gate.fail: {e}"))?;
+        }
         policy.hosts = hosts;
         Ok(policy)
     }

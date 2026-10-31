@@ -13,6 +13,10 @@ impl Entry {
     /// The setting as a file writes it, for a person to read: its dotted
     /// path, then `=` and the value, `+=` for an element of `judge.schemes`.
     pub fn written_as(&self) -> String {
+        if self.host.is_none() && self.key == "gate.fail" {
+            let list: Vec<String> = self.value.split(',').map(|o| format!("{o:?}")).collect();
+            return format!("gate.fail = [{}]", list.join(", "));
+        }
         let value = if matches!(self.value.as_str(), "true" | "false") {
             self.value.clone()
         } else {

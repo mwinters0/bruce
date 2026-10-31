@@ -694,13 +694,14 @@ fn every_key_the_config_reads_is_in_the_manual_with_its_default() {
         .filter(|k| {
             !matches!(
                 **k,
-                "root" | "rate" | "default" | "host" | "judge" | "severity"
+                "root" | "rate" | "default" | "host" | "judge" | "severity" | "gate"
             )
         })
         .map(|k| k.to_string())
         .collect();
     read.extend(keys::<RawRoot>().iter().map(|k| k.to_string()));
     read.extend(keys::<RawJudge>().iter().map(|k| format!("judge.{k}")));
+    read.extend(keys::<RawGate>().iter().map(|k| format!("gate.{k}")));
     read.extend(keys::<RawRate>().iter().map(|k| format!("default.{k}")));
     read.extend(
         keys::<RawHost>()

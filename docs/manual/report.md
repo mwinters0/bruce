@@ -184,11 +184,13 @@ also has `linking_pages`, an array of the pages whose links they are. Below the
 text table a line names the two runs.
 
 **`introduced`** reads a run that [`bruce check-dir`](check-dir.md) wrote,
-and has a row for each link that is `broken_url` or `broken_anchor` in it and
-that the run's baseline does not have broken, the failures of `check-dir`'s
+and has a row for each link whose outcome is one of the run's
+[`gate.fail`](config.md#the-gate) in it (`broken_url` and `broken_anchor` by
+default) and that the run's baseline does not have at one, the failures of `check-dir`'s
 exit status: `broken`'s columns but `hint`, with one more, `baseline`, after `status`. It
 is `new` where the baseline has no such link (the same page, target and
-fragment), else the outcome the baseline had (`ok`, `unchecked` or `error`).
+fragment), else the outcome the baseline had (`ok`, `unchecked`, `error` or an outcome the
+list leaves out).
 Below the text table are the baseline run and its day, the inverse breakage
 (`inverse`'s rows), the redirected links the baseline did not have redirected, the links whose outcome is `error` and
 the count of breakage the baseline already had, as `check-dir` prints them.

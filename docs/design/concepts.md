@@ -127,5 +127,5 @@ below `profile` (D39).
 
 - **bruce** — `config.rs`: the loader, its defaults and its validation, and
   the allowlist's matching of a host (D68), and `config/policy.rs`, the
-  judging settings a run is judged by and records, with their defaults (D78), a row of the record and how a file writes it in `config/policy/entry.rs`, and the severity map in `config/policy/severity.rs` (D82), at
+  judging settings a run is judged by and records, with their defaults (D78), a row of the record and how a file writes it in `config/policy/entry.rs`, the severity map in `config/policy/severity.rs` (D82) and the outcomes that fail the gate in `config/policy/gate.rs` (D83), at
   the bottom of the layering but for `url`, so every module may read a setting (D39).

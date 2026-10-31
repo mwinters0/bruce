@@ -33,7 +33,7 @@ fn the_default_policy_is_what_bruce_has_always_judged_by() {
 fn every_setting_is_an_entry_with_its_value_written_out() {
     let mut policy = Policy::default();
     let defaults = rows(&policy);
-    assert_eq!(defaults.len(), 1 + 12 + 1 + 1 + 3 + 5);
+    assert_eq!(defaults.len(), 1 + 12 + 1 + 1 + 3 + 5 + 1);
     for row in [
         "/pedantic_trailing_slash=true",
         "/schemes=mailto",
@@ -41,6 +41,7 @@ fn every_setting_is_an_entry_with_its_value_written_out() {
         "/doubled_slash=true",
         "/doubled_slash_reach=full",
         "/status.403=error",
+        "/gate.fail=broken_url,broken_anchor",
     ] {
         assert!(defaults.contains(&row.to_string()), "{row}");
     }
@@ -223,4 +224,41 @@ fn a_setting_is_written_as_the_file_writes_it() {
         written(Some("pagure.io"), "status.403", "broken_url"),
         "host.\"pagure.io\".status.403 = \"broken_url\""
     );
+}
+
+#[test]
+fn a_file_names_the_outcomes_the_gate_fails_on_and_it_is_one_row() {
+    let policy = parse("[gate]\nfail = [\"error\", \"broken_url\", \"error\"]").unwrap();
+    assert_eq!(policy.gate_fail, [FailOn::BrokenUrl, FailOn::Error]);
+    let row = policy
+        .entries()
+        .into_iter()
+        .find(|e| e.key == "gate.fail")
+        .unwrap();
+    assert_eq!(row.value, "broken_url,error");
+    assert_eq!(row.written_as(), "gate.fail = [\"broken_url\", \"error\"]");
+    assert_eq!(FailOn::from_row(Some(&row.value)), policy.gate_fail);
+    // A run with no row is at the default, and a name this version lacks is skipped.
+    assert_eq!(FailOn::from_row(None), DEFAULT_FAIL);
+    assert_eq!(
+        FailOn::from_row(Some("broken_anchor,warning")),
+        [FailOn::BrokenAnchor]
+    );
+    assert_eq!(parse("").unwrap().gate_fail, DEFAULT_FAIL);
+}
+
+#[test]
+fn a_fail_list_that_cannot_mean_anything_is_refused_naming_it() {
+    for (extra, named) in [
+        ("[gate]\nfail = []", "gate.fail: names no outcome"),
+        (
+            "[gate]\nfail = [\"redirected\"]",
+            "\"redirected\" is not an outcome",
+        ),
+        ("[gate]\nfail = [\"unchecked\"]", "gate.fail"),
+        ("[gate]\nwarn = [\"error\"]", "warn"),
+    ] {
+        let err = parse(extra).unwrap_err();
+        assert!(err.contains(named), "{extra}: {err}");
+    }
 }

@@ -255,10 +255,32 @@ any other drops it. A fragment on a URL judged `ok`
 by this map is `unchecked`, reason `no_anchors`, as on any `ok` URL whose body
 was not read.
 
+## The gate
+
+`[gate]` `fail` names the outcomes that fail [`check-dir`](check-dir.md#what-fails)
+and are `bruce report introduced`'s rows, `broken_url`, `broken_anchor` and `error`,
+each once, in any order. A site that does not want a missing anchor to fail CI
+leaves `broken_anchor` out; one that wants a 5xx to fail it adds `error`. The
+list is the **CI run's**: it judges the baseline's links as well, as its other
+judging keys do. An outcome left out stays in `bruce report broken`, the digest and
+every other report. A list naming no outcome is refused, a gate that can never
+fail being no gate, and a redirect is no outcome. The inverse check is not
+this list's: `check-dir --inverse` says whether it fails.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `gate.fail` | `["broken_url", "broken_anchor"]` | The outcomes that fail the gate. Recorded as one row, and the digest's Housekeeping writes it as the file does where it differs. |
+
+```toml
+[gate]
+fail = ["broken_url"]
+```
+
 ## Severity
 
 `[severity]` sets how loudly [the digest](digest.md#the-html) shows each kind of
-finding, with no effect on any outcome, any report or the gate. A level is
+finding, with no effect on any outcome, any report or the gate (the gate's own
+list is [`[gate]`](#the-gate)). A level is
 `"broken"` (a red dot), `"attention"` (amber), `"pedantic"` (a grey ring) or
 `"none"` (no dot); the colours are fixed. A key is an outcome, `redirected` for
 a redirected link, or a reason, and a reason's level beats its outcome's, so

@@ -15,7 +15,7 @@ The en-US crawls the entries quote are named by their day: 2026-10-23's is `runs
 2026-10-24's `runs/p8.14-en-us-20261024-1322/`, and 2026-10-25's `runs/en-us-20261025-1301/`, run 2 of a copy of
 2026-10-24's database.
 
-<!-- decision-watermark: D82 -->
+<!-- decision-watermark: D83 -->
 
 ## Scope and modes
 
@@ -258,7 +258,7 @@ inverse check: pages outside the build linking to pages, files or anchors this c
 ### D9 CI fails only on breakage the change introduced
 A link is `(source URL, target URL, fragment)` of any kind (D13), with the build dir mapped to production URLs; only built
 pages' links count. It is introduced if it is broken here and the baseline's is not, or is absent. The inverse check fails by
-default; `--inverse=warn` turns it down (D27). The baseline's links are judged by the CI run's policy (D81). Accepted noise: a renamed page's links all look new. `report introduced` judges
+default; `--inverse=warn` turns it down (D27). The baseline's links are judged by the CI run's policy (D81), and the outcomes that fail are that policy's `gate.fail`, `broken_url` and `broken_anchor` unless a site says otherwise (D83). Accepted noise: a renamed page's links all look new. `report introduced` judges
 every kind too, so re-reporting a CI run gives the rows that set its exit under `--inverse=fail`, which `report` assumes: in text,
 or in JSON as `report inverse`'s beside its own (D6). Rejected: failing on all breakage, which keeps CI permanently red;
 `check-dir --kind`, narrowing the gate, D50's `skip` silencing a noisy URL instead.
@@ -400,7 +400,7 @@ Reopens: a setting a stored fact cannot judge, which the crawl must keep (P7's r
 Code: `store::views`. Evidence: `store::views::tests::a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic`, `runs/p7.1-verdicts/`, `runs/p7.3-verdicts/` (every report and the digest byte-identical to P7.2's on the 2026-10-28 crawl's DB).
 
 ### D78 A run records the policy it was judged by, whole, as rows of a `policy` table
-`policy(run_id, host, key, value)`: one row per setting, a list one row per element (`schemes`), a status `status.<code>` with its outcome as the value, `host` NULL for the run-wide value and a host's name for that host's own, which only a host's settings write. `Store::begin_run` writes every setting, the defaults included, with the run in one transaction; the baseline file carries the rows (D21) and `prune` deletes them (D2). A key is a row, so a slice adding a setting changes no schema.
+`policy(run_id, host, key, value)`: one row per setting, a list one row per element (`schemes`; `gate.fail` is one, D83), a status `status.<code>` with its outcome as the value, `host` NULL for the run-wide value and a host's name for that host's own, which only a host's settings write. `Store::begin_run` writes every setting, the defaults included, with the run in one transaction; the baseline file carries the rows (D21) and `prune` deletes them (D2). A key is a row, so a slice adding a setting changes no schema.
 Why: a report reads a run and never the file (P7), the macro must join a host's own value to the default, and the judging of a run must outlive a later default, so the rows hold the whole policy.
 Rejected: a `runs` column, a struct fixing the keys so each slice bumps the schema, or JSON, a feature `Cargo.toml` does not enable, giving the macro no join; only values differing from the default, which a later default would silently change.
 Reopens: a setting that is not text in a row. Code: `config::policy`, `store::Store::begin_run`, `store::schema`. Evidence: `store::tests::a_run_records_its_whole_policy_beside_itself`, `store::baseline::tests::a_run_policy_travels_in_the_baseline_file_and_into_the_run_that_imports_it`.
@@ -634,3 +634,9 @@ times it. An end-to-end 2–3-component Antora site sits behind a task, as it is
 alone, so two origins differ by port, and no test resolves a name to NXDOMAIN through the crawl. Rejected: a
 timing threshold in `check`, flaky at the spike's 8% run-to-run noise (`runs/tokenizer-spike/`) and tied
 to one machine.
+
+### D83 The gate fails on the outcomes the CI run's `gate.fail` names, recorded as one row
+`[gate]` `fail` is a list of `broken_url`, `broken_anchor` and `error`, `broken_url` and `broken_anchor` by default (D9); an introduced link is one whose outcome is on it and which the baseline lacks on it, so `error` fails only where named. The CI run's recorded row is read (D81), and the baseline's links are judged by that run's policy. It is one `gate.fail` row, comma-joined in a fixed order, not a row to an element (D78); a list naming no outcome is refused at load. An outcome left off is in no gate section, and the errors section lists every `error` whether or not it fails. The inverse check is `--inverse`'s, not this list's.
+Why: a site keeps a finding in every report and stops it failing CI, which reclassifying would not (the spec's "What becomes a setting"); one row is what lets Housekeeping state a list that has lost a default element, which a row per element cannot, a dropped row being no row differing.
+Rejected: a row per element, where a list shorter than the default differs in nothing and an empty one has no rows; an empty list meaning "never fail", a gate that cannot fail; a section listing the introduced links the list leaves out, which `report broken` and the digest hold already.
+Reopens: a site wanting to see the quiet outcomes in `check-dir`'s own output, or the inverse check following `broken_anchor`. Code: `config::policy::gate`, `report::gate`. Evidence: `report::gate::tests::the_ci_runs_fail_list_says_which_outcomes_are_introduced`, `config::policy::tests::a_file_names_the_outcomes_the_gate_fails_on_and_it_is_one_row`.

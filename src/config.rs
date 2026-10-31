@@ -22,11 +22,11 @@ use crate::url::{Canonical, canonical};
 
 mod policy;
 
-use policy::{RawJudge, RawJudging};
+use policy::{RawGate, RawJudge, RawJudging};
 
 pub use policy::{
-    Answer, Entry, HostJudging, Policy, Reach, SEVERITY_REASONS, Severity, SeverityMap,
-    WORKING_SCHEMES,
+    Answer, DEFAULT_FAIL, Entry, FailOn, HostJudging, Policy, Reach, SEVERITY_REASONS, Severity,
+    SeverityMap, WORKING_SCHEMES,
 };
 
 /// Requests a second to one host that no `Crawl-delay`, `[host]` or `[rate]`
@@ -276,8 +276,14 @@ impl Config {
             status: raw.default.status.clone(),
         };
         let (hosts, judged) = host_settings(raw.host)?;
-        let policy = Policy::from_raw(raw.judge, &default_judging, &raw.severity, judged)
-            .map_err(invalid)?;
+        let policy = Policy::from_raw(
+            raw.judge,
+            &default_judging,
+            &raw.severity,
+            &raw.gate,
+            judged,
+        )
+        .map_err(invalid)?;
         let config = Config {
             roots,
             allowlist,
@@ -728,6 +734,8 @@ struct RawConfig {
     judge: RawJudge,
     #[serde(default)]
     severity: BTreeMap<String, String>,
+    #[serde(default)]
+    gate: RawGate,
     user_agent: Option<String>,
     #[serde(default)]
     host: BTreeMap<String, RawHost>,
