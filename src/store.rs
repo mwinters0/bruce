@@ -21,18 +21,17 @@ use std::path::Path;
 use duckdb::{Connection, params, params_from_iter};
 use url::Url;
 
-use crate::config::Policy;
+use crate::config::{Policy, expand_reasons};
 use crate::profile::{BoxError, Lookup, Registry, View};
 
 pub use baseline::{BaselineIndex, Exported, Imported};
 pub use prune::Rule;
-pub use rows::{
-    AnchorRow, AnsweredBy, FactRow, Hop, LinkRow, Outcome, PageRow, Row, RunRoot, TargetRow,
-};
+pub use rows::{AnchorRow, AnsweredBy, FactRow, Hop, LinkRow, PageRow, Row, RunRoot, TargetRow};
+
+/// The outcome a target stores, defined beside the reasons a link carries.
+pub use crate::config::Outcome;
 pub use schema::SCHEMA_VERSION;
-pub use views::{
-    DOUBLED_SLASH, JudgedBy, PEDANTIC_TRAILING_SLASH, TARGET_URL_DOUBLES, WRONG_TRAILING_SLASH,
-};
+pub use views::{JudgedBy, TARGET_URL_DOUBLES};
 pub use writer::{WriteHandle, Writer, WriterGone};
 
 /// A run's number: allocated in order from 1 (D2).
@@ -173,12 +172,16 @@ impl Store {
         // Each is created after what it binds: the `doubled_slash` view, the
         // macro joining it, the view calling the macro.
         store.install(views::FIRST)?;
-        store.conn.execute_batch(&views::link_verdicts_with())?;
+        store
+            .conn
+            .execute_batch(&expand_reasons(&views::link_verdicts_with()))?;
         store.install(views::LAST)?;
         for profile in profiles.iter() {
             store.install(profile.views())?;
         }
-        store.conn.execute_batch(&views::link_hints(profiles))?;
+        store
+            .conn
+            .execute_batch(&expand_reasons(&views::link_hints(profiles)))?;
         Ok(store)
     }
 
@@ -189,7 +192,8 @@ impl Store {
         for view in views {
             self.conn.execute_batch(&format!(
                 "CREATE OR REPLACE VIEW {} AS {}",
-                view.name, view.select
+                view.name,
+                expand_reasons(view.select)
             ))?;
         }
         Ok(())

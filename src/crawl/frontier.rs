@@ -23,34 +23,11 @@ use std::sync::{Arc, Mutex, RwLock};
 
 use url::Url;
 
-use crate::config::Config;
+use crate::config::{Config, Reason};
 use crate::extract::Kind;
 use crate::fetch::local::Site;
 use crate::store::{AnsweredBy, BaselineIndex, RunId};
 use crate::url::{Canonical, canonical};
-
-/// The reason of a URL on a root's host, outside every root's scope, under
-/// another locale's prefix: nothing is fetched (D10).
-pub const OUT_OF_SCOPE: &str = "out_of_scope";
-
-/// The reason of a URL `skip` matched (D50).
-pub const SKIPPED: &str = "skipped";
-
-/// The reason of a URL `--externals=skip` neither copies nor asks: one on an
-/// allowlisted host, or on a root's host outside every scope and locale
-/// (D10, D22, D54).
-pub const EXTERNALS_SKIPPED: &str = "externals_skipped";
-
-/// The reason of a URL whose scheme a public web page uses but is not
-/// `http(s)`: nothing is fetched (D66).
-pub const SCHEME: &str = "scheme";
-
-/// The reason of a URL whose scheme no reader of a public web page can
-/// follow, which is `broken_url` (D66).
-pub const BAD_SCHEME: &str = "bad_scheme";
-
-/// The reason of an href that resolves to no URL, which is `broken_url` (D26).
-pub const INVALID_URL: &str = "invalid_url";
 
 /// What a run does about a URL.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -70,10 +47,10 @@ pub enum Plan {
     /// the GET fallback (D13).
     Status,
     /// Not requested; the target row says why.
-    Unchecked(&'static str),
+    Unchecked(Reason),
     /// Not requested, as no reader can follow it: the target is `broken_url`
     /// and its row says why (D66).
-    Broken(&'static str),
+    Broken(Reason),
     /// Not requested: the baseline's rows for it are copied into the run
     /// (D52). Only a run checked against a baseline plans one.
     Baseline,
@@ -215,15 +192,15 @@ impl Frontier {
         let scheme = url.scheme();
         if !matches!(scheme, "http" | "https") {
             let plan = if self.config.policy.schemes.iter().any(|s| s == scheme) {
-                Plan::Unchecked(SCHEME)
+                Plan::Unchecked(Reason::Scheme)
             } else {
-                Plan::Broken(BAD_SCHEME)
+                Plan::Broken(Reason::BadScheme)
             };
             return (plan, canonical(url, false));
         }
         let plain = canonical(url, false);
         if self.config.skip.is_match(plain.as_str()) {
-            return (Plan::Unchecked(SKIPPED), plain);
+            return (Plan::Unchecked(Reason::Skipped), plain);
         }
         for (root, r) in self.config.roots.iter().enumerate() {
             let form = r.canonical(url);
@@ -241,11 +218,11 @@ impl Frontier {
         let plan = if self.config.is_allowlisted(&host) {
             self.external(&form, kind)
         } else if self.is_other_locale(url) {
-            Plan::Unchecked(OUT_OF_SCOPE)
+            Plan::Unchecked(Reason::OutOfScope)
         } else if self.config.is_root_host(&host) {
             Plan::Outside
         } else {
-            Plan::Unchecked("host_not_allowlisted")
+            Plan::Unchecked(Reason::HostNotAllowlisted)
         };
         (plan, form)
     }
@@ -308,7 +285,7 @@ impl Frontier {
             .into_iter()
             .map(|o| {
                 let plan = if self.is_other_locale(&o.url) {
-                    Plan::Unchecked(OUT_OF_SCOPE)
+                    Plan::Unchecked(Reason::OutOfScope)
                 } else {
                     self.external(&o.form, o.kind)
                 };
@@ -338,7 +315,7 @@ impl Frontier {
     /// run against a baseline, and in any other it is asked.
     fn external(&self, form: &Canonical, kind: Kind) -> Plan {
         match self.baseline().map(|b| b.externals) {
-            Some(Externals::Skip) => self.copy_or(form, Plan::Unchecked(EXTERNALS_SKIPPED)),
+            Some(Externals::Skip) => self.copy_or(form, Plan::Unchecked(Reason::ExternalsSkipped)),
             Some(Externals::Baseline) => self.beyond(form, kind),
             Some(Externals::Live) | None => live(kind),
         }
@@ -358,11 +335,11 @@ impl Frontier {
         // locale is unlearned (`is_skipped_external`) and asked once it is.
         // Holding such a hop's chain until the locales are final is the fix.
         match self.plan(url, kind) {
-            (Plan::Unchecked(SKIPPED), form) => (Plan::Unchecked(SKIPPED), form),
-            (Plan::Baseline | Plan::Outside | Plan::Unchecked(EXTERNALS_SKIPPED), form)
+            (Plan::Unchecked(Reason::Skipped), form) => (Plan::Unchecked(Reason::Skipped), form),
+            (Plan::Baseline | Plan::Outside | Plan::Unchecked(Reason::ExternalsSkipped), form)
                 if self.is_skipped_external(url) =>
             {
-                (Plan::Unchecked(EXTERNALS_SKIPPED), form)
+                (Plan::Unchecked(Reason::ExternalsSkipped), form)
             }
             (
                 Plan::Unchecked(_)

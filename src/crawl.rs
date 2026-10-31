@@ -69,7 +69,7 @@ use tokio::task::JoinSet;
 use url::Url;
 use xxhash_rust::xxh3::xxh3_64;
 
-use crate::config::{Config, HashScope, ProfileChoice};
+use crate::config::{Config, HashScope, ProfileChoice, Reason};
 use crate::extract::{self, Extracted, Kind};
 use crate::fetch::local::Site;
 use crate::fetch::{Access, Body, Failure, FailureKind, Fetcher, MAX_SITEMAP, Mode};
@@ -79,7 +79,7 @@ use crate::store::{
     WriteHandle, WriterGone,
 };
 use crate::url::Canonical;
-use frontier::{EXTERNALS_SKIPPED, Frontier, Outside, Plan, SCHEME, SKIPPED};
+use frontier::{Frontier, Outside, Plan};
 use hops::{Chain, Stop};
 use schedule::{Route, Schedule, host_of};
 use sitemap::Sitemap;
@@ -270,7 +270,7 @@ enum End {
     Failed(Failure),
     /// robots.txt forbids the URL, could not be read, `skip` names it, or
     /// `--externals=skip` leaves it: not requested.
-    Blocked(&'static str),
+    Blocked(Reason),
     Stopped(Stop),
     /// The page or sitemap answered and could not be read as one.
     Unreadable,
@@ -655,7 +655,7 @@ where
     fn hop(&self, next: &Url, plan: Plan, kind: Kind) -> (Plan, Canonical) {
         match plan {
             Plan::Sitemap { .. } => match self.frontier.plan(next, kind) {
-                (skipped @ Plan::Unchecked(SKIPPED), form) => (skipped, form),
+                (skipped @ Plan::Unchecked(Reason::Skipped), form) => (skipped, form),
                 (_, form) => (plan, form),
             },
             _ => self.frontier.hop_plan(next, kind),
@@ -685,13 +685,13 @@ where
             }
             // A hop onto a skipped URL ends the chain there, as a forbidden
             // one does, and asks nothing, robots.txt included (D50).
-            if plan == Plan::Unchecked(SKIPPED) {
-                break End::Blocked(SKIPPED);
+            if plan == Plan::Unchecked(Reason::Skipped) {
+                break End::Blocked(Reason::Skipped);
             }
             // So does one onto an allowlisted host under `--externals=skip`
             // (D54).
-            if plan == Plan::Unchecked(EXTERNALS_SKIPPED) {
-                break End::Blocked(EXTERNALS_SKIPPED);
+            if plan == Plan::Unchecked(Reason::ExternalsSkipped) {
+                break End::Blocked(Reason::ExternalsSkipped);
             }
             let access = self.fetcher.access(&url).await;
             if self.stopping() {
@@ -699,8 +699,8 @@ where
             }
             match access {
                 Access::Allowed => {}
-                Access::Disallowed => break End::Blocked("robots"),
-                Access::Unavailable => break End::Blocked("robots_unavailable"),
+                Access::Disallowed => break End::Blocked(Reason::Robots),
+                Access::Unavailable => break End::Blocked(Reason::RobotsUnavailable),
                 Access::Failed(failure) => {
                     // The host's robots.txt request stands for this one (D8).
                     asked = true;
@@ -826,8 +826,8 @@ where
             End::Answered(a) => outcome::answered(a.status, &a.body, a.slash_answers),
             End::Failed(failure) => outcome::failed(failure),
             End::Blocked(reason) => (Outcome::Unchecked, Some(*reason)),
-            End::Stopped(stop) => (Outcome::BrokenUrl, Some(stop.as_str())),
-            End::Unreadable => (Outcome::Error, Some("unreadable")),
+            End::Stopped(stop) => (Outcome::BrokenUrl, Some(stop.reason())),
+            End::Unreadable => (Outcome::Error, Some(Reason::Unreadable)),
         };
         let row =
             |form: &Canonical, redirect_chain: Vec<Hop>, final_url: Option<String>| TargetRow {
@@ -841,7 +841,7 @@ where
                 final_url,
                 redirect_chain,
                 outcome,
-                reason: reason.map(str::to_owned),
+                reason,
                 checked_at: asked.then_some(started),
                 duration_ms: asked.then(|| u32::try_from(elapsed.as_millis()).unwrap_or(u32::MAX)),
                 answered_by: self.frontier.answered_by(form),
@@ -901,10 +901,12 @@ where
                     }
                     if self.frontier.claim(id) {
                         let unasked = match plan {
-                            Plan::Unchecked(SCHEME) => Some((Outcome::Unchecked, SCHEME)),
+                            Plan::Unchecked(Reason::Scheme) => {
+                                Some((Outcome::Unchecked, Reason::Scheme))
+                            }
                             Plan::Broken(reason) => Some((Outcome::BrokenUrl, reason)),
                             _ if index && depth >= MAX_SITEMAP_DEPTH => {
-                                Some((Outcome::Unchecked, "too_deep"))
+                                Some((Outcome::Unchecked, Reason::TooDeep))
                             }
                             _ => None,
                         };
@@ -951,7 +953,7 @@ where
                 id,
                 raw,
                 Outcome::BrokenUrl,
-                frontier::INVALID_URL,
+                Reason::InvalidUrl,
             ))?;
         }
         Ok(id)
@@ -1193,7 +1195,7 @@ where
                     u.form.id(),
                     u.form.as_str(),
                     Outcome::BrokenUrl,
-                    baseline::NOT_BUILT,
+                    Reason::NotBuilt,
                 );
                 row.answered_by = AnsweredBy::Local;
                 shared.send_target(row)?;
@@ -1261,7 +1263,7 @@ where
 }
 
 /// A target no request was made for.
-fn unchecked(run: RunId, url_id: u64, url: &str, outcome: Outcome, reason: &str) -> TargetRow {
+fn unchecked(run: RunId, url_id: u64, url: &str, outcome: Outcome, reason: Reason) -> TargetRow {
     TargetRow {
         run_id: run.0,
         url_id,
@@ -1270,7 +1272,7 @@ fn unchecked(run: RunId, url_id: u64, url: &str, outcome: Outcome, reason: &str)
         final_url: None,
         redirect_chain: Vec::new(),
         outcome,
-        reason: Some(reason.to_owned()),
+        reason: Some(reason),
         checked_at: None,
         duration_ms: None,
         answered_by: AnsweredBy::Live,

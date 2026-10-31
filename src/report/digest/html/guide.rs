@@ -11,8 +11,8 @@ use std::fmt::Write as _;
 
 use super::super::document::{Digest, Judged};
 use super::markup::w;
+use crate::config::Reason;
 use crate::config::{Reach, Severity, SeverityMap};
-use crate::store::{DOUBLED_SLASH, PEDANTIC_TRAILING_SLASH};
 
 /// An entry of the guide.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -26,9 +26,9 @@ pub(super) enum Entry {
 impl Entry {
     /// The entry explaining a link's reason, where the guide has one.
     fn of_reason(reason: Option<&str>) -> Option<Entry> {
-        match reason {
-            Some(DOUBLED_SLASH) => Some(Entry::DoubledSlash),
-            Some(PEDANTIC_TRAILING_SLASH) => Some(Entry::Pedantic),
+        match reason.and_then(Reason::parse) {
+            Some(Reason::DoubledSlash) => Some(Entry::DoubledSlash),
+            Some(Reason::PedanticTrailingSlash) => Some(Entry::Pedantic),
             _ => None,
         }
     }
@@ -167,7 +167,7 @@ fn pedantic_entry(marking: Option<&str>) -> String {
 /// The words stating how the guide's pedantic entry's redirect is marked, read
 /// off the map; none where the map lists no such redirect.
 pub(super) fn pedantic_marking(map: &SeverityMap) -> Option<&'static str> {
-    match map.of_redirect(Some(crate::store::PEDANTIC_TRAILING_SLASH)) {
+    match map.of_redirect(Some(Reason::PedanticTrailingSlash.as_str())) {
         Severity::Pedantic => Some("marked as pedantic with a ring"),
         Severity::Attention => Some("marked as attention with an amber dot"),
         Severity::Broken => Some("marked as broken with a red dot"),

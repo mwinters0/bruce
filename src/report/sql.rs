@@ -9,12 +9,13 @@ use duckdb::{Connection, params_from_iter};
 use super::error::Error;
 use super::request::Request;
 use super::table::{Cell, Table};
-use crate::store::{PEDANTIC_TRAILING_SLASH, RunId};
+use crate::config::expand_reasons;
+use crate::store::RunId;
 
 /// An expression true of a link whose verdict `column` is the pedantic reason
 /// (D70), to order those last (`false` sorts first).
 pub(super) fn pedantic(column: &str) -> String {
-    format!("coalesce({column} = '{PEDANTIC_TRAILING_SLASH}', false)")
+    format!("coalesce({column} = $reason(pedantic_trailing_slash), false)")
 }
 
 /// A statement and its arguments, kept in the order the text names them.
@@ -94,7 +95,7 @@ impl Sql {
     }
 
     pub(super) fn fetch(&self, conn: &Connection) -> Result<Table, Error> {
-        let mut stmt = conn.prepare(&self.text)?;
+        let mut stmt = conn.prepare(&expand_reasons(&self.text))?;
         let mut rows = stmt.query(params_from_iter(self.args.iter()))?;
         let width = rows.as_ref().map_or(0, |s| s.column_count());
         let mut cells = Vec::new();

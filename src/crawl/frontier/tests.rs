@@ -64,8 +64,11 @@ fn everything_else_is_unchecked_and_says_which_case() {
         Plan::Unchecked(reason) => reason,
         other => panic!("{url} is {other:?}"),
     };
-    assert_eq!(reason("https://other.example.net/"), "host_not_allowlisted");
-    assert_eq!(reason("mailto:me@example.org"), "scheme");
+    assert_eq!(
+        reason("https://other.example.net/"),
+        Reason::HostNotAllowlisted
+    );
+    assert_eq!(reason("mailto:me@example.org"), Reason::Scheme);
 }
 
 #[test]
@@ -87,7 +90,7 @@ fn a_scheme_a_public_web_page_uses_is_unchecked_and_any_other_broken() {
         "javascript:void(0)",
     ] {
         let (planned, _) = plan(&f, url, Kind::Anchor);
-        assert_eq!(planned, Plan::Unchecked(SCHEME), "{url}");
+        assert_eq!(planned, Plan::Unchecked(Reason::Scheme), "{url}");
     }
     assert_eq!(WORKING_SCHEMES.len(), 12, "each listed above");
     // A scheme the file names is one more, and the plan follows the policy.
@@ -98,9 +101,12 @@ fn a_scheme_a_public_web_page_uses_is_unchecked_and_any_other_broken() {
     let url = "matrix:r/fedora:matrix.org";
     assert_eq!(
         plan(&Frontier::new(config), url, Kind::Anchor).0,
-        Plan::Unchecked(SCHEME)
+        Plan::Unchecked(Reason::Scheme)
     );
-    assert_eq!(plan(&f, url, Kind::Anchor).0, Plan::Broken(BAD_SCHEME));
+    assert_eq!(
+        plan(&f, url, Kind::Anchor).0,
+        Plan::Broken(Reason::BadScheme)
+    );
     for url in [
         "file:///etc/hosts",
         "file://path/to/config.ign",
@@ -110,7 +116,7 @@ fn a_scheme_a_public_web_page_uses_is_unchecked_and_any_other_broken() {
         "vbscript:msgbox",
     ] {
         let (planned, form) = plan(&f, url, Kind::Image);
-        assert_eq!(planned, Plan::Broken(BAD_SCHEME), "{url}");
+        assert_eq!(planned, Plan::Broken(Reason::BadScheme), "{url}");
         assert_eq!(form, Url::parse(url).unwrap().as_str(), "the plain form");
     }
 }
@@ -128,7 +134,7 @@ fn a_skipped_url_is_skipped_before_scope_and_the_allowlist() {
     )
     .unwrap();
     let f = Frontier::new(config);
-    let skipped = |url: &str, kind| plan(&f, url, kind).0 == Plan::Unchecked("skipped");
+    let skipped = |url: &str, kind| plan(&f, url, kind).0 == Plan::Unchecked(Reason::Skipped);
     assert!(skipped(
         "https://forge.example.org/g/r/issues/new?title=x",
         Kind::Anchor
@@ -152,7 +158,7 @@ fn a_skipped_url_is_skipped_before_scope_and_the_allowlist() {
             Kind::Anchor
         )
         .0,
-        Plan::Unchecked("skipped"),
+        Plan::Unchecked(Reason::Skipped),
         "a hop onto a skipped URL ends the chain (D50)"
     );
 }
@@ -194,7 +200,7 @@ fn a_url_on_a_roots_host_outside_every_scope_waits_unless_another_locales() {
         url("https://elsewhere.example.org/de/"),
     ]);
     f.learn(&[url("https://docs.example.org/fr/")]);
-    let other = Plan::Unchecked(OUT_OF_SCOPE);
+    let other = Plan::Unchecked(Reason::OutOfScope);
     assert_eq!(class("https://docs.example.org/fr/a/"), other);
     assert_eq!(
         class("http://docs.example.org/pt_BR/x/y"),
@@ -210,7 +216,7 @@ fn a_url_on_a_roots_host_outside_every_scope_waits_unless_another_locales() {
     assert_eq!(class("https://docs.example.org/"), Plan::Outside);
     assert_eq!(
         class("https://elsewhere.example.org/de/a/"),
-        Plan::Unchecked("host_not_allowlisted"),
+        Plan::Unchecked(Reason::HostNotAllowlisted),
         "a locale names pages on a root's host only"
     );
     assert_eq!(
@@ -239,14 +245,14 @@ fn an_allowlisted_domain_names_its_hosts_but_never_a_roots() {
     assert_eq!(class("https://a.b.example.org/x"), Plan::Anchors);
     assert_eq!(
         class("https://example.org/x"),
-        Plan::Unchecked("host_not_allowlisted"),
+        Plan::Unchecked(Reason::HostNotAllowlisted),
         "the domain is an entry of its own"
     );
     assert_eq!(class("https://docs.example.org/fr/x/"), Plan::Outside);
     f.learn(&[url("https://docs.example.org/fr/")]);
     assert_eq!(
         class("https://docs.example.org/fr/x/"),
-        Plan::Unchecked(OUT_OF_SCOPE)
+        Plan::Unchecked(Reason::OutOfScope)
     );
     assert_eq!(
         f.hop_plan(&url("https://docs.example.org/fr/x/"), Kind::Anchor)
@@ -283,7 +289,7 @@ fn a_waiting_url_is_judged_by_the_locales_learned_since() {
     assert_eq!(
         judged,
         [
-            (fr.to_owned(), Plan::Unchecked(OUT_OF_SCOPE)),
+            (fr.to_owned(), Plan::Unchecked(Reason::OutOfScope)),
             (typo.to_owned(), Plan::Anchors),
         ],
         "outside every locale, it is asked as an allowlisted URL is, one hop deep"
@@ -396,7 +402,7 @@ fn against_a_baseline_a_url_the_build_lacks_is_copied_deferred_or_asked() {
     );
     assert_eq!(
         class("https://other.example.net/", Kind::Anchor),
-        Plan::Unchecked("host_not_allowlisted")
+        Plan::Unchecked(Reason::HostNotAllowlisted)
     );
     let beyond = |url: &str| {
         let (_, form) = f.plan(&Url::parse(url).unwrap(), Kind::Anchor);
@@ -433,7 +439,7 @@ fn externals_decides_an_allowlisted_url_and_no_other() {
     let new = "https://forge.example.org/new/";
     assert_eq!(
         external(Externals::Skip, new),
-        Plan::Unchecked(EXTERNALS_SKIPPED),
+        Plan::Unchecked(Reason::ExternalsSkipped),
         "and asks nothing else"
     );
     assert_eq!(external(Externals::Baseline, new), Plan::Anchors);
@@ -466,12 +472,12 @@ fn against_a_baseline_an_out_of_scope_url_is_answered_as_an_external() {
     assert_eq!(judge(Externals::Skip, known), Plan::Baseline);
     assert_eq!(
         judge(Externals::Skip, new),
-        Plan::Unchecked(EXTERNALS_SKIPPED)
+        Plan::Unchecked(Reason::ExternalsSkipped)
     );
     for externals in [Externals::Skip, Externals::Baseline, Externals::Live] {
         assert_eq!(
             judge(externals, fr),
-            Plan::Unchecked(OUT_OF_SCOPE),
+            Plan::Unchecked(Reason::OutOfScope),
             "another locale's page is never copied nor asked"
         );
     }
@@ -490,7 +496,7 @@ fn a_hop_onto_an_external_ends_the_chain_under_externals_skip() {
     ] {
         assert_eq!(
             hop(Externals::Skip, url),
-            Plan::Unchecked(EXTERNALS_SKIPPED),
+            Plan::Unchecked(Reason::ExternalsSkipped),
             "{url}"
         );
     }
@@ -506,7 +512,7 @@ fn a_hop_onto_an_external_ends_the_chain_under_externals_skip() {
     let outside = "https://docs.example.org/old/";
     assert_eq!(
         hop(Externals::Skip, outside),
-        Plan::Unchecked(EXTERNALS_SKIPPED),
+        Plan::Unchecked(Reason::ExternalsSkipped),
         "a root's host outside every scope is an external too"
     );
     assert_eq!(hop(Externals::Baseline, outside), Plan::Status);

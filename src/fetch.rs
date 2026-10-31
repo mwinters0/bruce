@@ -23,6 +23,8 @@ use tokio::sync::watch;
 use tokio::time::Instant;
 use url::Url;
 
+use crate::config::Reason;
+
 pub mod charset;
 pub mod http;
 pub mod local;
@@ -112,16 +114,17 @@ pub enum FailureKind {
 }
 
 impl FailureKind {
-    /// The value for `targets.reason`.
-    pub fn as_str(self) -> &'static str {
+    /// The reason `targets.reason` holds for this cause, none for `Stopped`,
+    /// which is no outcome.
+    pub fn reason(self) -> Option<Reason> {
         match self {
-            FailureKind::NxDomain => "nxdomain",
-            FailureKind::Timeout => "timeout",
-            FailureKind::Tls => "tls",
-            FailureKind::Connect => "connect",
-            FailureKind::Reset => "reset",
-            FailureKind::Other => "other",
-            FailureKind::Stopped => "stopped",
+            FailureKind::NxDomain => Some(Reason::Nxdomain),
+            FailureKind::Timeout => Some(Reason::Timeout),
+            FailureKind::Tls => Some(Reason::Tls),
+            FailureKind::Connect => Some(Reason::Connect),
+            FailureKind::Reset => Some(Reason::Reset),
+            FailureKind::Other => Some(Reason::Other),
+            FailureKind::Stopped => None,
         }
     }
 
@@ -135,7 +138,8 @@ impl FailureKind {
 
 impl fmt::Display for Failure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {}", self.kind.as_str(), self.detail)
+        let cause = self.kind.reason().map_or("stopped", Reason::as_str);
+        write!(f, "{cause}: {}", self.detail)
     }
 }
 

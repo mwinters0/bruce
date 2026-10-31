@@ -26,8 +26,9 @@ mod policy;
 use policy::{RawAsking, RawDigest, RawGate, RawJudge, RawJudging};
 
 pub use policy::{
-    ASKING_KEYS, Answer, Asking, DEFAULT_FAIL, Entry, FailOn, HostAsking, HostJudging, Policy,
-    Reach, SEVERITY_REASONS, Severity, SeverityMap, WORKING_SCHEMES, backoff, group_by_from_row,
+    ASKING_KEYS, Answer, Asking, DEFAULT_FAIL, Entry, FailOn, HostAsking, HostJudging, Outcome,
+    Policy, Reach, Reason, Severity, SeverityMap, WORKING_SCHEMES, backoff, expand_reasons,
+    group_by_from_row,
 };
 
 /// Requests a second to one host that no `Crawl-delay`, `[host]` or

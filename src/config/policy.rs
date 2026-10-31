@@ -20,13 +20,15 @@ pub use self::digest::from_row as group_by_from_row;
 pub use self::entry::Entry;
 pub(in crate::config) use self::gate::RawGate;
 pub use self::gate::{DEFAULT_FAIL, FailOn};
-pub use self::severity::{REASONS as SEVERITY_REASONS, Severity, SeverityMap};
+pub use self::severity::{Severity, SeverityMap};
+pub use self::verdict::{Outcome, Reason, expand as expand_reasons};
 
 mod asking;
 mod digest;
 mod entry;
 mod gate;
 mod severity;
+mod verdict;
 
 /// The schemes besides `http(s)` that work on a public web page (D66), the
 /// first of [`Policy::schemes`].

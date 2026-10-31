@@ -13,8 +13,8 @@ use super::super::document::Digest;
 use super::guide::Entry;
 use super::markup::{Row, counted, num, rows};
 use super::severity::mark_before;
+use crate::config::Reason;
 use crate::config::{Severity, SeverityMap};
-use crate::store::DOUBLED_SLASH;
 
 /// The kinds of link a count words, in the order a summary lists them within
 /// a level.
@@ -157,7 +157,9 @@ pub(super) fn pages(d: &Digest) -> Vec<Page<'_>> {
         counts.add(Kind::Unverifiable, level, 1, moved);
         *new += i64::from(level.is_finding() && r.is_new());
     }
-    let through = d.severity.of_link(Some("broken_url"), Some(DOUBLED_SLASH));
+    let through = d
+        .severity
+        .of_link(Some("broken_url"), Some(Reason::DoubledSlash.as_str()));
     let mut out: Vec<Page> = rows(&d.pages)
         .filter_map(|row| {
             let (mut counts, new_links) = found

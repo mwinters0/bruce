@@ -361,10 +361,11 @@ pedantic_trailing_slash = "none"
 | `pedantic_trailing_slash` | `"pedantic"` |
 
 A reason not listed has no level of its own and takes its outcome's: `nxdomain`,
-`timeout`, `tls`, `connect`, `reset`, `other`, `redirect_loop`,
-`too_many_redirects`, `bad_redirect`, `too_large`, `unresolved_xref`,
-`bad_scheme`, `invalid_url` (an href that resolves to no URL), `doubled_slash` and
-`wrong_trailing_slash`.
+`timeout`, `tls`, `connect`, `reset`, `other`, `unreadable` (a page or sitemap that
+answered and could not be read as one), `redirect_loop`, `too_many_redirects`,
+`bad_redirect`, `too_large`, `unresolved_xref`, `not_built` (a URL in a component
+`check-dir` holds whole and the build lacks), `bad_scheme`, `invalid_url` (an href
+that resolves to no URL), `doubled_slash` and `wrong_trailing_slash`.
 
 ## Digest
 

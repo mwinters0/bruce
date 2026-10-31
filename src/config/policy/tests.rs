@@ -167,6 +167,27 @@ fn a_file_moves_a_kind_to_another_level_and_a_reason_beats_its_outcome() {
 }
 
 #[test]
+fn every_reason_a_link_can_be_broken_or_errored_by_takes_a_level() {
+    // Every reason a level may be set for is accepted, and none of the
+    // `unchecked` ones is.
+    for reason in Reason::ALL {
+        let parsed = parse(&format!("[severity]\n{} = \"none\"", reason.as_str()));
+        assert_eq!(parsed.is_ok(), reason.takes_level(), "{reason:?}");
+    }
+    let policy = parse("[severity]\nunreadable = \"attention\"\nnot_built = \"none\"").unwrap();
+    assert_eq!(
+        policy.severity.of_link(Some("error"), Some("unreadable")),
+        Severity::Attention
+    );
+    assert_eq!(
+        policy
+            .severity
+            .of_link(Some("broken_url"), Some("not_built")),
+        Severity::None
+    );
+}
+
+#[test]
 fn a_severity_key_that_cannot_mean_anything_is_refused_naming_it() {
     for (extra, named) in [
         (

@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::time::{Duration, UNIX_EPOCH};
 
 use super::*;
+use crate::config::Reason;
 use crate::profile::{Extract, Profile, Sink, View};
 
 /// A profile that ships one view over `page_facts`.
@@ -495,14 +496,14 @@ fn a_targets_time_and_outcome_round_trip_on_both_write_paths() {
         let mut t = target(run, id, chain);
         t.status = None;
         t.outcome = Outcome::BrokenUrl;
-        t.reason = Some("dns".into());
+        t.reason = Some(Reason::Nxdomain);
         t.checked_at = Some(at);
         h.send(Row::Target(t)).unwrap();
     }
     h.send(Row::Target(target(run, 3, Vec::new()))).unwrap();
     let store = writer.finish().unwrap();
     let sql = "SELECT count(*) FROM targets WHERE status IS NULL AND outcome = 'broken_url' \
-               AND reason = 'dns' AND duration_ms = 30 \
+               AND reason = 'nxdomain' AND duration_ms = 30 \
                AND epoch_us(checked_at) = 1700000000123456";
     assert_eq!(count(&store, sql), 2);
     assert_eq!(

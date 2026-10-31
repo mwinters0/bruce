@@ -22,7 +22,7 @@
 //! 2. A link whose target has no row, which only a stopped run leaves, is
 //!    `unchecked`, reason `cut`.
 //! 3. A link to a URL whose path doubles a slash, or to one that redirected
-//!    to such a URL, is `broken_url`, reason [`DOUBLED_SLASH`], whatever the
+//!    to such a URL, is `broken_url`, reason `doubled_slash`, whatever the
 //!    target answered and asked or not, bar a page's link to itself, a
 //!    `#fragment` link on a doubled-slash page being that page's (D71), and
 //!    unless the policy turns it off for the host of the URL linked.
@@ -39,7 +39,7 @@
 //!    or percent-decoded, as a browser looks (D12), else `broken_anchor`.
 //!
 //! An `ok` link whose target was redirected to its own URL with a final `/`
-//! added or removed has the reason [`PEDANTIC_TRAILING_SLASH`], whatever the
+//! added or removed has the reason `pedantic_trailing_slash`, whatever the
 //! hops between (D70), unless the policy turns it off. It is not an outcome of
 //! its own.
 //!
@@ -82,19 +82,6 @@ impl Drop for JudgedBy<'_> {
         let _ = self.conn.execute_batch("SET VARIABLE judged_by = NULL");
     }
 }
-
-/// The reason of an `ok` link whose redirect differs from its URL only by a
-/// final `/` (D70).
-pub const PEDANTIC_TRAILING_SLASH: &str = "pedantic_trailing_slash";
-
-/// The reason of a link to a URL whose path doubles a slash (D71).
-pub const DOUBLED_SLASH: &str = "doubled_slash";
-
-/// The reason of a target that answered `broken_url` where its URL with its
-/// final `/` toggled answers 2xx, which the crawl asked (D72). The link keeps
-/// the target's judged outcome and reason, the reason dropped where a status
-/// map changes the outcome (D79), and the fix is read off the URL.
-pub const WRONG_TRAILING_SLASH: &str = "wrong_trailing_slash";
 
 /// The `doubled_slash` view, created before the macro that joins it.
 pub(super) const FIRST: &[View] = &[POLICY_IN_FORCE, DOUBLED_SLASH_TARGETS];
@@ -231,10 +218,10 @@ WITH pr AS (
 ), tj AS (
     SELECT th.run_id, th.url_id, th.url, th.final_url,
         CASE
-            WHEN th.reason IN ('scheme', 'bad_scheme') THEN
+            WHEN th.reason IN ($reason(scheme), $reason(bad_scheme)) THEN
                 CASE WHEN list_contains(coalesce(sch.schemes, [$SCHEMES]),
                         lower(regexp_extract(th.url, '^([A-Za-z][A-Za-z0-9+.-]*):', 1)))
-                    THEN ['unchecked', 'scheme'] ELSE ['broken_url', 'bad_scheme'] END
+                    THEN ['unchecked', $reason(scheme)] ELSE ['broken_url', $reason(bad_scheme)] END
             WHEN th.status NOT BETWEEN 300 AND 399 AND coalesce(hm.value, dm.value) IS NOT NULL
                 THEN [coalesce(hm.value, dm.value),
                     CASE WHEN coalesce(hm.value, dm.value) = th.outcome THEN th.reason END]
@@ -283,13 +270,13 @@ WITH pr AS (
     SELECT joined.*, CASE
         WHEN xref_refspec IS NOT NULL AND (target_url_id = src_url_id OR fragment = xref_refspec
                 OR target_outcome = 'broken_url')
-            THEN ['broken_url', 'unresolved_xref']
-        WHEN NOT found THEN ['unchecked', 'cut']
-        WHEN doubled AND target_url_id <> src_url_id THEN ['broken_url', 'doubled_slash']
+            THEN ['broken_url', $reason(unresolved_xref)]
+        WHEN NOT found THEN ['unchecked', $reason(cut)]
+        WHEN doubled AND target_url_id <> src_url_id THEN ['broken_url', $reason(doubled_slash)]
         WHEN target_outcome <> 'ok' THEN [target_outcome, target_reason]
         WHEN coalesce(fragment, '') = '' OR lower(fragment) = 'top' THEN ['ok', NULL]
-        WHEN contains(fragment, ':~:') THEN ['unchecked', 'text_fragment']
-        WHEN page_id IS NULL THEN ['unchecked', 'no_anchors']
+        WHEN contains(fragment, ':~:') THEN ['unchecked', $reason(text_fragment)]
+        WHEN page_id IS NULL THEN ['unchecked', $reason(no_anchors)]
         WHEN EXISTS (SELECT 1 FROM anchors a WHERE a.run_id = joined.run_id
                 AND a.url_id = joined.page_id AND a.anchor = joined.fragment)
             OR EXISTS (SELECT 1 FROM anchors a WHERE a.run_id = joined.run_id
@@ -302,7 +289,7 @@ WITH pr AS (
 SELECT j.run_id, j.src_url_id, j.target_url_id, j.fragment, j.raw_href, j.kind, j.xref_refspec,
     j.verdict[1] AS outcome,
     CASE WHEN j.verdict[1] = 'ok' AND j.slash_only AND coalesce(pe.value, 'true') <> 'false'
-            THEN 'pedantic_trailing_slash'
+            THEN $reason(pedantic_trailing_slash)
         ELSE j.verdict[2] END AS reason,
     j.redirected, j.relative,
     NOT j.src_doubled OR (NOT j.src_twin

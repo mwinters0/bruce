@@ -13,6 +13,7 @@ use duckdb::{Appender, params, params_from_iter};
 
 use super::rows::{Hop, Row, TargetRow, timestamp};
 use super::{Error, RunId, Store};
+use crate::config::Reason;
 
 /// Rows the writer takes, counted across tables, before it flushes every
 /// appender.
@@ -184,7 +185,7 @@ impl<'a> Tables<'a> {
                     t.final_url,
                     Null,
                     t.outcome.as_str(),
-                    t.reason,
+                    t.reason.map(Reason::as_str),
                     t.checked_at.map(timestamp),
                     t.duration_ms,
                     t.answered_by.as_str()
@@ -241,7 +242,7 @@ impl<'a> Tables<'a> {
         }
         args.extend([
             t.outcome.as_str().to_string().into(),
-            t.reason.clone().into(),
+            t.reason.map(Reason::as_str).map(str::to_owned).into(),
             t.checked_at.map_or(Value::Null, timestamp),
             t.duration_ms.into(),
             t.answered_by.as_str().to_string().into(),

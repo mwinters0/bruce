@@ -116,11 +116,6 @@ roadmap's phase index.
   (D13). **(c) unowned**: a site whose pages load a resource through one would
   promote it. Detail: `src/extract/links.rs`
 
-- **KD31** — `[severity]` cannot name `unreadable` or `not_built`, reasons the
-  crawl writes on an `error` and a `broken_url`, so a site cannot set their
-  level apart from their outcome's. **(c) unowned**: a site wanting to would
-  promote it. Detail: `src/config/policy/severity.rs`
-
 - **KD32** — "By: Link Target" says no broken target is named by more than one
   link where the severity map puts every such target at `none`, and the
   sections since the compared run are left out where it empties them, where

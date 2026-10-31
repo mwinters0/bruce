@@ -1,5 +1,5 @@
 use super::super::tests::{compared, of, ranked, store, with_doubled_slashes, with_unchecked};
-use crate::config::{Severity, SeverityMap};
+use crate::config::{Reason, Severity, SeverityMap};
 use crate::report::table::Cell;
 use crate::report::tests::{registry, xrefs};
 use crate::store::RunId;
@@ -488,26 +488,16 @@ fn a_page_whose_links_hold_a_hint_shows_a_hint_column_and_no_other_does() {
 }
 
 #[test]
-fn every_reason_the_crawler_writes_for_an_unchecked_link_is_explained() {
-    // The frontier's (`Frontier::plan`, `SKIPPED`, `EXTERNALS_SKIPPED`), the
-    // walk's robots.txt and sitemap depth (`crawl`), and the verdict's own
-    // (`link_verdicts`).
-    for reason in [
-        "scheme",
-        "skipped",
-        "out_of_scope",
-        "host_not_allowlisted",
-        "externals_skipped",
-        "robots",
-        "robots_unavailable",
-        "too_deep",
-        "cut",
-        "text_fragment",
-        "no_anchors",
-    ] {
-        assert!(super::unchecked_meaning(reason).is_some(), "{reason}");
+fn every_reason_an_unchecked_link_carries_is_explained() {
+    // The reasons that take no level are those of an `unchecked` link.
+    for reason in Reason::ALL.iter().filter(|r| !r.takes_level()) {
+        assert!(
+            super::unchecked_meaning(reason.as_str()).is_some(),
+            "{reason:?}"
+        );
     }
     assert!(super::unchecked_meaning("broken").is_none());
+    assert!(super::unchecked_meaning("nxdomain").is_none());
 }
 
 #[test]
@@ -552,7 +542,7 @@ fn each_unchecked_reason_is_explained_beside_where_its_links_point_most() {
 #[test]
 fn a_level_is_read_off_a_links_outcome_and_reason() {
     let map = SeverityMap::default();
-    let pedantic = Some(crate::store::PEDANTIC_TRAILING_SLASH);
+    let pedantic = Some(Reason::PedanticTrailingSlash.as_str());
     assert_eq!(map.of_link(Some("broken_url"), None), Severity::Broken);
     assert_eq!(
         map.of_link(Some("error"), Some("timeout")),
@@ -594,7 +584,7 @@ fn a_heading_carries_no_dot_and_each_dot_is_named() {
         .iter()
         .position(|c| c == "reason")
         .unwrap();
-    d.redirects.rows[0][reason] = Cell::Text(crate::store::PEDANTIC_TRAILING_SLASH.into());
+    d.redirects.rows[0][reason] = Cell::Text(Reason::PedanticTrailingSlash.as_str().into());
     assert!(section(&d.html(), "housekeeping").contains(
         "<summary><span class=\"sev pedantic\" role=\"img\" aria-label=\"Pedantic\"></span><span class=\"ttl\">"
     ));

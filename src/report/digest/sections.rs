@@ -8,6 +8,7 @@ use url::Url;
 
 use super::document::{Judged, Run, Totals};
 use crate::config::{ASKING_KEYS, Entry, Reach, group_by_from_row};
+use crate::config::{Reason, expand_reasons};
 use crate::extract::Kind;
 use crate::profile::Registry;
 use crate::report::error::Error;
@@ -16,7 +17,7 @@ use crate::report::redirects;
 use crate::report::request::{Report, Request};
 use crate::report::sql::Sql;
 use crate::report::table::{Cell, Table};
-use crate::store::{DOUBLED_SLASH, Mode, RunId, TARGET_URL_DOUBLES, WRONG_TRAILING_SLASH};
+use crate::store::{Mode, RunId, TARGET_URL_DOUBLES};
 use crate::url::toggle_slash;
 
 /// A link of `view`, a `report_*` link view, on a crawled page.
@@ -49,7 +50,7 @@ const PAGE_COUNTS: &str = "CREATE OR REPLACE TEMP TABLE digest_page_counts AS \
      v.reason, v.relative, v.outcome, v.counted, v.raw_href, v.kind FROM link_verdicts v \
      JOIN targets t ON t.run_id = v.run_id AND t.url_id = v.target_url_id \
      LEFT JOIN targets landing ON landing.run_id = t.run_id AND landing.url = t.final_url \
-     WHERE v.run_id = $1 AND (v.reason = 'doubled_slash' OR v.src_url_id IN \
+     WHERE v.run_id = $1 AND (v.reason = $reason(doubled_slash) OR v.src_url_id IN \
      (SELECT url_id FROM dp UNION SELECT twin_id FROM dp))), \
      brk AS (SELECT l.src AS url_id, count(*)::BIGINT AS n FROM lv l \
      JOIN dp ON dp.url_id = l.src WHERE l.relative \
@@ -57,7 +58,7 @@ const PAGE_COUNTS: &str = "CREATE OR REPLACE TEMP TABLE digest_page_counts AS \
      AND NOT EXISTS (SELECT 1 FROM lv c WHERE c.src = dp.twin_id AND c.raw_href = l.raw_href \
      AND c.kind = l.kind AND c.outcome IN ('broken_url', 'broken_anchor', 'error')) \
      GROUP BY l.src), \
-     reach(page, dst) AS (SELECT src, dst FROM lv WHERE reason = 'doubled_slash' AND counted \
+     reach(page, dst) AS (SELECT src, dst FROM lv WHERE reason = $reason(doubled_slash) AND counted \
      AND dst IN (SELECT url_id FROM dp) AND '$REACH' <> 'off' \
      UNION SELECT r.page, e.dst FROM reach r JOIN lv e ON e.src = r.dst \
      WHERE e.relative AND e.dst IN (SELECT url_id FROM dp) AND '$REACH' = 'full'), \
@@ -75,7 +76,10 @@ pub(super) struct PageCounts(());
 /// Computes `run`'s page counts, once for the three sections that rank by them.
 pub(super) fn page_counts(conn: &Connection, run: RunId) -> Result<PageCounts, Error> {
     let reach = recorded_reach(conn, run)?;
-    conn.execute(&PAGE_COUNTS.replace("$REACH", reach.as_str()), [run.0])?;
+    conn.execute(
+        &expand_reasons(&PAGE_COUNTS.replace("$REACH", reach.as_str())),
+        [run.0],
+    )?;
     Ok(PageCounts(()))
 }
 
@@ -260,9 +264,9 @@ pub(super) fn unchecked_groups(conn: &Connection, run: RunId) -> Result<Table, E
          WHEN url IS NULL THEN NULL \
          WHEN scheme = '' THEN url \
          WHEN scheme NOT IN ('http', 'https') THEN scheme || ':' \
-         WHEN reason = 'skipped' AND len(segs) > 2 \
+         WHEN reason = $reason(skipped) AND len(segs) > 2 \
          THEN host || '/\u{2026}/' || array_to_string(segs[-2:], '/') \
-         WHEN reason = 'skipped' THEN host || '/' || array_to_string(segs, '/') \
+         WHEN reason = $reason(skipped) THEN host || '/' || array_to_string(segs, '/') \
          WHEN root_host AND segs[1] = '' THEN origin || '/' \
          WHEN root_host THEN origin || '/' || segs[1] \
          || CASE WHEN len(segs) > 1 OR ends_with(path, '/') THEN '/' ELSE '' END \
@@ -315,13 +319,13 @@ fn landing_join() -> String {
     format!(
         "LEFT JOIN (SELECT t.run_id, t.url, t.final_url FROM targets t \
          WHERE t.final_url IS NOT NULL AND NOT {TARGET_URL_DOUBLES}) dl \
-         ON b.reason IN ('{DOUBLED_SLASH}', '{WRONG_TRAILING_SLASH}') \
+         ON b.reason IN ($reason(doubled_slash), $reason(wrong_trailing_slash)) \
          AND dl.run_id = b.run_id AND dl.url = b.target "
     )
 }
 
 /// Puts the column `fix` after `landing`: for a row whose reason is
-/// [`WRONG_TRAILING_SLASH`] the URL with its final `/` toggled that the crawl
+/// [`Reason::WrongTrailingSlash`] the URL with its final `/` toggled that the crawl
 /// found answering (D72), the `landing`'s where the target redirected, else
 /// the target's; `null` for any other row.
 fn add_fix(table: &mut Table) {
@@ -332,7 +336,8 @@ fn add_fix(table: &mut Table) {
     };
     table.columns.insert(landing + 1, "fix".to_owned());
     for row in &mut table.rows {
-        let fix = (row[reason].text() == Some(WRONG_TRAILING_SLASH))
+        let fix = Reason::WrongTrailingSlash
+            .is(row[reason].text())
             .then(|| row[landing].text().or_else(|| row[target].text()))
             .flatten()
             .and_then(|url| toggle_slash(&Url::parse(url).ok()?))

@@ -11,6 +11,7 @@ use std::collections::HashSet;
 
 use url::Url;
 
+use crate::config::Reason;
 use crate::extract::{Kind, Link};
 use crate::fetch::Response;
 use crate::store::Hop;
@@ -28,11 +29,11 @@ pub enum Stop {
 }
 
 impl Stop {
-    /// The value for `targets.reason`.
-    pub fn as_str(self) -> &'static str {
+    /// The reason `targets.reason` holds for it.
+    pub fn reason(self) -> Reason {
         match self {
-            Stop::Loop => "redirect_loop",
-            Stop::TooMany => "too_many_redirects",
+            Stop::Loop => Reason::RedirectLoop,
+            Stop::TooMany => Reason::TooManyRedirects,
         }
     }
 }

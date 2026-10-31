@@ -10,6 +10,7 @@
 use std::collections::BTreeMap;
 
 use super::entry::Entry;
+use super::verdict::{Outcome, Reason};
 
 /// A kind's severity, the least first. `None` is no dot.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -52,40 +53,8 @@ impl Severity {
     }
 }
 
-/// The outcomes a severity may be set for. `ok` is no finding and `unchecked`
-/// keeps no level (D76).
-pub const OUTCOMES: [&str; 3] = ["broken_url", "broken_anchor", "error"];
-
 /// The key for a redirected link.
 pub const REDIRECTED: &str = "redirected";
-
-/// The reasons a link can carry, whatever its outcome (`too_large` and
-/// `pedantic_trailing_slash` on an `ok` one), which a severity may be set for. The test
-/// `crawl::outcome::tests::every_reason_the_crawl_writes_takes_a_severity`
-/// holds it to the reasons it lists of what the crawl and the views write.
-// deficiency: KD31 The crawl also writes `unreadable` (an `error`,
-// `crawl::Shared::write`) and `not_built` (a `broken_url`, `crawl::baseline`),
-// which neither this list nor the test names, so a `[severity]` key naming
-// either is refused at load. Adding both, and the test's arms for them, is the
-// fix; the reasons on `unchecked` links take no level (D76).
-pub const REASONS: [&str; 16] = [
-    "nxdomain",
-    "timeout",
-    "tls",
-    "connect",
-    "reset",
-    "other",
-    "redirect_loop",
-    "too_many_redirects",
-    "bad_redirect",
-    "too_large",
-    "unresolved_xref",
-    "bad_scheme",
-    "doubled_slash",
-    "wrong_trailing_slash",
-    "pedantic_trailing_slash",
-    "invalid_url",
-];
 
 /// The severity of each kind a site has set or left at D76's default.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -95,11 +64,11 @@ impl Default for SeverityMap {
     fn default() -> SeverityMap {
         SeverityMap(
             [
-                ("broken_url", Severity::Broken),
-                ("error", Severity::Broken),
-                ("broken_anchor", Severity::Attention),
+                (Outcome::BrokenUrl.as_str(), Severity::Broken),
+                (Outcome::Error.as_str(), Severity::Broken),
+                (Outcome::BrokenAnchor.as_str(), Severity::Attention),
                 (REDIRECTED, Severity::Attention),
-                ("pedantic_trailing_slash", Severity::Pedantic),
+                (Reason::PedanticTrailingSlash.as_str(), Severity::Pedantic),
             ]
             .into_iter()
             .map(|(key, level)| (key.to_owned(), level))
@@ -116,9 +85,9 @@ impl SeverityMap {
             if key == "unchecked" {
                 return Err("unchecked keeps no level".to_owned());
             }
-            if !OUTCOMES.contains(&key.as_str())
+            if !Outcome::LEVELLED.iter().any(|o| o.as_str() == key)
                 && key != REDIRECTED
-                && !REASONS.contains(&key.as_str())
+                && !Reason::levelled().any(|r| r.as_str() == key)
             {
                 return Err(format!(
                     "{key:?} is not an outcome (broken_url, broken_anchor, error), redirected or a reason"
@@ -178,10 +147,12 @@ impl SeverityMap {
     /// The kinds at `level`, in the order a reader meets them: the outcomes,
     /// `redirected`, then the reasons.
     pub fn kinds_at(&self, level: Severity) -> Vec<&str> {
-        let order = OUTCOMES.iter().chain([&REDIRECTED]).chain(REASONS.iter());
-        order
-            .filter(|k| self.0.get(**k) == Some(&level))
-            .copied()
+        let outcomes = Outcome::LEVELLED.into_iter().map(Outcome::as_str);
+        let reasons = Reason::levelled().map(Reason::as_str);
+        outcomes
+            .chain([REDIRECTED])
+            .chain(reasons)
+            .filter(|k| self.0.get(*k) == Some(&level))
             .collect()
     }
 }

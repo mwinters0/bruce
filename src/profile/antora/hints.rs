@@ -25,7 +25,7 @@ WITH unresolved AS (
             '^page[$]', '') AS spec
     FROM link_verdicts v
     LEFT JOIN antora_pages a ON a.run_id = v.run_id AND a.url_id = v.src_url_id
-    WHERE v.reason = 'unresolved_xref' AND v.xref_refspec IS NOT NULL
+    WHERE v.reason = $reason(unresolved_xref) AND v.xref_refspec IS NOT NULL
 ), wanted AS (
     SELECT run_id, src_url_id, xref_refspec, regexp_replace(
         CASE length(spec) - length(replace(spec, ':', ''))

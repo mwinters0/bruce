@@ -29,10 +29,6 @@ use crate::extract::Kind;
 use crate::store::LinkRow;
 use crate::url::Canonical;
 
-/// The reason of a URL the build lacks in a component-version it holds
-/// (D22).
-pub(super) const NOT_BUILT: &str = "not_built";
-
 /// The component-versions the built pages carry, which the build holds
 /// whole: Antora has that component's whole catalog, so a URL in one that is
 /// not built is a page the change deleted (D22).

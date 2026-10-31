@@ -22,9 +22,8 @@ use self::markup::{
 use self::severity::{figure_class, legend, mark};
 use self::standing::{Counts, Page, listed, tally};
 use super::document::Digest;
-use crate::config::{Severity, SeverityMap};
+use crate::config::{Reason, Severity, SeverityMap};
 use crate::report::table::Table;
-use crate::store::{DOUBLED_SLASH, PEDANTIC_TRAILING_SLASH, WRONG_TRAILING_SLASH};
 
 mod compared;
 mod guide;
@@ -125,7 +124,7 @@ fn final_slash(text: &str) -> String {
 /// `/` marked, and the `fix` under it (D72).
 fn target_cell(r: &Row, fragment: Option<&str>) -> String {
     let target = r.text("target").unwrap_or("");
-    if r.text("reason") == Some(WRONG_TRAILING_SLASH)
+    if Reason::WrongTrailingSlash.is(r.text("reason"))
         && let Some(fix) = r.text("fix")
     {
         let mut cell = target_link(target, fragment);
@@ -143,7 +142,7 @@ fn target_cell(r: &Row, fragment: Option<&str>) -> String {
         );
         return cell;
     }
-    if r.text("reason") != Some(DOUBLED_SLASH) {
+    if !Reason::DoubledSlash.is(r.text("reason")) {
         return target_link(target, fragment);
     }
     let mut cell = match fragment {
@@ -166,7 +165,7 @@ fn target_cell(r: &Row, fragment: Option<&str>) -> String {
 /// A broken link as its page writes it, a doubled slash marked.
 fn written_as(r: &Row) -> String {
     let raw = r.text("raw_href").unwrap_or("");
-    if r.text("reason") == Some(DOUBLED_SLASH) {
+    if Reason::DoubledSlash.is(r.text("reason")) {
         format!("<code>{}</code>", slashes(raw))
     } else {
         format!("<code>{}</code>", esc(raw))
@@ -701,7 +700,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
     fold(out, "Redirected links", &redirected, |out| {
         out.push_str("<p>The links whose target redirects, by where it lands, the most links first: update them to the landing. Open one for the redirecting URLs, the hops the first took and the pages the links are written on.");
         if d.severity
-            .of_redirect(Some(PEDANTIC_TRAILING_SLASH))
+            .of_redirect(Some(Reason::PedanticTrailingSlash.as_str()))
             .is_finding()
         {
             out.push_str(" A landing marked as a ring is reached by a URL differing from it only by a final <code>/</code>, and comes last.");
@@ -784,55 +783,55 @@ const MOST_HOSTS: usize = 10;
 
 /// What an `unchecked` link's reason means, in a reader's words, and the
 /// setting that would check its links where there is one; the manual says it
-/// precisely. `None` for a reason this `bruce` does not write.
+/// precisely. `None` for a reason no `unchecked` link carries.
 fn unchecked_meaning(reason: &str) -> Option<&'static str> {
-    Some(match reason {
-        "out_of_scope" => {
+    Some(match Reason::parse(reason)? {
+        Reason::OutOfScope => {
             "Links to the site's pages in other languages, which the language menu links every \
              page to. To check them, add a <code>[[root]]</code> for those languages."
         }
-        "host_not_allowlisted" => {
+        Reason::HostNotAllowlisted => {
             "Links to other websites, which this run was not set up to check. To check a site's \
              links, add it to the <code>allowlist</code>; the sites that were checked are listed \
              at the end."
         }
-        "skipped" => {
+        Reason::Skipped => {
             "Links that match a <code>skip</code> pattern in the configuration, left alone on \
              purpose. These are usually pages a check cannot judge, such as a forge's \"new \
              issue\" form or a login page."
         }
-        "scheme" => {
+        Reason::Scheme => {
             "Links that do not lead to a web page but to something else a browser can open, \
              mostly email addresses (<code>mailto:</code>), so there is nothing to fetch. A link \
              starting with anything else, such as <code>file:</code> or a mistyped \
              <code>hhttps:</code>, cannot work for a reader and is listed as broken instead."
         }
-        "robots" => {
+        Reason::Robots => {
             "Links to pages the site asks robots not to fetch, in its <code>robots.txt</code>, \
              and the run respected that. On a site this run checks, the <code>robots</code> \
              setting for its host can turn this off."
         }
-        "robots_unavailable" => {
+        Reason::RobotsUnavailable => {
             "Links to a site whose <code>robots.txt</code>, which says what robots may fetch, \
              could not be read: the site answered with an error, or sent the robot somewhere it \
              could not follow, so the run left the whole site alone. Usually the site was failing \
              at the time."
         }
-        "externals_skipped" => {
+        Reason::ExternalsSkipped => {
             "Links to other websites that a <code>check-dir</code> run was told not to check \
              (<code>--externals skip</code>), with no earlier result to reuse."
         }
-        "too_deep" => "Sitemaps nested too many levels inside other sitemaps, so not read.",
-        "no_anchors" => {
+        Reason::TooDeep => "Sitemaps nested too many levels inside other sitemaps, so not read.",
+        Reason::NoAnchors => {
             "Links to a spot (after <code>#</code>) in a file the run did not read as a page, \
              such as an image or a file too large to read. The file was found; the spot was not \
              checked."
         }
-        "text_fragment" => {
+        Reason::TextFragment => {
             "Links to some words on a page (<code>#:~:text=</code>), which the browser finds \
              when it opens it. The page was found; whether the words are on it was not checked."
         }
-        "cut" => "Links the run stopped before getting to.",
+        Reason::Cut => "Links the run stopped before getting to.",
         _ => return None,
     })
 }

@@ -8,7 +8,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use duckdb::types::{TimeUnit, Value};
 
-use crate::config::Config;
+use crate::config::{Config, Outcome, Reason};
 
 /// A row of `pages` (D26, D34–D36).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -84,29 +84,6 @@ pub struct FactRow {
     pub value: String,
 }
 
-/// One of D16's five outcomes, as `targets.outcome` stores it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Outcome {
-    Ok,
-    BrokenUrl,
-    BrokenAnchor,
-    Error,
-    Unchecked,
-}
-
-impl Outcome {
-    /// The value the tables hold.
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Outcome::Ok => "ok",
-            Outcome::BrokenUrl => "broken_url",
-            Outcome::BrokenAnchor => "broken_anchor",
-            Outcome::Error => "error",
-            Outcome::Unchecked => "unchecked",
-        }
-    }
-}
-
 /// One response in a target's redirect chain (D7): the URL asked, the status
 /// it answered, and whether the hop is a page's `refresh` of delay 0 rather
 /// than a 3xx. A 301 or 308 says to update the link, a 302 or 307 is often the
@@ -152,7 +129,7 @@ pub struct TargetRow {
     /// gave; empty, and stored NULL, where the target was not redirected.
     pub redirect_chain: Vec<Hop>,
     pub outcome: Outcome,
-    pub reason: Option<String>,
+    pub reason: Option<Reason>,
     /// `None` where no request was made for the URL, its host's robots.txt
     /// request that got no response counting as one (D8).
     pub checked_at: Option<SystemTime>,

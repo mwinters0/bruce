@@ -15,14 +15,14 @@ fn a_status_is_classified_by_d16() {
     }
     assert_eq!(status(500), (Outcome::Error, None));
     assert_eq!(status(503), (Outcome::Error, None));
-    assert_eq!(status(302), (Outcome::BrokenUrl, Some("bad_redirect")));
+    assert_eq!(status(302), (Outcome::BrokenUrl, Some(Reason::BadRedirect)));
 }
 
 #[test]
 fn a_page_over_the_cap_answered_so_it_is_ok() {
     assert_eq!(
         answered(200, &Body::TooLarge, false),
-        (Outcome::Ok, Some("too_large"))
+        (Outcome::Ok, Some(Reason::TooLarge))
     );
 }
 
@@ -34,7 +34,7 @@ fn only_a_missing_name_is_broken() {
     };
     assert_eq!(
         failed(&failure(FailureKind::NxDomain)),
-        (Outcome::BrokenUrl, Some("nxdomain"))
+        (Outcome::BrokenUrl, Some(Reason::Nxdomain))
     );
     for kind in [
         FailureKind::Timeout,
@@ -43,17 +43,17 @@ fn only_a_missing_name_is_broken() {
         FailureKind::Reset,
         FailureKind::Other,
     ] {
-        assert_eq!(
-            failed(&failure(kind)),
-            (Outcome::Error, Some(kind.as_str()))
-        );
+        assert_eq!(failed(&failure(kind)), (Outcome::Error, kind.reason()));
     }
 }
 
 #[test]
 fn a_toggled_slash_that_answers_names_a_broken_4xx_and_nothing_else() {
     let slash = |code| answered(code, &Body::Unread, true);
-    assert_eq!(slash(404), (Outcome::BrokenUrl, Some(WRONG_TRAILING_SLASH)));
+    assert_eq!(
+        slash(404),
+        (Outcome::BrokenUrl, Some(Reason::WrongTrailingSlash))
+    );
     for other in [200, 302, 403, 429, 500] {
         assert_eq!(slash(other), status(other), "{other}");
     }
@@ -74,34 +74,12 @@ fn the_default_status_map_of_the_policy_is_the_class_given_here() {
 }
 
 #[test]
-fn every_reason_the_crawl_writes_takes_a_severity() {
-    use crate::config::SEVERITY_REASONS;
+fn a_cause_names_the_reason_it_writes() {
     use crate::crawl::hops::Stop;
-    use crate::fetch::FailureKind;
-    use crate::store::{DOUBLED_SLASH, PEDANTIC_TRAILING_SLASH};
-    let written = [
-        FailureKind::NxDomain,
-        FailureKind::Timeout,
-        FailureKind::Tls,
-        FailureKind::Connect,
-        FailureKind::Reset,
-        FailureKind::Other,
-    ]
-    .map(FailureKind::as_str)
-    .into_iter()
-    .chain([Stop::Loop, Stop::TooMany].map(Stop::as_str))
-    .chain([
-        status(302).1.unwrap(),
-        answered(200, &Body::TooLarge, false).1.unwrap(),
-        answered(404, &Body::Unread, true).1.unwrap(),
-        crate::crawl::frontier::BAD_SCHEME,
-        crate::crawl::frontier::INVALID_URL,
-        "unresolved_xref",
-        DOUBLED_SLASH,
-        PEDANTIC_TRAILING_SLASH,
-    ]);
-    for reason in written {
-        assert!(SEVERITY_REASONS.contains(&reason), "{reason}");
-    }
-    assert_eq!(SEVERITY_REASONS.len(), 16);
+    assert_eq!(FailureKind::NxDomain.reason(), Some(Reason::Nxdomain));
+    assert_eq!(FailureKind::Other.reason(), Some(Reason::Other));
+    // The crawl writes nothing for a request it stopped (D16).
+    assert_eq!(FailureKind::Stopped.reason(), None);
+    assert_eq!(Stop::Loop.reason(), Reason::RedirectLoop);
+    assert_eq!(Stop::TooMany.reason(), Reason::TooManyRedirects);
 }
