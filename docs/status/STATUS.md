@@ -84,10 +84,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **Source rules are recorded under their place in the file** (10.4): `profile.<name>.source.<i>.from`,
-  `.pattern`, `.repo`, `.ref`, `.path`, `i` counting from 0, because a rule has no name to key it by and its
-  order is its meaning. Deleting or inserting a rule renumbers every later one, so 10.5's naming of a rule
-  that differs between two runs will report them all as changed after it. Reconsider by giving a rule an
-  optional `name` the rows key on, which adds a config key; or by recording each rule as one row holding its
-  whole definition, which cannot say which field changed.

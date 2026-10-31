@@ -31,7 +31,7 @@ grilling, spec amendment and a numbered slice.
 **Ledger lines stay one line each.** The detail lives in the dated history
 entry each line points at.
 
-Allocated so far: M1–M37. <!-- out-of-band-watermark: M37 -->
+Allocated so far: M1–M38. <!-- out-of-band-watermark: M38 -->
 
 ## The ledger
 
@@ -44,3 +44,4 @@ Allocated so far: M1–M37. <!-- out-of-band-watermark: M37 -->
 | M35 | 2026-10-31 | The digest under a `none` map: "By: Link Target" and sections 3 and 4 say the map left them empty (KD32) | | [2026-10-31](../status/history/2026-10-31.md) |
 | M36 | 2026-10-31 | The digest's JSON marks a row new as a finding under the report's map beside `new`, and the HTML marks from it; amends D75 (KD33) | | [2026-10-31](../status/history/2026-10-31.md) |
 | M37 | 2026-10-31 | A declared profile's name and region interned through a process-wide cache, as `profile::selectors` caches selectors, not leaked per registry built | | [2026-10-31](../status/history/2026-10-31.md) |
+| M38 | | The digest's Housekeeping lists a declared profile's source-rule rows in file order, `source.<i>` sorted as a number | | [2026-10-31](../status/history/2026-10-31.md) |

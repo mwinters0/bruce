@@ -160,7 +160,12 @@ root's hash scope (D15), so a comparison tells a rule edited from a site
 changed, and the digest names a rule that differs between the runs it
 compares, **among the profiles `pages.profile` shows either run used**
 (amended 2026-10-31, the history entry "P10.3's calls reviewed"; 10.5
-builds the naming). **They are
+builds the naming). **A source rule is named by its place in each run's
+list**, its order being its meaning (D93), **and the naming aligns the two
+runs' lists**, so a rule inserted or removed is named alone, never every rule
+after it, and rules removed and added in one gap are paired in order, the
+fields that changed named (amended 2026-10-31, the history entry "10.4's call reviewed").
+**They are
 `policy` rows (D78)**, keys under `profile.<name>.`, so the schema does not
 change (D43), the digest's Housekeeping states them as it states the rest
 (D91), and a crawl before P10 stays comparable with one after.

@@ -43,9 +43,10 @@ A `[[profile.source]]` is `from = "url" | "edit_link"` and a regex whose capture
 `${name}` templates over them, give a source; the first rule giving a repo and a path wins, and `forge::parse` reads the
 edit link only where none does. Why: a site with no edit link has only its URL, which names neither the repo nor the
 file's extension (Sphinx's `/en/<ref>/<page>.html`), and the parse cannot tell a ref holding `/` from the path without
-a forge call per repo (I23). An expansion that is no source is passed over. Rejected: captures alone, stating no
-literal; a rule per root, a profile being what D35 chooses by. Reopens: a site mixing formats under one profile, the
-first match too coarse. Code: `forge::rule`, `config::profile`. Evidence: `forge::rule::tests`.
+a forge call per repo (I23). Rejected: captures alone, stating no literal; a rule per root, a profile being what D35
+chooses by; recorded rows keyed by a rule's `name`, not its place, which is its meaning. Reopens: a site mixing
+formats under one profile, the first match too coarse. Code: `forge::rule`, `config::profile`. Evidence:
+`forge::rule::tests`.
 
 ### D17 Each page stores its source file and repo, read from its edit link
 This routes a breakage to the repo and file that own it, and groups more precisely than component (some repos supply
