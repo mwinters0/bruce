@@ -177,6 +177,7 @@ impl Store {
         for profile in profiles.iter() {
             store.install(profile.views())?;
         }
+        store.conn.execute_batch(&views::link_hints(profiles))?;
         Ok(store)
     }
 

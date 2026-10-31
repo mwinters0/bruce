@@ -102,8 +102,9 @@ pub struct Digest {
     /// Each repo, ranked as `pages` are: `repo`, `pages`, `broken_pages`,
     /// `links`, `broken_url`, `broken_anchor`, `error` and `through`.
     pub by_repo: Table,
-    /// `by_repo`'s columns for each Antora component, as `component`.
-    pub by_component: Table,
+    /// `by_repo`'s columns for each value of the fact `[digest]` `group_by`
+    /// names, as `group` (D86); no rows where the run groups by nothing.
+    pub by_group: Table,
     /// Every link whose outcome is `error`: `page`, `source_url`, `raw_href`,
     /// `target`, `fragment`, `kind`, `reason` and `status`.
     pub errors: Table,
@@ -116,6 +117,10 @@ pub struct Digest {
     /// The sitemap's entries no page was fetched for, those that did not
     /// answer `ok` first: `page`, `outcome`, `reason` and `status`.
     pub sitemap_entries: Table,
+    /// What the generators of the crawled pages say of the sitemap they write
+    /// (`Profile::sitemap_note`), one for each profile that has something to
+    /// say, in the registry's order.
+    pub sitemap_notes: Vec<&'static str>,
     /// The pages that lost an anchor links still name since the compared run:
     /// `page`, `anchor`, `links`, `pages`, `linking_pages`, `source_repo` and
     /// `source_path`. Empty where `compared` is `None`.

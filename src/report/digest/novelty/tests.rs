@@ -6,7 +6,13 @@ use crate::report::tests::column;
 use crate::store::RunId;
 
 fn compared_digest() -> Digest {
-    digest(&compared(), Some(RunId(1)), Against::Run(RunId(4))).unwrap()
+    digest(
+        &compared(),
+        Some(RunId(1)),
+        Against::Run(RunId(4)),
+        &crate::report::tests::registry(),
+    )
+    .unwrap()
 }
 
 fn sections(d: &Digest) -> [(&'static str, &Table); 9] {

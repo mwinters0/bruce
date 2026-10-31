@@ -370,7 +370,7 @@ fn a_digest_is_written_under_the_day_the_run_started() {
     );
     assert_eq!(html.trim_end_matches("html"), json.trim_end_matches("json"));
     let text = std::fs::read_to_string(out.join(json)).unwrap();
-    assert!(text.contains("\"format_version\": 1"));
+    assert!(text.contains("\"format_version\": 2"));
     let page = std::fs::read_to_string(out.join(html)).unwrap();
     assert!(page.starts_with("<!doctype html>") && page.contains("<title>Link check digest 20"));
     // A second digest of the day replaces the first.

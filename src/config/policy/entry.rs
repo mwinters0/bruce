@@ -35,7 +35,10 @@ impl Entry {
             (None, key @ ("pedantic_trailing_slash" | "doubled_slash_reach")) => {
                 (format!("judge.{key}"), "=")
             }
-            (None, key) if key.starts_with("severity.") || key == "max_body_mib" => {
+            (None, key)
+                if key.starts_with("severity.")
+                    || matches!(key, "max_body_mib" | "digest.group_by") =>
+            {
                 (key.to_owned(), "=")
             }
             (None, key) => (format!("default.{key}"), "="),

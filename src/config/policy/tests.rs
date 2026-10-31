@@ -33,7 +33,7 @@ fn the_default_policy_is_what_bruce_has_always_judged_by() {
 fn every_setting_is_an_entry_with_its_value_written_out() {
     let mut policy = Policy::default();
     let defaults = rows(&policy);
-    assert_eq!(defaults.len(), 1 + 12 + 1 + 1 + 3 + 5 + 1 + 6);
+    assert_eq!(defaults.len(), 1 + 12 + 1 + 1 + 3 + 5 + 1 + 1 + 6);
     for row in [
         "/pedantic_trailing_slash=true",
         "/schemes=mailto",
@@ -42,6 +42,7 @@ fn every_setting_is_an_entry_with_its_value_written_out() {
         "/doubled_slash_reach=full",
         "/status.403=error",
         "/gate.fail=broken_url,broken_anchor",
+        "/digest.group_by=",
         "/timeout=30",
         "/retries=3",
         "/slash_probe=true",
@@ -228,6 +229,42 @@ fn a_setting_is_written_as_the_file_writes_it() {
         written(Some("pagure.io"), "status.403", "broken_url"),
         "host.\"pagure.io\".status.403 = \"broken_url\""
     );
+}
+
+#[test]
+fn a_file_names_the_fact_the_digest_groups_by_and_it_is_one_row() {
+    let policy = parse("[digest]\ngroup_by = \"antora.component\"").unwrap();
+    assert_eq!(policy.group_by.as_deref(), Some("antora.component"));
+    let row = policy
+        .entries()
+        .into_iter()
+        .find(|e| e.key == "digest.group_by")
+        .unwrap();
+    assert_eq!(row.value, "antora.component");
+    assert_eq!(row.written_as(), "digest.group_by = \"antora.component\"");
+    assert_eq!(group_by_from_row(Some(&row.value)), policy.group_by);
+    // The default groups by nothing, and its row is empty.
+    let none = parse("").unwrap();
+    assert_eq!(none.group_by, None);
+    assert!(rows(&none).contains(&"/digest.group_by=".to_owned()));
+    assert_eq!(group_by_from_row(Some("")), None);
+    assert_eq!(group_by_from_row(None), None);
+}
+
+#[test]
+fn a_group_by_that_is_no_fact_key_is_refused_at_load() {
+    for bad in [
+        "",
+        "component",
+        ".component",
+        "antora.",
+        "antora..x",
+        "an tora.x",
+    ] {
+        let err = parse(&format!("[digest]\ngroup_by = {bad:?}")).unwrap_err();
+        assert!(err.contains("digest.group_by"), "{bad}: {err}");
+    }
+    assert!(parse("[digest]\nsort = 1").is_err());
 }
 
 #[test]

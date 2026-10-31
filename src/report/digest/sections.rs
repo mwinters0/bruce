@@ -7,8 +7,9 @@ use duckdb::Connection;
 use url::Url;
 
 use super::document::{Judged, Run, Totals};
-use crate::config::{ASKING_KEYS, Entry, Reach};
+use crate::config::{ASKING_KEYS, Entry, Reach, group_by_from_row};
 use crate::extract::Kind;
+use crate::profile::Registry;
 use crate::report::error::Error;
 use crate::report::reach;
 use crate::report::redirects;
@@ -22,7 +23,7 @@ use crate::url::toggle_slash;
 pub(super) const ON_CRAWLED: &str = " JOIN report_pages pg ON pg.run_id = b.run_id \
                           AND pg.url_id = b.src_url_id AND pg.crawled ";
 
-/// The page counts the pages, repos and components rank by, computed once into
+/// The page counts the pages, repos and groups rank by, computed once into
 /// the temporary table `digest_page_counts` (D71): each crawled page's counted
 /// links, `links`, `broken_url`, `broken_anchor` and `error`, and the broken
 /// links reached *through* a link to a URL that doubles a slash, `through`.
@@ -66,7 +67,7 @@ const PAGE_COUNTS: &str = "CREATE OR REPLACE TEMP TABLE digest_page_counts AS \
      coalesce(th.through, 0)::BIGINT AS through FROM s LEFT JOIN th ON th.url_id = s.url_id";
 
 /// Proof that [`page_counts`] ran for the run being read, which [`pages`],
-/// [`by_repo`] and [`by_component`] join.
+/// [`by_repo`] and [`by_group`] join.
 #[derive(Clone, Copy)]
 pub(super) struct PageCounts(());
 
@@ -426,23 +427,37 @@ pub(super) fn by_repo(conn: &Connection, run: RunId, counts: PageCounts) -> Resu
     grouped(conn, run, counts, "pg.source_repo", "repo", "", None)
 }
 
-/// The Antora components of the crawled pages, ranked as [`pages`] ranks a
-/// page. A site
-/// of no Antora pages has none.
-pub(super) fn by_component(
+/// The crawled pages grouped by the value of the fact `key` names (D86), ranked
+/// as [`pages`] ranks a page. A run that groups by nothing, or by a fact no page
+/// carries, has no rows.
+pub(super) fn by_group(
     conn: &Connection,
     run: RunId,
     counts: PageCounts,
+    key: Option<&str>,
 ) -> Result<Table, Error> {
     grouped(
         conn,
         run,
         counts,
         "f.value",
-        "component",
+        "group",
         "JOIN page_facts f ON f.run_id = pg.run_id AND f.url_id = pg.url_id AND f.key = ",
-        Some("antora.component"),
+        // No fact has an empty key, so no row groups.
+        Some(key.unwrap_or("")),
     )
+}
+
+/// The fact the run's recorded `digest.group_by` names (D86), none where the run
+/// groups by nothing or has no row.
+pub(super) fn group_by(conn: &Connection, run: RunId) -> Result<Option<String>, Error> {
+    let value: Option<String> = conn.query_row(
+        "SELECT max(value) FROM policy_in_force WHERE run_id = ? AND host IS NULL \
+         AND key = 'digest.group_by'",
+        [run.0],
+        |row| row.get(0),
+    )?;
+    Ok(group_by_from_row(value.as_deref()))
 }
 
 /// Every link whose outcome is `error` on a crawled page (D16), a page's
@@ -485,6 +500,25 @@ pub(super) fn orphans(conn: &Connection, run: RunId) -> Result<Table, Error> {
 /// The pages absent from the sitemap of a root that read one.
 pub(super) fn unlisted(conn: &Connection, run: RunId) -> Result<Table, Error> {
     Ok(reach::unlisted(conn, run, &every(Report::Unlisted))?.0)
+}
+
+/// What the profiles that read the run's crawled pages say of the sitemap their
+/// generators write, one note to a profile, in the registry's order.
+pub(super) fn sitemap_notes(
+    conn: &Connection,
+    run: RunId,
+    profiles: &Registry,
+) -> Result<Vec<&'static str>, Error> {
+    let mut stmt =
+        conn.prepare("SELECT DISTINCT profile FROM report_pages WHERE run_id = ? AND crawled")?;
+    let read: Vec<String> = stmt
+        .query_map([run.0], |row| row.get(0))?
+        .collect::<Result<_, _>>()?;
+    Ok(profiles
+        .iter()
+        .filter(|p| read.iter().any(|name| name == p.name()))
+        .filter_map(|p| p.sitemap_note())
+        .collect())
 }
 
 /// The sitemap's entries no page was fetched for, with what each answered,

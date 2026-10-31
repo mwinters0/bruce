@@ -7,7 +7,7 @@ use crate::report::table::{Format, quoted};
 /// The version of the document's shape. It changes only with a change a
 /// loader would misread: a field renamed, removed or given another meaning,
 /// never one added (D64).
-pub const FORMAT_VERSION: u32 = 1;
+pub const FORMAT_VERSION: u32 = 2;
 
 /// An object of `fields`, one to a line, each value already JSON.
 fn object(fields: &[(&str, String)]) -> String {
@@ -121,7 +121,7 @@ fn render(d: &Digest) -> String {
         ("pages", json(&d.pages)),
         ("broken", json(&d.broken)),
         ("by_repo", json(&d.by_repo)),
-        ("by_component", json(&d.by_component)),
+        ("by_group", json(&d.by_group)),
         ("new_breakage", json(&d.new_breakage)),
         ("fixed_breakage", json(&d.fixed_breakage)),
         ("anchors_removed", json(&d.anchors_removed)),

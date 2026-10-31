@@ -4,7 +4,7 @@
 //!
 //! It composes what the reports hold into the sections D64 names: the
 //! figures, the broken targets ranked by the links naming them, the pages
-//! ranked by their broken links, the repos and components, the errors apart
+//! ranked by their broken links, the repos and the groups a site names, the errors apart
 //! from breakage (D16) and the housekeeping. Every section is a [`Table`] whose
 //! rows are already in the order a reader wants them, so a rendering walks
 //! them and ranks nothing but a page's drill-down, its errors joined to its
@@ -27,6 +27,7 @@ use super::error::Error;
 use super::run;
 use super::table::Table;
 use crate::config::SeverityMap;
+use crate::profile::Registry;
 use crate::store::{JudgedBy, RunId, Store};
 
 pub use document::{Compared, Digest};
@@ -45,7 +46,12 @@ pub enum Against<'a> {
 
 /// The digest of `run`, else of the latest finished one (D59), compared
 /// `against` another. A run `check-dir` made has none.
-pub fn digest(store: &Store, run: Option<RunId>, against: Against<'_>) -> Result<Digest, Error> {
+pub fn digest(
+    store: &Store,
+    run: Option<RunId>,
+    against: Against<'_>,
+    profiles: &Registry,
+) -> Result<Digest, Error> {
     let conn = store.connection();
     let (id, unfinished, later_unfinished) = run::one(conn, run)?;
     let read = Read {
@@ -54,11 +60,11 @@ pub fn digest(store: &Store, run: Option<RunId>, against: Against<'_>) -> Result
         later_unfinished,
     };
     match against {
-        Against::Previous => build(conn, &read, compare::previous(conn, id)?, false),
-        Against::Run(from) => build(conn, &read, Some(from), false),
+        Against::Previous => build(conn, &read, compare::previous(conn, id)?, false, profiles),
+        Against::Run(from) => build(conn, &read, Some(from), false, profiles),
         Against::File(path) => {
             let imported = store.import_baseline(path).map_err(Error::Baseline)?;
-            let built = build(conn, &read, Some(imported.run), true);
+            let built = build(conn, &read, Some(imported.run), true, profiles);
             // The baseline was imported to be read, and as the latest finished
             // run it would be what a bare `report` read next.
             let discarded = store.discard_import(imported).map_err(Error::Baseline);
@@ -76,7 +82,13 @@ struct Read {
     later_unfinished: Option<RunId>,
 }
 
-fn build(conn: &Connection, read: &Read, from: Option<RunId>, file: bool) -> Result<Digest, Error> {
+fn build(
+    conn: &Connection,
+    read: &Read,
+    from: Option<RunId>,
+    file: bool,
+    profiles: &Registry,
+) -> Result<Digest, Error> {
     let id = read.id;
     // The compared run is judged by this run's policy (D81).
     let _judged = from.map(|_| JudgedBy::new(conn, id.0)).transpose()?;
@@ -100,6 +112,7 @@ fn build(conn: &Connection, read: &Read, from: Option<RunId>, file: bool) -> Res
         None => (empty(), empty()),
     };
     let policy = sections::policy(conn, id)?;
+    let group_by = sections::group_by(conn, id)?;
     let mut digest = Digest {
         run,
         compared,
@@ -115,12 +128,13 @@ fn build(conn: &Connection, read: &Read, from: Option<RunId>, file: bool) -> Res
         pages,
         broken,
         by_repo: sections::by_repo(conn, id, counts)?,
-        by_component: sections::by_component(conn, id, counts)?,
+        by_group: sections::by_group(conn, id, counts, group_by.as_deref())?,
         errors: sections::errors(conn, id)?,
         redirects: sections::redirects(conn, id)?,
         orphans: sections::orphans(conn, id)?,
         unlisted: sections::unlisted(conn, id)?,
         sitemap_entries: sections::sitemap_entries(conn, id)?,
+        sitemap_notes: sections::sitemap_notes(conn, id, profiles)?,
         anchors_removed,
         new_breakage,
         fixed_breakage,

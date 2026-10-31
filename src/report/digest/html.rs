@@ -704,7 +704,9 @@ fn housekeeping(out: &mut String, d: &Digest) {
         "Sitemap entries no page was fetched for",
         &entries(&d.sitemap_entries),
         |out| {
-            out.push_str("<p>Antora writes a sitemap from what it publishes, so an entry that did not answer is a build or deploy fault.</p>\n");
+            for note in &d.sitemap_notes {
+                w!(out, "<p>{}</p>\n", esc(note));
+            }
             let body: Vec<(bool, Vec<String>)> = rows(&d.sitemap_entries)
                 .map(|r| {
                     let page = r.text("page").unwrap_or("");

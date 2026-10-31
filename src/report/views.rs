@@ -45,12 +45,13 @@ WHERE v.counted AND v.outcome IN ",
 }
 
 /// A link whose outcome is `broken_url` or `broken_anchor`. An unresolved
-/// xref carries the page ID `antora_hints` finds nearest to its refspec (D65).
+/// xref carries the page ID a profile's hints find nearest to its refspec
+/// (D65), through `link_hints` (D87).
 const BROKEN: View = View {
     name: "report_broken",
     select: link_rows!(
         ",\n    h.hint",
-        "\nLEFT JOIN antora_hints h ON h.run_id = v.run_id AND h.src_url_id = v.src_url_id
+        "\nLEFT JOIN link_hints h ON h.run_id = v.run_id AND h.src_url_id = v.src_url_id
     AND h.xref_refspec = v.xref_refspec",
         "('broken_url', 'broken_anchor')"
     ),

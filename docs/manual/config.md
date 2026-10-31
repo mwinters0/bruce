@@ -362,6 +362,25 @@ A reason not listed has no level of its own and takes its outcome's: `nxdomain`,
 `too_many_redirects`, `bad_redirect`, `too_large`, `unresolved_xref`,
 `bad_scheme`, `doubled_slash` and `wrong_trailing_slash`.
 
+## Digest
+
+`[digest]` `group_by` names a fact the pages carry, by its full key
+(`antora.component`: a profile's name, a dot and the fact), and the
+[digest's JSON](digest.md#the-json) then holds `by_group`, the crawled pages
+grouped by that fact's value and ranked as `by_repo` is. `bruce` groups by nothing
+unless a site says so, and `by_group` is then empty; a key no page carries groups
+nothing either. A run records the key with its other settings, and a report reads it
+from the run, so `bruce report digest --config` tries another.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `digest.group_by` | none | The fact whose values group the digest's pages. A page without the fact is in no group. |
+
+```toml
+[digest]
+group_by = "antora.component"
+```
+
 ## User agent
 
 Every request names `bruce` and its version, `bruce/0.2.0`. `user_agent` names

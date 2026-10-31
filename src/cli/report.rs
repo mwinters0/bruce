@@ -512,8 +512,8 @@ fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
         (_, Some(file)) => Against::File(file.path()),
         _ => Against::Previous,
     };
-    let mut digest: Digest =
-        report::digest(&store, args.run, against).map_err(|e| format!("{}: {e}", db.display()))?;
+    let mut digest: Digest = report::digest(&store, args.run, against, registry)
+        .map_err(|e| format!("{}: {e}", db.display()))?;
     digest.trial = args.config.as_ref().map(|p| p.display().to_string());
     let compared = digest
         .compared

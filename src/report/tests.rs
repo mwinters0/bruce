@@ -454,3 +454,24 @@ fn errors_have_no_hint_and_a_site_without_antora_pages_has_none() {
         "no page has a path"
     );
 }
+
+#[test]
+fn a_registry_whose_profiles_ship_no_hints_still_has_the_broken_view() {
+    let store = Store::open_in_memory(&Registry::new(Box::new(Generic))).unwrap();
+    store.install(VIEWS).unwrap();
+    let hints: i64 = store
+        .connection()
+        .query_row("SELECT count(*) FROM link_hints", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(hints, 0);
+    let columns: i64 = store
+        .connection()
+        .query_row(
+            "SELECT count(*) FROM information_schema.columns WHERE table_name = 'report_broken' \
+             AND column_name = 'hint'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(columns, 1);
+}

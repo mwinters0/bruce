@@ -365,8 +365,13 @@ fn text_a_page_wrote_is_escaped_and_only_http_urls_are_links() {
 #[test]
 fn an_unfinished_run_says_so() {
     let store = store();
-    let d =
-        crate::report::digest(&store, Some(RunId(3)), crate::report::Against::Previous).unwrap();
+    let d = crate::report::digest(
+        &store,
+        Some(RunId(3)),
+        crate::report::Against::Previous,
+        &crate::report::tests::registry(),
+    )
+    .unwrap();
     let html = d.html();
     assert!(html.contains("This run never finished"));
     assert!(html.contains("never finished</dd>"));
@@ -387,9 +392,14 @@ fn a_run_with_nothing_to_report_says_so_in_each_section() {
         )
         .unwrap();
     store.finish_run(id).unwrap();
-    let html = crate::report::digest(&store, None, crate::report::Against::Previous)
-        .unwrap()
-        .html();
+    let html = crate::report::digest(
+        &store,
+        None,
+        crate::report::Against::Previous,
+        &crate::report::tests::registry(),
+    )
+    .unwrap()
+    .html();
     for said in [
         "No broken target is named by more than one link.",
         "No page holds a broken link.",
@@ -765,6 +775,7 @@ fn compared_digest() -> crate::report::Digest {
         &compared(),
         Some(RunId(1)),
         crate::report::Against::Run(RunId(4)),
+        &crate::report::tests::registry(),
     )
     .unwrap()
 }
@@ -780,6 +791,7 @@ fn fixed_html() -> String {
         &crate::report::digest::tests::compared_with_a_fix(),
         Some(RunId(1)),
         crate::report::Against::Run(RunId(4)),
+        &crate::report::tests::registry(),
     )
     .unwrap()
     .html()

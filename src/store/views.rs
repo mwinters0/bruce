@@ -55,7 +55,7 @@
 use duckdb::Connection;
 
 use crate::config::WORKING_SCHEMES;
-use crate::profile::View;
+use crate::profile::{Registry, View};
 
 /// Every run read through `link_verdicts` is judged by one run's policy while
 /// this lives: the newer run's, in a comparison (D77). Dropping it puts each
@@ -103,6 +103,34 @@ const POLICY_IN_FORCE: View = View {
     name: "policy_in_force",
     select: "SELECT * FROM policy",
 };
+
+/// The `link_hints` view, created after the profiles' views it reads: the
+/// hint of every unresolved xref that a profile's `<profile>_hints` view
+/// offers (D87), the columns of such a view and no row where no profile ships
+/// one. A key two profiles hint keeps the least hint, so a link is one row.
+pub(super) fn link_hints(profiles: &Registry) -> String {
+    let columns = "run_id, src_url_id, xref_refspec, hint";
+    let shipped: Vec<String> = profiles
+        .iter()
+        .filter_map(|p| {
+            let name = format!("{}_hints", p.name());
+            let ships = p.views().iter().any(|v| v.name == name);
+            ships.then(|| format!("SELECT {columns} FROM {name}"))
+        })
+        .collect();
+    let select = match shipped.as_slice() {
+        [] => "SELECT run_id, src_url_id, xref_refspec, NULL::VARCHAR AS hint FROM links \
+               WHERE false"
+            .to_owned(),
+        [one] => one.clone(),
+        many => format!(
+            "SELECT run_id, src_url_id, xref_refspec, min(hint) AS hint FROM ({}) \
+             GROUP BY run_id, src_url_id, xref_refspec",
+            many.join(" UNION ALL ")
+        ),
+    };
+    format!("CREATE OR REPLACE VIEW link_hints AS {select}")
+}
 
 /// The view calling the macro, created after it.
 pub(super) const LAST: &[View] = &[LINK_VERDICTS];

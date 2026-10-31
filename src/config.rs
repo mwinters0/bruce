@@ -23,11 +23,11 @@ use crate::url::{Canonical, canonical};
 
 mod policy;
 
-use policy::{RawAsking, RawGate, RawJudge, RawJudging};
+use policy::{RawAsking, RawDigest, RawGate, RawJudge, RawJudging};
 
 pub use policy::{
     ASKING_KEYS, Answer, Asking, DEFAULT_FAIL, Entry, FailOn, HostAsking, HostJudging, Policy,
-    Reach, SEVERITY_REASONS, Severity, SeverityMap, WORKING_SCHEMES, backoff,
+    Reach, SEVERITY_REASONS, Severity, SeverityMap, WORKING_SCHEMES, backoff, group_by_from_row,
 };
 
 /// Requests a second to one host that no `Crawl-delay`, `[host]` or `[rate]`
@@ -290,6 +290,7 @@ impl Config {
             &default_judging,
             &raw.severity,
             &raw.gate,
+            &raw.digest,
             judged,
             asking,
         )
@@ -762,6 +763,8 @@ struct RawConfig {
     severity: BTreeMap<String, String>,
     #[serde(default)]
     gate: RawGate,
+    #[serde(default)]
+    digest: RawDigest,
     max_body_mib: Option<u64>,
     user_agent: Option<String>,
     #[serde(default)]

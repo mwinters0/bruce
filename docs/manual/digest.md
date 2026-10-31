@@ -190,7 +190,7 @@ new or all fixed. In this order:
     how the run's severity marks such a redirect.
 
 The JSON holds every row the HTML lists and the targets it leaves out, and
-the by-component counts it has no section for. It holds the rows of a kind
+the counts by group it has no section for. It holds the rows of a kind
 the severity map puts at none too, counted and ranked by outcome.
 
 ## The JSON
@@ -200,7 +200,7 @@ and a count or status a number.
 
 ```json
 {
-  "format_version": 1,
+  "format_version": 2,
   "tool_version": "0.1.0",
   "run": {"id":1,"tool_version":"0.1.0","started_at":"2026-10-23T20:04:11Z","finished_at":"2026-10-23T21:14:44Z","duration_seconds":4233,"roots":["https://docs.example.org/en-US/"]},
   "compared_with": {"id":0,"from_file":false,"tool_version":"0.1.0","started_at":"2026-10-22T20:03:58Z","finished_at":"2026-10-22T21:12:09Z","roots":["https://docs.example.org/en-US/"],"totals":{"pages":5,"links":9,"broken_url":2,"broken_anchor":0,"error":1,"unchecked":1}},
@@ -209,7 +209,7 @@ and a count or status a number.
   "pages": [{"page":"https://docs.example.org/en-US/a/","title":"A","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0,"new":false,"new_links":1}],
   "broken": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","landing":null,"fix":null,"fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"hint":null,"status":200,"new":true}],
   "by_repo": [{"repo":"https://forge.example.org/docs","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0,"new":false,"new_links":1}],
-  "by_component": [{"component":"handbook","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0}],
+  "by_group": [{"group":"handbook","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0}],
   "new_breakage": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"status":200,"cause":"anchor_removed","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/b.adoc"}],
   "fixed_breakage": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../old/","target":"https://docs.example.org/en-US/old/","fragment":null,"kind":"anchor","outcome":"broken_url","reason":null,"status":404,"became":"ok","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc"}],
   "anchors_removed": [{"page":"https://docs.example.org/en-US/b/","anchor":"nope","links":1,"pages":1,"linking_pages":["https://docs.example.org/en-US/a/"],"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc"}],
@@ -230,7 +230,7 @@ and a count or status a number.
 ```
 
 `format_version` changes only when a field is renamed, removed or given
-another meaning, never when one is added, so a loader reading version 1 may
+another meaning, never when one is added, so a loader reading version 2 may
 ignore a field it does not know. `tool_version` is the `bruce` that wrote the
 file, and `run.tool_version` the one that crawled. `compared_with` is the run
 this one was compared with, or `null` where there was none.
@@ -255,7 +255,7 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `pages` | The pages that hold a broken link or one whose outcome is `error`, the most `broken_url` plus `error` plus `through` first, then the most `broken_anchor`. `links` counts every link on the page that counts, `error` its links that could not be verified, and `through` the broken relative links (a `?query` is one) on the pages at doubled-slash URLs that its `doubled_slash` links reach, each page once, less those broken on the page's twin too (zero for nearly every page). A page at a doubled-slash URL counts no link where the URL with its slashes collapsed is a page of the run, and else all but its broken relative links. `source_url` is the forge's view of the page's file. |
 | `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order; a link whose outcome is `error` is in `errors`, where the HTML's drill-down finds it. `page` joins to `pages`. `hint` is, for an Antora `xref:` that names no page, the nearest page ID in the run, as `component:module:path` with an empty module for `ROOT`, where one is close enough to be a typo of it, else `null`. `landing` and `fix` are as in `broken_targets`. |
 | `by_repo` | Each repo the pages were built from, ranked as `pages` are, `through` the sum of its pages'; `repo` is `null` for the pages that record none. `pages` counts the repo's pages, `broken_pages` those holding a broken link or an error. |
-| `by_component` | The same by Antora component. A site with no Antora page has none. |
+| `by_group` | The same by the value of the fact [`[digest]` `group_by`](config.md#digest) names, as `group`, a page without the fact being in no group. Empty for a site that groups by nothing, which is the default. |
 | `new_breakage` | The links broken in `run` and not in `compared_with`, a link to a row: `outcome` is `broken_url` or `broken_anchor`, and `cause` is what the compared run held, [below](#why-a-link-is-newly-broken), the rows in that order and then `broken_url` first. `source_repo`, `source_path` and `source_url` are those of the page answering for it: the target page's, as the compared run recorded it where it did and else as `run` does, for `target_removed`, `target_moved` and `anchor_removed`, else the linking page's. Empty where `compared_with` is `null`. |
 | `fixed_breakage` | The links broken in `compared_with` and not in `run`, as `new_breakage`'s rows without a `cause`, with what each is in `run` as `became`: `ok`, `error` or `unchecked`; `link_removed`, the page no longer holding it; `page_removed`, the page not among the pages the roots cover; or `uncounted`, held on a page whose twin at a URL without the doubled slash answers for its links. The source is the linking page's, `run`'s where it holds the page, else the compared run's. Empty where `compared_with` is `null`. |
 | `anchors_removed` | The pages of `run` that lost an anchor since `compared_with`, links still naming it, one row to a `page` and `anchor`, the most `links` first and then the most `pages`: the links to it, the distinct pages they are on and those pages as `linking_pages`, over every kind of link. A page that landed a redirect is the page it landed on. Empty where `compared_with` is `null`. |
@@ -263,7 +263,7 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `housekeeping.redirects` | The redirected links by landing URL, the most `links` first: `urls` distinct URLs reached it, `chain` is the hops the first took, and `pages` the pages whose links they are. `reason` is `pedantic_trailing_slash` on a landing whose links name a URL that differs from it only by a final `/`, which comes after every other row, else `null`: such a landing has two rows where other links reach it too. |
 | `housekeeping.orphans` | The pages a sitemap lists that no other page links to. |
 | `housekeeping.unlisted` | The pages absent from the sitemap of a root that read one. |
-| `housekeeping.sitemap_entries` | The sitemap entries no page was fetched for, those whose `outcome` is not `ok` first: what the URL answered. Antora writes a sitemap from what it publishes, so such an entry is a build or deploy fault. |
+| `housekeeping.sitemap_entries` | The sitemap entries no page was fetched for, those whose `outcome` is not `ok` first: what the URL answered. The HTML says what the generator's sitemap guarantees where its profile has something to say: Antora writes one from what it publishes, so such an entry is a build or deploy fault. |
 | `housekeeping.roots_without_sitemap` | The roots that read no sitemap, whose pages cannot be unlisted. |
 | `housekeeping.unchecked` | The `unchecked` links by `reason` ([below](#why-a-link-is-unchecked)), and the distinct `targets` they name. |
 | `housekeeping.unchecked_groups` | The same links by `reason` and by `group`, where they point, every group listed: the reasons in `unchecked`'s order, a reason's groups the most `links` first. A `group` is the scheme, as `mailto:`, for a URL that is not `http` or `https`; for `skipped`, the host and the path's last two segments, as `forge.example.org/…/issues/new`, the part a `skip` glob usually matches; on a root's host, the URL up to the path's first segment, as `https://docs.example.org/de/`, with the `/` after it where the path goes on; and else the host. It is `null` for a link the run stopped before asking about. |

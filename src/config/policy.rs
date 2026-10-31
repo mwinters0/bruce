@@ -15,12 +15,15 @@ use serde::Deserialize;
 
 pub(in crate::config) use self::asking::RawAsking;
 pub use self::asking::{Asking, HostAsking, KEYS as ASKING_KEYS, backoff};
+pub(in crate::config) use self::digest::RawDigest;
+pub use self::digest::from_row as group_by_from_row;
 pub use self::entry::Entry;
 pub(in crate::config) use self::gate::RawGate;
 pub use self::gate::{DEFAULT_FAIL, FailOn};
 pub use self::severity::{REASONS as SEVERITY_REASONS, Severity, SeverityMap};
 
 mod asking;
+mod digest;
 mod entry;
 mod gate;
 mod severity;
@@ -136,6 +139,9 @@ pub struct Policy {
     pub severity: SeverityMap,
     /// The outcomes that fail the gate, in [`FailOn`]'s order (D83).
     pub gate_fail: Vec<FailOn>,
+    /// The fact key the digest groups its pages by, as `antora.component`;
+    /// none groups by nothing (D86).
+    pub group_by: Option<String>,
     /// The hosts' own settings, by host as `Host` prints it, only those a
     /// file names.
     pub hosts: BTreeMap<String, HostJudging>,
@@ -166,6 +172,7 @@ impl Default for Policy {
                 .collect(),
             severity: SeverityMap::default(),
             gate_fail: DEFAULT_FAIL.to_vec(),
+            group_by: None,
             hosts: BTreeMap::new(),
             asking: Asking::default(),
         }
@@ -196,6 +203,7 @@ impl Policy {
         rows.extend(statuses(None, &self.status));
         rows.extend(self.severity.entries());
         rows.push(run("gate.fail", FailOn::row(&self.gate_fail)));
+        rows.push(run(digest::KEY, self.group_by.clone().unwrap_or_default()));
         rows.extend(self.asking.entries());
         for (host, h) in &self.hosts {
             if let Some(on) = h.doubled_slash {
@@ -210,13 +218,14 @@ impl Policy {
         rows
     }
 
-    /// The policy a file's `[judge]`, `[default]`, `[severity]`, `[gate]` and `[host]` tables say,
+    /// The policy a file's `[judge]`, `[default]`, `[severity]`, `[gate]`, `[digest]` and `[host]` tables say,
     /// each at its default where a key is left out.
     pub(super) fn from_raw(
         judge: RawJudge,
         default: &RawJudging,
         severity: &BTreeMap<String, String>,
         gate: &RawGate,
+        digest: &RawDigest,
         hosts: BTreeMap<String, HostJudging>,
         asking: Asking,
     ) -> Result<Policy, String> {
@@ -244,6 +253,8 @@ impl Policy {
         if let Some(fail) = &gate.fail {
             policy.gate_fail = FailOn::from_raw(fail).map_err(|e| format!("gate.fail: {e}"))?;
         }
+        policy.group_by = digest::from_raw(digest.group_by.as_deref())
+            .map_err(|e| format!("digest.group_by: {e}"))?;
         policy.hosts = hosts;
         policy.asking = asking;
         Ok(policy)

@@ -220,6 +220,12 @@ impl Profile for Antora {
     fn views(&self) -> &'static [View] {
         &[PAGES, hints::HINTS]
     }
+
+    fn sitemap_note(&self) -> Option<&'static str> {
+        Some(
+            "Antora writes a sitemap from what it publishes, so an entry that did not answer is a build or deploy fault.",
+        )
+    }
 }
 
 #[cfg(test)]

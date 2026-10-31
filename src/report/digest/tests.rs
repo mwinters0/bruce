@@ -168,7 +168,13 @@ pub(super) fn compared_with_a_fix() -> Store {
 }
 
 pub(super) fn of(store: &Store) -> Digest {
-    digest(store, Some(RunId(1)), Against::Previous).unwrap()
+    digest(
+        store,
+        Some(RunId(1)),
+        Against::Previous,
+        &crate::report::tests::registry(),
+    )
+    .unwrap()
 }
 
 /// [`store`] with page 5 linking to an unchecked target of each reason the
@@ -378,7 +384,48 @@ fn repos_and_components_are_ranked_and_a_page_without_either_is_kept() {
         ]
     );
     assert_eq!(d.by_repo.rows[2][1..3], [Cell::Int(3), Cell::Int(0)]);
-    assert_eq!(column(&d.by_component, "component"), ["handbook", "other"]);
+}
+
+#[test]
+fn pages_are_grouped_by_the_fact_the_policy_names_and_by_nothing_otherwise() {
+    let group = |key: Option<&str>| {
+        let store = store();
+        if let Some(key) = key {
+            store
+                .connection()
+                .execute(
+                    "INSERT INTO policy VALUES (1, NULL, 'digest.group_by', ?)",
+                    [key],
+                )
+                .unwrap();
+        }
+        let d = of(&store);
+        let groups = column(&d.by_group, "group");
+        let broken = column(&d.by_group, "broken_pages");
+        (groups, broken)
+    };
+    // The default groups by nothing, whatever facts the pages carry.
+    assert_eq!(group(None).0, Vec::<String>::new());
+    assert_eq!(group(Some("")).0, Vec::<String>::new());
+    // A fact no page carries groups none.
+    assert_eq!(group(Some("antora.module")).0, Vec::<String>::new());
+    let (groups, _) = group(Some("antora.component"));
+    assert_eq!(groups, ["handbook", "other"]);
+}
+
+#[test]
+fn a_run_without_the_row_and_a_trial_group_as_the_policy_in_force_says() {
+    let store = store();
+    let trial = crate::config::Policy {
+        group_by: Some("antora.component".to_owned()),
+        ..Default::default()
+    };
+    store.try_policy(&trial).unwrap();
+    let d = of(&store);
+    assert_eq!(column(&d.by_group, "group"), ["handbook", "other"]);
+    let json: Value = serde_json::from_str(&d.json()).unwrap();
+    assert_eq!(json["by_group"][0]["group"], "handbook");
+    assert!(json.get("by_component").is_none());
 }
 
 /// A link from `src` to `to` written as `href`.
@@ -792,25 +839,51 @@ fn housekeeping_holds_the_redirects_orphans_and_unlisted_pages() {
 fn a_run_is_named_and_a_check_dir_run_has_no_digest() {
     let store = store();
     assert_eq!(
-        digest(&store, Some(RunId(1)), Against::Previous)
-            .unwrap()
-            .run
-            .id,
+        digest(
+            &store,
+            Some(RunId(1)),
+            Against::Previous,
+            &crate::report::tests::registry()
+        )
+        .unwrap()
+        .run
+        .id,
         RunId(1)
     );
-    let d = digest(&store, Some(RunId(3)), Against::Previous).unwrap();
+    let d = digest(
+        &store,
+        Some(RunId(3)),
+        Against::Previous,
+        &crate::report::tests::registry(),
+    )
+    .unwrap();
     assert!(d.unfinished && d.run.finished.is_none());
     assert!(matches!(
-        digest(&store, Some(RunId(2)), Against::Previous),
+        digest(
+            &store,
+            Some(RunId(2)),
+            Against::Previous,
+            &crate::report::tests::registry()
+        ),
         Err(Error::NotCrawl(RunId(2)))
     ));
     assert!(matches!(
-        digest(&store, Some(RunId(9)), Against::Previous),
+        digest(
+            &store,
+            Some(RunId(9)),
+            Against::Previous,
+            &crate::report::tests::registry()
+        ),
         Err(Error::NoSuchRun(RunId(9)))
     ));
     // The default is the latest finished run, which here is the `check-dir` one.
     assert!(matches!(
-        digest(&store, None, Against::Previous),
+        digest(
+            &store,
+            None,
+            Against::Previous,
+            &crate::report::tests::registry()
+        ),
         Err(Error::NotCrawl(RunId(2)))
     ));
 }
@@ -822,7 +895,13 @@ fn the_default_names_a_later_unfinished_run() {
         .connection()
         .execute("DELETE FROM runs WHERE run_id = 2", [])
         .unwrap();
-    let d = digest(&store, None, Against::Previous).unwrap();
+    let d = digest(
+        &store,
+        None,
+        Against::Previous,
+        &crate::report::tests::registry(),
+    )
+    .unwrap();
     assert_eq!((d.run.id, d.later_unfinished), (RunId(1), Some(RunId(3))));
 }
 
@@ -840,7 +919,13 @@ fn a_run_with_no_pages_has_empty_sections() {
         )
         .unwrap();
     store.finish_run(id).unwrap();
-    let d = digest(&store, None, Against::Previous).unwrap();
+    let d = digest(
+        &store,
+        None,
+        Against::Previous,
+        &crate::report::tests::registry(),
+    )
+    .unwrap();
     assert_eq!((d.totals.pages, d.totals.links), (0, 0));
     assert!(d.pages.rows.is_empty() && d.by_repo.rows.is_empty());
     let json: Value = serde_json::from_str(&d.json()).unwrap();
@@ -869,9 +954,14 @@ fn the_json_is_valid_and_carries_its_version_and_context() {
 fn an_unfinished_runs_digest_has_no_finish() {
     let store = store();
     let json: Value = serde_json::from_str(
-        &digest(&store, Some(RunId(3)), Against::Previous)
-            .unwrap()
-            .json(),
+        &digest(
+            &store,
+            Some(RunId(3)),
+            Against::Previous,
+            &crate::report::tests::registry(),
+        )
+        .unwrap()
+        .json(),
     )
     .unwrap();
     assert_eq!(json["run"]["finished_at"], Value::Null);
@@ -932,12 +1022,18 @@ fn the_json_has_the_fields_the_manual_documents() {
     let store = compared_with_a_fix();
     store
         .connection()
-        .execute(
-            "INSERT INTO policy VALUES (1, NULL, 'schemes', 'matrix')",
-            [],
+        .execute_batch(
+            "INSERT INTO policy VALUES (1, NULL, 'schemes', 'matrix'), \
+             (1, NULL, 'digest.group_by', 'antora.component')",
         )
         .unwrap();
-    let compared = digest(&store, Some(RunId(1)), Against::Run(RunId(4))).unwrap();
+    let compared = digest(
+        &store,
+        Some(RunId(1)),
+        Against::Run(RunId(4)),
+        &crate::report::tests::registry(),
+    )
+    .unwrap();
     let json: Value = serde_json::from_str(&compared.json()).unwrap();
     same_shape(&documented, &json, "$");
 }
@@ -964,7 +1060,15 @@ fn a_run_judges_a_reason_unless_its_policy_turns_it_off_everywhere() {
 #[test]
 fn the_compared_run_is_judged_by_the_digests_policy() {
     let store = compared();
-    let digest = || digest(&store, Some(RunId(1)), Against::Run(RunId(4))).unwrap();
+    let digest = || {
+        digest(
+            &store,
+            Some(RunId(1)),
+            Against::Run(RunId(4)),
+            &crate::report::tests::registry(),
+        )
+        .unwrap()
+    };
     assert_eq!(digest().compared.as_ref().unwrap().totals.broken_url, 1);
     // Run 1 maps a 404 to `ok`; run 4, which recorded none, is read as run 1 is.
     store
@@ -1053,4 +1157,39 @@ fn a_trial_judges_the_digest_and_leaves_how_the_run_asked_as_it_recorded() {
         !rows.contains(&"default.timeout = 5".to_owned()),
         "{rows:?}"
     );
+}
+
+#[test]
+fn the_sitemap_note_is_what_the_profiles_of_the_crawled_pages_say() {
+    let note = "Antora writes a sitemap";
+    let store = store();
+    // The pages were read by `generic`, which says nothing of a sitemap.
+    let d = of(&store);
+    assert!(d.sitemap_notes.is_empty());
+    assert!(!d.html().contains(note));
+    // A page `antora` read brings its note, once however many pages.
+    store
+        .connection()
+        .execute(
+            "UPDATE pages SET profile = 'antora' WHERE url_id IN (1, 2)",
+            [],
+        )
+        .unwrap();
+    let d = of(&store);
+    assert_eq!(d.sitemap_notes.len(), 1);
+    assert!(d.sitemap_notes[0].starts_with(note));
+    assert!(d.html().contains(&format!("<p>{}", d.sitemap_notes[0])));
+    // A page that is not crawled (an allowlisted one) is no page of the site.
+    store
+        .connection()
+        .execute(
+            "UPDATE pages SET profile = 'generic' WHERE url_id IN (1, 2)",
+            [],
+        )
+        .unwrap();
+    store
+        .connection()
+        .execute("UPDATE pages SET profile = 'antora' WHERE url_id = 6", [])
+        .unwrap();
+    assert!(of(&store).sitemap_notes.is_empty());
 }

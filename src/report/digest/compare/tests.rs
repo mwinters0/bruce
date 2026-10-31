@@ -21,7 +21,13 @@ fn a_digest_is_compared_with_the_finished_crawl_run_before_it() {
     assert_eq!(super::previous(conn, RunId(4)).unwrap(), Some(RunId(1)));
     assert_eq!(super::previous(conn, RunId(3)).unwrap(), Some(RunId(1)));
     assert_eq!(super::previous(conn, RunId(1)).unwrap(), None);
-    let d = digest(&store, Some(RunId(3)), Against::Previous).unwrap();
+    let d = digest(
+        &store,
+        Some(RunId(3)),
+        Against::Previous,
+        &crate::report::tests::registry(),
+    )
+    .unwrap();
     assert_eq!(d.compared.unwrap().run.id, RunId(1));
 }
 
@@ -43,7 +49,13 @@ fn a_run_shares_its_day_with_another_crawl_run_started_that_day() {
     assert!(!super::shares_day(conn, RunId(4)).unwrap());
     add(6, "crawl");
     assert!(super::shares_day(conn, RunId(4)).unwrap());
-    let d = digest(&store, Some(RunId(1)), Against::Run(RunId(4))).unwrap();
+    let d = digest(
+        &store,
+        Some(RunId(1)),
+        Against::Run(RunId(4)),
+        &crate::report::tests::registry(),
+    )
+    .unwrap();
     assert!(d.compared.unwrap().shares_day);
 }
 
@@ -56,7 +68,13 @@ fn a_digest_with_nothing_to_compare_with_says_so() {
 #[test]
 fn a_named_run_is_compared_with_its_figures_and_the_anchors_it_lost() {
     let store = compared();
-    let d = digest(&store, Some(RunId(1)), Against::Run(RunId(4))).unwrap();
+    let d = digest(
+        &store,
+        Some(RunId(1)),
+        Against::Run(RunId(4)),
+        &crate::report::tests::registry(),
+    )
+    .unwrap();
     let c = d.compared.as_ref().unwrap();
     assert_eq!((c.run.id, c.file), (RunId(4), false));
     assert_eq!(
@@ -82,11 +100,21 @@ fn a_named_run_is_compared_with_its_figures_and_the_anchors_it_lost() {
 fn a_run_that_is_not_a_crawl_or_not_there_is_refused() {
     let store = compared();
     assert!(matches!(
-        digest(&store, Some(RunId(1)), Against::Run(RunId(2))),
+        digest(
+            &store,
+            Some(RunId(1)),
+            Against::Run(RunId(2)),
+            &crate::report::tests::registry()
+        ),
         Err(Error::NotCrawl(RunId(2)))
     ));
     assert!(matches!(
-        digest(&store, Some(RunId(1)), Against::Run(RunId(9))),
+        digest(
+            &store,
+            Some(RunId(1)),
+            Against::Run(RunId(9)),
+            &crate::report::tests::registry()
+        ),
         Err(Error::NoSuchRun(RunId(9)))
     ));
 }
@@ -106,7 +134,13 @@ fn a_baseline_file_is_imported_for_the_digest_and_removed_after() {
     let (_dir, out) = exported();
     let store = store();
     let before = runs(&store);
-    let d = digest(&store, Some(RunId(1)), Against::File(&out)).unwrap();
+    let d = digest(
+        &store,
+        Some(RunId(1)),
+        Against::File(&out),
+        &crate::report::tests::registry(),
+    )
+    .unwrap();
     let c = d.compared.as_ref().unwrap();
     assert!(c.file);
     assert_eq!(c.totals.pages, 2);
@@ -127,7 +161,13 @@ fn a_baseline_the_database_already_holds_is_left_there() {
         .export_baseline(Some(RunId(4)), &out, &registry())
         .unwrap();
     let before = runs(&store);
-    let d = digest(&store, Some(RunId(1)), Against::File(&out)).unwrap();
+    let d = digest(
+        &store,
+        Some(RunId(1)),
+        Against::File(&out),
+        &crate::report::tests::registry(),
+    )
+    .unwrap();
     assert!(d.compared.unwrap().file);
     assert_eq!(runs(&store), before);
     assert_eq!(
@@ -148,7 +188,12 @@ fn a_file_that_is_no_baseline_is_refused_and_the_database_left_alone() {
     let store = store();
     let before = runs(&store);
     assert!(matches!(
-        digest(&store, Some(RunId(1)), Against::File(&junk)),
+        digest(
+            &store,
+            Some(RunId(1)),
+            Against::File(&junk),
+            &crate::report::tests::registry()
+        ),
         Err(Error::Baseline(_))
     ));
     assert_eq!(runs(&store), before);
@@ -156,7 +201,13 @@ fn a_file_that_is_no_baseline_is_refused_and_the_database_left_alone() {
 
 #[test]
 fn the_json_holds_the_run_compared_with() {
-    let d = digest(&compared(), Some(RunId(1)), Against::Run(RunId(4))).unwrap();
+    let d = digest(
+        &compared(),
+        Some(RunId(1)),
+        Against::Run(RunId(4)),
+        &crate::report::tests::registry(),
+    )
+    .unwrap();
     let json: Value = serde_json::from_str(&d.json()).unwrap();
     let with = &json["compared_with"];
     assert_eq!(with["id"], 4);

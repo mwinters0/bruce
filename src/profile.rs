@@ -57,8 +57,19 @@ pub trait Profile: Send + Sync {
     ) -> Result<Option<Url>, BoxError>;
 
     /// Views: the SQL views pivoting this profile's `page_facts` keys into
-    /// columns (D37), created when a database is opened.
+    /// columns (D37), created when a database is opened. A view named
+    /// `<profile>_hints` is the profile's hint for an unresolved xref: a row for
+    /// each `(run_id, src_url_id, xref_refspec)` it can help, with a `hint`
+    /// (D65), which `link_hints` offers the reports (D87).
     fn views(&self) -> &'static [View];
+
+    /// What the generator's sitemap guarantees, for the digest to say above the
+    /// sitemap entries no page was fetched for: a sentence, where this
+    /// profile's generator writes one the entries can be read by. `generic`
+    /// knows no generator and has none (D87).
+    fn sitemap_note(&self) -> Option<&'static str> {
+        None
+    }
 }
 
 /// One SQL view a profile ships. `name` begins with the profile's name and an
