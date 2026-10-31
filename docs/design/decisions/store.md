@@ -32,7 +32,7 @@ computed at each read, so a stopped run needs no second path and no stored colum
 the gate (D9) read the same join, but for the reads KD23 names. One writer owns the store, DuckDB allowing one writing
 process per file (`store::writer`). Rejected: checking fragments in memory as pages arrive; a table written at a run's
 end. Reopens: a read slow enough to materialise (0.2 s warm over 587,839 links, run 1 of
-`runs/p4.10-en-us-20261019-2125/combined.duckdb`, a schema `bruce` now refuses). Code: `store::views`. Evidence:
+2026-10-19's combined en-US database, no longer kept). Code: `store::views`. Evidence:
 `store::views::tests`.
 
 ### D51 A target records where its answer came from, in a column the writer fills and no view reads

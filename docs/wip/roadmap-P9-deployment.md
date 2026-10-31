@@ -59,7 +59,7 @@ Settled 2026-10-21. **Where a build's `index.html` at the prefix is a
 meta refresh, the gate treats the prefix as not built**, so a built page's
 home link is answered from the baseline (D22's "under the prefix and not
 built") and is not an introduced `redirected` row. Today 236 of quick-docs's
-239 redirected rows are that link (`runs/p5.12-quick-docs/published.json`),
+239 redirected rows are that link (a quick-docs CI run, no longer kept),
 burying a real one. This amends D22 for that one file; the slice that lands
 it writes the amendment. Rejected: the guide telling a repo to expect the
 rows; a report filter dropping redirected rows to the prefix, which hides the
@@ -165,7 +165,7 @@ Settled 2026-10-21. **The guide gives one script that both schedules run**:
 `crawl`, then `export-baseline --force` and gzip, then the binary,
 `bruce.toml` and `baseline.duckdb.gz` staged in a publish directory, then
 `prune --keep 30` (about 1 GB of en-US runs at 33 MB each,
-`runs/p5.2-en-us-20261020/en-us.duckdb`). A crawl exiting non-zero stops it
+2026-10-20's crawl). A crawl exiting non-zero stops it
 before anything is published. One sequence is what keeps `prune` off a DB a
 crawl holds (`../manual/prune.md`, "Not beside a crawl"). Moving the
 directory to a web server is the deployer's, left out. **The guide schedules
@@ -246,7 +246,7 @@ Found 2026-10-21, for the decisions above.
   locale's pages are in a sitemap: every locale's `sitemap.xml` repeats
   en-US's index (I1), so a locale root is found by links alone.
 - **An en-US crawl is about 3,200 docs.fp.o requests and 4,100 to the
-  forge.** `runs/p5.2-en-us-20261020/en-us.duckdb`: 3,186 docs.fp.o and
+  forge.** 2026-10-20's crawl: 3,186 docs.fp.o and
   4,123 forge targets `ok`, and 154,581 docs.fp.o targets `unchecked`, the
   language menu's links into other locales. So every locale at one request a
   second is about 69 × 3,200 ≈ 220,000 docs.fp.o requests,

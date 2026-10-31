@@ -107,7 +107,7 @@ impl Held {
         // playbook sets no `urls.latest_version_segment`, as docs.fp.o's CI
         // playbooks do not) holds no `latest` segment, so a link written
         // under production's `latest` (113 absolute hrefs on 112 `fedora`
-        // pages, `runs/p5.2-en-us-20261020/en-us.duckdb`) is the baseline's:
+        // pages of an en-US crawl) is the baseline's:
         // where the change deleted its page it passes on production's `ok`,
         // and where the change adds it, production lacks it and it fails the
         // gate as introduced though the build has it. Nothing in the build
