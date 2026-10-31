@@ -43,6 +43,6 @@ Allocated so far: M1–M30. <!-- out-of-band-watermark: M30 -->
 | M25 | 2026-10-31 | The digest's words under a severity map: a count part moved off its outcome's level names its reasons, the legend's *none* line and the manual stop saying the figures leave such a kind out, a list the map empties says so | | [2026-10-31](../status/history/2026-10-31.md) |
 | M26 | 2026-10-31 | A digest's comparison judges both runs by the newer run's policy when `--from` names a later run (KD24) | | [2026-10-31](../status/history/2026-10-31.md) |
 | M27 | 2026-10-31 | Under `--externals=skip` a redirect's hop onto a URL on a root's host outside every scope asks nothing (KD25) | | [2026-10-31](../status/history/2026-10-31.md) |
-| M28 | | `[severity]` names `invalid_url` (KD26) | P9 | [2026-10-31](../status/history/2026-10-31.md) |
+| M28 | 2026-10-31 | `[severity]` names `invalid_url` (KD26) | | [2026-10-31](../status/history/2026-10-31.md) |
 | M29 | | The page and message texts the P7 wrap's repoint found false: an empty baseline's refusal, the compared run's source columns, the digest's footer on the JSON | P9 | [2026-10-31](../status/history/2026-10-31.md) |
 | M30 | | A digest is judged by its own run's policy whatever `--from` names, as `report diff` is by `--to`, and D81 says a comparison is judged by the run it reports on (KD28) | P9 | [2026-10-31](../status/history/2026-10-31.md) |

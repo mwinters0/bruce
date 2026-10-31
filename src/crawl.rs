@@ -948,7 +948,7 @@ where
                 id,
                 raw,
                 Outcome::BrokenUrl,
-                "invalid_url",
+                frontier::INVALID_URL,
             ))?;
         }
         Ok(id)

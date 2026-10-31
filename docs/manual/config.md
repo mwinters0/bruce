@@ -360,7 +360,8 @@ pedantic_trailing_slash = "none"
 A reason not listed has no level of its own and takes its outcome's: `nxdomain`,
 `timeout`, `tls`, `connect`, `reset`, `other`, `redirect_loop`,
 `too_many_redirects`, `bad_redirect`, `too_large`, `unresolved_xref`,
-`bad_scheme`, `doubled_slash` and `wrong_trailing_slash`.
+`bad_scheme`, `invalid_url` (an href that resolves to no URL), `doubled_slash` and
+`wrong_trailing_slash`.
 
 ## Digest
 

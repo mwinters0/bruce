@@ -63,10 +63,7 @@ pub const REDIRECTED: &str = "redirected";
 /// `pedantic_trailing_slash` on an `ok` one), which a severity may be set for. The test
 /// `crawl::outcome::tests::every_reason_the_crawl_writes_takes_a_severity`
 /// holds it to what the crawl and the views write.
-// deficiency: KD26 `invalid_url`, which `Crawl::invalid` writes on a
-// `broken_url` target, is not here and not in that test's list, so a key
-// naming it is refused at load. Adding it to both would close it.
-pub const REASONS: [&str; 15] = [
+pub const REASONS: [&str; 16] = [
     "nxdomain",
     "timeout",
     "tls",
@@ -82,6 +79,7 @@ pub const REASONS: [&str; 15] = [
     "doubled_slash",
     "wrong_trailing_slash",
     "pedantic_trailing_slash",
+    "invalid_url",
 ];
 
 /// The severity of each kind a site has set or left at D76's default.

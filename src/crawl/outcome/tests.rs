@@ -95,6 +95,7 @@ fn every_reason_the_crawl_writes_takes_a_severity() {
         answered(200, &Body::TooLarge, false).1.unwrap(),
         answered(404, &Body::Unread, true).1.unwrap(),
         crate::crawl::frontier::BAD_SCHEME,
+        crate::crawl::frontier::INVALID_URL,
         "unresolved_xref",
         DOUBLED_SLASH,
         PEDANTIC_TRAILING_SLASH,
@@ -102,5 +103,5 @@ fn every_reason_the_crawl_writes_takes_a_severity() {
     for reason in written {
         assert!(SEVERITY_REASONS.contains(&reason), "{reason}");
     }
-    assert_eq!(SEVERITY_REASONS.len(), 15);
+    assert_eq!(SEVERITY_REASONS.len(), 16);
 }

@@ -49,6 +49,9 @@ pub const SCHEME: &str = "scheme";
 /// follow, which is `broken_url` (D66).
 pub const BAD_SCHEME: &str = "bad_scheme";
 
+/// The reason of an href that resolves to no URL, which is `broken_url` (D26).
+pub const INVALID_URL: &str = "invalid_url";
+
 /// What a run does about a URL.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Plan {
