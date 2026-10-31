@@ -252,3 +252,14 @@ fn a_selector_that_cannot_be_built_is_refused_by_name() {
     let e = Declarative::new(&definition).err().unwrap();
     assert!(e.starts_with("region: \"p:has(a)\""), "{e}");
 }
+
+#[test]
+fn registries_built_from_one_definition_share_its_name_and_region() {
+    let build = || {
+        let definition = Config::parse(SPHINX).unwrap().policy.profiles.remove(0);
+        Declarative::new(&definition).unwrap()
+    };
+    let (first, second) = (build(), build());
+    assert!(std::ptr::eq(first.name(), second.name()));
+    assert!(std::ptr::eq(first.region, second.region));
+}

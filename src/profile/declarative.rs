@@ -2,10 +2,10 @@
 //! region, fact rules, an edit link and a generator pattern, and no
 //! resolution or views (D38), as `generic` has none.
 //!
-//! The name and region outlive the registry that holds them, as
-//! [`compiled`]'s selectors do, because [`Profile::name`] and the region are
-//! `'static` and a config's are known only at run time. Both are bounded by
-//! the definitions, never by pages.
+//! The name and region outlive the registry that holds them, because
+//! [`Profile::name`] and the region are `'static` and a config's are known
+//! only at run time; [`interned`] hands the same ones to every registry built
+//! from the same definition.
 //!
 //! A fact rule reads the first element that gives a value (D33): an attribute
 //! is kept as written, an empty one included, and an element without it gives
@@ -23,7 +23,8 @@ use regex::Regex;
 use url::Url;
 
 use super::{
-    BoxError, Extract, GENERIC_REGION, Lookup, Profile, Sink, View, compiled, element, text,
+    BoxError, Extract, GENERIC_REGION, Lookup, Profile, Sink, View, compiled, element, interned,
+    text,
 };
 use crate::config::{Definition, Fact};
 
@@ -70,12 +71,7 @@ impl Declarative {
             for selector in &definition.region {
                 compiled(selector).map_err(|e| format!("region: {selector:?}: {e}"))?;
             }
-            let leaked: Vec<&'static str> = definition
-                .region
-                .iter()
-                .map(|s| &*Box::leak(s.clone().into_boxed_str()))
-                .collect();
-            Box::leak(leaked.into_boxed_slice())
+            interned::list(&definition.region)
         };
         if let Some(selector) = &definition.edit_link {
             compiled(selector).map_err(|e| format!("edit_link: {selector:?}: {e}"))?;
@@ -86,7 +82,7 @@ impl Declarative {
             .map(Rule::new)
             .collect::<Result<_, _>>()?;
         Ok(Declarative {
-            name: Box::leak(definition.name.clone().into_boxed_str()),
+            name: interned::text(&definition.name),
             generator,
             region,
             edit_link: definition.edit_link.clone(),

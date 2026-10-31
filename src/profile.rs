@@ -8,6 +8,7 @@
 pub mod antora;
 pub mod declarative;
 pub mod generic;
+mod interned;
 mod selectors;
 
 use std::borrow::Cow;

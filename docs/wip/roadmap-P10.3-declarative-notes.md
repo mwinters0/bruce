@@ -28,9 +28,10 @@ extraction is what it was: the 30-page snapshots and the bench corpus pass untou
   reached up. `Definition::rows` returns pairs for the same reason (`Policy` makes the `Entry`s).
 - **File order needed `toml`'s `preserve_order`**: deserialising `[profile]` into a map
   sorted it, and the `Profiles` visitor only keeps the order the parser gives.
-- **`Profile::name` and the region stay `'static`**: `Declarative::new` leaks the name
-  and the region slice, as `selectors::compiled` leaks its selectors, so the trait and
-  every consumer of `Extract::region` are unchanged (10.2's notes expected a widening).
+- **`Profile::name` and the region stay `'static`**: `Declarative::new` takes the name
+  and the region slice from `profile::interned`, which leaks each distinct text once, as
+  `selectors::compiled` does its selectors, so the trait and every consumer of
+  `Extract::region` are unchanged (10.2's notes expected a widening).
 
 ## Behaviours a rule has, as tested
 

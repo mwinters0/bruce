@@ -43,4 +43,4 @@ Allocated so far: M1–M37. <!-- out-of-band-watermark: M37 -->
 | M34 | 2026-10-31 | `report introduced` and `report inverse` under `--top N` count every row, printing N (KD20) | | [2026-10-31](../status/history/2026-10-31.md) |
 | M35 | 2026-10-31 | The digest under a `none` map: "By: Link Target" and sections 3 and 4 say the map left them empty (KD32) | | [2026-10-31](../status/history/2026-10-31.md) |
 | M36 | 2026-10-31 | The digest's JSON marks a row new as a finding under the report's map beside `new`, and the HTML marks from it; amends D75 (KD33) | | [2026-10-31](../status/history/2026-10-31.md) |
-| M37 | | A declared profile's name and region interned through a process-wide cache, as `profile::selectors` caches selectors, not leaked per registry built | P10 | [2026-10-31](../status/history/2026-10-31.md) |
+| M37 | 2026-10-31 | A declared profile's name and region interned through a process-wide cache, as `profile::selectors` caches selectors, not leaked per registry built | | [2026-10-31](../status/history/2026-10-31.md) |
