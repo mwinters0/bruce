@@ -326,6 +326,7 @@ dependencies = [
  "lol_html",
  "percent-encoding",
  "quick-xml",
+ "regex",
  "reqwest",
  "rustls",
  "serde",

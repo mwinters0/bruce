@@ -62,7 +62,7 @@ remeasures it.
 ## Profiles
 [`decisions/profiles.md`](decisions/profiles.md)
 - **D32** Two extension layers: generator profiles in code, the deployment in config
-- **D33** Profiles are compiled in; declarative per-root rules come later, as their own phase
+- **D33** Profiles are compiled in, or declared in config as a `[profile.<name>]` table
 - **D35** A root's profile defaults to `auto`, which picks one per page by its generator meta
 - **D36** The page → source tie-back is core: an edit-link heuristic and forge URL shapes
 - **D17** Each page stores its source file and repo, read from its edit link

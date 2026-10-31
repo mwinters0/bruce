@@ -7,7 +7,7 @@ use std::cell::RefCell;
 
 use url::Url;
 
-use super::{BoxError, Extract, Lookup, Profile, Sink, View};
+use super::{BoxError, Extract, GENERIC_REGION, Lookup, Profile, Sink, View};
 
 /// The profile for a site the core reads without help.
 pub struct Generic;
@@ -22,7 +22,7 @@ impl Profile for Generic {
     }
 
     fn extract<'h>(&self, _sink: &'h RefCell<Sink>) -> Extract<'h> {
-        Extract::region(&["main", "[role=main]"])
+        Extract::region(GENERIC_REGION)
     }
 
     fn resolve(

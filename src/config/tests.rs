@@ -695,7 +695,15 @@ fn every_key_the_config_reads_is_in_the_manual_with_its_default() {
         .filter(|k| {
             !matches!(
                 **k,
-                "root" | "rate" | "default" | "host" | "judge" | "severity" | "gate" | "digest"
+                "root"
+                    | "rate"
+                    | "default"
+                    | "host"
+                    | "judge"
+                    | "severity"
+                    | "gate"
+                    | "digest"
+                    | "profile"
             )
         })
         .map(|k| k.to_string())
@@ -705,6 +713,17 @@ fn every_key_the_config_reads_is_in_the_manual_with_its_default() {
     read.extend(keys::<RawGate>().iter().map(|k| format!("gate.{k}")));
     read.extend(keys::<RawDigest>().iter().map(|k| format!("digest.{k}")));
     read.extend(keys::<RawRate>().iter().map(|k| format!("default.{k}")));
+    read.extend(
+        keys::<profile::RawProfile>()
+            .iter()
+            .filter(|k| **k != "fact")
+            .map(|k| format!("profile.<name>.{k}")),
+    );
+    read.extend(
+        keys::<profile::RawFact>()
+            .iter()
+            .map(|k| format!("profile.<name>.fact.{k}")),
+    );
     read.extend(
         keys::<RawHost>()
             .iter()

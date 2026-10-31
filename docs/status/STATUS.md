@@ -16,9 +16,9 @@ Red means a repoint is due ([`../process.md`](../process.md),
 
 The `bruce` crate is D39's top-level modules, a binary whose subcommands
 are `bruce crawl`, `bruce check-dir`, `bruce report`, `bruce prune` and `bruce export-baseline`, and Rust 1.99.1 pinned in `mise.toml`. Eleven modules hold
-code: `cli`, the command line, the five subcommands and the profile registry; `config`, the loader and the policy a run is judged by and asks with; `store`, the DuckDB schema, its version check, the
-`link_verdicts` view, the guard naming the run a comparison judges by, `link_hints`, the policy a run records and a trial one in its place, the deleting of old runs, the baseline export and import, the index of a baseline's targets and its pages' facts, the copy of a target's rows between runs, which the writer also runs on request, and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
-`generic` and `antora` profiles' Detect, Views, Extract and Resolve; `extract`, the pass over one page, which yields its
+code: `cli`, the command line, the five subcommands and the profile registry; `config`, the loader, the policy a run is judged by and asks with, and the declarative profiles a file defines; `store`, the DuckDB schema, its version check, the
+`link_verdicts` view, the guard naming the run a comparison judges by, `link_hints`, the policy a run records and a trial one in its place, the deleting of old runs, the baseline export and import, the index of a baseline's targets and its pages' facts, the copy of a target's rows between runs, which the writer also runs on request, and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry, the
+`generic` and `antora` profiles' Detect, Views, Extract and Resolve and the declarative profile a config's `[profile.<name>]` builds (region, generator pattern, fact rules, edit link); `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
 the profile's facts, the other locales its language menu names and the content hash with the scope it covered;
 `forge`, the edit-URL shape parse;
@@ -51,9 +51,10 @@ The spec is [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.m
   ([notes](../wip/roadmap-P10.1-evidence-notes.md)).
 - [x] **10.2** Selectors compiled once per run, with no change of behaviour
   ([notes](../wip/roadmap-P10.2-selectors-notes.md)).
-- [ ] **10.3** A standalone declarative profile: `[profile.<name>]`'s
+- [x] **10.3** A standalone declarative profile: `[profile.<name>]`'s
   `region`, `generator`, fact rules and `edit_link`, the registry, the
-  `policy` rows, checked on the Sphinx fixture.
+  `policy` rows, checked on the Sphinx fixture
+  ([notes](../wip/roadmap-P10.3-declarative-notes.md)).
 - [ ] **10.4** Source rules before `forge::parse`, and **strikes `KD1` and
   `KD2`**.
 - [ ] **10.5** `extends`, and a report's registry built from the run's
@@ -79,3 +80,25 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **A fact rule reads the first element that gives a value, and an attribute is
+  kept as written.** The spec says "the first matching element gives the fact";
+  this reads past an element lacking the attribute, matching no `pattern` or
+  holding no text, and records an empty attribute (`data-version=""`) as a
+  value, since Antora's own facts do. Why: the first match is often a decoration
+  (an empty element, a tag without the attribute) and the one the site means is
+  the next. Reconsidering to the literal reading changes the three readers in
+  `Declarative::extract`, and a rule would then need `[attr]` in its selector.
+- **A run records every profile its config defines, not only those it
+  extracted by.** The spec says "each declarative profile it extracted by". At
+  `begin_run` the pages are not yet read, and a defined profile can claim any
+  page under `auto`, so the whole set is the comparable record. Reconsidering
+  changes `Policy::profiles` to a set the writer fills at the end of the run,
+  and the rows then differ between two runs of one config that met different
+  pages.
+- **`regex` is a direct dependency and `toml` has `preserve_order`.** Both were
+  already in the tree (`texting_robots`, `indexmap`); the spec names regexes,
+  and `[profile.<name>]`'s file order is a spec rule (`auto` tries them in
+  turn). Reconsidering means a hand-written matcher, or a profile list as an
+  array of tables (`[[profile]]` with a `name`), which keeps order without the
+  feature.

@@ -1,5 +1,5 @@
 //! Subcommands (D27), one child module each: `check_dir`, `crawl`, `export_baseline`, `prune` and `report`; `file`, the baseline file two of them read; and `db` and `interrupt`, which they share. The only module that names a
-//! concrete profile, to build the registry (D39).
+//! concrete profile, to build the registry (D39), in its `registry` child.
 
 mod check_dir;
 /// Public so `examples/sim_config.rs` loads a config exactly as `crawl` does.
@@ -9,6 +9,7 @@ mod export_baseline;
 mod file;
 mod interrupt;
 mod prune;
+mod registry;
 mod report;
 
 use std::ffi::OsString;
@@ -16,17 +17,10 @@ use std::process::ExitCode;
 
 use clap::Command;
 
-use crate::profile::Registry;
-use crate::profile::antora::Antora;
-use crate::profile::generic::Generic;
+pub use registry::{registry, registry_for};
 
 /// The exit status of a command line `clap` refuses, as its own `exit` uses.
 const USAGE: u8 = 2;
-
-/// The profiles compiled in, `generic` the fallback (D35).
-pub fn registry() -> Registry {
-    Registry::new(Box::new(Generic)).with(Box::new(Antora))
-}
 
 /// Runs the process's command line.
 pub fn run() -> ExitCode {
@@ -44,8 +38,8 @@ where
         Err(e) => return refuse(&e),
     };
     match matches.subcommand() {
-        Some(("check-dir", m)) => check_dir::run(&check_dir::Args::from(m), registry()),
-        Some(("crawl", m)) => crawl::run(&crawl::Args::from(m), registry()),
+        Some(("check-dir", m)) => check_dir::run(&check_dir::Args::from(m)),
+        Some(("crawl", m)) => crawl::run(&crawl::Args::from(m)),
         Some(("export-baseline", m)) => {
             export_baseline::run(&export_baseline::Args::from(m), registry())
         }

@@ -70,10 +70,9 @@ pub fn command() -> Command {
         )
 }
 
-/// Runs `args` with the profiles `registry` holds, reporting to stdout and
-/// stderr.
-pub fn run(args: &Args, registry: Registry) -> ExitCode {
-    match crawl(args, registry) {
+/// Runs `args`, reporting to stdout and stderr.
+pub fn run(args: &Args) -> ExitCode {
+    match crawl(args) {
         Ok((run, Some(summary), pressed)) => {
             println!("{}", report(run, &summary));
             if summary.stopped {
@@ -98,8 +97,8 @@ pub fn run(args: &Args, registry: Registry) -> ExitCode {
 
 /// Crawls and writes one run, finishing it unless it was stopped. No summary
 /// means the second signal abandoned the crawl.
-fn crawl(args: &Args, registry: Registry) -> Result<(RunId, Option<Summary>, Pressed), String> {
-    let (config, hash) = configure(args, &registry)?;
+fn crawl(args: &Args) -> Result<(RunId, Option<Summary>, Pressed), String> {
+    let (config, registry, hash) = configure(args)?;
     let db = db::path(args.db.as_deref());
     let in_db = |e: crate::store::Error| format!("{}: {e}", db.display());
     let store = db::open(db, &registry).map_err(in_db)?;
@@ -138,10 +137,10 @@ fn crawl(args: &Args, registry: Registry) -> Result<(RunId, Option<Summary>, Pre
     Ok((run, Some(summary), pressed))
 }
 
-/// The run's configuration, and the `runs.config_hash` that names it: the
-/// `xxh3_64` of the file's text and the URL given, so it changes with any
-/// edit to either.
-pub fn configure(args: &Args, registry: &Registry) -> Result<(Config, String), String> {
+/// The run's configuration, the profiles it extracts by (the compiled ones and
+/// the file's) and the `runs.config_hash` that names it: the `xxh3_64` of the
+/// file's text and the URL given, so it changes with any edit to either.
+pub fn configure(args: &Args) -> Result<(Config, Registry, String), String> {
     let (mut config, text) = match &args.config {
         Some(path) => {
             let text =
@@ -183,6 +182,10 @@ pub fn configure(args: &Args, registry: &Registry) -> Result<(Config, String), S
             path.display()
         ));
     }
+    let registry = super::registry::registry_for(&config.policy.profiles).map_err(|e| {
+        let path = args.config.as_deref().unwrap_or(Path::new(""));
+        format!("{}: {e}", path.display())
+    })?;
     for (i, root) in config.roots.iter().enumerate() {
         if let ProfileChoice::Named(name) = &root.profile
             && registry.get(name).is_none()
@@ -197,7 +200,7 @@ pub fn configure(args: &Args, registry: &Registry) -> Result<(Config, String), S
     let mut hashed = text.into_bytes();
     hashed.push(0);
     hashed.extend(args.url.as_deref().unwrap_or("").as_bytes());
-    Ok((config, format!("{:016x}", xxh3_64(&hashed))))
+    Ok((config, registry, format!("{:016x}", xxh3_64(&hashed))))
 }
 
 /// The line a run ends with.

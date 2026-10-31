@@ -32,7 +32,6 @@ use crate::fetch::http::host::Hosts;
 use crate::fetch::http::{HttpFetcher, Settings};
 use crate::fetch::local::LocalFetcher;
 use crate::fetch::routed::Routed;
-use crate::profile::Registry;
 use crate::report::{Format, Gate, InverseMode, Report, Request};
 use crate::store::{Mode, RunId, RunRoot, Writer};
 
@@ -163,9 +162,9 @@ pub fn command() -> Command {
         )
 }
 
-/// Runs `args` with the profiles `registry` holds.
-pub fn run(args: &Args, registry: Registry) -> ExitCode {
-    match check(args, registry) {
+/// Runs `args`.
+pub fn run(args: &Args) -> ExitCode {
+    match check(args) {
         Ok(Checked::Judged(run, summary, gate)) => {
             let line = format!(
                 "run {}: {} targets, {} pages",
@@ -210,14 +209,14 @@ enum Checked {
 
 /// Checks and writes one run of the build, and judges it against its
 /// baseline unless a signal came first.
-fn check(args: &Args, registry: Registry) -> Result<Checked, String> {
+fn check(args: &Args) -> Result<Checked, String> {
     // With no file the prefix is the root, and a file names its own.
     let given = crawl::Args {
         url: args.config.is_none().then(|| args.prefix.clone()),
         config: args.config.clone(),
         db: None,
     };
-    let (config, hash) = crawl::configure(&given, &registry)?;
+    let (config, registry, hash) = crawl::configure(&given)?;
     let build = Build::scan(&args.dir, &args.prefix, &config).map_err(|e| e.to_string())?;
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()

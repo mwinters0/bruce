@@ -10,6 +10,12 @@ pub struct Entry {
 }
 
 impl Entry {
+    /// Whether the row is part of a declarative profile's definition (D78),
+    /// which a run extracted by and no report judges by.
+    pub fn is_profile(&self) -> bool {
+        self.host.is_none() && self.key.starts_with("profile.")
+    }
+
     /// The setting as a file writes it, for a person to read: its dotted
     /// path, then `=` and the value, `+=` for an element of `judge.schemes`.
     pub fn written_as(&self) -> String {
@@ -35,6 +41,10 @@ impl Entry {
             (None, key @ ("pedantic_trailing_slash" | "doubled_slash_reach")) => {
                 (format!("judge.{key}"), "=")
             }
+            (None, key) if key.starts_with("profile.") => (
+                key.to_owned(),
+                if key.ends_with(".region") { "+=" } else { "=" },
+            ),
             (None, key)
                 if key.starts_with("severity.")
                     || matches!(key, "max_body_mib" | "digest.group_by") =>

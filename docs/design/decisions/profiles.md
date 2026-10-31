@@ -13,16 +13,21 @@ only, owned outside this repo (D41). Forge edit-URL shapes are core, as every ge
 `--fact antora.component=…` reads `page_facts` (D37). Reopens: a deployment quirk that config and profile settings
 cannot express.
 
-### D33 Profiles are compiled in; declarative per-root rules come later, as their own phase
-A profile is a module behind a trait, so a new generator is a PR. Its facts are key/value strings, so a TOML rule
-(selector and attribute, region selector, URL regex) can write the same facts later with no schema change; resolution
-stays code. Rejected: WASM or out-of-process plugins, an ABI, sandbox and versioning burden for no second user.
+### D33 Profiles are compiled in, or declared in config as a `[profile.<name>]` table
+A compiled profile is a module behind a trait, so a new generator is a PR. A declarative one is that trait built from
+config: a content region, a `generator` pattern, fact rules (a selector, an attribute or the text, a regex whose one
+capture is the value) and an edit-link selector, writing the same key/value facts (D37). Resolve and Views stay empty
+and resolution stays code. Rejected: WASM or out-of-process plugins, an ABI, sandbox and versioning burden for no second
+user; rules per root, a profile being what D35 chooses by. Code: `config::profile`, `profile::declarative`. Evidence:
+`profile::declarative::tests`.
 
 ### D35 A root's profile defaults to `auto`, which picks one per page by its generator meta
-`profile = "auto" | "generic" | "antora"` per root. Under `auto` the page's `<meta name="generator">`, read by a
-pre-pass before anything a profile extracts, picks the profile, else `generic` (Docsy and Sphinx emit none, I12);
-`pages.profile` keeps the choice. Rejected: deciding once per root, which mislabels a root spanning generators; config
-only, which makes every Antora user opt in. Code: `profile::Registry::choose`, `extract::generator`.
+`profile = "auto" | "generic" | "antora" | <a declared name>` per root. Under `auto` the page's
+`<meta name="generator">`, read by a pre-pass before anything a profile extracts, picks the profile, else `generic`
+(Docsy and Sphinx emit none, I12); a declared profile's `generator` regex claims it, the file's profiles tried in file
+order before the compiled ones. `pages.profile` keeps the choice. Rejected: deciding once per root, which mislabels a
+root spanning generators; config only, which makes every Antora user opt in. Code: `profile::Registry::choose`,
+`extract::generator`, `cli::registry_for`.
 
 ### D36 The page → source tie-back is core: an edit-link heuristic and forge URL shapes
 Every generator's edit link points at a forge, so any site gets page → file with no config. A link earning no tier

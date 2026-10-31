@@ -19,8 +19,8 @@ fn main() -> ExitCode {
         config: Some(PathBuf::from(path)),
         ..Args::default()
     };
-    match configure(&args, &bruce::cli::registry()) {
-        Ok((config, _)) => {
+    match configure(&args) {
+        Ok((config, _, _)) => {
             println!(
                 "{} root(s), {} allowlisted host(s) or domain(s), {} skip glob(s)",
                 config.roots.len(),

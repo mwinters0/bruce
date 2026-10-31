@@ -22,7 +22,8 @@ page. Code: `extract::anchors`, `store::views` (`link_verdicts`).
 Antora's region is `<article class="doc">` (I8); `generic` takes `<main>` or `[role=main]` and records `unknown` on a
 page with neither, so a heuristic guess never poses as a fact and the chrome report says only what it knows. Rejected:
 everything `content` when no landmark exists; `hash_root` setting the region too, a root of `html` putting every chrome
-id in `content` (D15); a per-root region, which is D33's rules. Code: `extract::anchors`, `Profile::extract`'s region.
+id in `content` (D15); a per-root region, a declared profile's `region` (D33) being the remedy. Code: `extract::anchors`,
+`Profile::extract`'s region.
 
 ### D15 Pages store metadata, a content hash and their profile's facts; bodies only on request
 The hash detects change, validators being unreliable (I3): xxh3-128, no adversary calling for BLAKE3, over what

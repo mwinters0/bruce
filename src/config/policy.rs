@@ -13,6 +13,8 @@ use std::collections::BTreeMap;
 
 use serde::Deserialize;
 
+use super::profile::Definition;
+
 pub(in crate::config) use self::asking::RawAsking;
 pub use self::asking::{Asking, HostAsking, KEYS as ASKING_KEYS, backoff};
 pub(in crate::config) use self::digest::RawDigest;
@@ -149,6 +151,10 @@ pub struct Policy {
     pub hosts: BTreeMap<String, HostJudging>,
     /// How the run asks, which no report judges by (D85).
     pub asking: Asking,
+    /// The declarative profiles a file defines, in its order. A run extracts
+    /// by them, so it records them with the judging settings and no report
+    /// judges by them (D78).
+    pub profiles: Vec<Definition>,
 }
 
 /// The settings one host sets for itself, beside its politeness (D8).
@@ -177,6 +183,7 @@ impl Default for Policy {
             group_by: None,
             hosts: BTreeMap::new(),
             asking: Asking::default(),
+            profiles: Vec::new(),
         }
     }
 }
@@ -207,6 +214,16 @@ impl Policy {
         rows.push(run("gate.fail", FailOn::row(&self.gate_fail)));
         rows.push(run(digest::KEY, self.group_by.clone().unwrap_or_default()));
         rows.extend(self.asking.entries());
+        rows.extend(
+            self.profiles
+                .iter()
+                .flat_map(Definition::rows)
+                .map(|(key, value)| Entry {
+                    host: None,
+                    key,
+                    value,
+                }),
+        );
         for (host, h) in &self.hosts {
             if let Some(on) = h.doubled_slash {
                 rows.push(Entry {
@@ -260,6 +277,14 @@ impl Policy {
         policy.hosts = hosts;
         policy.asking = asking;
         Ok(policy)
+    }
+}
+
+impl Entry {
+    /// Whether a report judges by the row: it is neither a setting for asking
+    /// nor a profile's definition, both of which stay as the run recorded them.
+    pub fn is_judged(&self) -> bool {
+        !self.is_asking() && !self.is_profile()
     }
 }
 

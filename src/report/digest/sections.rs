@@ -116,14 +116,17 @@ pub(super) fn judged(conn: &Connection, run: RunId) -> Result<Judged, Error> {
 }
 
 /// The rows of the run's recorded policy (D78), the run-wide ones first: the
-/// judging rows as in force (D84), and the asking rows as the run recorded
-/// them, which a trial cannot change (D85).
+/// judging rows as in force (D84), and the asking rows (D85) and the
+/// profiles' (`profile.`) as the run recorded them, which a trial cannot
+/// change.
 pub(super) fn policy(conn: &Connection, run: RunId) -> Result<Vec<Entry>, Error> {
     let asking = ASKING_KEYS.map(|k| format!("'{k}'")).join(", ");
     let mut stmt = conn.prepare(&format!(
         "SELECT host, key, value FROM (\
          SELECT host, key, value FROM policy_in_force WHERE run_id = $1 AND key NOT IN ({asking}) \
-         UNION ALL SELECT host, key, value FROM policy WHERE run_id = $1 AND key IN ({asking})) \
+         AND key NOT LIKE 'profile.%' \
+         UNION ALL SELECT host, key, value FROM policy WHERE run_id = $1 \
+         AND (key IN ({asking}) OR key LIKE 'profile.%')) \
          ORDER BY host NULLS FIRST, key, value"
     ))?;
     let rows = stmt.query_map([run.0], |row| {

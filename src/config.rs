@@ -22,14 +22,18 @@ use url::{Host, Url};
 use crate::url::{Canonical, canonical};
 
 mod policy;
+mod profile;
+mod selector;
 
 use policy::{RawAsking, RawDigest, RawGate, RawJudge, RawJudging};
+use selector::selectors;
 
 pub use policy::{
     ASKING_KEYS, Answer, Asking, DEFAULT_FAIL, Entry, FailOn, HostAsking, HostJudging, Outcome,
     Policy, Reach, Reason, Severity, SeverityMap, WORKING_SCHEMES, backoff, expand_reasons,
     group_by_from_row,
 };
+pub use profile::{AUTO_PROFILE, Definition, Fact};
 
 /// Requests a second to one host that no `Crawl-delay`, `[host]` or
 /// `[default]` governs (D40).
@@ -42,9 +46,6 @@ pub const DEFAULT_CONCURRENCY: u32 = 4;
 
 /// Sent as `User-Agent` unless the file names one (D40).
 pub const DEFAULT_USER_AGENT: &str = concat!("bruce/", env!("CARGO_PKG_VERSION"));
-
-/// The profile value that picks one per page by its generator meta (D35).
-pub const AUTO_PROFILE: &str = "auto";
 
 /// A validated configuration: what a file said, every key it left out at its
 /// default.
@@ -296,6 +297,10 @@ impl Config {
             asking,
         )
         .map_err(invalid)?;
+        let policy = Policy {
+            profiles: raw.profile.validate().map_err(invalid)?,
+            ..policy
+        };
         let config = Config {
             roots,
             allowlist,
@@ -632,54 +637,6 @@ impl Patterns {
     }
 }
 
-/// Each selector of `list` on its own, a string holding a selector list
-/// split at its commas, and each checked against what `lol_html` parses:
-/// a combinator or pseudo-class it does not stream (`+`, `~`, `:has`) is
-/// refused with its reason (D33).
-fn selectors(list: &[String]) -> Result<Vec<String>, String> {
-    let mut out = Vec::new();
-    for written in list {
-        for part in split_list(written) {
-            let part = part.trim();
-            if part.is_empty() {
-                return Err(format!("{written:?} holds an empty selector"));
-            }
-            part.parse::<lol_html::Selector>()
-                .map_err(|e| format!("{part:?}: {e}"))?;
-            out.push(part.to_owned());
-        }
-    }
-    Ok(out)
-}
-
-/// `s` split at each comma outside quotes, brackets and parentheses, a
-/// backslash escaping the character after it.
-fn split_list(s: &str) -> Vec<&str> {
-    let mut parts = Vec::new();
-    let (mut depth, mut quote, mut escaped, mut start) = (0u32, None, false, 0);
-    for (i, c) in s.char_indices() {
-        if escaped {
-            escaped = false;
-            continue;
-        }
-        match (c, quote) {
-            ('\\', _) => escaped = true,
-            (q, Some(open)) if q == open => quote = None,
-            (_, Some(_)) => {}
-            ('"' | '\'', None) => quote = Some(c),
-            ('[' | '(', None) => depth += 1,
-            (']' | ')', None) => depth = depth.saturating_sub(1),
-            (',', None) if depth == 0 => {
-                parts.push(&s[start..i]);
-                start = i + 1;
-            }
-            _ => {}
-        }
-    }
-    parts.push(&s[start..]);
-    parts
-}
-
 fn http_url(s: &str) -> Result<Url, String> {
     let url = Url::parse(s).map_err(|e| format!("{s}: {e}"))?;
     match url.scheme() {
@@ -770,6 +727,8 @@ struct RawConfig {
     user_agent: Option<String>,
     #[serde(default)]
     host: BTreeMap<String, RawHost>,
+    #[serde(default)]
+    profile: profile::Profiles,
 }
 
 #[derive(Deserialize, Default)]

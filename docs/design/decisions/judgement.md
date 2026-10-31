@@ -80,12 +80,12 @@ mattering on a larger site. Code: `store::views::link_verdicts_with`. Evidence: 
 `runs/p7.3-verdicts/` (reports byte-identical).
 
 ### D78 A run records the policy it was judged by, whole, as rows of a `policy` table
-`policy(run_id, host, key, value)`, `host` NULL for the run-wide value; every setting is written, the defaults included,
-and the rows travel with the run (D21, D2). Why: a report reads a run, never the file (D90), the macro joins a host's
-value to the default, and a run's judging must outlive a later default. Rejected: a `runs` column or a struct fixing the
-keys, each new setting bumping the schema; JSON, a feature `Cargo.toml` does not enable, giving the macro no join; only
-values differing from the default, which a later default would silently change. Reopens: a setting that is not text in a
-row. Code: `config::Policy::entries`, `store::Store::begin_run`. Evidence:
+`policy(run_id, host, key, value)`, `host` NULL for a run-wide one; every setting is written, defaults too, and the rows
+travel with the run (D21). A declared profile (D33) is `profile.<name>.*` rows, judged by nothing. Why: a report reads a
+run, never the file (D90), the macro joins a host's value to the default, and judging must outlive a later default.
+Rejected: a `runs` column or a struct fixing the keys, each new setting bumping the schema; JSON, a feature `Cargo.toml`
+does not enable; only values differing from the default, which a later default would change. Reopens: a setting that is
+not text in a row. Code: `config::Policy::entries`, `store::Store::begin_run`. Evidence:
 `store::tests::a_run_records_its_whole_policy_beside_itself`,
 `store::baseline::tests::a_run_policy_travels_in_the_baseline_file_and_into_the_run_that_imports_it`.
 

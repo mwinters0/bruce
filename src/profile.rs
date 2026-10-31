@@ -6,6 +6,7 @@
 //! hands it a [`Lookup`] when it resolves (D39).
 
 pub mod antora;
+pub mod declarative;
 pub mod generic;
 mod selectors;
 
@@ -19,6 +20,10 @@ use crate::config::ProfileChoice;
 use crate::forge::EditLink;
 
 pub use selectors::{compiled, element, text};
+
+/// The content region of any site (D34): `generic`'s, which a declarative
+/// profile naming none takes as its own.
+const GENERIC_REGION: &[&str] = &["main", "[role=main]"];
 
 /// An error a profile or the store behind its [`Lookup`] hands back.
 pub type BoxError = Box<dyn std::error::Error + Send + Sync>;

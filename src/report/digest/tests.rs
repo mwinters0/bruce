@@ -1137,6 +1137,40 @@ fn the_run_s_whole_recorded_policy_is_in_the_digest_and_its_json() {
 }
 
 #[test]
+fn the_profiles_a_run_extracted_by_are_housekeeping_and_a_trial_leaves_them_as_recorded() {
+    let store = store();
+    store
+        .connection()
+        .execute_batch(
+            "INSERT INTO policy VALUES (1, NULL, 'profile.site.generator', '^SiteGen'), \
+             (1, NULL, 'profile.site.region', 'div.document')",
+        )
+        .unwrap();
+    let written = |store: &Store| -> Vec<String> {
+        of(store).policy.iter().map(|e| e.written_as()).collect()
+    };
+    let before = written(&store);
+    assert!(
+        before.contains(&"profile.site.generator = \"^SiteGen\"".to_owned()),
+        "{before:?}"
+    );
+    assert!(
+        before.contains(&"profile.site.region += \"div.document\"".to_owned()),
+        "{before:?}"
+    );
+    store.try_policy(&crate::config::Policy::default()).unwrap();
+    let after = written(&store);
+    assert!(
+        after.contains(&"profile.site.generator = \"^SiteGen\"".to_owned()),
+        "{after:?}"
+    );
+    assert!(
+        after.contains(&"profile.site.region += \"div.document\"".to_owned()),
+        "{after:?}"
+    );
+}
+
+#[test]
 fn a_trial_judges_the_digest_and_leaves_how_the_run_asked_as_it_recorded() {
     let store = store();
     store

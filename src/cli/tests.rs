@@ -4,7 +4,7 @@ use crate::config::ProfileChoice;
 use crate::store::{Mode, Store};
 
 use super::crawl::Args;
-use super::registry;
+use super::{registry, registry_for};
 
 /// `antora_pages`' columns.
 type Pivot = (
@@ -128,4 +128,26 @@ fn the_antora_view_pivots_a_pages_facts() {
             (2, s("arm-sbc"), None, None, s("index.adoc")),
         ]
     );
+}
+
+#[test]
+fn a_defined_profile_is_tried_under_auto_before_the_compiled_ones() {
+    let defined = crate::config::Config::parse(
+        "[profile.mine]\ngenerator = \"^Antora\"\n[profile.other]\ngenerator = \"^Antora\"\n",
+    )
+    .unwrap()
+    .policy
+    .profiles;
+    let r = registry_for(&defined).unwrap();
+    let names: Vec<&str> = r.iter().map(|p| p.name()).collect();
+    assert_eq!(names, ["generic", "mine", "other", "antora"]);
+    let pick = |g| r.choose(&ProfileChoice::Auto, g).unwrap().name();
+    assert_eq!(pick(Some("Antora 3")), "mine");
+    assert_eq!(pick(Some("Hugo")), "generic");
+    for profile in r.iter() {
+        for view in profile.views() {
+            assert!(view.name.starts_with(&format!("{}_", profile.name())));
+        }
+    }
+    Store::open_in_memory(&r).unwrap();
 }

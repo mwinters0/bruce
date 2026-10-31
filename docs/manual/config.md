@@ -46,7 +46,7 @@ and a file naming roots refuses one ([`crawl.md`](crawl.md)).
 | `exclude` | `[]` | URL globs that keep a page out, even when `include` matches it. |
 | `strip_query` | `false` | Whether a URL's `?query` is dropped, in this root's scope, when `bruce` decides which URLs are the same page (below). |
 | `sitemap` | discovered | The sitemap to start from. By default, the `Sitemap:` lines of the host's `robots.txt`, then `sitemap.xml` under the root, then `sitemap.xml` at the host. |
-| `profile` | `"auto"` | How the root's pages are read: `"auto"`, `"generic"` or `"antora"` (below). |
+| `profile` | `"auto"` | How the root's pages are read: `"auto"`, `"generic"`, `"antora"` or the name of a [profile](#profiles) the file defines. |
 | `hash_root` | `[]` | CSS selectors for the part of each page whose change counts as the page changing (below). |
 | `hash_exclude` | `[]` | CSS selectors for parts of each page whose change never counts (below). |
 
@@ -104,6 +104,7 @@ is kept by default, since a query can pick a different page.
   component and version.
 - `"auto"` picks one for each page from its `<meta name="generator">`, and
   uses `"generic"` when there is none or no profile claims it.
+- A name picks a [profile the file defines](#profiles).
 
 **The content hash** tells a changed page from an unchanged one. It covers
 each page's tags, attributes and text within a scope that `hash_root` and
@@ -136,6 +137,57 @@ The database records which scope covered each page (`pages.hash_scope`:
 `root` for `hash_root`, `region` for the default, `whole` for the rest) and
 each run's `hash_root` and `hash_exclude` per root (`runs.hash_scopes`), so a
 report can tell an edit to the scope from an edit to the page.
+
+## Profiles
+
+A **profile** the file defines reads a site generator that `generic` and
+`antora` do not know, with no change to `bruce`. A `[profile.<name>]` table
+names it, and a root's `profile = "<name>"` (or a generator pattern, below)
+picks it. The name is a letter, then letters, digits, `-` and `_`; `auto`,
+`generic` and `antora` are taken. It starts every fact the profile records:
+`<name>.<key>`.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `profile.<name>.generator` | none | A regular expression. Under `"auto"`, a page whose `<meta name="generator">` it matches is read by this profile. Without one, only a root naming the profile picks it. |
+| `profile.<name>.region` | `generic`'s: `main`, `[role=main]` | Selectors for the elements holding a page's content. Anchors there count as content, and the [content hash](#roots) covers them by default. Each entry is one selector with no space or combinator, as `div.document`. |
+| `profile.<name>.edit_link` | none | A selector for the link that is the page's edit link, for a site whose link `bruce` does not recognise. The first match with an `href` is taken. |
+
+Each `[[profile.<name>.fact]]` table reads one fact from a page:
+
+| Key | Default | Meaning |
+|---|---|---|
+| `profile.<name>.fact.key` | required | The fact's name: letters, digits, `-` and `_`. One fact to a key. |
+| `profile.<name>.fact.selector` | required | The elements to read. |
+| `profile.<name>.fact.attr` | none | The attribute to read, as written, an empty one included. Without it the value is the element's text, trimmed. |
+| `profile.<name>.fact.pattern` | none | A regular expression with exactly one capture group, which is the value. An element it does not match gives nothing. |
+
+The first element that gives a value gives the fact; a page with none records
+no fact. Selectors are the ones `hash_root` takes, and a regular expression is
+Rust's [`regex`](https://docs.rs/regex) syntax, unanchored, so write `^` and `$`
+where you mean them.
+
+```toml
+[profile.sphinx]
+generator = "^Sphinx"
+region = ["div.document"]
+
+[[profile.sphinx.fact]]
+key = "version"
+selector = "meta[name=readthedocs-version-slug]"
+attr = "content"
+
+[[profile.sphinx.fact]]
+key = "heading"
+selector = "h1"
+pattern = '^(.*?)\s*¶?$'
+```
+
+`[digest]` `group_by = "sphinx.version"` then groups the digest's pages by the
+fact. A run records each profile's definition with its other settings
+(`profile.<name>.*`) and the digest's Housekeeping lists it; `--config` on a
+report tries another file's judging settings and leaves the recorded profiles
+as they are.
 
 ## Allowlist
 

@@ -6,14 +6,12 @@ use wiremock::matchers::path;
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use crate::config::ProfileChoice;
-use crate::profile::antora::Antora;
-use crate::profile::generic::Generic;
 use crate::store::Store;
 
 use super::*;
 
 fn registry() -> Registry {
-    Registry::new(Box::new(Generic)).with(Box::new(Antora))
+    crate::cli::registry()
 }
 
 const URL: &str = "https://docs.example.org/en-US/";
@@ -33,7 +31,7 @@ fn args(url: Option<&str>, config: Option<&NamedTempFile>) -> Args {
 }
 
 fn configured(url: Option<&str>, config: Option<&NamedTempFile>) -> Result<Config, String> {
-    configure(&args(url, config), &registry()).map(|(c, _)| c)
+    configure(&args(url, config)).map(|(c, _, _)| c)
 }
 
 fn root_urls(config: &Config) -> Vec<String> {
@@ -108,9 +106,7 @@ fn a_profile_the_registry_lacks_is_refused() {
 
 #[test]
 fn the_config_hash_follows_the_file_and_the_url() {
-    let hash = |url: Option<&str>, f: Option<&NamedTempFile>| {
-        configure(&args(url, f), &registry()).unwrap().1
-    };
+    let hash = |url: Option<&str>, f: Option<&NamedTempFile>| configure(&args(url, f)).unwrap().2;
     let (a, b) = (
         file("user_agent = \"x/1\"\n"),
         file("user_agent = \"y/1\"\n"),
@@ -181,8 +177,8 @@ fn a_crawl_writes_a_finished_run_to_the_db() {
         config: None,
         db: Some(db.clone()),
     };
-    assert_eq!(run(&args, registry()), ExitCode::SUCCESS);
-    assert_eq!(run(&args, registry()), ExitCode::SUCCESS);
+    assert_eq!(run(&args), ExitCode::SUCCESS);
+    assert_eq!(run(&args), ExitCode::SUCCESS);
     let store = Store::open(&db, &registry()).unwrap();
     let conn = store.connection();
     let (runs, finished): (i64, i64) = conn
@@ -209,5 +205,121 @@ fn a_db_that_cannot_be_opened_fails_before_any_request() {
         config: None,
         db: Some(dir.path().to_owned()),
     };
-    assert_eq!(run(&args, registry()), ExitCode::FAILURE);
+    assert_eq!(run(&args), ExitCode::FAILURE);
+}
+
+const SITE_PROFILE: &str = r#"
+[profile.site]
+generator = "^SiteGen"
+
+[[profile.site.fact]]
+key = "section"
+selector = "meta[name=section]"
+attr = "content"
+"#;
+
+#[test]
+fn a_profile_the_file_defines_is_chosen_by_name_or_generator_and_recorded_with_the_run() {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let server = rt.block_on(async {
+        let server = MockServer::start().await;
+        Mock::given(path("/docs/"))
+            .respond_with(ResponseTemplate::new(200).set_body_raw(
+                r#"<meta name="generator" content="SiteGen 2"><meta name="section" content="guides"><title>Docs</title><a href="a">a</a>"#,
+                "text/html",
+            ))
+            .mount(&server)
+            .await;
+        Mock::given(path("/docs/a"))
+            .respond_with(ResponseTemplate::new(200).set_body_raw(
+                r#"<meta name="section" content="other"><title>A</title>"#,
+                "text/html",
+            ))
+            .mount(&server)
+            .await;
+        server
+    });
+    let dir = TempDir::new().unwrap();
+    let db = dir.path().join("runs.duckdb");
+    let f = file(&format!(
+        "[[root]]\nurl = \"{}/docs/\"\n{SITE_PROFILE}",
+        server.uri()
+    ));
+    let args = Args {
+        url: None,
+        config: Some(f.path().to_owned()),
+        db: Some(db.clone()),
+    };
+    assert_eq!(run(&args), ExitCode::SUCCESS);
+    let store = Store::open(&db, &registry()).unwrap();
+    let conn = store.connection();
+    let facts: Vec<(String, String, String)> = conn
+        .prepare(
+            "SELECT p.url, pg.profile, f.value FROM pages pg JOIN targets p USING (run_id, url_id) \
+             LEFT JOIN page_facts f ON f.run_id = pg.run_id AND f.url_id = pg.url_id \
+             AND f.key = 'site.section' ORDER BY p.url",
+        )
+        .unwrap()
+        .query_map([], |r| {
+            Ok((
+                r.get(0)?,
+                r.get(1)?,
+                r.get::<_, Option<String>>(2)?.unwrap_or_default(),
+            ))
+        })
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap();
+    // The page naming a generator is the profile's; the other has none, so
+    // `generic` reads it.
+    assert_eq!(facts.len(), 2, "{facts:?}");
+    assert_eq!(
+        (facts[0].1.as_str(), facts[0].2.as_str()),
+        ("site", "guides")
+    );
+    assert_eq!((facts[1].1.as_str(), facts[1].2.as_str()), ("generic", ""));
+    let rows: Vec<(String, String)> = conn
+        .prepare(
+            "SELECT key, value FROM policy WHERE run_id = 1 AND key LIKE 'profile.%' ORDER BY key",
+        )
+        .unwrap()
+        .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap();
+    let row = |k: &str, v: &str| (k.to_owned(), v.to_owned());
+    assert_eq!(
+        rows,
+        [
+            row("profile.site.fact.section.attr", "content"),
+            row("profile.site.fact.section.selector", "meta[name=section]"),
+            row("profile.site.generator", "^SiteGen"),
+        ]
+    );
+}
+
+#[test]
+fn a_root_may_name_a_profile_the_file_defines_and_a_name_a_compiled_one_holds_is_refused() {
+    let f = file(&format!(
+        "[[root]]\nurl = \"https://docs.example.org/\"\nprofile = \"site\"\n{SITE_PROFILE}"
+    ));
+    configured(None, Some(&f)).unwrap();
+    for name in ["generic", "antora"] {
+        let f = file(&format!(
+            "[[root]]\nurl = \"https://docs.example.org/\"\n[profile.{name}]\n"
+        ));
+        let e = configured(None, Some(&f)).unwrap_err();
+        assert!(
+            e.contains(&format!("profile.{name}: `{name}` is compiled in")),
+            "{e}"
+        );
+    }
+    let f = file(&format!(
+        "[[root]]\nurl = \"https://docs.example.org/\"\nprofile = \"hugo\"\n{SITE_PROFILE}"
+    ));
+    let e = configured(None, Some(&f)).unwrap_err();
+    assert!(
+        e.ends_with("the profiles are `auto`, `generic`, `site`, `antora`"),
+        "{e}"
+    );
 }

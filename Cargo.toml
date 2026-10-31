@@ -22,6 +22,8 @@ hyper = { version = "1.12.0", default-features = false }
 lol_html = "3.0.1"
 percent-encoding = "2.3.2"
 quick-xml = "0.42.0"
+# Declarative profiles' `generator` and `pattern` (D33); already in texting_robots's tree.
+regex = "1.13.1"
 # rustls without a provider (ring is installed in `fetch::http`) and hickory
 # DNS: D45.
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "http2", "gzip", "deflate", "hickory-dns"] }
@@ -29,7 +31,8 @@ rustls = { version = "0.23.46", default-features = false, features = ["ring", "s
 serde = { version = "1.0.229", features = ["derive"] }
 texting_robots = "0.2.2"
 tokio = { version = "1.53.3", features = ["rt-multi-thread", "macros", "sync", "time", "signal"] }
-toml = "1.1.8"
+# `preserve_order`: the `[profile.<name>]` tables are tried in the file's order (D35).
+toml = { version = "1.1.8", features = ["preserve_order"] }
 url = "2.5.8"
 xxhash-rust = { version = "0.8.19", features = ["xxh3"] }
 

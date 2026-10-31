@@ -20,7 +20,7 @@ decisions each carries are cited in its module's doc.
 ## Subcommands
 
 - **bruce** — `cli/` and the binary's `main.rs`, which only calls it: the
-  command line and the registry in the parent file, a child module for
+  command line in the parent file, the registry of the compiled profiles and a config's in its `registry` child, a child module for
   each subcommand, `check_dir` (its build, the run over it and the line it prints, and the gate's exit status), `crawl` (its roots from the file or the URL and the run), `export_baseline` (its files and the line it prints), `file` (the baseline file a path or URL names, downloaded and decompressed, which `check_dir` and `report digest --since` both read), `interrupt` (what SIGINT and SIGTERM do to the run `crawl` and `check_dir` make, D58), `prune` (its rule and what it prints) and `report` (its options and
   printing the output, or writing the digest's file), and the `db`
   child, which all five open the database through, installing the reports' views
@@ -107,7 +107,7 @@ decisions each carries are cited in its module's doc.
 
 - **bruce** — `profile/`: the trait, the registry and the fact and lookup
   types in the parent file, and a child module for each profile compiled in
-  (D33), `generic` and `antora`, whose Resolve is its `resolve` child (D55) and whose hint for an unresolved xref is its `hints` child (D65), and the `selectors` child, which parses a selector's text once per run for every handler, the core's and the profiles' (D11). `cli` alone builds the registry (D39).
+  (D33), `generic` and `antora`, and `declarative`, a profile built from a config's `[profile.<name>]` (D33), whose Resolve is its `resolve` child (D55) and whose hint for an unresolved xref is its `hints` child (D65), and the `selectors` child, which parses a selector's text once per run for every handler, the core's and the profiles' (D11). `cli` alone builds the registry, the file's profiles ahead of the compiled ones (D39, D35).
 
 **Not in one place.** I16's URL layout, a component-version's prefix in a
 page's URL, is read in `crawl/baseline.rs` (`Held::record`, `Held::holds`), `report/inverse.rs`
@@ -126,6 +126,6 @@ below `profile` (D39).
 ## Configuration
 
 - **bruce** — `config.rs`: the loader, its defaults and its validation, and
-  the allowlist's matching of a host (D68), and `config/policy.rs`, the
+  the allowlist's matching of a host (D68), `config/profile.rs`, a declarative profile as the file defines it and the rows a run records it as (D33, D78), `config/selector.rs`, the selectors a file writes, split and checked against what lol_html streams, and `config/policy.rs`, the
   judging settings a run is judged by and records, with their defaults (D78), a row of the record and how a file writes it in `config/policy/entry.rs`, the severity map in `config/policy/severity.rs` (D82), the outcome and the reason a link carries, the enums every writer and reader names and the map validates against (`store` re-exporting `Outcome`), in `config/policy/verdict.rs`, and the outcomes that fail the gate in `config/policy/gate.rs` (D83), the fact the digest groups by in `config/policy/digest.rs` (D86) and how a crawl asks, recorded with them and judged by nothing, in `config/policy/asking.rs` (D85), at
   the bottom of the layering but for `url`, so every module may read a setting (D39).
