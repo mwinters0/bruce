@@ -513,3 +513,43 @@ fn a_new_build_of_a_docs_fp_o_page_keeps_its_hash() {
     }
     assert_eq!(built, 30);
 }
+
+/// D33: a declared profile extending `antora` with no rule of its own reads
+/// every page as `antora` does, by the same facts in `antora.*`, claiming the
+/// pages `antora` claims and no others, and records its own name.
+#[test]
+fn an_extension_with_no_rules_extracts_what_antora_does() {
+    let extension =
+        bruce::config::Config::parse("[[profile]]\nname = \"fedora\"\nextends = \"antora\"\n")
+            .unwrap()
+            .policy
+            .profiles;
+    let registry = bruce::cli::registry_for(&extension).unwrap();
+    let mut claimed = 0;
+    for f in fixtures() {
+        let plain = run(&f);
+        let extended = extract(
+            &f.html,
+            &f.url,
+            &ProfileChoice::Auto,
+            &HashScope::default(),
+            &registry,
+        )
+        .unwrap();
+        let expected = if plain.profile == "antora" {
+            claimed += 1;
+            "fedora"
+        } else {
+            plain.profile
+        };
+        assert_eq!(extended.profile, expected, "{}", f.path);
+        assert_eq!(
+            summary(&extended).replacen(&format!("profile: {expected}"), "profile: ", 1),
+            summary(&plain).replacen(&format!("profile: {}", plain.profile), "profile: ", 1),
+            "{}",
+            f.path
+        );
+        assert_eq!(extended.other_locales, plain.other_locales, "{}", f.path);
+    }
+    assert!(claimed > 20, "{claimed}");
+}

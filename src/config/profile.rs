@@ -26,6 +26,11 @@ pub struct Definition {
     /// The name a root's `profile` gives and the namespace of the profile's
     /// facts (D37).
     pub name: String,
+    /// The compiled profile this one extends (D94): it does all its base does,
+    /// its own rules added, its facts in `<name>.*` and the base's in the
+    /// base's namespace. `cli` names the compiled profiles, so only the name's
+    /// shape is checked here (D39).
+    pub extends: Option<String>,
     /// A regex matched against a page's generator meta under `auto`, which
     /// then picks this profile (D35); none leaves it to a root naming it.
     pub generator: Option<String>,
@@ -78,6 +83,7 @@ pub struct Fact {
 #[serde(deny_unknown_fields)]
 pub(in crate::config) struct RawProfile {
     name: String,
+    extends: Option<String>,
     generator: Option<String>,
     #[serde(default)]
     region: Vec<String>,
@@ -151,6 +157,13 @@ impl Definition {
         if name == AUTO_PROFILE {
             return Err("`auto` picks a profile per page; it cannot be one".to_owned());
         }
+        if let Some(base) = &raw.extends
+            && (!is_name(base) || base == name)
+        {
+            return Err(format!(
+                "extends: {base:?} is not the name of a compiled profile other than this one"
+            ));
+        }
         if let Some(generator) = &raw.generator {
             Regex::new(generator).map_err(|e| format!("generator: {e}"))?;
         }
@@ -215,6 +228,7 @@ impl Definition {
         }
         Ok(Definition {
             name: raw.name,
+            extends: raw.extends,
             generator: raw.generator,
             region,
             edit_link: raw.edit_link,
@@ -224,7 +238,8 @@ impl Definition {
     }
 
     /// The definition as the rows a run records (D78), keys under
-    /// `profile.<name>.`: `generator` always, empty for none, `region` a row
+    /// `profile.<name>.`: `generator` always, empty for none, `extends` where
+    /// there is a base, `region` a row
     /// to an entry, `edit_link`, each fact's `selector`, `attr` and
     /// `pattern` under `fact.<key>.`, and each source rule's `from`,
     /// `pattern` and the templates it states under `source.<i>.`, `i` its
@@ -236,6 +251,9 @@ impl Definition {
             "generator".to_owned(),
             self.generator.as_deref().unwrap_or(""),
         )];
+        if let Some(base) = &self.extends {
+            rows.push(row("extends".to_owned(), base));
+        }
         rows.extend(self.region.iter().map(|r| row("region".to_owned(), r)));
         if let Some(selector) = &self.edit_link {
             rows.push(row("edit_link".to_owned(), selector));

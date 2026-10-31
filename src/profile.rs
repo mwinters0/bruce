@@ -41,6 +41,12 @@ pub trait Profile: Send + Sync {
     /// profile's facts and views (D37).
     fn name(&self) -> &'static str;
 
+    /// The namespace [`Sink::fact`] writes its keys under: the profile's name,
+    /// or its base's where it extends one, whose facts keep the base's (D94).
+    fn namespace(&self) -> &'static str {
+        self.name()
+    }
+
     /// Detect: whether the profile claims a page whose
     /// `<meta name="generator">` content is `generator` (D35). The fallback
     /// profile claims none; it is what no other claims.
@@ -112,8 +118,13 @@ impl Facts {
 
     /// Records `key` (without the namespace) as `value`.
     pub fn record(&mut self, key: &str, value: impl Into<String>) {
+        self.record_in(self.namespace, key, value);
+    }
+
+    /// Records `key` as `value` under `namespace`, not the set's own.
+    pub fn record_in(&mut self, namespace: &str, key: &str, value: impl Into<String>) {
         self.pairs
-            .push((format!("{}.{key}", self.namespace), value.into()));
+            .push((format!("{namespace}.{key}"), value.into()));
     }
 
     /// Every fact as a full key and its value, in the order recorded.
@@ -205,6 +216,12 @@ impl Sink {
     /// Records the fact `key` (without the namespace) as `value` (D37).
     pub fn fact(&mut self, key: &str, value: impl Into<String>) {
         self.facts.record(key, value);
+    }
+
+    /// Records the fact `key` as `value` under `namespace` (D37), which an
+    /// extension's own facts take where [`Sink::fact`] writes its base's (D94).
+    pub fn fact_in(&mut self, namespace: &str, key: &str, value: impl Into<String>) {
+        self.facts.record_in(namespace, key, value);
     }
 
     /// Tags the link the core is reading, for the profile's Resolve to

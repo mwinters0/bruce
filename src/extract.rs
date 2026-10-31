@@ -123,7 +123,7 @@ pub fn extract_under(
     };
     let profile = registry.choose(choice, generator.as_deref())?;
 
-    let sink = RefCell::new(Sink::new(profile.name()));
+    let sink = RefCell::new(Sink::new(profile.namespace()));
     let anchors = RefCell::new(Anchors::default());
     let title = RefCell::new(Title::default());
     let links = RefCell::new(Links::new(url, site_root));

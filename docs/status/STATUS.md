@@ -18,7 +18,7 @@ The `bruce` crate is D39's top-level modules, a binary whose subcommands
 are `bruce crawl`, `bruce check-dir`, `bruce report`, `bruce prune` and `bruce export-baseline`, and Rust 1.99.1 pinned in `mise.toml`. Eleven modules hold
 code: `cli`, the command line, the five subcommands and the profile registry; `config`, the loader, the policy a run is judged by and asks with, and the declarative profiles a file defines; `store`, the DuckDB schema, its version check, the
 `link_verdicts` view, the guard naming the run a comparison judges by, `link_hints`, the policy a run records and a trial one in its place, the deleting of old runs, the baseline export and import, the index of a baseline's targets and its pages' facts, the copy of a target's rows between runs, which the writer also runs on request, and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry, the
-`generic` and `antora` profiles' Detect, Views, Extract and Resolve and the declarative profile a config's `[[profile]]` builds (region, generator pattern, fact rules, source rules, edit link); `extract`, the pass over one page, which yields its
+`generic` and `antora` profiles' Detect, Views, Extract and Resolve and the declarative profile a config's `[[profile]]` builds (region, generator pattern, fact rules, source rules, edit link, and the compiled profile it extends); `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
 the profile's facts, the other locales its language menu names and the content hash with the scope it covered;
 `forge`, the edit-URL shape parse and the source rules a profile states, tried before it (D93);
@@ -61,8 +61,13 @@ The spec is [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.m
   follow ([notes](../wip/roadmap-P10.3.1-profile-array-notes.md)).
 - [x] **10.4** Source rules before `forge::parse`, and struck `KD1` and `KD2`
   ([notes](../wip/roadmap-P10.4-source-rules-notes.md)).
-- [ ] **10.5** `extends`, and a report's registry built from the run's
-  recorded profiles.
+- [x] **10.5** `extends`: an extension over a compiled profile, its facts
+  `<name>.*` beside the base's, and `pages.profile` its name
+  ([notes](../wip/roadmap-P10.5-extends-notes.md)).
+- [ ] **10.5.1** A report's registry built from the run's recorded profiles,
+  and the digest naming a rule that differs between the runs it compares
+  (the spec's "A run records its declarative profiles", "A report reads a
+  declarative profile from its run").
 - [ ] **10.6** Locale learning in the core, `locale_links`, and the guide's
   `fedora` extension extracting what today's code does.
 - [ ] **10.7** Neutral help examples and palette.
@@ -84,3 +89,15 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **10.5 landed `extends` alone, and 10.5.1 holds the rest.** The row paired
+  a self-contained feature with a rework of the report path and a digest
+  comparison the digest does not have (it compares no policy between runs), so
+  per `docs/process.md`'s "Slice numbering" the first landed and the second is
+  earned. The spec's "CI's xref resolution builds a recorded profile" is
+  dropped from 10.5.1 unrecorded in the spec: `crawl::xref::resolve` reads the
+  profile name the run's own extraction gave (`crawl.rs`, `defer_xref`), through
+  the registry its config built, so only the digest's sitemap note reads a
+  registry a report builds. Until 10.5.1 a digest of a run read by an extension
+  names no sitemap note. Reconsidering changes whether 10.5.1 stays one slice or
+  splits the digest's naming from the registry.

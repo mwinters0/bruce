@@ -207,6 +207,14 @@ fn what_the_loader_refuses_it_says_where() {
             "profile.x: generator:",
         ),
         (
+            "[[profile]]\nname = \"x\"\nextends = \"x\"\n",
+            "profile.x: extends: \"x\" is not the name of a compiled profile",
+        ),
+        (
+            "[[profile]]\nname = \"x\"\nextends = \"a b\"\n",
+            "profile.x: extends: \"a b\"",
+        ),
+        (
             "[[profile]]\nname = \"x\"\nregion = [\"div p\"]\n",
             "profile.x: region: \"div p\" holds a combinator",
         ),
@@ -311,4 +319,27 @@ fn each_profile_keeps_the_fact_rules_written_under_it() {
         })
         .collect();
     assert_eq!(shape, [("a", vec!["p"]), ("b", vec!["q", "r"])]);
+}
+
+#[test]
+fn an_extension_is_recorded_as_a_row_after_its_generator() {
+    let defined =
+        profiles("[[profile]]\nname = \"x\"\nextends = \"antora\"\nregion = [\"main\"]\n");
+    assert_eq!(defined[0].extends.as_deref(), Some("antora"));
+    let rows = defined[0].rows();
+    let row = |k: &str, v: &str| (format!("profile.x.{k}"), v.to_owned());
+    assert_eq!(
+        rows,
+        [
+            row("generator", ""),
+            row("extends", "antora"),
+            row("region", "main")
+        ]
+    );
+    assert!(
+        profiles(SPHINX)[0]
+            .rows()
+            .iter()
+            .all(|(k, _)| !k.ends_with(".extends"))
+    );
 }

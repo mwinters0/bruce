@@ -151,8 +151,9 @@ tried in the order the file writes them, before `antora`.
 | Key | Default | Meaning |
 |---|---|---|
 | `profile.name` | required | What a root's `profile` names, and the start of each fact's key. |
-| `profile.generator` | none | A regular expression. Under `"auto"`, a page whose `<meta name="generator">` it matches is read by this profile. Without one, only a root naming the profile picks it. |
-| `profile.region` | `generic`'s: `main`, `[role=main]` | Selectors for the elements holding a page's content. Anchors there count as content, and the [content hash](#roots) covers them by default. Each entry is one selector with no space or combinator, as `div.document`. |
+| `profile.extends` | none | `"antora"` or `"generic"`: the profile does everything that one does, with its own rules added. See below. |
+| `profile.generator` | none | A regular expression. Under `"auto"`, a page whose `<meta name="generator">` it matches is read by this profile. Without one, only a root naming the profile picks it, or, where it extends one, whatever that one claims. |
+| `profile.region` | `generic`'s: `main`, `[role=main]`, or its base's | Selectors for the elements holding a page's content. Anchors there count as content, and the [content hash](#roots) covers them by default. Each entry is one selector with no space or combinator, as `div.document`. |
 | `profile.edit_link` | none | A selector for the link that is the page's edit link, for a site whose link `bruce` does not recognise. The first match with an `href` is taken. |
 
 Each `[[profile.fact]]` table, written under the `[[profile]]` it belongs to, reads one fact from a page:
@@ -186,6 +187,17 @@ segment (a branch `feature/x` is read as the ref `feature`) and a repo named
 `edit` or `blob` to be a marker. A rule over `edit_link` states those cases; one
 over `url` asserts one format for every page it matches, so a site mixing formats
 writes a pattern for each, or leaves the rest to its edit links.
+
+A profile that **extends** `antora` is `antora` with the file's rules added,
+which is how a site's own markup is read without losing what `antora` reads: it
+claims the pages `antora` claims (unless it has a `generator` of its own, which
+then replaces that), reads the same facts under the same `antora.*` keys, so
+`group_by = "antora.component"` and `antora`'s xref resolution are unchanged,
+and records its own facts as `<name>.*`. Its `region`, where it has one,
+replaces `antora`'s. Its source rules are tried before the edit link, as any
+profile's are. A page it reads is recorded under the extension's name, and one
+level only: `extends` names `generic` or `antora`, never a profile the file
+defines.
 
 Selectors are the ones `hash_root` takes, and a regular expression is
 Rust's [`regex`](https://docs.rs/regex) syntax, unanchored, so write `^` and `$`

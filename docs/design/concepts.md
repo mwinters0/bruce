@@ -107,7 +107,7 @@ decisions each carries are cited in its module's doc.
 
 - **bruce** — `profile/`: the trait, the registry and the fact and lookup
   types in the parent file, and a child module for each profile compiled in
-  (D33), `generic` and `antora`, and `declarative`, a profile built from a config's `[[profile]]` (D33), whose Resolve is its `resolve` child (D55) and whose hint for an unresolved xref is its `hints` child (D65), and the `selectors` child, which parses a selector's text once per run for every handler, the core's and the profiles' (D11), and the `interned` child, which hands a declared profile's name and region out as the same `'static` text for every registry built from one definition. `cli` alone builds the registry, the file's profiles ahead of the compiled ones (D39, D35).
+  (D33), `generic` and `antora`, and `declarative`, a profile built from a config's `[[profile]]` (D33), wrapping the compiled profile it extends where it names one (D94), whose Resolve is its `resolve` child (D55) and whose hint for an unresolved xref is its `hints` child (D65), and the `selectors` child, which parses a selector's text once per run for every handler, the core's and the profiles' (D11), and the `interned` child, which hands a declared profile's name and region out as the same `'static` text for every registry built from one definition. `cli` alone builds the registry, the file's profiles ahead of the compiled ones (D39, D35).
 
 **Not in one place.** I16's URL layout, a component-version's prefix in a
 page's URL, is read in `crawl/baseline.rs` (`Held::record`, `Held::holds`), `report/inverse.rs`

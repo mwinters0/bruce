@@ -26,10 +26,10 @@ what D35 chooses by; the first match alone, leaving `pattern` no way to choose. 
 ### D35 A root's profile defaults to `auto`, which picks one per page by its generator meta
 `profile = "auto" | "generic" | "antora" | <a declared name>` per root. Under `auto` the page's
 `<meta name="generator">`, read by a pre-pass before anything a profile extracts, picks the profile, else `generic`
-(Docsy and Sphinx emit none, I12); a declared profile's `generator` regex claims it, the file's profiles tried in file
-order before the compiled ones. `pages.profile` keeps the choice. Rejected: deciding once per root, which mislabels a
-root spanning generators; config only, which makes every Antora user opt in. Code: `profile::Registry::choose`,
-`extract::generator`, `cli::registry_for`.
+(Docsy and Sphinx emit none, I12); a declared profile's `generator` regex claims it, else its base's detection does
+(D94), the file's profiles tried in file order before the compiled ones. `pages.profile` keeps the choice. Rejected:
+deciding once per root, which mislabels a root spanning generators; config only, which makes every Antora user opt in.
+Code: `profile::Registry::choose`, `extract::generator`, `cli::registry_for`.
 
 ### D36 The page → source tie-back is core: an edit-link heuristic and forge URL shapes
 Every generator's edit link points at a forge, so any site gets page → file with no config. A link earning no tier
@@ -47,6 +47,15 @@ a forge call per repo (I23). Rejected: captures alone, stating no literal; a rul
 chooses by; recorded rows keyed by a rule's `name`, not its place, which is its meaning. Reopens: a site mixing
 formats under one profile, the first match too coarse. Code: `forge::rule`, `config::profile`. Evidence:
 `forge::rule::tests`.
+
+### D94 A declarative profile may extend one compiled profile, adding its rules to all the base does
+`extends = "antora" | "generic"` wraps the base: its Extract with the extension's handlers, finish and source rules added
+(the extension's first), its region where it states one, its detection where it has no `generator`, its Resolve and
+sitemap note. Facts: the base's keep its namespace (`antora.*`), the extension's own are `<name>.*`; `pages.profile` is
+the extension's name. Why: a deployment then states only what is its own, and `group_by` and the base's views are
+unchanged (D32, D33). Views are none, the base being in every registry. Rejected: an extension of a declared profile;
+the base's facts renamed under the extension. Reopens: a second level wanted. Code: `profile::declarative`,
+`cli::registry_for`. Evidence: `profile::declarative::tests`, `tests/extract.rs`.
 
 ### D17 Each page stores its source file and repo, read from its edit link
 This routes a breakage to the repo and file that own it, and groups more precisely than component (some repos supply

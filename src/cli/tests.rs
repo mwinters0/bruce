@@ -151,3 +151,25 @@ fn a_defined_profile_is_tried_under_auto_before_the_compiled_ones() {
     }
     Store::open_in_memory(&r).unwrap();
 }
+
+#[test]
+fn a_profile_extends_a_compiled_one_and_nothing_else() {
+    let build = |toml: &str| {
+        let defined = crate::config::Config::parse(toml).unwrap().policy.profiles;
+        registry_for(&defined)
+    };
+    let r = build("[[profile]]\nname = \"mine\"\nextends = \"antora\"\n").unwrap();
+    let names: Vec<&str> = r.iter().map(|p| p.name()).collect();
+    assert_eq!(names, ["generic", "mine", "antora"]);
+    let pick = |g| r.choose(&ProfileChoice::Auto, g).unwrap().name();
+    assert_eq!(pick(Some("Antora 3")), "mine");
+    assert_eq!(pick(Some("Hugo")), "generic");
+    Store::open_in_memory(&r).unwrap();
+    let e = build("[[profile]]\nname = \"a\"\n[[profile]]\nname = \"b\"\nextends = \"a\"\n")
+        .err()
+        .unwrap();
+    assert!(
+        e.starts_with("profile.b: extends: `a` is not a compiled profile"),
+        "{e}"
+    );
+}

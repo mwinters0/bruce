@@ -9,7 +9,7 @@ use crate::profile::generic::Generic;
 fn registry(toml: &str) -> Registry {
     let mut registry = Registry::new(Box::new(Generic));
     for definition in Config::parse(toml).unwrap().policy.profiles {
-        registry = registry.with(Box::new(Declarative::new(&definition).unwrap()));
+        registry = registry.with(Box::new(Declarative::new(&definition, None).unwrap()));
     }
     registry
 }
@@ -311,7 +311,7 @@ fn a_selector_that_cannot_be_built_is_refused_by_name() {
         .profiles
         .remove(0);
     definition.region = vec!["p:has(a)".to_owned()];
-    let e = Declarative::new(&definition).err().unwrap();
+    let e = Declarative::new(&definition, None).err().unwrap();
     assert!(e.starts_with("region: \"p:has(a)\""), "{e}");
     definition.region.clear();
     definition.sources = vec![crate::config::SourceRule {
@@ -321,7 +321,7 @@ fn a_selector_that_cannot_be_built_is_refused_by_name() {
         git_ref: None,
         path: None,
     }];
-    let e = Declarative::new(&definition).err().unwrap();
+    let e = Declarative::new(&definition, None).err().unwrap();
     assert!(e.starts_with("source[0]: repo:"), "{e}");
 }
 
@@ -329,9 +329,171 @@ fn a_selector_that_cannot_be_built_is_refused_by_name() {
 fn registries_built_from_one_definition_share_its_name_and_region() {
     let build = || {
         let definition = Config::parse(SPHINX).unwrap().policy.profiles.remove(0);
-        Declarative::new(&definition).unwrap()
+        Declarative::new(&definition, None).unwrap()
     };
     let (first, second) = (build(), build());
     assert!(std::ptr::eq(first.name(), second.name()));
-    assert!(std::ptr::eq(first.region, second.region));
+    assert!(std::ptr::eq(first.region.unwrap(), second.region.unwrap()));
+}
+
+const ANTORA_PAGE: &str = r##"<html><head><meta name="generator" content="Antora 3.1.15"></head>
+<body><div class="nav-container" data-component="guide" data-version="1.0"></div>
+<main id="chrome"><p id="outside">x</p></main>
+<article class="doc"><h1 id="inside">T</h1>
+<div class="edit-this-page"><a href="https://forge.example/org/repo/-/edit/main/guide/modules/ROOT/pages/a.adoc">Edit this Page</a></div>
+<a class="xref unresolved" href="#guide:ROOT:a.adoc">a</a>
+<meta name="own" content="mine"></article></body></html>"##;
+
+const EXTENDS: &str = r#"
+[[profile]]
+name = "x"
+extends = "antora"
+
+[[profile.fact]]
+key = "own"
+selector = "meta[name=own]"
+attr = "content"
+"#;
+
+fn extended(toml: &str) -> Registry {
+    let defined = Config::parse(toml).unwrap().policy.profiles;
+    crate::cli::registry_for(&defined).unwrap()
+}
+
+fn page(toml: &str, choice: &ProfileChoice) -> Extracted {
+    let url = Url::parse("https://example.org/guide/1.0/a/").unwrap();
+    extract(
+        ANTORA_PAGE,
+        &url,
+        choice,
+        &HashScope::default(),
+        &extended(toml),
+    )
+    .unwrap()
+}
+
+#[test]
+fn an_extension_keeps_its_bases_facts_in_the_bases_namespace_and_adds_its_own() {
+    let x = page(EXTENDS, &ProfileChoice::Auto);
+    assert_eq!(x.profile, "x", "the extension claims what its base claims");
+    assert_eq!(
+        facts(&x),
+        [
+            ("antora.component", "guide"),
+            ("antora.version", "1.0"),
+            ("antora.module", "ROOT"),
+            ("antora.rel_path", "a.adoc"),
+            ("x.own", "mine"),
+        ]
+    );
+    let plain = page("", &ProfileChoice::Auto);
+    assert_eq!(plain.profile, "antora");
+    assert_eq!(x.edit_link, plain.edit_link);
+    assert_eq!(x.source, plain.source);
+}
+
+#[test]
+fn an_extension_takes_its_bases_region_unless_it_states_one() {
+    let content = |toml: &str| {
+        let x = page(toml, &ProfileChoice::Named("x".into()));
+        let mut ids: Vec<_> = x
+            .anchors
+            .iter()
+            .filter(|a| a.placement == Placement::Content)
+            .map(|a| a.value.clone())
+            .collect();
+        ids.sort();
+        ids
+    };
+    assert_eq!(content(EXTENDS), ["inside"], "article.doc, antora's");
+    let own = EXTENDS.replace(
+        "extends = \"antora\"",
+        "extends = \"antora\"\nregion = [\"main\"]",
+    );
+    assert_eq!(content(&own), ["chrome", "outside"], "its own replaces it");
+}
+
+#[test]
+fn an_extension_detects_by_its_pattern_else_by_its_bases() {
+    let claims = |toml: &str, generator: &str| {
+        extended(toml)
+            .iter()
+            .find(|p| p.name() == "x")
+            .unwrap()
+            .detect(generator)
+    };
+    assert!(claims(EXTENDS, "Antora 3.1.15"));
+    assert!(!claims(EXTENDS, "Sphinx 7"));
+    let own = EXTENDS.replace(
+        "extends = \"antora\"",
+        "extends = \"antora\"\ngenerator = \"^Sphinx\"",
+    );
+    assert!(claims(&own, "Sphinx 7"));
+    assert!(
+        !claims(&own, "Antora 3.1.15"),
+        "its pattern replaces the base's"
+    );
+}
+
+#[test]
+fn an_extension_resolves_and_notes_the_sitemap_as_its_base_does() {
+    struct Pages;
+    impl Lookup for Pages {
+        fn pages_with_facts(&self, facts: &[(&str, &str)]) -> Result<Vec<Url>, BoxError> {
+            let has = |k: &str, v: &str| facts.contains(&(k, v));
+            Ok(
+                if has("antora.component", "guide") && has("antora.rel_path", "a.adoc") {
+                    vec![Url::parse("https://example.org/guide/1.0/a/").unwrap()]
+                } else {
+                    Vec::new()
+                },
+            )
+        }
+        fn facts(&self, _page: &Url) -> Result<Vec<(String, String)>, BoxError> {
+            Ok(vec![
+                ("antora.component".into(), "guide".into()),
+                ("antora.module".into(), "ROOT".into()),
+                ("antora.rel_path".into(), "a.adoc".into()),
+            ])
+        }
+    }
+    let registry = extended(EXTENDS);
+    let (extension, base) = (registry.get("x").unwrap(), registry.get("antora").unwrap());
+    let from = Url::parse("https://example.org/guide/1.0/b/").unwrap();
+    let resolve = |p: &dyn Profile| p.resolve("guide:ROOT:a.adoc", &from, &Pages).unwrap();
+    assert!(resolve(base).is_some(), "the base resolves this refspec");
+    assert_eq!(resolve(extension), resolve(base));
+    assert_eq!(extension.sitemap_note(), base.sitemap_note());
+    assert!(extension.sitemap_note().is_some());
+    assert!(
+        extension.views().is_empty(),
+        "the base installs its own, once"
+    );
+}
+
+#[test]
+fn an_extension_of_generic_reads_as_generic_does_where_it_states_no_rule() {
+    let toml = "[[profile]]\nname = \"x\"\nextends = \"generic\"\n";
+    let (url, html) = sphinx_page();
+    let content = |name: &str| {
+        let x = extract(
+            &html,
+            &url,
+            &ProfileChoice::Named(name.into()),
+            &HashScope::default(),
+            &extended(toml),
+        )
+        .unwrap();
+        (x.profile, count_content(&x), x.hash)
+    };
+    let (extension, generic) = (content("x"), content("generic"));
+    assert_eq!((extension.1, extension.2), (generic.1, generic.2));
+    assert_eq!(extension.0, "x");
+}
+
+fn count_content(x: &Extracted) -> usize {
+    x.anchors
+        .iter()
+        .filter(|a| a.placement == Placement::Content)
+        .count()
 }

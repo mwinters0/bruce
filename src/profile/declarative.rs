@@ -1,6 +1,14 @@
 //! A declarative profile (D33): a profile a config defines, with a content
 //! region, fact rules, source rules, an edit link and a generator pattern, and no
-//! resolution or views (D38), as `generic` has none.
+//! resolution or views of its own (D38), as `generic` has none.
+//!
+//! One that extends a compiled profile (D94) wraps it: its Extract is the base's with
+//! the extension's handlers, finish step and source rules added (its sources
+//! first, its facts under its own name, the base's under the base's) and its
+//! region replacing the base's where it states one; it detects a generator by
+//! its pattern, else by the base's; it resolves and gives the sitemap's
+//! sentence as the base does. Its Views are none, the base being in every
+//! registry that holds the extension and installing its own once.
 //!
 //! The name and region outlive the registry that holds them, because
 //! [`Profile::name`] and the region are `'static` and a config's are known
@@ -32,8 +40,9 @@ use crate::forge;
 /// A profile built from a [`Definition`].
 pub struct Declarative {
     name: &'static str,
+    base: Option<Box<dyn Profile>>,
     generator: Option<Regex>,
-    region: &'static [&'static str],
+    region: Option<&'static [&'static str]>,
     edit_link: Option<String>,
     facts: Arc<[Rule]>,
     sources: Arc<[forge::Rule]>,
@@ -60,20 +69,24 @@ struct Reading {
 }
 
 impl Declarative {
-    /// The profile `definition` describes. `Err` names what cannot be built,
-    /// which a definition the loader validated never holds.
-    pub fn new(definition: &Definition) -> Result<Declarative, String> {
+    /// The profile `definition` describes, over `base`, the compiled profile
+    /// it extends. `Err` names what cannot be built, which a definition the
+    /// loader validated never holds.
+    pub fn new(
+        definition: &Definition,
+        base: Option<Box<dyn Profile>>,
+    ) -> Result<Declarative, String> {
         let generator = match &definition.generator {
             Some(g) => Some(Regex::new(g).map_err(|e| format!("generator: {e}"))?),
             None => None,
         };
-        let region: &'static [&'static str] = if definition.region.is_empty() {
-            GENERIC_REGION
+        let region: Option<&'static [&'static str]> = if definition.region.is_empty() {
+            None
         } else {
             for selector in &definition.region {
                 compiled(selector).map_err(|e| format!("region: {selector:?}: {e}"))?;
             }
-            interned::list(&definition.region)
+            Some(interned::list(&definition.region))
         };
         if let Some(selector) = &definition.edit_link {
             compiled(selector).map_err(|e| format!("edit_link: {selector:?}: {e}"))?;
@@ -91,6 +104,7 @@ impl Declarative {
             .collect::<Result<_, _>>()?;
         Ok(Declarative {
             name: interned::text(&definition.name),
+            base,
             generator,
             region,
             edit_link: definition.edit_link.clone(),
@@ -147,15 +161,38 @@ impl Profile for Declarative {
         self.name
     }
 
-    fn detect(&self, generator: &str) -> bool {
-        self.generator
+    fn namespace(&self) -> &'static str {
+        self.base
             .as_ref()
-            .is_some_and(|pattern| pattern.is_match(generator))
+            .map_or(self.name, |base| base.namespace())
+    }
+
+    fn detect(&self, generator: &str) -> bool {
+        match (&self.generator, &self.base) {
+            (Some(pattern), _) => pattern.is_match(generator),
+            (None, Some(base)) => base.detect(generator),
+            (None, None) => false,
+        }
     }
 
     fn extract<'h>(&self, sink: &'h RefCell<Sink>) -> Extract<'h> {
-        let mut extract = Extract::region(self.region);
-        extract.sources = Arc::clone(&self.sources);
+        let mut extract = match &self.base {
+            Some(base) => base.extract(sink),
+            None => Extract::region(GENERIC_REGION),
+        };
+        if let Some(region) = self.region {
+            extract.region = region;
+        }
+        extract.sources = if extract.sources.is_empty() {
+            Arc::clone(&self.sources)
+        } else {
+            self.sources
+                .iter()
+                .chain(extract.sources.iter())
+                .cloned()
+                .collect()
+        };
+        let name = self.name;
         let readings: Rc<RefCell<Vec<Reading>>> = Rc::new(RefCell::new(
             self.facts.iter().map(|_| Reading::default()).collect(),
         ));
@@ -212,14 +249,18 @@ impl Profile for Declarative {
         }
         if !self.facts.is_empty() {
             let rules = Arc::clone(&self.facts);
-            extract.finish = Some(Box::new(move |_, sink| {
+            let base = extract.finish.take();
+            extract.finish = Some(Box::new(move |settled, sink| {
+                if let Some(base) = base {
+                    base(settled, sink);
+                }
                 let mut readings = readings.borrow_mut();
                 for (rule, reading) in rules.iter().zip(readings.iter_mut()) {
                     if reading.reading {
                         close(rule, reading);
                     }
                     if let Some(value) = reading.value.take() {
-                        sink.fact(&rule.key, value);
+                        sink.fact_in(name, &rule.key, value);
                     }
                 }
             }));
@@ -229,15 +270,22 @@ impl Profile for Declarative {
 
     fn resolve(
         &self,
-        _reference: &str,
-        _from: &Url,
-        _lookup: &dyn Lookup,
+        reference: &str,
+        from: &Url,
+        lookup: &dyn Lookup,
     ) -> Result<Option<Url>, BoxError> {
-        Ok(None)
+        match &self.base {
+            Some(base) => base.resolve(reference, from, lookup),
+            None => Ok(None),
+        }
     }
 
     fn views(&self) -> &'static [View] {
         &[]
+    }
+
+    fn sitemap_note(&self) -> Option<&'static str> {
+        self.base.as_ref().and_then(|base| base.sitemap_note())
     }
 }
 
