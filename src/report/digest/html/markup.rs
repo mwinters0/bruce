@@ -76,6 +76,11 @@ pub(super) fn esc(s: &str) -> String {
     out
 }
 
+/// `n` of `noun`, pluralised.
+pub(super) fn counted(n: i64, noun: &str) -> String {
+    format!("{} {noun}{}", num(n), if n == 1 { "" } else { "s" })
+}
+
 /// `n` with a comma between thousands.
 pub(super) fn num(n: i64) -> String {
     let digits = n.unsigned_abs().to_string();

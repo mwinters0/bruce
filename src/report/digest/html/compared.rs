@@ -11,6 +11,7 @@ use super::markup::{
     Row, a, close_section, day, esc, num, open_section, rows, short, source, table, w, when,
 };
 use super::severity::mark;
+use super::standing::listed;
 use crate::config::SeverityMap;
 use crate::report::table::Table;
 
@@ -182,7 +183,7 @@ fn status(r: &Row) -> String {
 
 /// The links of a table of sections 3 and 4, one row each, `now` heading a column
 /// that says what a fixed link became, and `whose` the source shown.
-fn links(out: &mut String, sev: &SeverityMap, rows: &[Row], now: bool, whose: &str) {
+fn links(out: &mut String, sev: &SeverityMap, rows: &[&Row], now: bool, whose: &str) {
     let body: Vec<Vec<String>> = rows
         .iter()
         .map(|r| {
@@ -234,13 +235,6 @@ fn fold(out: &mut String, title: &str, n: usize, inner: impl FnOnce(&mut String)
     out.push_str("</details>\n");
 }
 
-/// The rows of `table`, those whose `column` is `value`.
-fn of<'a>(table: &'a Table, column: &str, value: &str) -> Vec<Row<'a>> {
-    rows(table)
-        .filter(|r| r.text(column) == Some(value))
-        .collect()
-}
-
 /// What a link became, in words.
 fn became(r: &Row) -> String {
     match r.text("became") {
@@ -253,12 +247,20 @@ fn became(r: &Row) -> String {
     }
 }
 
+/// The rows of `table`, a section's links, that the severity map makes a
+/// finding: a kind at none is in no list (D82).
+fn found<'a>(d: &Digest, table: &'a Table) -> Vec<Row<'a>> {
+    rows(table)
+        .filter(|r| listed(&d.severity, r.text("outcome"), r.text("reason")))
+        .collect()
+}
+
 /// Whether sections 3 and 4 are shown: each is left out where it would list
 /// nothing, as with no comparison, which the sub-title says.
 pub(super) fn shown(d: &Digest) -> (bool, bool) {
     (
-        !d.new_breakage.rows.is_empty(),
-        !d.fixed_breakage.rows.is_empty(),
+        !found(d, &d.new_breakage).is_empty(),
+        !found(d, &d.fixed_breakage).is_empty(),
     )
 }
 
@@ -273,7 +275,8 @@ pub(super) fn broken_since(out: &mut String, d: &Digest) {
         "Broken since the previous run",
         Some("Each new break under its cause"),
     );
-    let new = d.new_breakage.rows.len();
+    let new_breakage = found(d, &d.new_breakage);
+    let new = new_breakage.len();
     w!(
         out,
         "<p>{} to a broken URL or a missing fragment {} broken since {}. A new break is laid \
@@ -283,14 +286,17 @@ pub(super) fn broken_since(out: &mut String, d: &Digest) {
         then(c)
     );
     for cause in CAUSES {
-        let found = of(&d.new_breakage, "cause", cause);
-        if found.is_empty() {
+        let of_cause: Vec<&Row> = new_breakage
+            .iter()
+            .filter(|r| r.text("cause") == Some(cause))
+            .collect();
+        if of_cause.is_empty() {
             continue;
         }
         let (title, meaning, whose) = cause_words(cause);
-        fold(out, title, found.len(), |out| {
+        fold(out, title, of_cause.len(), |out| {
             w!(out, "<p>{meaning}</p>\n");
-            links(out, &d.severity, &found, false, whose);
+            links(out, &d.severity, &of_cause, false, whose);
         });
     }
     close_section(out);
@@ -303,7 +309,8 @@ pub(super) fn fixed_since(out: &mut String, d: &Digest) {
         return;
     };
     open_section(out, "fixed-since", "Fixed since the previous run", None);
-    let fixed = d.fixed_breakage.rows.len();
+    let all = found(d, &d.fixed_breakage);
+    let fixed = all.len();
     w!(
         out,
         "<p>{} broken in {} {} not broken in this one: mended, or gone with the page. The \
@@ -312,7 +319,12 @@ pub(super) fn fixed_since(out: &mut String, d: &Digest) {
         then(c),
         if fixed == 1 { "is" } else { "are" }
     );
-    let all: Vec<Row> = rows(&d.fixed_breakage).collect();
-    links(out, &d.severity, &all, true, "Linking page's source");
+    links(
+        out,
+        &d.severity,
+        &all.iter().collect::<Vec<_>>(),
+        true,
+        "Linking page's source",
+    );
     close_section(out);
 }

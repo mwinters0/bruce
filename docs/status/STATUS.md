@@ -26,7 +26,7 @@ the profile's facts, the other locales its language menu names and the content h
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, the body decoding, the local fetcher over a map of URLs to files and the router that sends a URL the build holds to it and any other to HTTP;
 `crawl`, the frontier with the other locales learned and the URLs on a root's host outside every scope waiting on them, the hops of a redirect, D16's outcomes, the ask of a broken 4xx's URL, or of the broken 4xx a redirect lands on, with its final `/` toggled (D72), the schedule that gives a build's reads a budget of their own and each live host its share of the run's other slots (D61), sitemaps, the run that writes a target's rows and its stop, and a run from seeds checked against a baseline: the component-versions the build holds, `not_built`, the baseline's rows copied for what it lacks, and the xrefs into a component the build lacks resolved to the baseline's pages or the URLs they name;
 `ci`, a build directory read as its production URLs; and
-`report`, the `report_*` views, the choice of run, the eight single-run reports, `diff`, `changed` and `anchors-removed` over two runs, and the gate (`introduced`, in the outcomes the CI run's `gate.fail` names (D83), with the inverse check, the redirected links, the errors and the breakage already in the baseline; `check-dir --inverse fail|warn`), as a text table or JSON, and the digest of a crawl run (D64), written as dated JSON and HTML by `bruce report digest`, compared with the run before it, a named run or a baseline file (D73), the breakage new since it attributed to what it held (D74), its dots and legend following the site's severity map (D82) and its Housekeeping listing the settings off their defaults.
+`report`, the `report_*` views, the choice of run, the eight single-run reports, `diff`, `changed` and `anchors-removed` over two runs, and the gate (`introduced`, in the outcomes the CI run's `gate.fail` names (D83), with the inverse check, the redirected links, the errors and the breakage already in the baseline; `check-dir --inverse fail|warn`), as a text table or JSON, and the digest of a crawl run (D64), written as dated JSON and HTML by `bruce report digest`, compared with the run before it, a named run or a baseline file (D73), the breakage new since it attributed to what it held (D74), its dots, legend, counts and ranking following the site's severity map, a kind at none out of its lists (D82) and its Housekeeping listing the settings off their defaults.
 `docs/manual/` holds the config reference, `bruce crawl`'s, `bruce check-dir`'s, `bruce report`'s, `bruce prune`'s, `bruce export-baseline`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -72,11 +72,10 @@ The spec is [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
   gate and `report introduced`/`inverse` for the CI run, stated like any
   setting. Earned by 7.5 ([`history/2026-10-30.md`](history/2026-10-30.md)).
   Notes: [`../wip/roadmap-P7.5.1-fail-notes.md`](../wip/roadmap-P7.5.1-fail-notes.md).
-- [ ] **7.5.2** The map ranks: the HTML's page and repo counts by level and
-  ranked by them, and a kind at `none` out of its lists, counts and ranking
-  ([`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md), "Severity: three
-  fixed levels, the site mapping each kind"). Earned by 7.5
-  ([`history/2026-10-31.md`](history/2026-10-31.md)).
+- [x] **7.5.2** The map ranks: the HTML's page and repo counts by level and
+  ranked by them, and a kind at `none` out of its lists, counts and ranking.
+  Earned by 7.5 ([`history/2026-10-31.md`](history/2026-10-31.md)). Notes:
+  [`../wip/roadmap-P7.5.2-ranking-notes.md`](../wip/roadmap-P7.5.2-ranking-notes.md).
 - [ ] **7.5.3** The gate lists what its `fail` list leaves out: "introduced
   breakage not failing", the inverse check following the list with "inverse
   breakage not failing", and an empty list "report only"
@@ -102,3 +101,17 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **A kind a map splits over two levels prints two counts that word alike.**
+  With `doubled_slash = "attention"` a page's broken-URL links are "3 broken
+  links" red and "2 broken links" amber, the dots telling them apart, because a
+  count is kept per kind and level so a level still says which kinds it holds
+  ([`../wip/roadmap-P7.5.2-ranking-notes.md`](../wip/roadmap-P7.5.2-ranking-notes.md)).
+  Counting by level alone, or naming the reason in the amber count, would read
+  better and lose or add words per setting; the choice is `standing::tally`.
+- **A redirect at `none` is not listed, and the legend names what `none` leaves
+  out.** The spec says a `none` kind leaves "the link lists" and the legend
+  states policy; neither names the Housekeeping redirects or a legend line. They
+  follow from the rule rather than from a sentence of it. Reconsidering makes a
+  `redirected = "none"` site list its redirects undotted, or the legend silent
+  about a hidden kind (`html.rs` `housekeeping`, `html/severity.rs` `legend`).

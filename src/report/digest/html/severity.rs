@@ -5,8 +5,11 @@
 //! for pedantic, so the three read apart without their colours; each is named
 //! for a screen reader, the colour repeating the row's own text.
 
+use std::fmt::Write as _;
+
 use super::super::document::Digest;
 use super::guide::Entry;
+use super::markup::w;
 use crate::config::Severity;
 
 /// The class and name of a level that has a dot.
@@ -90,7 +93,9 @@ fn listed(items: &[String]) -> String {
 }
 
 /// The legend, one line naming each level some kind has, with the kinds at
-/// it, the dots hidden from a screen reader that reads the words beside them.
+/// it, the dots hidden from a screen reader that reads the words beside them,
+/// and a line naming the kinds at none, which the digest does not list or
+/// count (D82).
 pub(super) fn legend(d: &Digest) -> String {
     let items: Vec<String> = [Severity::Broken, Severity::Attention, Severity::Pedantic]
         .into_iter()
@@ -112,11 +117,26 @@ pub(super) fn legend(d: &Digest) -> String {
             ))
         })
         .collect();
-    if items.is_empty() {
-        return String::new();
+    let mut out = String::new();
+    if !items.is_empty() {
+        w!(
+            out,
+            "<p class=\"legend\">A dot marks the severity of a link or a target: {}.</p>\n",
+            items.join("; ")
+        );
     }
-    format!(
-        "<p class=\"legend\">A dot marks the severity of a link or a target: {}.</p>\n",
-        items.join("; ")
-    )
+    let quiet = d.severity.kinds_at(Severity::None);
+    if !quiet.is_empty() {
+        let words: Vec<String> = quiet
+            .iter()
+            .enumerate()
+            .map(|(i, kind)| kind_words(kind, &quiet[..i], d))
+            .collect();
+        w!(
+            out,
+            "<p class=\"legend\">Not listed or counted, this report being set to treat them as no finding: {}.</p>\n",
+            listed(&words)
+        );
+    }
+    out
 }

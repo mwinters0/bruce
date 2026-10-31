@@ -284,8 +284,8 @@ pub(super) fn checked_hosts(conn: &Connection, run: RunId) -> Result<Table, Erro
 
 /// The crawled pages holding a broken link or one that errored, ranked by
 /// their red links (`broken_url` and `error`) with those broken through them
-/// (`through`, D71) and then their amber ones (`broken_anchor`), the severity
-/// of the HTML's dots.
+/// (`through`, D71) and then their amber ones (`broken_anchor`): by outcome,
+/// as the JSON carries them, the HTML ranking by the map's levels (D82).
 pub(super) fn pages(conn: &Connection, run: RunId, _: PageCounts) -> Result<Table, Error> {
     let mut sql = Sql::new(
         "SELECT pg.url AS page, pg.title, p.source_repo, p.source_path, p.source_url, \

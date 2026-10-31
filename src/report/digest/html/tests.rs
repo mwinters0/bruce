@@ -124,41 +124,6 @@ fn pages_follow_their_rank_each_with_its_links_and_sources() {
 }
 
 #[test]
-fn a_summary_counts_red_then_amber_and_leaves_out_a_level_with_no_links() {
-    let tally = super::tally;
-    let red =
-        "<span class=\"cn\"><span class=\"sev broken\" role=\"img\" aria-label=\"Broken\"></span>";
-    let amber = "<span class=\"cn\"><span class=\"sev attention\" role=\"img\" aria-label=\"Attention\"></span>";
-    assert_eq!(
-        tally(&SeverityMap::default(), 181, 0, 0, 2),
-        format!("{red} 181 broken links</span>, {amber} 2 missing fragments</span>")
-    );
-    assert_eq!(
-        tally(&SeverityMap::default(), 1, 0, 0, 0),
-        format!("{red} 1 broken link</span>")
-    );
-    assert_eq!(
-        tally(&SeverityMap::default(), 0, 0, 0, 1),
-        format!("{amber} 1 missing fragment</span>")
-    );
-    // The links broken through a link and those that could not be verified
-    // are red, in that order after the broken ones, the first with the
-    // guide's ⓘ.
-    let info = super::guide::Entry::DoubledSlash.info();
-    assert_eq!(
-        tally(&SeverityMap::default(), 1, 579, 2, 0),
-        format!(
-            "{red} 1 broken link</span>, {red} 579 broken through it{info}</span>, {red} 2 \
-             unverifiable</span>"
-        )
-    );
-    assert_eq!(
-        tally(&SeverityMap::default(), 0, 0, 1, 0),
-        format!("{red} 1 unverifiable</span>")
-    );
-}
-
-#[test]
 fn a_page_lists_its_red_links_before_its_amber_ones_an_errored_link_among_the_red() {
     let store = ranked();
     let html = of(&store).html();
@@ -1038,6 +1003,9 @@ fn the_severity_map_moves_the_dots_the_legend_and_the_figures() {
     let quiet = digest.html();
     assert!(!quiet.contains("class=\"sev "), "a dot remained");
     assert!(!quiet.contains("A dot marks the severity"));
+    // The legend names what it leaves out instead.
+    assert!(section(&quiet, "figures").contains("Not listed or counted"));
+    assert!(!section(&default, "figures").contains("Not listed or counted"));
     // A link to a broken URL softened to attention joins the amber kinds, and
     // the broken level keeps the errors alone, worded to stand by itself.
     with_policy(&mut digest, &[("severity.broken_url", "attention")]);
@@ -1083,7 +1051,6 @@ fn the_pedantic_entry_says_how_the_run_marks_such_a_redirect() {
     for (level, words) in [
         ("attention", "marked as attention with an amber dot"),
         ("broken", "marked as broken with a red dot"),
-        ("none", "not marked"),
     ] {
         with_policy(&mut digest, &[("severity.pedantic_trailing_slash", level)]);
         assert!(
@@ -1091,6 +1058,11 @@ fn the_pedantic_entry_says_how_the_run_marks_such_a_redirect() {
             "{level}"
         );
     }
+    // At none the digest lists no such redirect, and the entry says so.
+    with_policy(&mut digest, &[("severity.pedantic_trailing_slash", "none")]);
+    let none = entry(&digest);
+    assert!(none.contains("treat them as no finding, so it does not list them"));
+    assert!(!none.contains("redirected links"));
 }
 
 #[test]
@@ -1134,4 +1106,95 @@ fn housekeeping_lists_the_settings_off_their_defaults() {
     }
     // A default row is not listed.
     assert!(!listed.contains("severity.error"));
+}
+
+#[test]
+fn a_kind_at_none_is_in_no_list_the_figures_and_the_json_keep_it() {
+    let mut digest = of(&ranked());
+    let default = digest.html();
+    assert!(section(&default, "pages").contains("<td>error \u{b7} server_error</td>"));
+    with_policy(&mut digest, &[("severity.error", "none")]);
+    let quiet = digest.html();
+    // The drill-downs, the unverified section and the repos' counts leave the
+    // errors out, and a page holding errors alone has no row.
+    let pages = section(&quiet, "pages");
+    assert!(!pages.contains("server_error") && !pages.contains("unverifiable"));
+    assert_eq!(pages.matches("<details id=\"p").count(), 3);
+    let errors = section(&quiet, "errors");
+    assert!(errors.contains("is a finding under this report's severity map"));
+    assert!(!errors.contains("https://slow.test/12"));
+    assert!(!section(&quiet, "repos").contains("unverifiable"));
+    // The figures are the run's outcome totals, and the JSON holds every row.
+    assert!(
+        section(&quiet, "figures").contains(
+            "<span class=\"n\">3</span><span class=\"l\">Links that could not be verified"
+        )
+    );
+    assert_eq!(digest.pages.rows.len(), 4);
+    assert!(digest.json().contains("server_error"));
+}
+
+#[test]
+fn a_target_at_none_leaves_the_targets_and_their_held_count() {
+    let mut digest = of(&ranked());
+    let held = |digest: &crate::report::Digest| {
+        let html = digest.html();
+        section(&html, "fix-once").to_owned()
+    };
+    assert!(held(&digest).contains("Targets named by more than one link"));
+    // With the links to a broken URL out, "held" is of the links still listed.
+    with_policy(&mut digest, &[("severity.broken_url", "none")]);
+    assert!(held(&digest).contains("holding 2 of the 2 broken links"));
+    with_policy(
+        &mut digest,
+        &[
+            ("severity.broken_url", "none"),
+            ("severity.broken_anchor", "none"),
+        ],
+    );
+    assert!(held(&digest).contains("No broken target is named by more than one link"));
+}
+
+#[test]
+fn a_redirect_at_none_is_not_listed_and_its_ring_sentence_goes() {
+    let mut digest = of(&store());
+    let fold = |digest: &crate::report::Digest| {
+        let html = digest.html();
+        let house = section(&html, "housekeeping").to_owned();
+        let from = house.find("Redirected links</span>").unwrap();
+        house[from..house.find("Sitemap entries").unwrap()].to_owned()
+    };
+    assert!(
+        fold(&digest).contains("class=\"ttl\">e.test/2"),
+        "{}",
+        fold(&digest)
+    );
+    with_policy(&mut digest, &[("severity.redirected", "none")]);
+    let quiet = fold(&digest);
+    assert!(
+        quiet.contains("<span class=\"cnt\">0 links</span>"),
+        "{quiet}"
+    );
+    assert!(quiet.contains("None."));
+    with_policy(&mut digest, &[("severity.pedantic_trailing_slash", "none")]);
+    assert!(!fold(&digest).contains("marked as a ring"));
+}
+
+#[test]
+fn the_breakage_since_leaves_out_a_kind_at_none_and_a_section_it_empties() {
+    let mut digest = compared_digest();
+    with_policy(&mut digest, &[("severity.broken_anchor", "none")]);
+    let html = digest.html();
+    let since = section(&html, "broken-since");
+    assert!(since.contains("2 to a broken URL or a missing fragment are broken since run 4"));
+    assert!(!since.contains("1&gt;2#nope"));
+    with_policy(
+        &mut digest,
+        &[
+            ("severity.broken_anchor", "none"),
+            ("severity.broken_url", "none"),
+        ],
+    );
+    let html = digest.html();
+    assert!(!html.contains("broken-since"));
 }

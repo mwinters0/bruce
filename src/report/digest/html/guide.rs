@@ -140,8 +140,16 @@ fn doubled_slash_entry(reach: Reach) -> String {
 }
 
 /// The pedantic entry, its last words stating how the run's severity map marks
-/// such a redirect and where the digest lists it (D82).
-fn pedantic_entry(marking: &str) -> String {
+/// such a redirect and where the digest lists it, or that it lists none (D82).
+fn pedantic_entry(marking: Option<&str>) -> String {
+    let placed = match marking {
+        Some(marking) => format!(
+            "they are under Housekeeping's redirected links, {marking}, after the other redirects"
+        ),
+        None => {
+            "this report is set to treat them as no finding, so it does not list them".to_owned()
+        }
+    };
     format!(
         "<p>Humans generally write URLs like <code>example.com/foo</code> \
     but <em>technically</em> the correct form is <code>example.com/foo/</code>: notice the \
@@ -151,18 +159,17 @@ fn pedantic_entry(marking: &str) -> String {
     browser has to make a second request.</p>\n\
     <p>Should the \"wrong\" URL count as broken, considering that the reader eventually ends up \
     in the right place? It's debatable, but it is certainly lower priority than an actually \
-    broken link (a 404, say). These are not counted as broken: they are under Housekeeping's \
-    redirected links, {marking}, after the other redirects.</p>\n"
+    broken link (a 404, say). These are not counted as broken: {placed}.</p>\n"
     )
 }
 
-/// The words stating where the guide's pedantic entry puts such a redirect and
-/// how it marks it, read off the map.
-pub(super) fn pedantic_marking(map: &SeverityMap) -> &'static str {
+/// The words stating how the guide's pedantic entry's redirect is marked, read
+/// off the map; none where the map lists no such redirect.
+pub(super) fn pedantic_marking(map: &SeverityMap) -> Option<&'static str> {
     match map.of_redirect(Some(crate::store::PEDANTIC_TRAILING_SLASH)) {
-        Severity::Pedantic => "marked as pedantic with a ring",
-        Severity::Attention => "marked as attention with an amber dot",
-        Severity::Broken => "marked as broken with a red dot",
-        Severity::None => "not marked",
+        Severity::Pedantic => Some("marked as pedantic with a ring"),
+        Severity::Attention => Some("marked as attention with an amber dot"),
+        Severity::Broken => Some("marked as broken with a red dot"),
+        Severity::None => None,
     }
 }

@@ -282,12 +282,20 @@ fail = ["broken_url"]
 finding, with no effect on any outcome, any report or the gate (the gate's own
 list is [`[gate]`](#the-gate)). A level is
 `"broken"` (a red dot), `"attention"` (amber), `"pedantic"` (a grey ring) or
-`"none"` (no dot); the colours are fixed. A key is an outcome, `redirected` for
+`"none"` (no finding); the colours are fixed. A key is an outcome, `redirected` for
 a redirected link, or a reason, and a reason's level beats its outcome's, so
 `doubled_slash = "attention"` softens that kind of `broken_url` alone. `unchecked`
 keeps no level, and a key `bruce` does not know is refused. The run records the map
-with its other settings, and the digest's legend, its dots, its counts' dots and
-the guide's pedantic entry follow it. A page's and a repo's ranking stays by outcome.
+with its other settings, and the digest's legend, its dots, its counts and
+ranking and the guide's pedantic entry follow it: a page's and a repo's counts
+are of their links by level, and they rank by their red links, then their amber
+ones, so `doubled_slash = "attention"` moves the page counting those links down
+the ranking. A kind at `"none"` is no finding in the digest: it leaves the link
+lists, the counts and the ranking, a page whose only findings are at `"none"` has
+no row, and the legend names what it leaves out. The run's outcomes, the figures,
+the JSON's rows and order, every other report and the gate are untouched. A level on a link
+that is neither broken nor errored (a redirect, a reason on an `ok` link) moves
+its dot where it is listed and counts nothing.
 
 ```toml
 [severity]

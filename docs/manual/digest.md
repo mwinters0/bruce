@@ -71,10 +71,11 @@ redirect that differs from its landing only by a final `/`. The ring differs
 from the others in shape, so the three read apart in print and without
 colour, and every dot is named for a screen reader. The figures' legend names
 the levels and the kinds at each; a site's [`[severity]`](config.md#severity)
-moves a kind to another level, or to none, which has no dot. Only the JSON's
+moves a kind to another level, or to none, which is no finding: it has no dot
+and is in no list, count or ranking of the HTML, and the legend names it. Only the JSON's
 `outcome` and `reason` and its `policy` decide a level; it has no
-field for it. A page's and a repo's counts take the level of their kind, but
-the ranking stays by outcome, red kinds first. The lists that are not links (orphans, unlisted pages, sitemap
+field for it. A page's and a repo's counts are of their links by level, and
+they rank by their red links, then their amber ones. The lists that are not links (orphans, unlisted pages, sitemap
 entries, the unchecked counts) have no dot. **A bar at the left edge** marks a
 row or a drill-down that is new since the compared run, as the JSON's `new`
 says ([below](#the-json)), and a drill-down that is not new counts its new
@@ -112,7 +113,7 @@ new or all fixed. In this order:
    that could not be verified and 2 to a missing fragment, "● 181 broken links,
    ● 3 unverifiable, ● 2 missing fragments", the first two dots red and the last
    amber, a count of no links left out. The pages rank by their red links, then their amber ones,
-   and the drill-down lists the red before the amber. A link is counted on the
+   by the level the [`[severity]`](config.md#severity) map gives each link, and the drill-down lists the red before the amber. A link is counted on the
    page it is written on. A link to a URL whose path doubles a slash is red,
    reason `doubled_slash`, whatever that URL answered and whether it was
    asked, and the page that writes it also counts, as "● 579 broken through
@@ -178,7 +179,8 @@ new or all fixed. In this order:
     how the run's severity marks such a redirect.
 
 The JSON holds every row the HTML lists and the targets it leaves out, and
-the by-component counts it has no section for.
+the by-component counts it has no section for. It holds the rows of a kind
+the severity map puts at none too, counted and ranked by outcome.
 
 ## The JSON
 

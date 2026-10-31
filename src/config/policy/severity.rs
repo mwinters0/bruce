@@ -34,6 +34,11 @@ impl Severity {
         }
     }
 
+    /// Whether a kind at this level is a finding: *none* is not (D82).
+    pub fn is_finding(self) -> bool {
+        self != Severity::None
+    }
+
     fn parse(s: &str) -> Result<Severity, String> {
         [
             Severity::None,
