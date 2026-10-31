@@ -99,10 +99,4 @@ roadmap's phase index.
   unowned**: a CI run whose redirects reach another locale would promote it.
   Detail: `src/crawl/frontier.rs`
 
-- **KD33** — A page or repo whose only findings in the compared run were at
-  `none` is not marked new once one is above it, the marks reading every
-  finding the JSON holds while the HTML listed none of them. **(c) unowned**:
-  a site mapping a broken kind to `none` would promote it.
-  Detail: `src/report/digest/novelty.rs`
-
 <!-- deficiency-watermark: KD33 -->

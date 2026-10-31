@@ -58,13 +58,13 @@ Reopens: runs that differ, where `unexplained` is large or `target_moved` mostly
 Code: `report::digest::cause`. Evidence: `report::digest::cause::tests`.
 
 ### D75 A row is new where the compared run's same section lacked it, a broken link where section 3 lists it, and a bar marks it
-Each section a reader acts on gets `new`, true where the compared run's same section lacks the row's key, a broken link
-being new where `new_breakage` lists it and a repo where its pages hold a finding and held none; `pages` and `by_repo`
-count `new_links`, and with no comparison both are `null`. Maintainer, 2026-10-25: new entries marked in every section
-in as little room as possible. Why: one rule, so a mark means the same everywhere and agrees with section 3. Rejected: a
-"NEW" pill; a glyph by the dot, read as a severity; a row new whenever a link under it is, making a long-broken page
-look new; HTML-only marks (D64); `false` with no comparison, claiming what is not known. Reopens: a section whose key a
-change moves wholesale (a site moving host). Code: `report::digest::novelty`. Evidence:
+`new` is true where the compared run's same section lacks the row's key: a broken link where `new_breakage` lists it, a
+repo where its pages hold a finding and held none; `pages` and `by_repo` count `new_links`; all are `null` with no
+comparison. `pages`, `by_repo`, `errors`, `broken_targets` and `redirects`, which the HTML lists through the severity
+map, also get `new_listed`: a finding whose key the compared run's section, read through that map, lacked; the HTML
+marks from it. Maintainer, 2026-10-31: `new` stays the data's (D92). Why: a page whose only findings then were at
+`none` was in no HTML. Rejected: a "NEW" pill; HTML-only marks (D64); `new` read through the map; `false` with no
+comparison. Reopens: a section whose key a change moves wholesale. Code: `report::digest::novelty`. Evidence:
 `report::digest::novelty::tests`.
 
 ### D76 A link's severity is one of three levels read off its outcome and reason, and only the HTML shows it

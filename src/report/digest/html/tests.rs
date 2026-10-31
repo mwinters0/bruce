@@ -951,6 +951,36 @@ fn what_is_new_is_marked_by_a_bar_and_a_drill_down_counts_its_new_links() {
 }
 
 #[test]
+fn a_page_whose_findings_then_were_at_none_is_marked_new() {
+    let store = compared();
+    store
+        .connection()
+        .execute(
+            "INSERT INTO policy VALUES (1, NULL, 'severity.broken_url', 'none')",
+            [],
+        )
+        .unwrap();
+    let html = crate::report::digest(
+        &store,
+        Some(RunId(1)),
+        crate::report::Against::Run(RunId(4)),
+        &crate::report::tests::registry(),
+    )
+    .unwrap()
+    .html();
+    // Run 4's page 1 held only a broken URL, which is no finding in this map.
+    let pages = section(&html, "pages");
+    assert!(pages.contains("<details class=\"new\" id=\"p1\">"));
+    let repos = section(&html, "repos");
+    assert!(repos.contains("<details class=\"new\">"));
+    assert_eq!(
+        repos.matches("<span class=\"rank\">").count(),
+        1,
+        "r/two has no finding"
+    );
+}
+
+#[test]
 fn the_first_digest_marks_nothing_new() {
     let html = html();
     assert!(!html.contains("class=\"new\""));

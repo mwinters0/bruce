@@ -209,17 +209,17 @@ and a count or status a number.
   "run": {"id":1,"tool_version":"0.1.0","started_at":"2026-10-23T20:04:11Z","finished_at":"2026-10-23T21:14:44Z","duration_seconds":4233,"roots":["https://docs.example.org/en-US/"]},
   "compared_with": {"id":0,"from_file":false,"tool_version":"0.1.0","started_at":"2026-10-22T20:03:58Z","finished_at":"2026-10-22T21:12:09Z","roots":["https://docs.example.org/en-US/"],"totals":{"pages":5,"links":9,"broken_url":2,"broken_anchor":0,"error":1,"unchecked":1}},
   "totals": {"pages":5,"links":10,"broken_url":3,"broken_anchor":1,"error":1,"unchecked":1},
-  "broken_targets": [{"target":"https://docs.example.org/en-US/b/","landing":null,"fix":null,"fragment":"nope","outcome":"broken_anchor","reason":null,"status":200,"links":1,"pages":1,"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/b.adoc","new":true}],
-  "pages": [{"page":"https://docs.example.org/en-US/a/","title":"A","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0,"new":false,"new_links":1}],
+  "broken_targets": [{"target":"https://docs.example.org/en-US/b/","landing":null,"fix":null,"fragment":"nope","outcome":"broken_anchor","reason":null,"status":200,"links":1,"pages":1,"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/b.adoc","new":true,"new_listed":true}],
+  "pages": [{"page":"https://docs.example.org/en-US/a/","title":"A","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0,"new":false,"new_links":1,"new_listed":false}],
   "broken": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","landing":null,"fix":null,"fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"hint":null,"status":200,"new":true}],
-  "by_repo": [{"repo":"https://forge.example.org/docs","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0,"new":false,"new_links":1}],
+  "by_repo": [{"repo":"https://forge.example.org/docs","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0,"new":false,"new_links":1,"new_listed":false}],
   "by_group": [{"group":"handbook","pages":2,"broken_pages":1,"links":6,"broken_url":2,"broken_anchor":1,"error":1,"through":0}],
   "new_breakage": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../b/#nope","target":"https://docs.example.org/en-US/b/","fragment":"nope","kind":"anchor","outcome":"broken_anchor","reason":null,"status":200,"cause":"anchor_removed","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/b.adoc"}],
   "fixed_breakage": [{"page":"https://docs.example.org/en-US/a/","raw_href":"../old/","target":"https://docs.example.org/en-US/old/","fragment":null,"kind":"anchor","outcome":"broken_url","reason":null,"status":404,"became":"ok","source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/a.adoc","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc"}],
   "anchors_removed": [{"page":"https://docs.example.org/en-US/b/","anchor":"nope","links":1,"pages":1,"linking_pages":["https://docs.example.org/en-US/a/"],"source_repo":"https://forge.example.org/docs","source_path":"modules/ROOT/pages/b.adoc"}],
-  "errors": [{"page":"https://docs.example.org/en-US/a/","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","raw_href":"https://slow.example.net/","target":"https://slow.example.net/","fragment":null,"kind":"anchor","reason":"server_error","status":503,"new":false}],
+  "errors": [{"page":"https://docs.example.org/en-US/a/","source_url":"https://forge.example.org/docs/src/branch/main/modules/ROOT/pages/a.adoc","raw_href":"https://slow.example.net/","target":"https://slow.example.net/","fragment":null,"kind":"anchor","reason":"server_error","status":503,"new":false,"new_listed":false}],
   "housekeeping": {
-    "redirects": [{"landing":"https://docs.example.org/en-US/b/","links":1,"urls":1,"chain":"301 https://docs.example.org/en-US/old/","reason":null,"pages":["https://docs.example.org/en-US/a/"],"new":false}],
+    "redirects": [{"landing":"https://docs.example.org/en-US/b/","links":1,"urls":1,"chain":"301 https://docs.example.org/en-US/old/","reason":null,"pages":["https://docs.example.org/en-US/a/"],"new":false,"new_listed":false}],
     "orphans": [{"page":"https://docs.example.org/en-US/c/","title":"C","root":"https://docs.example.org/en-US/","source_repo":null,"source_path":null,"new":false}],
     "unlisted": [{"page":"https://docs.example.org/en-US/d/","root":"https://docs.example.org/en-US/","title":"D","source_repo":null,"source_path":null,"new":false}],
     "sitemap_entries": [{"page":"https://docs.example.org/en-US/gone/","outcome":"broken_url","reason":null,"status":404,"new":false}],
@@ -245,8 +245,13 @@ and `sitemap_entries` has `new`, true where `compared_with`'s same list had
 no such row: the same page, target and fragment, or for a broken link, one
 `new_breakage` lists. A repo is new where its pages hold a broken link or an
 error and held none then. `pages` and `by_repo` also have `new_links`, the
-new rows of `broken` and `errors` on the page or the repo's pages. Both are
-`null` where `compared_with` is, nothing being known to be new.
+new rows of `broken` and `errors` on the page or the repo's pages. `pages`,
+`by_repo`, `errors`, `broken_targets` and `redirects` also have `new_listed`,
+which the HTML marks from: true where the row is a finding under the severity
+map and `compared_with`'s same list, read through that map, had no such row,
+so a page whose only findings then were of a kind at `none` is `new_listed`
+without being `new` (D75). All of them are `null` where `compared_with` is,
+nothing being known to be new.
 
 Every list below is **already ranked**; a loader needs to sort none of them.
 

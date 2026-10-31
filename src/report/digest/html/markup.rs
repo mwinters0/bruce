@@ -41,9 +41,16 @@ impl<'a> Row<'a> {
         }
     }
 
-    /// The row is new since the compared run (D75).
+    /// The row is new since the compared run (D75): as a finding under the
+    /// severity map where the section has `new_listed`, the section's `new`
+    /// where not.
     pub(super) fn is_new(&self) -> bool {
-        matches!(self.cell("new"), Cell::Bool(true))
+        let column = if self.columns.iter().any(|c| c == "new_listed") {
+            "new_listed"
+        } else {
+            "new"
+        };
+        matches!(self.cell(column), Cell::Bool(true))
     }
 
     pub(super) fn list(&self, name: &str) -> &'a [String] {
