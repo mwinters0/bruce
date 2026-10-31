@@ -478,7 +478,7 @@ fn against_a_baseline_an_out_of_scope_url_is_answered_as_an_external() {
 }
 
 #[test]
-fn a_hop_onto_an_allowlisted_host_ends_the_chain_under_externals_skip() {
+fn a_hop_onto_an_external_ends_the_chain_under_externals_skip() {
     let held = ["https://forge.example.org/p/"];
     let hop = |externals, url: &str| {
         let f = against(externals, &held);
@@ -502,6 +502,22 @@ fn a_hop_onto_an_allowlisted_host_ends_the_chain_under_externals_skip() {
         hop(Externals::Skip, "https://other.example.net/"),
         Plan::Status,
         "a host off the allowlist is followed as ever"
+    );
+    let outside = "https://docs.example.org/old/";
+    assert_eq!(
+        hop(Externals::Skip, outside),
+        Plan::Unchecked(EXTERNALS_SKIPPED),
+        "a root's host outside every scope is an external too"
+    );
+    assert_eq!(hop(Externals::Baseline, outside), Plan::Status);
+    assert_eq!(hop(Externals::Live, outside), Plan::Status);
+    let fr = Url::parse("https://docs.example.org/fr/a/").unwrap();
+    let f = against(Externals::Skip, &held);
+    f.learn(&[Url::parse("https://docs.example.org/fr/").unwrap()]);
+    assert_eq!(
+        f.hop_plan(&fr, Kind::Anchor).0,
+        Plan::Status,
+        "another locale's page is followed as ever"
     );
     assert_eq!(
         hop(Externals::Skip, "https://docs.example.org/en-US/b/new/"),

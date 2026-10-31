@@ -48,10 +48,11 @@ meant for the origin. Code: `extract::links::Links::resolve`. Evidence:
 An in-scope URL under the prefix and not built is judged once every built page is read, the held set (I16) final only
 then: in a held component-version it is `broken_url`, reason `not_built`; else it is answered as a URL outside the build
 is, by the baseline's rows if held, else a request. Copies go last, so a copied landing page never doubles a built one,
-`targets` having no key. `--externals=skip` asks nothing: an allowlisted URL gets the baseline's rows where held, else
-`unchecked`, `externals_skipped`, as does a hop onto one; in-scope URLs are not reached. Rejected: a pre-scan of the
-build (D38); `skip` as no verdict, passing a new link to a URL the baseline has broken. Reopens: a prefix below the site
-root. Code: `crawl::baseline`. Evidence: `crawl::baseline::tests`.
+`targets` having no key. `--externals=skip` asks nothing: an allowlisted URL, or one on a root's host outside every
+scope, gets the baseline's rows where held, else `unchecked`, `externals_skipped`, as does a hop onto either; in-scope
+URLs are not reached. Rejected: a pre-scan of the build (D38); `skip` as no verdict, passing a new link to a URL the
+baseline has broken. Reopens: a prefix below the site root.
+Code: `crawl::baseline`. Evidence: `crawl::baseline::tests`.
 
 ### D55 An xref waits for the held set, resolves through the baseline's pages, and keeps its refspec
 A refspec whose component-version the build holds stays `unresolved_xref`, Antora having had that catalog whole. Else,

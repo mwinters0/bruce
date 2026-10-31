@@ -99,11 +99,6 @@ roadmap's phase index.
   targets for those queries to read would promote it. Detail:
   `src/store/views.rs`
 
-- **KD25** — Under `--externals=skip`, a redirect's hop onto a URL on a root's
-  host outside every scope and locale is asked for its status, where a link
-  to it asks nothing and an allowlisted hop stays `externals_skipped`.
-  **(b) owned by M27**. Detail: `src/crawl/frontier.rs`
-
 - **KD26** — `[severity]` cannot name `invalid_url`, a reason the crawl writes
   on a `broken_url` link, so a site cannot move such links off red.
   **(b) owned by M28**. Detail:

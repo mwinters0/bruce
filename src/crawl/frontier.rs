@@ -111,7 +111,7 @@ pub struct Outside {
 /// host outside every scope and locale (D22).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Externals {
-    /// Nothing is requested for a link (a hop, KD25): the baseline's rows are
+    /// Nothing is requested for a link or a hop: the baseline's rows are
     /// copied where it holds the target, else the URL is `unchecked` (D54).
     Skip,
     /// The baseline's verdict where it holds one, else a request.
@@ -343,14 +343,14 @@ impl Frontier {
     /// [`Frontier::plan`] for the URL a redirect leads to: a hop is followed
     /// wherever it goes, so what a link would leave unchecked or broken is
     /// asked for its status alone. A skipped URL stays skipped, and ends the chain (D50);
-    /// so does an allowlisted one under `--externals=skip` (D54). A hop onto
+    /// so does an external one under `--externals=skip` (D54). A hop onto
     /// a URL the build lacks is asked, never copied from the baseline nor
     /// judged `not_built`: an Antora alias stays in its component, so no hop
     /// out of a built page is known to land there.
     pub fn hop_plan(&self, url: &Url, kind: Kind) -> (Plan, Canonical) {
         match self.plan(url, kind) {
             (Plan::Unchecked(SKIPPED), form) => (Plan::Unchecked(SKIPPED), form),
-            (Plan::Baseline | Plan::Unchecked(EXTERNALS_SKIPPED), form)
+            (Plan::Baseline | Plan::Outside | Plan::Unchecked(EXTERNALS_SKIPPED), form)
                 if self.is_skipped_external(url) =>
             {
                 (Plan::Unchecked(EXTERNALS_SKIPPED), form)
@@ -367,17 +367,15 @@ impl Frontier {
         }
     }
 
-    /// Whether `url` is on an allowlisted host, in no root's scope, in a run
-    /// whose `--externals` is `skip`.
-    // deficiency: KD25 A URL on a root's host outside every scope and locale
-    // is answered as an allowlisted one is (`external`), but this test names
-    // the allowlist alone, so a hop onto one under `skip` plans `Status` and
-    // is asked. Naming that URL here too would close it.
+    /// Whether `url` is one `--externals=skip` asks nothing of: on an
+    /// allowlisted host, or on a root's host under no other locale learned so
+    /// far (D10), and in no root's scope.
     fn is_skipped_external(&self, url: &Url) -> bool {
         let host = url.host().map(|h| h.to_string()).unwrap_or_default();
         self.baseline()
             .is_some_and(|b| b.externals == Externals::Skip)
-            && self.config.is_allowlisted(&host)
+            && (self.config.is_allowlisted(&host)
+                || (self.config.is_root_host(&host) && !self.is_other_locale(url)))
             && !self
                 .config
                 .roots
