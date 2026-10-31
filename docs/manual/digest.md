@@ -177,7 +177,9 @@ new or all fixed. In this order:
    differing from their landing only by a final `/` last, the sitemap entries no page was fetched for, the orphans, the unlisted pages
    and the unchecked links, each closed in its turn, then the settings of the
    run's [policy](config.md#judging) that differ from the defaults, as the
-   configuration file writes them. The unchecked links are
+   configuration file writes them, and in a comparison the rows of the two
+   runs' policy that differ, a row only one run recorded or whose value changed,
+   so a rule edited between the runs is told from a site changed. The unchecked links are
    listed by reason, each with what its links are in plain words, the setting
    in the [configuration](config.md) that would check them where there is
    one, and where its links point most: the hosts, the parts of a root's
@@ -229,6 +231,7 @@ and a count or status a number.
     "checked_hosts": [{"host":"slow.example.net","links":1,"targets":1}]
   },
   "policy": [{"host":null,"key":"pedantic_trailing_slash","value":"true"},{"host":null,"key":"severity.error","value":"broken"}],
+  "policy_changes": [{"from":{"host":null,"key":"timeout","value":"30"},"to":{"host":null,"key":"timeout","value":"60"}}],
   "trial": null
 }
 ```
@@ -277,6 +280,7 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `housekeeping.unchecked` | The `unchecked` links by `reason` ([below](#why-a-link-is-unchecked)), and the distinct `targets` they name. |
 | `housekeeping.unchecked_groups` | The same links by `reason` and by `group`, where they point, every group listed: the reasons in `unchecked`'s order, a reason's groups the most `links` first. A `group` is the scheme, as `mailto:`, for a URL that is not `http` or `https`; for `skipped`, the host and the path's last two segments, as `forge.example.org/…/issues/new`, the part a `skip` glob usually matches; on a root's host, the URL up to the path's first segment, as `https://docs.example.org/de/`, with the `/` after it where the path goes on; and else the host. It is `null` for a link the run stopped before asking about. |
 | `policy` | The whole policy the run was judged by, as it recorded it ([`config.md`](config.md#judging)): a row to a setting, `host` `null` for a run-wide one and a host's name for its own, `key` as the store spells it (`status.403`, `severity.doubled_slash`, a `schemes` row to each scheme) and `value` its text. A setting the file leaves out is a row at its default. |
+| `policy_changes` | The rows of the policy that differ between the run and the one it was compared with, each recorded by the two runs as they recorded it: `from` the compared run's row and `to` this run's, both with `host`, `key` and `value`, and `null` where only the other run recorded one. A row whose value changed has both, as has a declared profile's [source rule](config.md#profiles) a later run edited, named by its place in each run's list (`profile.site.source.2.pattern` in one, `profile.site.source.3.pattern` in the other); a rule inserted or removed is named alone, and the rules after it are not. A declared profile's rows are compared only when a page of either run was extracted by it. Empty where `compared_with` is `null`; a [trial](#a-trial-policy) changes neither run's recorded rows. |
 | `trial` | The path of the configuration file the digest was judged by in place of the run's recorded policy ([a trial](#a-trial-policy)), as `--config` gave it, else `null`; `policy` is then that file's judging rows and the run's asking ones. |
 | `housekeeping.checked_hosts` | The hosts no root starts on whose links' targets were asked about, the most `links` first: the [`allowlist`](config.md#allowlist) as far as the pages link to it. The run records no allowlist, so a host the allowlist names that no page links to is in no row. |
 

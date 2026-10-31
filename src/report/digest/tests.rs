@@ -1024,7 +1024,7 @@ fn the_json_has_the_fields_the_manual_documents() {
         .connection()
         .execute_batch(
             "INSERT INTO policy VALUES (1, NULL, 'schemes', 'matrix'), \
-             (1, NULL, 'digest.group_by', 'antora.component')",
+             (1, NULL, 'digest.group_by', 'antora.component'), (4, NULL, 'timeout', '30')",
         )
         .unwrap();
     let compared = digest(
@@ -1268,4 +1268,87 @@ fn the_sitemap_note_is_what_the_profiles_of_the_crawled_pages_say() {
         .execute("UPDATE pages SET profile = 'antora' WHERE url_id = 6", [])
         .unwrap();
     assert!(of(&store).sitemap_notes.is_empty());
+}
+
+#[test]
+fn the_pages_of_an_extension_get_their_bases_sitemap_note_from_the_runs_extends_row() {
+    let store = store();
+    let conn = store.connection();
+    conn.execute(
+        "UPDATE pages SET profile = 'site' WHERE url_id IN (1, 2)",
+        [],
+    )
+    .unwrap();
+    // The registry holds no `site`, and the run records no base for it.
+    assert!(of(&store).sitemap_notes.is_empty());
+    conn.execute(
+        "INSERT INTO policy VALUES (1, NULL, 'profile.site.extends', 'antora')",
+        [],
+    )
+    .unwrap();
+    let d = of(&store);
+    assert_eq!(d.sitemap_notes.len(), 1);
+    assert!(d.sitemap_notes[0].starts_with("Antora writes a sitemap"));
+    // Pages of the base beside the extension's still bring the note once.
+    conn.execute("UPDATE pages SET profile = 'antora' WHERE url_id = 4", [])
+        .unwrap();
+    assert_eq!(of(&store).sitemap_notes.len(), 1);
+}
+
+#[test]
+fn a_comparison_lists_the_policy_rows_that_differ_between_its_runs() {
+    let store = compared();
+    let conn = store.connection();
+    conn.execute_batch(
+        "INSERT INTO policy VALUES (1, NULL, 'timeout', '60'), (4, NULL, 'timeout', '30'), \
+         (4, 'pagure.io', 'status.403', 'ok'), \
+         (1, NULL, 'profile.site.source.0.from', 'url'), \
+         (1, NULL, 'profile.site.source.0.pattern', 'a'), \
+         (4, NULL, 'profile.site.source.0.from', 'url'), \
+         (4, NULL, 'profile.site.source.0.pattern', 'b'), \
+         (1, NULL, 'profile.idle.generator', 'x'); \
+         UPDATE pages SET profile = 'site' WHERE run_id = 4 AND url_id = 1",
+    )
+    .unwrap();
+    let d = digest_of_with(&store, 1, 4);
+    let written = |e: &Option<crate::config::Entry>| e.as_ref().map(|e| e.written_as());
+    let changes: Vec<(Option<String>, Option<String>)> = d
+        .policy_changes
+        .iter()
+        .map(|c| (written(&c.from), written(&c.to)))
+        .collect();
+    let some = |s: &str| Some(s.to_owned());
+    assert_eq!(
+        changes,
+        [
+            (
+                some("profile.site.source.0.pattern = \"b\""),
+                some("profile.site.source.0.pattern = \"a\"")
+            ),
+            (some("default.timeout = 30"), some("default.timeout = 60")),
+            (some("host.\"pagure.io\".status.403 = \"ok\""), None),
+        ]
+    );
+    // The profile no page of either run was extracted by is not compared.
+    assert!(!format!("{changes:?}").contains("idle"));
+    let html = d.html();
+    assert!(html.contains("Settings that differ between the runs"));
+    assert!(
+        html.contains(
+            "<code>default.timeout = 30</code> \u{2192} <code>default.timeout = 60</code>"
+        )
+    );
+    assert!(
+        html.contains(
+            "\u{2212} <code>host.&quot;pagure.io&quot;.status.403 = &quot;ok&quot;</code>"
+        )
+    );
+    let json: Value = serde_json::from_str(&d.json()).unwrap();
+    assert_eq!(json["policy_changes"].as_array().unwrap().len(), 3);
+    assert_eq!(json["policy_changes"][2]["to"], Value::Null);
+    assert_eq!(json["policy_changes"][1]["from"]["value"], "30");
+    // A digest with nothing to compare with lists nothing and has no section.
+    let alone = of(&store);
+    assert!(alone.compared.is_none() && alone.policy_changes.is_empty());
+    assert!(!alone.html().contains("Settings that differ"));
 }

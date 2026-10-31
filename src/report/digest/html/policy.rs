@@ -1,6 +1,7 @@
 //! Housekeeping's list of the settings this run was judged by that are not
 //! `bruce`'s defaults (D91), so a judgement the reader cannot otherwise see is
-//! stated, with how the run asked (D85). The JSON holds the whole policy.
+//! stated, with how the run asked (D85), and in a comparison the list of the
+//! rows that differ between its runs. The JSON holds the whole policy.
 
 use std::fmt::Write as _;
 
@@ -42,6 +43,37 @@ pub(super) fn list(out: &mut String, d: &Digest) {
     out.push_str("<ul>\n");
     for entry in differing {
         w!(out, "<li><code>{}</code></li>\n", esc(&entry.written_as()));
+    }
+    out.push_str("</ul>\n");
+}
+
+/// The list of the rows that differ between the two runs compared (D91): a row
+/// only one run recorded, and a row whose value, or place in a profile's list
+/// of source rules, changed, each as the configuration file writes it.
+pub(super) fn changes(out: &mut String, d: &Digest) {
+    out.push_str(
+        "<p>The rows of the policy the two runs recorded that differ, as the configuration \
+         file writes them: <strong>\u{2212}</strong> a row only the compared run recorded, \
+         <strong>+</strong> a row only this run recorded, and an arrow where a row changed. \
+         A declared profile's rows are compared when a page of either run was extracted by it, \
+         and a source rule is named by its place in each run's list.</p>\n",
+    );
+    if d.policy_changes.is_empty() {
+        out.push_str("<p class=\"muted\">None: the runs recorded the same policy.</p>\n");
+        return;
+    }
+    out.push_str("<ul>\n");
+    for change in &d.policy_changes {
+        let written = |e: &Option<Entry>| e.as_ref().map(|e| esc(&e.written_as()));
+        match (written(&change.from), written(&change.to)) {
+            (Some(was), Some(now)) => w!(
+                out,
+                "<li><code>{was}</code> \u{2192} <code>{now}</code></li>\n"
+            ),
+            (Some(was), None) => w!(out, "<li>\u{2212} <code>{was}</code></li>\n"),
+            (None, Some(now)) => w!(out, "<li>+ <code>{now}</code></li>\n"),
+            (None, None) => {}
+        }
     }
     out.push_str("</ul>\n");
 }

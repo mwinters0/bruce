@@ -49,13 +49,14 @@ formats under one profile, the first match too coarse. Code: `forge::rule`, `con
 `forge::rule::tests`.
 
 ### D94 A declarative profile may extend one compiled profile, adding its rules to all the base does
-`extends = "antora" | "generic"` wraps the base: its Extract with the extension's handlers, finish and source rules added
-(the extension's first), its region where it states one, its detection where it has no `generator`, its Resolve and
-sitemap note. Facts: the base's keep its namespace (`antora.*`), the extension's own are `<name>.*`; `pages.profile` is
-the extension's name. Why: a deployment then states only what is its own, and `group_by` and the base's views are
-unchanged (D32, D33). Views are none, the base being in every registry. Rejected: an extension of a declared profile;
-the base's facts renamed under the extension. Reopens: a second level wanted. Code: `profile::declarative`,
-`cli::registry_for`. Evidence: `profile::declarative::tests`, `tests/extract.rs`.
+`extends = "antora" | "generic"` wraps the base: its Extract with the extension's handlers, finish and source rules
+added (the extension's first), its region where it states one, its detection where it has no `generator`, its Resolve
+and sitemap note, which a report reads off the run's `profile.<name>.extends` row. Facts: the base's keep its namespace
+(`antora.*`), the extension's own are `<name>.*`; `pages.profile` is the extension's name. Why: a deployment then states
+only what is its own, and `group_by` and the base's views are unchanged (D32, D33); its Views are none. Rejected: an
+extension of a declared profile; the base's facts renamed under the extension. Reopens: a second level wanted. Code:
+`profile::declarative`, `cli::registry_for`, `report::digest::sections`. Evidence: `profile::declarative::tests`,
+`report::digest::tests`.
 
 ### D17 Each page stores its source file and repo, read from its edit link
 This routes a breakage to the repo and file that own it, and groups more precisely than component (some repos supply

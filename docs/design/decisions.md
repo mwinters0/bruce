@@ -124,7 +124,7 @@ remeasures it.
 - **D80** The doubled slash's reach is the digest's, and it moves what is blamed on the linking page, not what is counted
 - **D82** A site maps each kind to one of D76's levels in `[severity]`, and the map ranks as well as dots
 - **D86** The digest groups its pages by the fact `[digest]` `group_by` names, and by nothing unless a site says so
-- **D91** The digest states the policy it was judged by: Housekeeping what differs from the defaults, the JSON all of it, the guide what is judged
+- **D91** The digest states the policy it was judged by: Housekeeping what differs from the defaults and, compared, between the runs; the JSON all of it
 - **D92** A kind at `none` is no finding in the digest, and its JSON and figures keep it
 
 ## Build, layering and release

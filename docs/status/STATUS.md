@@ -26,7 +26,7 @@ the profile's facts, the other locales its language menu names and the content h
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, the body decoding, the local fetcher over a map of URLs to files and the router that sends a URL the build holds to it and any other to HTTP;
 `crawl`, the frontier with the other locales learned and the URLs on a root's host outside every scope waiting on them, the hops of a redirect, D16's outcomes, the ask of a broken 4xx's URL, or of the broken 4xx a redirect lands on, with its final `/` toggled (D72), the schedule that gives a build's reads a budget of their own and each live host its share of the run's other slots (D61), sitemaps, the run that writes a target's rows and its stop, and a run from seeds checked against a baseline: the component-versions the build holds, `not_built`, the baseline's rows copied for what it lacks, and the xrefs into a component the build lacks resolved to the baseline's pages or the URLs they name;
 `ci`, a build directory read as its production URLs; and
-`report`, the `report_*` views, the choice of run, the eight single-run reports, `diff`, `changed` and `anchors-removed` over two runs, and the gate (`introduced`, in the outcomes the CI run's `gate.fail` names, the introduced breakage the list leaves out and the inverse check following the list, each in a section of its own (D83), the redirected links, the errors and the breakage already in the baseline; `check-dir --inverse fail|warn`), as a text table or JSON, and the digest of a crawl run (D64), written as dated JSON and HTML by `bruce report digest`, compared with the run before it, a named run or a baseline file (D73), the breakage new since it attributed to what it held (D74), its dots, legend, counts and ranking following the site's severity map, a kind at none out of its lists (D82, D92) and its Housekeeping listing the settings off their defaults (D91), and its pages grouped by the fact `[digest]` `group_by` names (D86); `--config` on every report and the digest judges by a file's judging settings in place of the runs' recorded ones, the trial written nowhere (D84).
+`report`, the `report_*` views, the choice of run, the eight single-run reports, `diff`, `changed` and `anchors-removed` over two runs, and the gate (`introduced`, in the outcomes the CI run's `gate.fail` names, the introduced breakage the list leaves out and the inverse check following the list, each in a section of its own (D83), the redirected links, the errors and the breakage already in the baseline; `check-dir --inverse fail|warn`), as a text table or JSON, and the digest of a crawl run (D64), written as dated JSON and HTML by `bruce report digest`, compared with the run before it, a named run or a baseline file (D73), the breakage new since it attributed to what it held (D74), its dots, legend, counts and ranking following the site's severity map, a kind at none out of its lists (D82, D92) and its Housekeeping listing the settings off their defaults and, compared, those that differ between its runs (D91), and its pages grouped by the fact `[digest]` `group_by` names (D86); `--config` on every report and the digest judges by a file's judging settings in place of the runs' recorded ones, the trial written nowhere (D84).
 `docs/manual/` holds the config reference, `bruce crawl`'s, `bruce check-dir`'s, `bruce report`'s, `bruce prune`'s, `bruce export-baseline`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
@@ -64,11 +64,10 @@ The spec is [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.m
 - [x] **10.5** `extends`: an extension over a compiled profile, its facts
   `<name>.*` beside the base's, and `pages.profile` its name
   ([notes](../wip/roadmap-P10.5-extends-notes.md)).
-- [ ] **10.5.1** A report giving an extension's pages its base's sitemap note
+- [x] **10.5.1** A report giving an extension's pages its base's sitemap note
   through the run's recorded `extends`, and a comparison digest listing the
-  `policy` rows that differ between its runs, the profile rules aligned (the
-  spec's "A run records its declarative profiles", "A report reads a
-  declarative profile from its run").
+  `policy` rows that differ between its runs, the profile rules aligned
+  ([notes](../wip/roadmap-P10.5.1-report-notes.md)).
 - [ ] **10.6** Locale learning in the core, `locale_links`, and the guide's
   `fedora` extension extracting what today's code does.
 - [ ] **10.7** Neutral help examples and palette.
@@ -90,3 +89,13 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **The comparison's policy list reads the runs' recorded rows, and its JSON is
+  `policy_changes`, a list of `{from, to}` rows (10.5.1).** The spec fixed
+  neither the shape nor what a trial does to it. A trial (`--config`) changes
+  neither side, since D84 leaves what a run recorded as it is and the list says
+  what the runs configured; a key holding several values (`schemes`, `region`)
+  lists those lost and gained apart, never paired. Reconsidering changes the
+  JSON a loader reads (`format_version` stays 2, a field being added) and
+  whether a trial's judging rows show in the list
+  ([notes](../wip/roadmap-P10.5.1-report-notes.md)).

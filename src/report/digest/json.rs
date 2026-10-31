@@ -53,6 +53,31 @@ fn policy(d: &Digest) -> String {
     format!("[{}]", rows.join(","))
 }
 
+/// The rows that differ between the runs compared (D91): the row the compared
+/// run recorded as `from` and the digest's run's as `to`, `null` where a run
+/// recorded none.
+fn policy_changes(d: &Digest) -> String {
+    let row = |e: &Option<crate::config::Entry>| {
+        e.as_ref().map_or_else(
+            || "null".to_owned(),
+            |e| {
+                format!(
+                    "{{\"host\":{},\"key\":{},\"value\":{}}}",
+                    e.host.as_deref().map_or_else(|| "null".to_owned(), quoted),
+                    quoted(&e.key),
+                    quoted(&e.value)
+                )
+            },
+        )
+    };
+    let rows: Vec<String> = d
+        .policy_changes
+        .iter()
+        .map(|c| format!("{{\"from\":{},\"to\":{}}}", row(&c.from), row(&c.to)))
+        .collect();
+    format!("[{}]", rows.join(","))
+}
+
 fn render(d: &Digest) -> String {
     let run = &d.run;
     let finished = run.finished.map(|at| utc(at).1);
@@ -128,6 +153,7 @@ fn render(d: &Digest) -> String {
         ("errors", json(&d.errors)),
         ("housekeeping", housekeeping),
         ("policy", policy(d)),
+        ("policy_changes", policy_changes(d)),
         (
             "trial",
             d.trial.as_deref().map_or_else(|| "null".to_owned(), quoted),

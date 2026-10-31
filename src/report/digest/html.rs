@@ -684,7 +684,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
         "Housekeeping",
         Some(
             "Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links, \
-             settings off their defaults",
+             settings off their defaults and, in a comparison, those that differ",
         ),
     );
     let links = |t: &Table| format!("{} links", num(rows(t).map(|r| r.int("links")).sum()));
@@ -773,6 +773,14 @@ fn housekeeping(out: &mut String, d: &Digest) {
         &num(policy::differing(d).len() as i64),
         |out| policy::list(out, d),
     );
+    if d.compared.is_some() {
+        fold(
+            out,
+            "Settings that differ between the runs",
+            &num(d.policy_changes.len() as i64),
+            |out| policy::changes(out, d),
+        );
+    }
     close_section(out);
 }
 

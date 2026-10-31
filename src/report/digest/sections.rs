@@ -513,14 +513,20 @@ pub(super) fn unlisted(conn: &Connection, run: RunId) -> Result<Table, Error> {
 }
 
 /// What the profiles that read the run's crawled pages say of the sitemap their
-/// generators write, one note to a profile, in the registry's order.
+/// generators write, one note to a profile, in the registry's order. A page a
+/// declared profile read is read by its base, named by the run's recorded
+/// `profile.<name>.extends` row (D94), so the registry need not hold the
+/// declared profile.
 pub(super) fn sitemap_notes(
     conn: &Connection,
     run: RunId,
     profiles: &Registry,
 ) -> Result<Vec<&'static str>, Error> {
-    let mut stmt =
-        conn.prepare("SELECT DISTINCT profile FROM report_pages WHERE run_id = ? AND crawled")?;
+    let mut stmt = conn.prepare(
+        "SELECT DISTINCT coalesce((SELECT max(value) FROM policy WHERE run_id = pg.run_id \
+         AND host IS NULL AND key = 'profile.' || pg.profile || '.extends'), pg.profile) \
+         FROM report_pages pg WHERE pg.run_id = ? AND pg.crawled",
+    )?;
     let read: Vec<String> = stmt
         .query_map([run.0], |row| row.get(0))?
         .collect::<Result<_, _>>()?;

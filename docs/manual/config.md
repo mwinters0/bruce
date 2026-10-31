@@ -228,9 +228,10 @@ path = "doc/${page}.rst"
 
 `[digest]` `group_by = "sphinx.version"` then groups the digest's pages by the
 fact. A run records each profile's definition with its other settings
-(`profile.<name>.*`) and the digest's Housekeeping lists it; `--config` on a
-report tries another file's judging settings and leaves the recorded profiles
-as they are.
+(`profile.<name>.*`) and the digest's Housekeeping lists it. A digest compared
+with an earlier run also lists the rows that differ between the two runs, so a
+rule you edited is told from a site that changed; `--config` on a report tries
+another file's judging settings and leaves the recorded profiles as they are.
 
 ## Allowlist
 

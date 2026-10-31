@@ -109,14 +109,15 @@ checking the key against the profiles' facts at load, which the loader does not 
 the section. Code: `config::policy::digest`, `report::digest::sections::by_group`. Evidence: `report::digest::tests`,
 `config::policy::tests`.
 
-### D91 The digest states the policy it was judged by: Housekeeping what differs from the defaults, the JSON all of it, the guide what is judged
+### D91 The digest states the policy it was judged by: Housekeeping what differs from the defaults and, compared, between the runs; the JSON all of it
 Housekeeping lists the run's settings off their defaults, a trial's file named (D84), and the JSON holds every row as
-`policy`. The guide ("How to read this report") shows an entry only while its reason is judged, and reads the settings
-it states (`doubled_slash_reach`, a pedantic redirect's level) off the same rows. It is site-neutral (`example.com`) and
-names a doubled slash by role (D71), not by where the `//` falls. Why: a judgement the reader cannot see is a broken
-experience of the report itself. Rejected: the JSON alone; the guide's text left to a site's own wording (the digest's
-prose in config), false for a site's digest until then. Code: `report::digest::html::policy`,
-`report::digest::html::guide`. Evidence: `report::digest::html::tests`.
+`policy`. A comparison also lists each recorded row that differs between its runs (JSON `policy_changes`): a declared
+profile's among the profiles either run's pages used, a source rule by its place in each run's list, the lists aligned
+so a rule inserted is named alone. The guide shows an entry only while its reason is judged, and names a doubled slash by
+role (D71). Why: a judgement the reader cannot see is a broken experience; the defaults list shows no row removed, and
+rules alone would hide a changed root or scope. Rejected: the JSON alone; the guide's text left to a site's own wording.
+Code: `report::digest::html::policy`, `report::digest::changes`, `report::digest::html::guide`. Evidence:
+`report::digest::tests`.
 
 ### D92 A kind at `none` is no finding in the digest, and its JSON and figures keep it
 Its links leave the HTML's lists, counts and ranking, and a page whose only findings are at `none` has no row; the

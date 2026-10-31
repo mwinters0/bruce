@@ -1,6 +1,7 @@
 //! The digest's document: the run, its figures and the sections, each section
 //! a [`Table`] already in the order a reader wants it.
 
+use super::changes::Change;
 use crate::config::{Entry, Reach, SeverityMap};
 use crate::report::table::Table;
 use crate::store::RunId;
@@ -67,6 +68,10 @@ pub struct Digest {
     /// The run's whole recorded policy, as its rows (D78), or a trial's judging
     /// rows and the run's asking ones where `trial` names one (D84, D85).
     pub policy: Vec<Entry>,
+    /// The rows of the two runs' recorded policy that differ (D91), the
+    /// declared profiles' among those a page of either run was extracted by.
+    /// Empty where `compared` is `None`.
+    pub policy_changes: Vec<Change>,
     /// The configuration file whose judging settings stood in for the runs'
     /// own, which the caller that made the trial sets (D84).
     pub trial: Option<String>,

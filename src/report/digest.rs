@@ -13,6 +13,7 @@
 //! reads the pages a root covers alone.
 
 mod cause;
+mod changes;
 mod compare;
 mod document;
 mod html;
@@ -113,6 +114,10 @@ fn build(
         ),
         None => (empty(), empty()),
     };
+    let policy_changes = match &compared {
+        Some(c) => changes::changes(conn, c.run.id, id)?,
+        None => Vec::new(),
+    };
     let policy = sections::policy(conn, id)?;
     let group_by = sections::group_by(conn, id)?;
     let mut digest = Digest {
@@ -122,6 +127,7 @@ fn build(
         judged: sections::judged(conn, id)?,
         severity: SeverityMap::from_entries(&policy),
         policy,
+        policy_changes,
         trial: None,
         unchecked: sections::unchecked(conn, id)?,
         unchecked_groups: sections::unchecked_groups(conn, id)?,
