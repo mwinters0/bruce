@@ -7,8 +7,8 @@
 //! `'static` and a config's are known only at run time. Both are bounded by
 //! the definitions, never by pages.
 //!
-//! A fact rule reads the first element that gives a value: an attribute is
-//! kept as written, an empty one included, and an element without it gives
+//! A fact rule reads the first element that gives a value (D33): an attribute
+//! is kept as written, an empty one included, and an element without it gives
 //! none; without `attr` the value is the element's text, trimmed, which an
 //! end tag closes, so an element the parser closes implicitly gives the text it
 //! held at the page's end. A `pattern` that does not match gives none, so a

@@ -16,10 +16,11 @@ cannot express.
 ### D33 Profiles are compiled in, or declared in config as a `[profile.<name>]` table
 A compiled profile is a module behind a trait, so a new generator is a PR. A declarative one is that trait built from
 config: a content region, a `generator` pattern, fact rules (a selector, an attribute or the text, a regex whose one
-capture is the value) and an edit-link selector, writing the same key/value facts (D37). Resolve and Views stay empty
-and resolution stays code. Rejected: WASM or out-of-process plugins, an ABI, sandbox and versioning burden for no second
-user; rules per root, a profile being what D35 chooses by. Code: `config::profile`, `profile::declarative`. Evidence:
-`profile::declarative::tests`.
+capture is the value; the first element yielding a value, an empty attribute being one and empty text not) and an
+edit-link selector, writing the same key/value facts (D37). Resolve and Views stay empty and resolution stays code.
+Rejected: WASM or out-of-process plugins, an ABI, sandbox and versioning burden for no second user; rules per root, a
+profile being what D35 chooses by; the first match alone, leaving a `pattern` no way to choose among matches. Code:
+`config::profile`, `profile::declarative`. Evidence: `profile::declarative::tests`.
 
 ### D35 A root's profile defaults to `auto`, which picks one per page by its generator meta
 `profile = "auto" | "generic" | "antora" | <a declared name>` per root. Under `auto` the page's

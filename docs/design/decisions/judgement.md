@@ -81,8 +81,8 @@ mattering on a larger site. Code: `store::views::link_verdicts_with`. Evidence: 
 
 ### D78 A run records the policy it was judged by, whole, as rows of a `policy` table
 `policy(run_id, host, key, value)`, `host` NULL for a run-wide one; every setting is written, defaults too, and the rows
-travel with the run (D21). A declared profile (D33) is `profile.<name>.*` rows, judged by nothing. Why: a report reads a
-run, never the file (D90), the macro joins a host's value to the default, and judging must outlive a later default.
+travel with the run (D21). A declared profile (D33) is `profile.<name>.*` rows, each defined, used or not, judged by
+nothing. Why: a report reads a run, never the file (D90), and judging must outlive a later default.
 Rejected: a `runs` column or a struct fixing the keys, each new setting bumping the schema; JSON, a feature `Cargo.toml`
 does not enable; only values differing from the default, which a later default would change. Reopens: a setting that is
 not text in a row. Code: `config::Policy::entries`, `store::Store::begin_run`. Evidence:

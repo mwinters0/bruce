@@ -21,8 +21,11 @@ fixtures, as a check on where the line between config and compiled falls.
 
 ## The rules are a declarative profile
 
-Settled 2026-10-31 (maintainer). **A `[profile.<name>]` table in the config
-is a profile in the registry beside `generic` and `antora`**, chosen by a
+Settled 2026-10-31 (maintainer). **A `[[profile]]` entry in the config,
+named by its `name`, is a profile in the registry beside `generic` and
+`antora`**, an array of tables as `[[root]]` is, because the order `auto`
+tries them in is the file's and a TOML table's keys have none (amended
+2026-10-31, the history entry "P10.3's calls reviewed"). It is chosen by a
 root's `profile = "<name>"` or, under `auto`, by a pattern over the page's
 generator meta (D35). It holds a region (D34), fact rules (a selector and an
 attribute, the key namespaced `<name>.*` as the Sink does) and source rules;
@@ -68,11 +71,15 @@ compiles no profile for another generator.
 
 ## A fact rule reads one element
 
-Settled 2026-10-31 (maintainer). **`[[profile.<name>.fact]]` is `key`,
+Settled 2026-10-31 (maintainer). **`[[profile.fact]]`, under its profile, is `key`,
 `selector`, an optional `attr` (without one, the element's trimmed text) and
 an optional `pattern`, a regex whose one capture is the value; the first
-matching element on a page gives the fact.** A multi-valued fact waits for a
-site needing one, `group_by` and `--fact` counting a page once per value.
+matching element on a page that yields a value gives the fact.** An element
+without the attribute, with no text, or whose value the `pattern` does not
+match is passed over; an empty attribute is a value, as `antora`'s
+`data-version=""` is (amended 2026-10-31, the history entry "P10.3's calls
+reviewed"). A multi-valued fact waits for a site needing one, `group_by` and
+`--fact` counting a page once per value.
 
 ## Source rules come before the edit link's parse
 
@@ -148,9 +155,12 @@ about two hours, run detached.
 ## A run records its declarative profiles, as policy rows
 
 Settled 2026-10-31 (maintainer). **A run records the definition of each
-declarative profile it extracted by**, as it records each root's hash scope
-(D15), so a comparison tells a rule edited from a site changed, and the
-digest names a rule that differs between the runs it compares. **They are
+declarative profile its config defines**, used or not, as it records each
+root's hash scope (D15), so a comparison tells a rule edited from a site
+changed, and the digest names a rule that differs between the runs it
+compares, **among the profiles `pages.profile` shows either run used**
+(amended 2026-10-31, the history entry "P10.3's calls reviewed"; 10.5
+builds the naming). **They are
 `policy` rows (D78)**, keys under `profile.<name>.`, so the schema does not
 change (D43), the digest's Housekeeping states them as it states the rest
 (D91), and a crawl before P10 stays comparable with one after.
@@ -167,7 +177,7 @@ policy (D81).
 ## Where the code lives
 
 Settled 2026-10-31 (maintainer). **`config::profile`**, a new child, parses
-and validates `[profile.<name>]`, its selectors and regexes refused at load.
+and validates `[[profile]]`, its selectors and regexes refused at load.
 **`profile::declarative`**, a new child, builds a profile from it: the
 `extends` wrapper and the fact, source, edit-link and locale rules (`profile`
 sits above `config`, D39). **The departing-prefix computation moves from
@@ -190,6 +200,15 @@ Settled 2026-10-31 (maintainer). **One rule shape, `from = "url" |
 "edit_link"`, a regex with named captures `repo`, `ref` and `path`**: over
 the page's URL for a site with no edit link, over the edit link's for a forge
 shape `forge::parse` does not know, a ref holding a `/` among them (KD1).
+**A rule may set `repo`, `ref` and `path` as templates over its captures**
+(`${page}`, the `regex` crate's expansion), each defaulting to the capture of
+its own name, so a rule states what the URL does not: Sphinx's
+`/en/<ref>/<page>.html` is `repo = "https://github.com/sphinx-doc/sphinx"`,
+`path = "doc/${page}.rst"` (amended 2026-10-31, the history entry "P10.3's
+calls reviewed"; `fixtures/sphinx-doc-org`). A rule's `repo` is refused at
+load unless it has the URL form `forge::Source::repo` holds, and a URL rule
+asserting one extension leaves a site mixing source formats to its edit link,
+a property 10.4 states.
 
 ## What the inbox asked
 
