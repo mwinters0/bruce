@@ -336,9 +336,10 @@ with its other settings, and the digest's legend, its dots, its counts and
 ranking and the guide's pedantic entry follow it: a page's and a repo's counts
 are of their links by level, and they rank by their red links, then their amber
 ones, so `doubled_slash = "attention"` moves the page counting those links down
-the ranking. A kind at `"none"` is no finding in the digest: it leaves the link
+the ranking. A part of a count that a reason's key moved off its outcome's level names that reason,
+"● 2 broken links (`doubled_slash`)". A kind at `"none"` is no finding in the digest: it leaves the link
 lists, the counts and the ranking, a page whose only findings are at `"none"` has
-no row, and the legend names what it leaves out. The run's outcomes, the figures' numbers,
+no row, and the legend names what it leaves out; a list the map empties says so. The run's outcomes, the figures' numbers,
 the JSON's rows and order, every other report and the gate are untouched. A level on a link
 that is neither broken nor errored (a redirect, a reason on an `ok` link) moves
 its dot where it is listed and counts nothing.

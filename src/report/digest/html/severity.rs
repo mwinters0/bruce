@@ -94,8 +94,8 @@ fn listed(items: &[String]) -> String {
 
 /// The legend, one line naming each level some kind has, with the kinds at
 /// it, the dots hidden from a screen reader that reads the words beside them,
-/// and a line naming the kinds at none, which the digest does not list or
-/// count (D82).
+/// and a line naming the kinds at none, which the digest does not list, nor
+/// count on a page or a repo, its figures being the run's outcome totals (D82).
 pub(super) fn legend(d: &Digest) -> String {
     let items: Vec<String> = [Severity::Broken, Severity::Attention, Severity::Pedantic]
         .into_iter()
@@ -134,7 +134,7 @@ pub(super) fn legend(d: &Digest) -> String {
             .collect();
         w!(
             out,
-            "<p class=\"legend\">Not listed or counted, this report being set to treat them as no finding: {}.</p>\n",
+            "<p class=\"legend\">Not listed, nor counted on a page or a repo, this report being set to treat them as no finding: {}.</p>\n",
             listed(&words)
         );
     }

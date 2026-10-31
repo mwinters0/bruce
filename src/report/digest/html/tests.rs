@@ -1016,8 +1016,8 @@ fn the_severity_map_moves_the_dots_the_legend_and_the_figures() {
     assert!(!quiet.contains("class=\"sev "), "a dot remained");
     assert!(!quiet.contains("A dot marks the severity"));
     // The legend names what it leaves out instead.
-    assert!(section(&quiet, "figures").contains("Not listed or counted"));
-    assert!(!section(&default, "figures").contains("Not listed or counted"));
+    assert!(section(&quiet, "figures").contains("Not listed, nor counted on a page or a repo"));
+    assert!(!section(&default, "figures").contains("Not listed, nor counted on a page or a repo"));
     // A link to a broken URL softened to attention joins the amber kinds, and
     // the broken level keeps the errors alone, worded to stand by itself.
     with_policy(&mut digest, &[("severity.broken_url", "attention")]);
@@ -1135,6 +1135,23 @@ fn a_kind_at_none_is_in_no_list_the_figures_and_the_json_keep_it() {
     let errors = section(&quiet, "errors");
     assert!(errors.contains("is a finding under this report's severity map"));
     assert!(!errors.contains("https://slow.test/12"));
+    // A page list the map leaves empty says so, and does not say there is no link.
+    with_policy(
+        &mut digest,
+        &[
+            ("severity.error", "none"),
+            ("severity.broken_url", "none"),
+            ("severity.broken_anchor", "none"),
+        ],
+    );
+    let emptied = digest.html();
+    for said in [
+        "No page holds a finding under this report's severity map.",
+        "No repo's pages hold a finding under this report's severity map.",
+    ] {
+        assert!(emptied.contains(said), "{said}");
+    }
+    assert!(!emptied.contains("No page holds a broken link."));
     assert!(!section(&quiet, "repos").contains("unverifiable"));
     // The figures are the run's outcome totals, and the JSON holds every row.
     assert!(
@@ -1187,7 +1204,8 @@ fn a_redirect_at_none_is_not_listed_and_its_ring_sentence_goes() {
         quiet.contains("<span class=\"cnt\">0 links</span>"),
         "{quiet}"
     );
-    assert!(quiet.contains("None."));
+    assert!(quiet.contains("No redirect is a finding under this report's severity map."));
+    assert!(!quiet.contains("None."));
     with_policy(&mut digest, &[("severity.pedantic_trailing_slash", "none")]);
     assert!(!fold(&digest).contains("marked as a ring"));
 }

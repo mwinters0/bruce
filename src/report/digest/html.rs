@@ -409,7 +409,11 @@ fn pages(out: &mut String, d: &Digest, ranked: &[Page]) -> Ids {
     }
     let mut ids = Ids::new();
     if ranked.is_empty() {
-        out.push_str("<p>No page holds a broken link.</p>\n");
+        out.push_str(if d.pages.rows.is_empty() {
+            "<p>No page holds a broken link.</p>\n"
+        } else {
+            "<p>No page holds a finding under this report's severity map.</p>\n"
+        });
     }
     for (i, standing) in ranked.iter().enumerate() {
         let p = &standing.row;
@@ -550,7 +554,11 @@ fn repos(out: &mut String, d: &Digest, ranked: &[Page], ids: &Ids) {
         out.push_str("</ul>\n</details>\n");
     }
     if by_repo.len() == clean {
-        out.push_str("<p>No repo's pages hold a broken link.</p>\n");
+        out.push_str(if d.pages.rows.is_empty() {
+            "<p>No repo's pages hold a broken link.</p>\n"
+        } else {
+            "<p>No repo's pages hold a finding under this report's severity map.</p>\n"
+        });
     } else if clean > 0 {
         w!(
             out,
@@ -693,8 +701,12 @@ fn housekeeping(out: &mut String, d: &Digest) {
             out.push_str(&Entry::Pedantic.info_if(d.judged));
         }
         out.push_str("</p>\n");
-        if redirects.is_empty() {
+        if d.redirects.rows.is_empty() {
             out.push_str("<p class=\"muted\">None.</p>\n");
+        } else if redirects.is_empty() {
+            out.push_str(
+                "<p class=\"muted\">No redirect is a finding under this report's severity map.</p>\n",
+            );
         }
         for r in &redirects {
             redirect(out, &d.severity, r);

@@ -7,7 +7,7 @@
 //! the same tables.
 
 use std::cmp::Reverse;
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 
 use super::super::document::Digest;
 use super::guide::Entry;
@@ -37,22 +37,36 @@ const KINDS: [Kind; 4] = [
 /// The counted levels, the least first, indexing [`Counts`].
 const LEVELS: [Severity; 3] = [Severity::Pedantic, Severity::Attention, Severity::Broken];
 
-/// A page's or a repo's links, by kind and by the level the map gives them.
-/// A link at *none* is in no cell.
-#[derive(Clone, Copy, Default)]
-pub(super) struct Counts([[i64; 3]; 4]);
+/// A page's or a repo's links, by kind and by the level the map gives them,
+/// with the reasons that put a cell's links at a level other than their
+/// outcome's own. A link at *none* is in no cell.
+#[derive(Clone, Default)]
+pub(super) struct Counts {
+    cells: [[i64; 3]; 4],
+    moved: [[BTreeSet<String>; 3]; 4],
+}
 
 impl Counts {
-    fn add(&mut self, kind: Kind, level: Severity, n: i64) {
+    /// `n` links of `kind` at `level`, `moved_by` being the reason that put
+    /// them off their outcome's level, if one did ([`SeverityMap::moved_by`]).
+    fn add(&mut self, kind: Kind, level: Severity, n: i64, moved_by: Option<&str>) {
         if let Some(at) = LEVELS.iter().position(|l| *l == level) {
-            self.0[kind as usize][at] += n;
+            self.cells[kind as usize][at] += n;
+            if let Some(reason) = moved_by {
+                self.moved[kind as usize][at].insert(reason.to_owned());
+            }
         }
     }
 
     fn plus(&mut self, other: &Counts) {
-        for (mine, theirs) in self.0.iter_mut().zip(&other.0) {
+        for (mine, theirs) in self.cells.iter_mut().zip(&other.cells) {
             for (mine, theirs) in mine.iter_mut().zip(theirs) {
                 *mine += theirs;
+            }
+        }
+        for (mine, theirs) in self.moved.iter_mut().zip(&other.moved) {
+            for (mine, theirs) in mine.iter_mut().zip(theirs) {
+                mine.extend(theirs.iter().cloned());
             }
         }
     }
@@ -61,7 +75,24 @@ impl Counts {
         LEVELS
             .iter()
             .position(|l| *l == level)
-            .map_or(0, |at| self.0[kind as usize][at])
+            .map_or(0, |at| self.cells[kind as usize][at])
+    }
+
+    /// The reasons that put the links of `kind` at `level` off their
+    /// outcome's level, as code, "(`a`, `b`)"; empty where none did.
+    fn reasons(&self, kind: Kind, level: Severity) -> String {
+        let Some(at) = LEVELS.iter().position(|l| *l == level) else {
+            return String::new();
+        };
+        let reasons: Vec<String> = self.moved[kind as usize][at]
+            .iter()
+            .map(|r| format!("<code>{r}</code>"))
+            .collect();
+        if reasons.is_empty() {
+            String::new()
+        } else {
+            format!(" ({})", reasons.join(", "))
+        }
     }
 
     /// The links at `level`, of every kind.
@@ -112,14 +143,18 @@ pub(super) fn pages(d: &Digest) -> Vec<Page<'_>> {
             Kind::Broken
         };
         let level = d.severity.of_link(r.text("outcome"), r.text("reason"));
+        let moved = d
+            .severity
+            .moved_by(r.text("outcome").unwrap_or("broken_url"), r.text("reason"));
         let (counts, new) = found.entry(r.text("page").unwrap_or("")).or_default();
-        counts.add(kind, level, 1);
+        counts.add(kind, level, 1, moved);
         *new += i64::from(level.is_finding() && r.is_new());
     }
     for r in rows(&d.errors) {
         let level = d.severity.of_link(Some("error"), r.text("reason"));
+        let moved = d.severity.moved_by("error", r.text("reason"));
         let (counts, new) = found.entry(r.text("page").unwrap_or("")).or_default();
-        counts.add(Kind::Unverifiable, level, 1);
+        counts.add(Kind::Unverifiable, level, 1, moved);
         *new += i64::from(level.is_finding() && r.is_new());
     }
     let through = d.severity.of_link(Some("broken_url"), Some(DOUBLED_SLASH));
@@ -127,9 +162,9 @@ pub(super) fn pages(d: &Digest) -> Vec<Page<'_>> {
         .filter_map(|row| {
             let (mut counts, new_links) = found
                 .get(row.text("page").unwrap_or(""))
-                .copied()
+                .cloned()
                 .unwrap_or_default();
-            counts.add(Kind::Through, through, row.int("through"));
+            counts.add(Kind::Through, through, row.int("through"), None);
             (!counts.is_empty()).then_some(Page {
                 row,
                 counts,
@@ -159,7 +194,7 @@ pub(super) fn repos<'a>(d: &'a Digest, pages: &[Page<'_>]) -> Vec<Repo<'a>> {
     let mut out: Vec<Repo> = rows(&d.by_repo)
         .map(|row| {
             let (counts, new_links, pages) =
-                of_repo.get(&row.text("repo")).copied().unwrap_or_default();
+                of_repo.get(&row.text("repo")).cloned().unwrap_or_default();
             Repo {
                 row,
                 counts,
@@ -181,7 +216,9 @@ pub(super) fn repos<'a>(d: &'a Digest, pages: &[Page<'_>]) -> Vec<Repo<'a>> {
 /// kind of a level behind the level's dot and a kind of none left out, and no
 /// total (D82). Under D76's map: the broken links, those broken through a
 /// link to a URL that doubles a slash (D88), the unverifiable ones, then the
-/// missing fragments.
+/// missing fragments. A part the map moved off its outcome's level names the
+/// reasons that did, so no two parts differ by their dots alone; the links
+/// broken through a doubled slash name theirs already.
 pub(super) fn tally(counts: &Counts) -> String {
     let mut parts = Vec::new();
     for level in LEVELS.into_iter().rev() {
@@ -191,12 +228,14 @@ pub(super) fn tally(counts: &Counts) -> String {
                 continue;
             }
             let words = match kind {
-                Kind::Broken => counted(n, "broken link"),
+                Kind::Broken => counted(n, "broken link") + &counts.reasons(kind, level),
                 Kind::Through => {
                     format!("{} broken through it{}", num(n), Entry::DoubledSlash.info())
                 }
-                Kind::Unverifiable => format!("{} unverifiable", num(n)),
-                Kind::Fragment => counted(n, "missing fragment"),
+                Kind::Unverifiable => {
+                    format!("{} unverifiable{}", num(n), counts.reasons(kind, level))
+                }
+                Kind::Fragment => counted(n, "missing fragment") + &counts.reasons(kind, level),
             };
             parts.push(format!(
                 "<span class=\"cn\">{}{words}</span>",

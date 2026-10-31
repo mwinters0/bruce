@@ -83,10 +83,12 @@ from the others in shape, so the three read apart in print and without
 colour, and every dot is named for a screen reader. The figures' legend names
 the levels and the kinds at each; a site's [`[severity]`](config.md#severity)
 moves a kind to another level, or to none, which is no finding: it has no dot
-and is in no list, count or ranking of the HTML, and the legend names it. Only the JSON's
+and is in no list, nor in a page's or a repo's count or the ranking of the HTML, and the legend
+names it. Only the JSON's
 `outcome` and `reason` and its `policy` decide a level; it has no
 field for it. A page's and a repo's counts are of their links by level, and
-they rank by their red links, then their amber ones. The lists that are not links (orphans, unlisted pages, sitemap
+they rank by their red links, then their amber ones. A part of a count that a reason's key moved
+off its outcome's level names that reason, "● 2 broken links (`doubled_slash`)". The lists that are not links (orphans, unlisted pages, sitemap
 entries, the unchecked counts) have no dot. **A bar at the left edge** marks a
 row or a drill-down that is new since the compared run, as the JSON's `new`
 says ([below](#the-json)), and a drill-down that is not new counts its new

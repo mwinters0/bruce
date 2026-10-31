@@ -61,7 +61,7 @@ is in its inbox, `roadmap-P11-prose-inbox.md`.
   rows as the stored ones, `main.policy` finding the temporary table too.
   `policy_in_force` is the fix (D84's Rejected).
 - **A count by level alone** ("5 red") was not built. It loses which kind a
-  level holds. M25 is to name the reasons in a split count instead.
+  level holds. A part off its outcome's level names its reasons instead (D82).
 - **No guard on `changed` or `anchors-removed`.** They read no verdict of the
   older run (a content hash; its anchors).
 

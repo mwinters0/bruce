@@ -159,6 +159,13 @@ impl SeverityMap {
             .unwrap_or(Severity::None)
     }
 
+    /// The `reason` of a link of `outcome` where it puts the link off the
+    /// level the map gives that outcome, else none: the reason a count part
+    /// at a level other than its outcome's names (D82).
+    pub fn moved_by<'a>(&self, outcome: &str, reason: Option<&'a str>) -> Option<&'a str> {
+        reason.filter(|_| self.of_link(Some(outcome), reason) != self.of_link(Some(outcome), None))
+    }
+
     /// The severity of a redirected link, whose row has a reason and no
     /// outcome.
     pub fn of_redirect(&self, reason: Option<&str>) -> Severity {
