@@ -37,6 +37,6 @@ snapshots and the 30-page corpus pass untouched, and `KD1` and `KD2` are propert
 
 - A site mixing source formats under one profile gets the first matching rule for every page it matches
   (the manual says so): a rule asserts one format and the rest fall to the edit link's parse. Nothing here
-  tells a rule edited from a site changed; 10.5's comparison of recorded rules is the place.
+  tells a rule edited from a site changed; 10.5.1's comparison of recorded rules is the place.
 - No crawl-level test of a rule: `write_page` reads `Extracted::source` alone, and the extraction tests
   cover the Sphinx fixture end to end (`profile::declarative::tests`).

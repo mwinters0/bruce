@@ -159,25 +159,35 @@ declarative profile its config defines**, used or not, as it records each
 root's hash scope (D15), so a comparison tells a rule edited from a site
 changed, and the digest names a rule that differs between the runs it
 compares, **among the profiles `pages.profile` shows either run used**
-(amended 2026-10-31, the history entry "P10.3's calls reviewed"; 10.5
-builds the naming). **A source rule is named by its place in each run's
+(amended 2026-10-31, the history entry "P10.3's calls reviewed"). **A source rule is named by its place in each run's
 list**, its order being its meaning (D93), **and the naming aligns the two
 runs' lists**, so a rule inserted or removed is named alone, never every rule
 after it, and rules removed and added in one gap are paired in order, the
 fields that changed named (amended 2026-10-31, the history entry "10.4's call reviewed").
-**They are
+**A comparison digest lists every `policy` row that differs between its
+runs under Housekeeping**, the profile rows among those profiles, apart from
+the rows that differ from the defaults, and its JSON under a key of its own:
+that list says what one run configured and cannot show a row removed, and
+rules alone would hide a changed root or scope, which changes what a run
+fetched (amended 2026-10-31, the history entry "10.5's call reviewed"; D91
+amended as 10.5.1 lands). **They are
 `policy` rows (D78)**, keys under `profile.<name>.`, so the schema does not
 change (D43), the digest's Housekeeping states them as it states the rest
 (D91), and a crawl before P10 stays comparable with one after.
 
 ## A report reads a declarative profile from its run
 
-Settled 2026-10-31 (maintainer). **A report, and CI's xref resolution, build
-a recorded declarative profile from the run's `policy` rows**, not from the
-config they are given: a page extracted by an extension reaches its base's
-Resolve and sitemap note (`crawl::xref`, `report::digest::sections`) with no
-config, read as it was extracted, as a digest is judged by its own run's
-policy (D81).
+Settled 2026-10-31 (maintainer; amended 2026-10-31, the history entry "10.5's
+call reviewed"). **A report reads a declared profile's base from the run's
+`profile.<name>.extends` row**, not from the config it is given, and gives the
+pages `pages.profile` names it that compiled profile's sitemap note
+(`report::digest::sections`), read as they were extracted, as a digest is
+judged by its own run's policy (D81). A declarative profile has no report-time
+behaviour but its base's, so nothing is rebuilt from the rows, and a report of
+an old run never refuses over a definition a later `bruce` would not build.
+**Xref resolution reads no recorded profile**: it runs inside the crawl,
+`check-dir`'s included, through the registry of the run whose extraction named
+the profile (`crawl::xref`).
 
 ## Where the code lives
 
@@ -244,7 +254,7 @@ core path a slice of its own (`../process.md`, "The loop", step 3).
 4. **10.4 Source rules**, before `forge::parse`; KD1 and KD2 a property at
    `forge.rs`, struck.
 5. **10.5 `extends`**: an extension over a compiled profile, `pages.profile`,
-   and a report's registry built from the run's recorded definitions.
+   and a report reading an extension's base from the run's recorded `extends`.
 6. **10.6 Locale learning in the core**: `locale_links`, `antora` reading no
    menu, D67 amended and I25 repointed; the guide's `fedora` extension in
    `../manual/deploy.md`, loaded by `sim`; `fixtures/docs-fp-o` and
