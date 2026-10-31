@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Core Concepts :: Antora Docs</title>
+    <link rel="canonical" href="https://docs.antora.org/collector-extension/latest/concepts/">
+    <link rel="prev" href="../">
+    <link rel="next" href="../install/">
+    <meta name="generator" content="Antora 3.2.0">
+    <link rel="stylesheet" href="../../../_/css/site.css">
+    <link rel="stylesheet" href="../../../_/css/site-extra.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/docsearch.min.css">
+    <!-- fetched from https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css -->
+    <link rel="icon" href="../../../favicon.ico" type="image/x-icon">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-112324747-2"></script>
+    <script>function gtag(){dataLayer.push(arguments)};window.dataLayer=window.dataLayer||[];gtag('js',new Date());gtag('config','UA-112324747-2')</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="navbar-item">
+        <a href="https://antora.org">Antora</a>
+        <span class="separator">//</span>
+        <a href="https://docs.antora.org">Docs</a>
+      </div>
+      <div id="search-field" class="navbar-item search hide-for-print">
+        <input id="search-input" type="text" placeholder="Search the docs">
+      </div>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="https://gitlab.com/antora">Projects</a>
+          <div class="navbar-dropdown">
+            <div class="navbar-item"><strong>Core</strong></div>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora">Repository</a>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora/issues">Issue Tracker</a>
+            <hr class="navbar-divider">
+            <div class="navbar-item"><strong>Default UI</strong></div>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora-ui-default">Repository</a>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora-ui-default/issues">Issue Tracker</a>
+            <hr class="navbar-divider">
+            <a class="navbar-item" href="https://gitlab.com/antora/antora/blob/main/contributing.adoc">Contributing</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <div class="navbar-link">Tooling</div>
+          <div class="navbar-dropdown is-right">
+            <div class="navbar-item"><strong>Build Automation</strong></div>
+            <a class="navbar-item has-label" href="https://hub.docker.com/r/antora/antora">Docker Image <small>OCI</small></a>
+            <a class="navbar-item has-label" href="https://gitlab.com/antora/antora-maven-plugin">Maven Plugin <small>Java</small></a>
+            <a class="navbar-item has-label" href="https://gitlab.com/antora/gradle-antora-plugin">Gradle Plugin <small>Java</small></a>
+            <hr class="navbar-divider">
+            <div class="navbar-item"><strong>Authoring / Preview</strong></div>
+            <a class="navbar-item has-label" href="https://intellij-asciidoc-plugin.ahus1.de/docs/users-guide/features/advanced/antora.html">AsciiDoc Plugin <small>IntelliJ</small></a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="../../../antora/latest/project/get-help/">Community</a>
+          <div class="navbar-dropdown is-right">
+            <a class="navbar-item has-label" href="https://chat.antora.org">Chat <small>Zulip</small></a>
+            <a class="navbar-item has-label" href="https://twitter.com/antoraproject">News <small>Twitter</small></a>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora/-/blob/main/CODE-OF-CONDUCT.adoc">Code of Conduct</a>
+          </div>
+        </div>
+        <a class="navbar-item" href="https://twitter.com/antoraproject">
+          <span class="icon">
+            <svg aria-hidden="true" data-icon="twitter" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+              <path fill="#57aaee" d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"></path>
+            </svg>
+          </span>
+        </a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="collector-extension" data-version="1.0">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../">Antora Collector Extension</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="./">Concepts</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../install/">Install</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../register/">Register</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../configure/">Configure</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../configure-worktree/">Worktree</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../configure-clean/">Clean</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../configure-run/">Run</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../configure-scan/">Scan</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../use-cases/">Use Cases</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">Antora Collector Extension</span>
+    <span class="version">1.0</span>
+  </div>
+  <ul class="components">
+    <li class="component">
+      <div class="title"><a href="../../../antora/latest/">Antora</a></div>
+      <ul class="versions">
+        <li class="version is-latest">
+          <a href="../../../antora/latest/">3.2</a>
+        </li>
+        <li class="version">
+          <a href="../../../antora/3.1/">3.1</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <div class="title"><a href="../../../assembler/latest/">Antora Assembler</a></div>
+      <ul class="versions">
+        <li class="version is-latest">
+          <a href="../../../assembler/latest/">1.0</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component is-current">
+      <div class="title"><a href="../">Antora Collector Extension</a></div>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../">1.0</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <div class="title"><a href="../../../antora-ui-default/">Antora Default UI</a></div>
+    </li>
+    <li class="component">
+      <div class="title"><a href="../../../maven-plugin/latest/">Antora Maven Plugin</a></div>
+      <ul class="versions">
+        <li class="version is-latest">
+          <a href="../../../maven-plugin/latest/">1.0.0-alpha.5</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <div class="title"><a href="../../../gradle-plugin/latest/">Gradle Antora Plugin</a></div>
+      <ul class="versions">
+        <li class="version is-latest">
+          <a href="../../../gradle-plugin/latest/">1.0</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../../../antora/latest/" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../">Antora Collector Extension</a></li>
+    <li><a href="./">Concepts</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="https://gitlab.com/antora/antora-collector/-/edit/main/docs/collector-extension/modules/ROOT/pages/concepts.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Core Concepts</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The Antora Collector extension discovers, allocates, and invokes Collector instances.
+A Collector instance performs designated actions&#8212;&#8203;such as clean, run, and scan&#8212;&#8203;in the context of a worktree.
+The run action allows external commands, local or system-wide, to be invoked.
+The scan action finds and imports files, generated or otherwise, from the local filesystem.</p>
+</div>
+<div class="paragraph">
+<p>This page explores these concepts to give you a broad view of how Collector works and what you can accomplish with it.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="scope"><a class="anchor" href="#scope"></a>Scope</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The Antora Collector extension provides a configuration-based approach to contribute additional files to a component version bucket (which is destined to become a component version) using external commands.</p>
+</div>
+<div class="paragraph">
+<p>If more advanced capability is needed, a custom Antora extension could be used to add, update, or delete files associated with a component version.
+Thus, the Antora Collector extension isn&#8217;t doing anything exclusive that another extension could not itself do.
+It&#8217;s just an Antora extension that provides an approachable way to extend the capabilities of Antora.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="when-does-this-extension-run"><a class="anchor" href="#when-does-this-extension-run"></a>When does this extension run?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The Antora Collector extension orchestrates Collector instances in serial during the <code>contentAggregated</code> event.
+At this stage in Antora&#8217;s pipeline, Antora has aggregated the files it has discovered into buckets by component version.
+But, Antora has yet to classify these component versions and files into the content catalog.
+Thus, the Antora Collector extension acts on component version buckets (collectively the content aggregate) for the purpose of augmenting the buckets with additional files or metadata.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="what-is-a-collector-instance"><a class="anchor" href="#what-is-a-collector-instance"></a>What is a Collector instance?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A Collector instance consists of a sequence of steps that perform designated actions&#8212;&#8203;such as clean, run, and scan&#8212;&#8203;in the context of a worktree.
+Each step must declare a clean, run, or scan action, or any combination of these.
+The actions per step are performed in the following set order: clean, run, scan.
+All actions of a Collector instance are performed in serial.
+A Collector instance with a single step can be abbreviated in the configuration as a map.</p>
+</div>
+<div class="paragraph">
+<p>The first step can configure how the worktree for the Collector instance is allocated.
+The worktree is always a directory on the local filesystem.
+If the origin already has a worktree, Collector will reuse that worktree by default.
+If the origin does not have a worktree, Collector will checkout out the git reference into a temporary directory by default, thus allocating a worktree automatically.
+The preparation of the worktree is configurable.</p>
+</div>
+<div class="paragraph">
+<p>Since a Collector instance is run in the worktree for an origin, it&#8217;s able to see all files in that worktree, even those that Antora did not scan and import into the component version bucket.
+This allows the Collector instance to reorganize and import files stored elsewhere in the worktree (i.e., git repository branch), even those that are not in the Antora content structure.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="what-is-the-purpose-of-a-collector-instance"><a class="anchor" href="#what-is-the-purpose-of-a-collector-instance"></a>What is the purpose of a Collector instance?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Typically, the goal of a Collector instance is to generate files and import those files into the component version bucket.
+The bucket for the component version from which the Collector instance is run is the default target, though the target can be any component version bucket, including a new one.
+A Collector instance also has the ability to alter the identity of the current component version bucket by generating an antora.yml file.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="where-is-a-collector-instance-defined"><a class="anchor" href="#where-is-a-collector-instance-defined"></a>Where is a Collector instance defined?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A Collector instance is defined per content source root in an <em class="path">antora.yml</em> file.
+A content source root is the location of the <em class="path">antora.yml</em> file, also referred to as an origin.</p>
+</div>
+<div class="paragraph">
+<p>A Collector instance is defined and configured using the <code>collector</code> key, which must itself be defined under the <code>ext</code> key.</p>
+</div>
+<div class="paragraph">
+<p>There can only be a single Collector instance per origin, though that instance may perform multiple steps.
+While this often equates to a single Collector instance per component version, this is not always the case.
+A distributed component version is able to define multiple Collector instances (since a distributed component version has multiple origins).</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="how-is-a-collector-instance-configured"><a class="anchor" href="#how-is-a-collector-instance-configured"></a>How is a Collector instance configured?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A Collector instance is configured by specifying actions to perform.
+These groups of actions are carried out in the order they are defined, thus becoming its steps.
+Within a step, the group of actions are always performed in a set order: clean, run, scan.</p>
+</div>
+<div class="paragraph">
+<p>The worktree in which the Collector instance runs can be configured using the <code>worktree</code> key.
+This key controls the predefined worktree action, which always runs at the beginning of the first step.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="what-happens-after-a-collector-instance-has-run"><a class="anchor" href="#what-happens-after-a-collector-instance-has-run"></a>What happens after a Collector instance has run?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Once all Collector instances have been run, there&#8217;s no difference in how the imported files are classified than had they been discovered in the content source root.
+A Collector instance is essentially adding a dynamic component to Antora&#8217;s content aggregator, allowing files to be generated at runtime instead of stored in a git repository.</p>
+</div>
+<div class="paragraph">
+<p>If a worktree was created for the Collector instance, it&#8217;s removed automatically unless configured otherwise.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="portability-considerations"><a class="anchor" href="#portability-considerations"></a>Portability considerations</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When defining a Collector instance, it&#8217;s important to consider the portability of the steps.
+Ideally, a Collector instance should not depend on system-wide commands or files, preferring instead to use files available within the worktree or retrieved from the network.
+The one exception is the use of Node.js.
+A Collector instance is able to discover and run the Node.js binary that was used to launch Antora.</p>
+</div>
+<div class="paragraph">
+<p>You also may want to ensure that the site can still be built successfully when the Collector extension is not in use.
+This will make it easier for authors to preview their work locally.</p>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="prev"><a href="../">Antora Collector Extension</a></span>
+  <span class="next"><a href="../install/">Install</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>Copyright © <a href="https://opendevise.com" target="_blank" rel="noopener">OpenDevise Inc.</a> and individual contributors to <a href="https://antora.org">Antora</a>. Chat powered by <a href="https://zulip.com" title="Zulip is an open-source modern team chat app" target="_blank" rel="noopener">Zulip</a>. Site deploys by <a href="https://netlify.com" target="_blank" rel="noopener">Netlify</a>.</p>
+  <p>Except where otherwise noted, docs.antora.org, Antora, and the Antora UI, are licensed under the <a href="https://www.mozilla.org/en-US/MPL/2.0/">Mozilla Public License Version 2.0</a> (MPL-2.0).</p>
+  <p>AsciiDoc® is a trademark of the Eclipse Foundation, Inc.</p>
+</footer>
+<script id="site-script" src="../../../_/js/site.js" data-ui-root-path="../../../_"></script>
+<script async src="../../../_/js/vendor/highlight.js"></script>
+<script src="../../../_/js/vendor/docsearch.min.js"></script>
+<!-- fetched from https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js -->
+<script>
+var search = docsearch({
+  appId: 'E80Q5UHPOS',
+  apiKey: '6e7248a6d21038512a92145e9b903757',
+  indexName: 'antora-docs',
+  inputSelector: '#search-input',
+  autocompleteOptions: { hint: false, keyboardShortcuts: ['s'] },
+  algoliaOptions: { hitsPerPage: 10 }
+}).autocomplete
+search.on('autocomplete:closed', function () { search.autocomplete.setVal() })
+</script>
+  </body>
+</html>

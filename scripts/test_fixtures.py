@@ -120,6 +120,10 @@ class Paths(unittest.TestCase):
     def test_an_error_page_is_named_for_its_status(self) -> None:
         self.assertEqual(fixtures.rel_path("https://h/en-US/gone/", 404), "en-US/gone/404.html")
 
+    def test_a_page_that_is_a_file_stays_one(self) -> None:
+        self.assertEqual(fixtures.rel_path("https://h/en/usage/x.html"), "en/usage/x.html")
+        self.assertEqual(fixtures.rel_path("https://h/en/x.html", 404), "en/x.404.html")
+
 
 class Committed(unittest.TestCase):
     """The manifest in the tree and the pages it names agree."""
@@ -135,6 +139,30 @@ class Committed(unittest.TestCase):
             body = (self.manifest.parent / e["path"]).read_bytes()
             self.assertEqual(hashlib.sha256(body).hexdigest(), e["sha256"], e["path"])
             self.assertEqual(len(body), e["bytes"], e["path"])
+
+
+class OtherSites(unittest.TestCase):
+    """The sites beside docs.fp.o: each manifest and its pages agree."""
+
+    def test_every_site_lists_each_page_once_with_a_reason(self) -> None:
+        for name, site in fixtures.SITES.items():
+            paths = [p for p, _ in site["pages"]]
+            self.assertEqual(len(paths), len(set(paths)), name)
+            self.assertTrue(all(why for _, why in site["pages"]), name)
+
+    def test_every_page_is_present_and_hashes_to_its_record(self) -> None:
+        import hashlib
+
+        for name, site in fixtures.SITES.items():
+            manifest = fixtures.ROOT / "fixtures" / name / "manifest.json"
+            if not manifest.exists():
+                self.skipTest(f"no {name} manifest yet")
+            entries = json.loads(manifest.read_text())["pages"]
+            self.assertEqual([e["url"] for e in entries], [site["host"] + p for p, _ in site["pages"]], name)
+            for e in entries:
+                body = (manifest.parent / e["path"]).read_bytes()
+                self.assertEqual(hashlib.sha256(body).hexdigest(), e["sha256"], e["path"])
+                self.assertEqual(len(body), e["bytes"], e["path"])
 
 
 class VendoredUi(unittest.TestCase):

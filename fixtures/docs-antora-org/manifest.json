@@ -1,0 +1,147 @@
+{
+ "pages": [
+  {
+   "url": "https://docs.antora.org/antora/latest/",
+   "why": [
+    "a component's start page, the default UI: component, version, edit link"
+   ],
+   "status": 200,
+   "path": "antora/latest/index.html",
+   "bytes": 44160,
+   "sha256": "a012474fa0ee1baf08033e44d8dc3b7ca64fbffb94f67557ebd1879ed2da8c89",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://docs.antora.org/antora/3.1/",
+   "why": [
+    "an older version of the same component, beside `latest`"
+   ],
+   "status": 200,
+   "path": "antora/3.1/index.html",
+   "bytes": 43150,
+   "sha256": "c622982e02e936af92924d3defebf546a1160aa922965a9d527f3e0841ccef7b",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://docs.antora.org/antora/latest/install/install-antora/",
+   "why": [
+    "a page under a section"
+   ],
+   "status": 200,
+   "path": "antora/latest/install/install-antora/index.html",
+   "bytes": 56506,
+   "sha256": "53efb243ce5d8b92cab44b4ba9e88d7e524a3b8d9faccee81760ac1874809771",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://docs.antora.org/antora/latest/page/xref/",
+   "why": [
+    "a page about xrefs, holding xref links"
+   ],
+   "status": 200,
+   "path": "antora/latest/page/xref/index.html",
+   "bytes": 51999,
+   "sha256": "0bdd2d0e6a8c1746ce07f1359fc593e66731717d54592e19e9d0b4bfb4ce14b7",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://docs.antora.org/antora/latest/extend/extensions/",
+   "why": [
+    "a page two sections deep"
+   ],
+   "status": 200,
+   "path": "antora/latest/extend/extensions/index.html",
+   "bytes": 50592,
+   "sha256": "a8a215de8c941011f933b6420866dd700abc662d5d67d95253aafe06fa024726",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://docs.antora.org/antora/latest/playbook/",
+   "why": [
+    "a long page with many anchors"
+   ],
+   "status": 200,
+   "path": "antora/latest/playbook/index.html",
+   "bytes": 45521,
+   "sha256": "1115df72843b2578da92034a53eb6c5510482133b60f25e25c4efb90f6b370b7",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://docs.antora.org/antora-ui-default/",
+   "why": [
+    "an unversioned component: data-version is empty and its URLs omit one"
+   ],
+   "status": 200,
+   "path": "antora-ui-default/index.html",
+   "bytes": 24451,
+   "sha256": "8fe732ea66bb16d8cd77c3b99ee5f83e417c3836e91a82289c0bf6a6947789f7",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://docs.antora.org/antora-ui-default/add-fonts/",
+   "why": [
+    "a page of the unversioned component"
+   ],
+   "status": 200,
+   "path": "antora-ui-default/add-fonts/index.html",
+   "bytes": 19546,
+   "sha256": "0f8cb8e506fd0d0348c45fe84c815e7ef8759141c5eb9c7f6724e4170bb7473a",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://docs.antora.org/assembler/latest/",
+   "why": [
+    "a second versioned component, at version 1.0"
+   ],
+   "status": 200,
+   "path": "assembler/latest/index.html",
+   "bytes": 21564,
+   "sha256": "bcdf51b680ce9772b53f2ce849cf697c5c3f859a347828b28e89576c4b67eed7",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://docs.antora.org/collector-extension/latest/concepts/",
+   "why": [
+    "a third versioned component, a repo of its own"
+   ],
+   "status": 200,
+   "path": "collector-extension/latest/concepts/index.html",
+   "bytes": 19098,
+   "sha256": "d23448e94d73c56e042b32de2e8389e220e37ddfc8d3e9efa878d085967910f9",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://docs.antora.org/gradle-plugin/latest/",
+   "why": [
+    "a fourth versioned component, a small page"
+   ],
+   "status": 200,
+   "path": "gradle-plugin/latest/index.html",
+   "bytes": 12793,
+   "sha256": "7521a05395b801e34efb920c5f51df06b2ce0a29fdaa6691ce034b812b5f3813",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://docs.antora.org/maven-plugin/latest/antora-goal/",
+   "why": [
+    "a page with no canonical link"
+   ],
+   "status": 200,
+   "path": "maven-plugin/latest/antora-goal/index.html",
+   "bytes": 46877,
+   "sha256": "7aa8ec9feb1584a045f21fca5d4a9e746441df77b83eeb57b14fec7de404a9e9",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://docs.antora.org/antora/latest/no-such-page-bruce-fixture/",
+   "why": [
+    "a 404: the nav container renders with no component or version"
+   ],
+   "status": 404,
+   "path": "antora/latest/no-such-page-bruce-fixture/404.html",
+   "bytes": 9152,
+   "sha256": "6e1b7ad6fdd705b3f9bfa78449d90dbb11c674f77a5d21358a0360b06043461a",
+   "fetched": "2026-10-31"
+  }
+ ]
+}

@@ -30,7 +30,8 @@ the profile's facts, the other locales its language menu names and the content h
 `docs/manual/` holds the config reference, `bruce crawl`'s, `bruce check-dir`'s, `bruce report`'s, `bruce prune`'s, `bruce export-baseline`'s and the deployment guide's config section, which `mise run sim` extracts into `sim/` and checks. The design is settled ([`../design/decisions.md`](../design/decisions.md))
 and the development process is in place: [`../process.md`](../process.md), the
 `go`, `gosub`, `dwal`, `process` and `grilling` skills, and `mise run check`
-over the docs. `fixtures/` holds 30 saved docs.fp.o pages and ten hand-written
+over the docs. `fixtures/` holds 30 saved docs.fp.o pages, 13 of docs.antora.org's, 9 of the
+Sphinx project's documentation and ten hand-written
 pages, chosen and saved by `scripts/fixtures.py`, and `fixtures/antora/`, a
 three-component Antora site, the Fedora UI bundle and seven built pages, which
 `mise run e2e` rebuilds and then crawls, exports and runs `check-dir` over, asserting
@@ -43,9 +44,11 @@ The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-P
 
 The spec is [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.md).
 
-- [ ] **10.1** Evidence: docs.antora.org's and a Sphinx site's pages saved as
+- [x] **10.1** Evidence: docs.antora.org's and a Sphinx site's pages saved as
   fixtures, and the "before" en-US crawl launched detached from a copy of
-  today's binary.
+  today's binary: finished, exit 0, in
+  `runs/p10-before-20261031-1647/en-us.duckdb`
+  ([notes](../wip/roadmap-P10.1-evidence-notes.md)).
 - [ ] **10.2** Selectors compiled once per run, with no change of behaviour.
 - [ ] **10.3** A standalone declarative profile: `[profile.<name>]`'s
   `region`, `generator`, fact rules and `edit_link`, the registry, the

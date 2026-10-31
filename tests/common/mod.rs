@@ -1,6 +1,8 @@
 //! The saved pages under `fixtures/` (D24), shared by the fixture tests and
 //! the bench. `fixtures/antora/`, the end-to-end site and the build's pages, is
-//! not among them: its tests read it themselves.
+//! not among them: its tests read it themselves. Nor are `docs-antora-org/` and
+//! `sphinx-doc-org/`, other sites' pages saved for the slices that extract
+//! them, so the bench's corpus and the snapshots stay what they were.
 
 use std::path::Path;
 
@@ -16,10 +18,10 @@ pub struct Fixture {
     pub html: String,
 }
 
-fn walk(dir: &Path, skip: &Path, out: &mut Vec<std::path::PathBuf>) {
+fn walk(dir: &Path, skip: &[std::path::PathBuf], out: &mut Vec<std::path::PathBuf>) {
     for entry in std::fs::read_dir(dir).unwrap() {
         let path = entry.unwrap().path();
-        if path == skip {
+        if skip.contains(&path) {
             continue;
         }
         if path.is_dir() {
@@ -34,7 +36,11 @@ fn walk(dir: &Path, skip: &Path, out: &mut Vec<std::path::PathBuf>) {
 pub fn fixtures() -> Vec<Fixture> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures");
     let mut files = Vec::new();
-    walk(&root, &root.join("antora"), &mut files);
+    let skip: Vec<_> = ["antora", "docs-antora-org", "sphinx-doc-org"]
+        .iter()
+        .map(|d| root.join(d))
+        .collect();
+    walk(&root, &skip, &mut files);
     files.sort();
     files
         .into_iter()

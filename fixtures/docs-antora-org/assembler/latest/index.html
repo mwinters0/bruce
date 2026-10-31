@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Antora Assembler Documentation :: Antora Docs</title>
+    <link rel="canonical" href="https://docs.antora.org/assembler/latest/">
+    <link rel="next" href="concepts/">
+    <meta name="generator" content="Antora 3.2.0">
+    <link rel="stylesheet" href="../../_/css/site.css">
+    <link rel="stylesheet" href="../../_/css/site-extra.css">
+    <link rel="stylesheet" href="../../_/css/vendor/docsearch.min.css">
+    <!-- fetched from https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css -->
+    <link rel="icon" href="../../favicon.ico" type="image/x-icon">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-112324747-2"></script>
+    <script>function gtag(){dataLayer.push(arguments)};window.dataLayer=window.dataLayer||[];gtag('js',new Date());gtag('config','UA-112324747-2')</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="navbar-item">
+        <a href="https://antora.org">Antora</a>
+        <span class="separator">//</span>
+        <a href="https://docs.antora.org">Docs</a>
+      </div>
+      <div id="search-field" class="navbar-item search hide-for-print">
+        <input id="search-input" type="text" placeholder="Search the docs">
+      </div>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="https://gitlab.com/antora">Projects</a>
+          <div class="navbar-dropdown">
+            <div class="navbar-item"><strong>Core</strong></div>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora">Repository</a>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora/issues">Issue Tracker</a>
+            <hr class="navbar-divider">
+            <div class="navbar-item"><strong>Default UI</strong></div>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora-ui-default">Repository</a>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora-ui-default/issues">Issue Tracker</a>
+            <hr class="navbar-divider">
+            <a class="navbar-item" href="https://gitlab.com/antora/antora/blob/main/contributing.adoc">Contributing</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <div class="navbar-link">Tooling</div>
+          <div class="navbar-dropdown is-right">
+            <div class="navbar-item"><strong>Build Automation</strong></div>
+            <a class="navbar-item has-label" href="https://hub.docker.com/r/antora/antora">Docker Image <small>OCI</small></a>
+            <a class="navbar-item has-label" href="https://gitlab.com/antora/antora-maven-plugin">Maven Plugin <small>Java</small></a>
+            <a class="navbar-item has-label" href="https://gitlab.com/antora/gradle-antora-plugin">Gradle Plugin <small>Java</small></a>
+            <hr class="navbar-divider">
+            <div class="navbar-item"><strong>Authoring / Preview</strong></div>
+            <a class="navbar-item has-label" href="https://intellij-asciidoc-plugin.ahus1.de/docs/users-guide/features/advanced/antora.html">AsciiDoc Plugin <small>IntelliJ</small></a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="../../antora/latest/project/get-help/">Community</a>
+          <div class="navbar-dropdown is-right">
+            <a class="navbar-item has-label" href="https://chat.antora.org">Chat <small>Zulip</small></a>
+            <a class="navbar-item has-label" href="https://twitter.com/antoraproject">News <small>Twitter</small></a>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora/-/blob/main/CODE-OF-CONDUCT.adoc">Code of Conduct</a>
+          </div>
+        </div>
+        <a class="navbar-item" href="https://twitter.com/antoraproject">
+          <span class="icon">
+            <svg aria-hidden="true" data-icon="twitter" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+              <path fill="#57aaee" d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"></path>
+            </svg>
+          </span>
+        </a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="assembler" data-version="1.0">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="./">Antora Assembler</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="concepts/">Concepts</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="exporter-extensions/">Exporters</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="pdf-extension/">PDF Extension</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="epub-extension/">EPUB Extension</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="html-single-extension/">HTML Single Extension</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="custom-exporter-extension/">Custom Exporter Extension</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="custom-exporter-examples/">Custom Exporter Examples</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="tutorial/">Tutorial</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="install/">Install</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="register/">Register</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="configure/">Configure</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="configure-filter/">Filter</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="configure-assembly/">Assembly</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="configure-profiles/">Profiles</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="configure-asciidoc/">AsciiDoc</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="configure-build/">Build</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="reference-exports/">Reference Exports</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="use-cases/">Use Cases</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="use-api/">Use the API</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="glossary/">Glossary</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="known-issues/">Known Issues</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">Antora Assembler</span>
+    <span class="version">1.0</span>
+  </div>
+  <ul class="components">
+    <li class="component">
+      <div class="title"><a href="../../antora/latest/">Antora</a></div>
+      <ul class="versions">
+        <li class="version is-latest">
+          <a href="../../antora/latest/">3.2</a>
+        </li>
+        <li class="version">
+          <a href="../../antora/3.1/">3.1</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component is-current">
+      <div class="title"><a href="./">Antora Assembler</a></div>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="./">1.0</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <div class="title"><a href="../../collector-extension/latest/">Antora Collector Extension</a></div>
+      <ul class="versions">
+        <li class="version is-latest">
+          <a href="../../collector-extension/latest/">1.0</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <div class="title"><a href="../../antora-ui-default/">Antora Default UI</a></div>
+    </li>
+    <li class="component">
+      <div class="title"><a href="../../maven-plugin/latest/">Antora Maven Plugin</a></div>
+      <ul class="versions">
+        <li class="version is-latest">
+          <a href="../../maven-plugin/latest/">1.0.0-alpha.5</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <div class="title"><a href="../../gradle-plugin/latest/">Gradle Antora Plugin</a></div>
+      <ul class="versions">
+        <li class="version is-latest">
+          <a href="../../gradle-plugin/latest/">1.0</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../../antora/latest/" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="./">Antora Assembler</a></li>
+    <li><a href="./">Antora Assembler Documentation</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="https://gitlab.com/antora/antora-assembler/-/edit/main/docs/assembler/pages/index.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Antora Assembler Documentation</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Antora Assembler (herein, Assembler) provides a JavaScript library and set of Antora extensions for merging content in an Antora site and publishing it in an alternative format, such as PDF.
+Assembler does this by producing a set of assembly files driven by the hierarchy described by the navigation data and converting those files to another format using an AsciiDoc converter provided by an exporter extension.</p>
+</div>
+<div class="paragraph">
+<p>The exporter extension that produces the PDF format is the Antora PDF extension, which is part of the Assembler suite.
+Thus, if your goal is to create PDFs from the content in your site, the Antora PDF extension is the software you&#8217;re looking for.
+Yet, Assembler is not just limited to creating PDFs.</p>
+</div>
+<div class="paragraph">
+<p>The core of Assembler handles merging AsciiDoc content from multiple pages into an assembly.
+It repeats this process for each selected component version.
+It then delegates to a command (e.g., <code>asciidoctor-pdf</code>) or function designated by an exporter extension to convert those assembly files to another format, such as PDF or EPUB.
+The result is referred to as an export file.
+Assembler then publishes the export files alongside the other files in the site.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="features"><a class="anchor" href="#features"></a>Features</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Antora Assembler provides the following capabilities and features:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Combines AsciiDoc content from multiple pages based on the navigation data.</p>
+</li>
+<li>
+<p>Reconciles section heading levels to form a logical hierarchy.</p>
+</li>
+<li>
+<p>Provides different strategies for combining the navigation hierarchy with the section hierarchy of each page.</p>
+</li>
+<li>
+<p>Supports designating pages as special sections for create semantic documents.</p>
+</li>
+<li>
+<p>Rewrites and scopes IDs (and any references to those IDs) to avoid conflicts across pages.</p>
+</li>
+<li>
+<p>Rewrites references (i.e., xrefs) into internal document or public links to decouple them from the Antora referencing system (effectively converting them standard AsciiDoc notation).</p>
+</li>
+<li>
+<p>Allows filtering by component version and/or prerelease status using a pattern-based filter.</p>
+</li>
+<li>
+<p>Allows the navigation to be customized per export format or profile.</p>
+</li>
+<li>
+<p>Allows content and navigation to be filtered using preprocessor conditionals.</p>
+</li>
+<li>
+<p>Delegates to an external command to convert the AsciiDoc assemblies to the target format (or Asciidoctor.js in the case of the HTML Single Extension).</p>
+</li>
+<li>
+<p>Supports configuring the converter command using AsciiDoc attributes or CLI option flags.</p>
+</li>
+<li>
+<p>Can be used to export to various formats using different exporter extensions.</p>
+</li>
+<li>
+<p>Establishes a link from each page included in an assembly to the export in which it is included.</p>
+</li>
+<li>
+<p>Provides an API for writing new exporter extensions or calling Assembler programmatically.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="assumptions"><a class="anchor" href="#assumptions"></a>Assumptions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Assembler is designed to create exports from content (i.e., pages and navigation) in an Antora site.
+That means your content must be organized in Antora content roots (i.e., the Antora standard file hierarchy) and you must have an Antora playbook file that configures those content roots as content sources.
+Assembler runs during the standard Antora site generation, (specifically the <code>navigationBuilt</code> event).</p>
+</div>
+<div class="paragraph">
+<p>If you have organized your content for use with Antora, you will not be able to run an AsciiDoc converter (e.g., Asciidoctor PDF) on that content directly.
+That&#8217;s because AsciiDoc converters do not understand Antora&#8217;s references, structure, or scoping.
+Assembler bridges that gap.
+Assembler transforms the AsciiDoc source so it can be converted using any AsciiDoc converter, thus making it portable.</p>
+</div>
+<div class="paragraph">
+<p>Although Assembler is designed to publish the exports along with the site, you can also use it as a tool to merely produce those exports without publishing them.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="packages"><a class="anchor" href="#packages"></a>Packages</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The Assembler project distributes the following packages:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Assembler Core (@antora/assembler)</dt>
+<dd>
+<p>Assembler is a JavaScript library for writing Antora extensions that merge content from multiple pages into a single output file.
+The assembly files that Assembler produces are Antora-agnostic, which means they can be converted by any AsciiDoc converter, such as Asciidoctor PDF.
+Assembler uses the converter metadata and convert function provided by the exporter extension to convert the assembly files to the target format.</p>
+</dd>
+<dt class="hdlist1">Antora PDF Extension (@antora/pdf-extension)</dt>
+<dd>
+<p>The Antora PDF Extension is the official extension for producing PDFs from content in an Antora site.
+It generates PDFs from assembly files prepared by Assembler Core.
+It does so by configuring Assembler and passing it a converter (metadata and convert function).
+Assembler Core manages the rest of the workflow.</p>
+</dd>
+<dt class="hdlist1">Antora EPUB Extension (@antora/epub-extension)</dt>
+<dd>
+<p>The Antora EPUB Extension is the official extension for producing EPUBs from content in an Antora site.
+It generates EPUBs from assembly files prepared by Assembler Core.
+It does so by configuring Assembler and passing it a converter (metadata and convert function).
+Assembler Core manages the rest of the workflow.</p>
+</dd>
+<dt class="hdlist1">Antora HTML Single Extension (@antora/html-single-extension)</dt>
+<dd>
+<p>The Antora HTML Single Extension generates standalone HTML documents from assembly files prepared by Assembler Core.
+It does so by configuring Assembler and passing it a converter (metadata and convert function).
+Assembler Core manages the rest of the workflow.</p>
+</dd>
+</dl>
+</div>
+<div class="paragraph">
+<p>Assembler Core is installed automatically when you install an exporter extension (e.g., Antora PDF Extension), the latter which serves as an entry point for Assembler.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="operation"><a class="anchor" href="#operation"></a>Operation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The user-facing component of Assembler is the exporter extension (e.g., <code>@antora/pdf-extension</code>).
+The exporter extension configures Assembler&#8212;&#8203;effectively creating an instance of Assembler&#8212;&#8203;and provides the converter to handle conversion to the target format.
+From there, Assembler creates the assembly file, uses the converter provided by the exporter extension to convert the assembly files to the target format, then publishes the converted files as exports (i.e., export family) in the Antora site.</p>
+</div>
+<div class="paragraph">
+<p>When Assembler creates the assembly files, it models the outline using the navigation data.
+In other words, it uses the navigation data to know which pages to merge and in which order to merge them.</p>
+</div>
+<div class="paragraph">
+<p>An Assembler instance can either produce a single export from a component version, or an export per top-level navigation entry.
+When assembling content, Assembler rewrites all references in the Antora referencing system to decouple them from Antora while also avoiding ID conflicts.</p>
+</div>
+<div class="paragraph">
+<p>Currently, each target format you want to produce requires the use of a dedicated exporter extension.
+The behavior of the exporter (assembly and conversion) is controlled through the use of an Assembler configuration file (e.g., <em class="path">antora-assembler-pdf.yml</em>).
+Typically, an exporter will use an external command to handle the conversion (e.g., <code>asciidoctor-pdf</code>), so you can conveniently plug in and configure the AsciiDoc converter of your choice.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="next-steps"><a class="anchor" href="#next-steps"></a>Next steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To get a better idea of how Assembler works, refer to <a href="concepts/" class="xref page">Core Concepts</a>.
+You can then get started with Assembler by <a href="install/" class="xref page">installing</a> and <a href="register/" class="xref page">registering</a> an exporter extension.
+You&#8217;ll then be ready to learn how to export content in your site using an Assembler instance by way of an <a href="exporter-extensions/" class="xref page">exporter extension</a>.</p>
+</div>
+<div class="paragraph">
+<p>Refer to <a href="tutorial/" class="xref page">Configuration Tutorial</a> to find a full walkthrough.</p>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="next"><a href="concepts/">Concepts</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>Copyright © <a href="https://opendevise.com" target="_blank" rel="noopener">OpenDevise Inc.</a> and individual contributors to <a href="https://antora.org">Antora</a>. Chat powered by <a href="https://zulip.com" title="Zulip is an open-source modern team chat app" target="_blank" rel="noopener">Zulip</a>. Site deploys by <a href="https://netlify.com" target="_blank" rel="noopener">Netlify</a>.</p>
+  <p>Except where otherwise noted, docs.antora.org, Antora, and the Antora UI, are licensed under the <a href="https://www.mozilla.org/en-US/MPL/2.0/">Mozilla Public License Version 2.0</a> (MPL-2.0).</p>
+  <p>AsciiDoc® is a trademark of the Eclipse Foundation, Inc.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+<script src="../../_/js/vendor/docsearch.min.js"></script>
+<!-- fetched from https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js -->
+<script>
+var search = docsearch({
+  appId: 'E80Q5UHPOS',
+  apiKey: '6e7248a6d21038512a92145e9b903757',
+  indexName: 'antora-docs',
+  inputSelector: '#search-input',
+  autocompleteOptions: { hint: false, keyboardShortcuts: ['s'] },
+  algoliaOptions: { hitsPerPage: 10 }
+}).autocomplete
+search.on('autocomplete:closed', function () { search.autocomplete.setVal() })
+</script>
+  </body>
+</html>

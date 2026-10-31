@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>antora:antora Goal :: Antora Docs</title>
+    <link rel="prev" href="../usage/">
+    <link rel="next" href="../help-goal/">
+    <meta name="description" content="The Antora Maven plugin adds the antora:antora goal and provides configuration parameters for Node.js and Antora.">
+    <meta name="generator" content="Antora 3.2.0">
+    <link rel="stylesheet" href="../../../_/css/site.css">
+    <link rel="stylesheet" href="../../../_/css/site-extra.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/docsearch.min.css">
+    <!-- fetched from https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css -->
+    <link rel="icon" href="../../../favicon.ico" type="image/x-icon">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-112324747-2"></script>
+    <script>function gtag(){dataLayer.push(arguments)};window.dataLayer=window.dataLayer||[];gtag('js',new Date());gtag('config','UA-112324747-2')</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="navbar-item">
+        <a href="https://antora.org">Antora</a>
+        <span class="separator">//</span>
+        <a href="https://docs.antora.org">Docs</a>
+      </div>
+      <div id="search-field" class="navbar-item search hide-for-print">
+        <input id="search-input" type="text" placeholder="Search the docs">
+      </div>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="https://gitlab.com/antora">Projects</a>
+          <div class="navbar-dropdown">
+            <div class="navbar-item"><strong>Core</strong></div>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora">Repository</a>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora/issues">Issue Tracker</a>
+            <hr class="navbar-divider">
+            <div class="navbar-item"><strong>Default UI</strong></div>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora-ui-default">Repository</a>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora-ui-default/issues">Issue Tracker</a>
+            <hr class="navbar-divider">
+            <a class="navbar-item" href="https://gitlab.com/antora/antora/blob/main/contributing.adoc">Contributing</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <div class="navbar-link">Tooling</div>
+          <div class="navbar-dropdown is-right">
+            <div class="navbar-item"><strong>Build Automation</strong></div>
+            <a class="navbar-item has-label" href="https://hub.docker.com/r/antora/antora">Docker Image <small>OCI</small></a>
+            <a class="navbar-item has-label" href="https://gitlab.com/antora/antora-maven-plugin">Maven Plugin <small>Java</small></a>
+            <a class="navbar-item has-label" href="https://gitlab.com/antora/gradle-antora-plugin">Gradle Plugin <small>Java</small></a>
+            <hr class="navbar-divider">
+            <div class="navbar-item"><strong>Authoring / Preview</strong></div>
+            <a class="navbar-item has-label" href="https://intellij-asciidoc-plugin.ahus1.de/docs/users-guide/features/advanced/antora.html">AsciiDoc Plugin <small>IntelliJ</small></a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="../../../antora/latest/project/get-help/">Community</a>
+          <div class="navbar-dropdown is-right">
+            <a class="navbar-item has-label" href="https://chat.antora.org">Chat <small>Zulip</small></a>
+            <a class="navbar-item has-label" href="https://twitter.com/antoraproject">News <small>Twitter</small></a>
+            <a class="navbar-item" href="https://gitlab.com/antora/antora/-/blob/main/CODE-OF-CONDUCT.adoc">Code of Conduct</a>
+          </div>
+        </div>
+        <a class="navbar-item" href="https://twitter.com/antoraproject">
+          <span class="icon">
+            <svg aria-hidden="true" data-icon="twitter" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+              <path fill="#57aaee" d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"></path>
+            </svg>
+          </span>
+        </a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="maven-plugin" data-version="1.0">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../">Antora Maven Plugin</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../usage/">Usage</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Goals</span>
+<ul class="nav-list">
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="./">antora:antora</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../help-goal/">antora:help</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../antora-lifecycle/">Lifecycle Extension</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../packages/">Package Management</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../playbook-provider/">Playbook Provider</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../npm-config/">npm Configuration</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../project/">Project Information</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">Antora Maven Plugin</span>
+    <span class="version">1.0.0-alpha.5</span>
+  </div>
+  <ul class="components">
+    <li class="component">
+      <div class="title"><a href="../../../antora/latest/">Antora</a></div>
+      <ul class="versions">
+        <li class="version is-latest">
+          <a href="../../../antora/latest/">3.2</a>
+        </li>
+        <li class="version">
+          <a href="../../../antora/3.1/">3.1</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <div class="title"><a href="../../../assembler/latest/">Antora Assembler</a></div>
+      <ul class="versions">
+        <li class="version is-latest">
+          <a href="../../../assembler/latest/">1.0</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <div class="title"><a href="../../../collector-extension/latest/">Antora Collector Extension</a></div>
+      <ul class="versions">
+        <li class="version is-latest">
+          <a href="../../../collector-extension/latest/">1.0</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <div class="title"><a href="../../../antora-ui-default/">Antora Default UI</a></div>
+    </li>
+    <li class="component is-current">
+      <div class="title"><a href="../">Antora Maven Plugin</a></div>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../">1.0.0-alpha.5</a>
+        </li>
+      </ul>
+    </li>
+    <li class="component">
+      <div class="title"><a href="../../../gradle-plugin/latest/">Gradle Antora Plugin</a></div>
+      <ul class="versions">
+        <li class="version is-latest">
+          <a href="../../../gradle-plugin/latest/">1.0</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../../../antora/latest/" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../">Antora Maven Plugin</a></li>
+    <li>Goals</li>
+    <li><a href="./">antora:antora</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="https://gitlab.com/antora/antora-maven-plugin/-/edit/main/docs/modules/ROOT/pages/antora-goal.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">antora:antora Goal</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Sets up a Node.js and npm installation, then installs and runs Antora from the current project with options defined in the plugin configuration using that Node.js runtime.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Plugin artifact</dt>
+<dd>
+<p><a href="https://central.sonatype.com/artifact/org.antora/antora-maven-plugin" target="_blank" rel="noopener">org.antora/antora-maven-plugin</a></p>
+</dd>
+<dt class="hdlist1">Fully-qualified name</dt>
+<dd>
+<p>org.antora:antora-maven-plugin:1.0.0-alpha.5:antora</p>
+</dd>
+<dt class="hdlist1">Default phase</dt>
+<dd>
+<p>antora (if plugin extensions are enabled), otherwise none</p>
+</dd>
+<dt class="hdlist1">Requirements</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>Does not require a project</p>
+</li>
+<li>
+<p>Does not require dependency resolution or collection</p>
+</li>
+<li>
+<p>Does not require online</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <code>antora:antora</code> goal leverages the <a href="https://github.com/eirslett/frontend-maven-plugin">frontend-maven-plugin</a> to install and run Antora from a Maven build.
+It also uses that plugin to automatically manage the Node.js installation needed to run Antora.
+To learn how to set up and configure this goal, refer to the following sections:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../usage/" class="xref page">Usage</a></p>
+</li>
+<li>
+<p><a href="#configuration-parameters">Configuration parameters</a></p>
+</li>
+<li>
+<p><a href="../packages/" class="xref page">Package Management</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If your Antora site requires additional packages to build, refer to <a href="../packages/" class="xref page">Package Management</a> to learn how to declare those packages.
+The plugin will automatically install those packages before or when it runs Antora (depending on how they are declared).</p>
+</div>
+<div class="paragraph">
+<p>This plugin configures Node.js to not use global module search paths (e.g., <em>$HOME/.node_modules</em>).
+The plugin will warn if it detects the existence of <em>$HOME/node_modules</em>, which is not a global module search path, but is always in the fallback module search path when the project is inside the user&#8217;s home directory.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuration-parameters"><a class="anchor" href="#configuration-parameters"></a>Configuration parameters</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The examples in this section show XML snippets that go inside the plugin declaration or one of its executions.</p>
+</div>
+<div class="sect2">
+<h3 id="environmentVariables"><a class="anchor" href="#environmentVariables"></a>&lt;environmentVariables&gt;</h3>
+<div class="paragraph">
+<p>Additional environment variables to set when invoking Antora.
+The name of the environment variable is specified using a tag name and the contents of that tag is the value.</p>
+</div>
+<div class="paragraph">
+<p>The Antora process automatically inherits environment variables that are set at the time Maven is run.
+These additional environment variables take precedence over the inherited ones.</p>
+</div>
+<div class="paragraph">
+<p>You can define the <code>NODE_OPTIONS</code> environment variable to set options passed to Node.js.
+(This plugin automatically appends <code>--no-global-search-paths</code> to the <code>NODE_OPTIONS</code> environment variable when running Antora).
+You can also use the environment variables to configure npm.
+Any environment variables that start with <code>npm_config_</code> will be interpreted as an npm configuration parameter (e.g., <code>npm_config_registry</code>).</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;environmentVariables&gt;
+    &lt;GOOGLE_ANALYTICS_KEY&gt;UA-abcxyz-1&lt;/GOOGLE_ANALYTICS_KEY&gt;
+    &lt;NODE_OPTIONS&gt;--max-old-space-size=4096&lt;/NODE_OPTIONS&gt;
+  &lt;/environmentVariables&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>Map&lt;String, String&gt;</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>false</p>
+</dd>
+<dt class="hdlist1">Alias</dt>
+<dd>
+<p>env</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="nodeDownloadUrl"><a class="anchor" href="#nodeDownloadUrl"></a>&lt;nodeDownloadUrl&gt;</h3>
+<div class="paragraph">
+<p>The root URL from where the Node.js distributions are retrieved.
+The trailing <code>/</code> is permitted, but not required.</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;nodeDownloadUrl&gt;https://download.example.org/nodejs&lt;/nodeDownloadUrl&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="title">CLI</div>
+<div class="content">
+<pre>$ mvn antora:antora -Dnode.downloadUrl=https://download.example.org/nodejs</pre>
+</div>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>String</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>true</p>
+</dd>
+<dt class="hdlist1">Default value</dt>
+<dd>
+<p>https://nodejs.org/dist</p>
+</dd>
+<dt class="hdlist1">User property</dt>
+<dd>
+<p>node.downloadUrl</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="nodeDownloadServerId"><a class="anchor" href="#nodeDownloadServerId"></a>&lt;nodeDownloadServerId&gt;</h3>
+<div class="paragraph">
+<p>The ID of a Maven server declaration that supplies credentials for the URL from which Node.js distributions are downloaded (see the <a href="#nodeDownloadUrl">nodeDownloadUrl</a> parameter).</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;nodeDownloadServerId&gt;download-server&lt;/nodeDownloadServerId&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="title">CLI</div>
+<div class="content">
+<pre>$ mvn antora:antora -Dnode.downloadServerId=download-server</pre>
+</div>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>String</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>false</p>
+</dd>
+<dt class="hdlist1">User property</dt>
+<dd>
+<p>node.downloadServerId</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="nodeExecutable"><a class="anchor" href="#nodeExecutable"></a>&lt;nodeExecutable&gt;</h3>
+<div class="paragraph">
+<p>The name or path of the Node.js executable to use.</p>
+</div>
+<div class="paragraph">
+<p>When this parameter is specified, a Node.js installation structure will be created under the location specified by the <a href="#nodeInstallDirectory">nodeInstallDirectory</a> parameter that links (using symlinks) to the Node.js installation for the specified executable.
+In this scenario, Node.js will not be downloaded and installed locally and the <a href="#nodeVersion">nodeVersion</a> parameter will be ignored.
+The location of the Node.js installation is determined by passing a script to the specified executable that reports the location where Node.js is installed.
+The plugin validates the Node.js installation by looking for the npm binscript under <em class="path">lib/node_modules</em>, <em class="path">node_modules</em>, or <em class="path">libexec/lib/node_modules</em> relative to the node executable (aka binary).</p>
+</div>
+<div class="paragraph">
+<p>In order for the plugin to set up this link on Windows, developer mode must be enabled (so <code>mklink</code> can be used).
+If it isn&#8217;t, the plugin will copy the Node.js installation instead of creating symlinks to it.</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;nodeExecutable&gt;node&lt;/nodeExecutable&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="title">CLI</div>
+<div class="content">
+<pre>$ mvn antora:antora -Dnode.executable=node</pre>
+</div>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>String</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>false</p>
+</dd>
+<dt class="hdlist1">User property</dt>
+<dd>
+<p>node.executable</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="nodeInstallDirectory"><a class="anchor" href="#nodeInstallDirectory"></a>&lt;nodeInstallDirectory&gt;</h3>
+<div class="paragraph">
+<p>The location where Node.js (and npm) will be installed.
+The directory <em class="path">node</em>, which contains the Node.js installation, will be created <strong>inside</strong> the specified directory.</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;nodeInstallDirectory&gt;${basedir}&lt;/nodeInstallDirectory&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="title">CLI</div>
+<div class="content">
+<pre>$ mvn antora:antora -Dnode.installDirectory=target</pre>
+</div>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>File</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>true</p>
+</dd>
+<dt class="hdlist1">Default</dt>
+<dd>
+<p>${project.build.directory}</p>
+</dd>
+<dt class="hdlist1">User property</dt>
+<dd>
+<p>node.installDirectory</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="nodeVersion"><a class="anchor" href="#nodeVersion"></a>&lt;nodeVersion&gt;</h3>
+<div class="paragraph">
+<p>The version of Node.js to install and use to run Antora.
+The goal also installs the version of npm that&#8217;s bundled with the specified version of Node.js.</p>
+</div>
+<div class="paragraph">
+<p>Use <code>lts</code> to reference the most recent LTS release version.
+Use <code>latest</code> to use the highest available version.
+If the value is an exact version (e.g., <code>v18.19.1</code>), it will be used as is, bypassing the version resolution step.
+If the value is a single number (e.g., <code>v18</code>), it will be resolved to the latest minor and patch version of that major release.
+If the value has two segments (e.g., <code>v18.19</code>), it will be resolved to the latest patch version of that minor release.
+If the version cannot be resolved, it will default to a fallback version with a warning.</p>
+</div>
+<div class="paragraph">
+<p>When the version is a number, the leading <code>v</code> is optional (e.g., <code>18</code>).</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;nodeVersion&gt;18&lt;/nodeVersion&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="title">CLI</div>
+<div class="content">
+<pre>$ mvn antora:antora -Dnode.version=18</pre>
+</div>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>String</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>true</p>
+</dd>
+<dt class="hdlist1">Default</dt>
+<dd>
+<p>lts (resolves to the most recent LTS release version)</p>
+</dd>
+<dt class="hdlist1">User property</dt>
+<dd>
+<p>node.version</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="options"><a class="anchor" href="#options"></a>&lt;options&gt;</h3>
+<div class="paragraph">
+<p>CLI options to pass to the Antora command.</p>
+</div>
+<div class="paragraph">
+<p>If Maven is run with the <code>--errors</code> option, the <code>stacktrace</code> option is implicitly added first.
+If Maven is run from within a project, the <code>to-dir ${project.build.directory}/site</code> option is implicitly added as well.</p>
+</div>
+<div class="paragraph">
+<p>The options can be specified as a comma-separated list (as long as no value contains a comma) or a list of nested <code>&lt;option&gt;</code> tags.
+(Technically, the name used for the nested tags does not matter, but the convention is to use the singular name of the parameter noun).
+The options are processed in the order specified.</p>
+</div>
+<div class="paragraph">
+<p>If the option is a flag (aka switch), the form should be <code>name</code>, <code>name? value</code>, or <code>name?=value</code>.
+If a <code>name?</code> form is used, the value can be true, empty (which defaults to false), or false.
+The value can have an optional fallback value offset by a colon (e.g., <code>${property.name.here}:false</code>) to override the default value when the primary part is empty.
+If the value resolves to false, it will not only skip adding the option, but also remove any option with that name if previously set.</p>
+</div>
+<div class="paragraph">
+<p>If the option accepts a value, the form should be <code>name=value</code> or <code>name value</code> for singular options and <code>name[]=value</code> or <code>name[] value</code> for variadic options (options that can be specified multiple times, such as attribute, extension, and key).
+If a variadic option is specified using the singular form, all previous instances are replaced with the current one.
+Spaces and special characters in the value do not have to be escaped (as this escaping is handled internally).</p>
+</div>
+<div class="paragraph">
+<p>Regardless of whether the option accepts a value, the <code>name!</code> form can be used to remove a previously set option with that name.</p>
+</div>
+<div class="paragraph">
+<p>In all cases, the leading <code>--</code> on the name part is optional.
+This prefix is automatically added to the options when passing them to Antora.</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;options&gt;
+    &lt;option&gt;fetch&lt;/option&gt;
+    &lt;option&gt;log-failure-level warn&lt;/option&gt;
+    &lt;option&gt;to-dir ${project.build.directory}/antora/site&lt;/option&gt;
+    &lt;option&gt;attribute[] product-name=ACME&lt;/option&gt;
+    &lt;option&gt;attribute[] product-url=https://example.org&lt;/option&gt;
+  &lt;/options&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>or</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;options&gt;fetch, log-failure-level warn, to-dir ${project.build.directory}/antora/site, attribute[] product-name=ACME, attribute[] product-url=https://example.org&lt;/options&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The user property for this parameter, <code>antora.options</code>, is only intented to be used when the goal is run outside of a Maven project.</p>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>List&lt;String&gt;</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>false</p>
+</dd>
+<dt class="hdlist1">User property</dt>
+<dd>
+<p>antora.options</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="additionalOptions"><a class="anchor" href="#additionalOptions"></a>&lt;additionalOptions&gt;</h3>
+<div class="paragraph">
+<p>Additional CLI options to pass to the Antora command.
+These options are appended to the options specified using the <a href="#options">options</a> parameter.
+The values are specified in the same way.</p>
+</div>
+<div class="paragraph">
+<p>The intended use of this parameter is to add additional options in a non-default execution or from the command line without having to redefine all the options again.</p>
+</div>
+<div class="paragraph">
+<p>If an additional option has the same name as an option defined using the options parameter, if it&#8217;s a singular option, it replaces the previous option, and if it&#8217;s a variadic option, it is appended.</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;options&gt;
+    &lt;option&gt;clean&lt;/option&gt;
+    &lt;option&gt;fetch&lt;/option&gt;
+    &lt;option&gt;log-failure-level warn&lt;/option&gt;
+    &lt;option&gt;log-format pretty&lt;/option&gt;
+  &lt;/options&gt;
+&lt;/configuration&gt;
+&lt;executions&gt;
+  &lt;execution&gt;
+    &lt;id&gt;graceful&lt;/id&gt;
+    &lt;configuration&gt;
+      &lt;additionalOptions&gt;
+        &lt;option&gt;log-failure-level fatal&lt;/option&gt;
+      &lt;/additionalOptions&gt;
+    &lt;/configuration&gt;
+  &lt;/execution&gt;
+&lt;/executions&gt;</code></pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="title">CLI</div>
+<div class="content">
+<pre>$ mvn antora:antora "-Dantora.additionalOptions=log-failure-level fatal"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When specifying a parameter using a user property, the property name must be followed by an equals sign (i.e., name=value).
+This differs from the syntax of an option, which permits the use of a space in place of an equals sign.
+If the value of the user property contains a space, the entire property declaration (i.e., the CLI option) must be enclosed in quotes.
+This enclosure is also necessary in PowerShell if the user property name or value contains a period.</p>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>List&lt;String&gt;</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>false</p>
+</dd>
+<dt class="hdlist1">User property</dt>
+<dd>
+<p>antora.additionalOptions</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="playbookFile"><a class="anchor" href="#playbookFile"></a>&lt;playbookFile&gt;</h3>
+<div class="paragraph">
+<p>The Antora playbook file to use.
+The value can be an absolute or relative path.
+If the path is relative, it&#8217;s resolved from the directory of the current Maven project (or the current working directory if Maven is run outside of a project).</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;playbookFile&gt;src/main/antora/antora-playbook.yml&lt;/playbookFile&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>File</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>true</p>
+</dd>
+<dt class="hdlist1">Alias</dt>
+<dd>
+<p>playbook</p>
+</dd>
+<dt class="hdlist1">Default</dt>
+<dd>
+<p>antora-playbook.yml</p>
+</dd>
+<dt class="hdlist1">User property</dt>
+<dd>
+<p>antora.playbookFile</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="playbookProvider"><a class="anchor" href="#playbookProvider"></a>&lt;playbookProvider&gt;</h3>
+<div class="paragraph">
+<p>Specifies the location of a playbook template to sideload or download to use as the Antora playbook.
+If this parameter is specified, the <a href="#playbookFile">playbookFile</a> parameter is ignored.
+The playbook template will be cached locally as <em class="path">provided-antora-playbook.yml</em>.</p>
+</div>
+<div class="paragraph">
+<p>See <a href="../playbook-provider/" class="xref page">Playbook Provider</a> to learn how to set up and use the playbook provider.</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;playbookProvider&gt;
+    &lt;repository&gt;org-name/repo-name&lt;/repository&gt;
+    &lt;branch&gt;docs-playbook&lt;/branch&gt;
+    &lt;path&gt;lib/per-branch-antora-playbook.yml&lt;/path&gt;
+    &lt;tryLocalBranch&gt;first&lt;/tryLocalBranch&gt;
+  &lt;/playbookProvider&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>org.antora.maven.PlaybookProvider</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>false</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="packages"><a class="anchor" href="#packages"></a>&lt;packages&gt;</h3>
+<div class="paragraph">
+<p>Specifies npm packages (aside from Antora itself) to install when installing Antora.
+These packages are not installed if a qualifying <em class="path">package.json</em> file is present or the <a href="#playbookProvider">playbookProvider</a> parameter is specified.</p>
+</div>
+<div class="paragraph">
+<p>The packages can be specified as a comma-separated list (as long as no value contains a comma) or a list of nested <code>&lt;package&gt;</code> tags.
+Each package must be specified by its name and an optional version.
+(Technically, the name used for the nested tags does not matter, but the convention is to use the singular name of the parameter noun).</p>
+</div>
+<div class="paragraph">
+<p>See <a href="../packages/" class="xref page">Package Management</a> to learn about how and when to use npm packages.</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;packages&gt;
+    &lt;package&gt;@antora/lunr-extension&lt;/package&gt;
+    &lt;package&gt;@asciidoctor/tabs@1.0.0-beta.6&lt;/package&gt;
+  &lt;/packages&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>or</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;packages&gt;@antora/lunr-extension, @asciidoctor/tabs@1.0.0-beta.6&lt;/packages&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The user property for this parameter, <code>antora.options</code>, is only intented to be used when the goal is run outside of a Maven project.</p>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>List&lt;String&gt;</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>false</p>
+</dd>
+<dt class="hdlist1">User property</dt>
+<dd>
+<p>antora.packages</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="additionalPackages"><a class="anchor" href="#additionalPackages"></a>&lt;additionalPackages&gt;</h3>
+<div class="paragraph">
+<p>Additional npm packages to install when installing Antora.
+These packages are appended to the packages specified using the <a href="#packages">packages</a> parameter.
+The values are specified in the same way.</p>
+</div>
+<div class="paragraph">
+<p>The intended use of this parameter is to add additional packages in a non-default execution or from the command line without having to redeclare all the packages again.</p>
+</div>
+<div class="paragraph">
+<p>These packages are not installed when a qualifying <em class="path">package.json</em> file is present.
+Unlike <a href="#packages">packages</a>, these packages <strong>are</strong> installed if the <a href="#playbookProvider">playbookProvider</a> is specified.</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;packages&gt;
+    &lt;package&gt;@asciidoctor/tabs&lt;/package&gt;
+  &lt;/packages&gt;
+&lt;/configuration&gt;
+&lt;executions&gt;
+  &lt;execution&gt;
+    &lt;id&gt;pdf&lt;/id&gt;
+    &lt;configuration&gt;
+      &lt;additionalOptions&gt;
+        &lt;option&gt;extension[] @antora/pdf-extension&lt;/option&gt;
+      &lt;/additionalOptions&gt;
+      &lt;additionalPackages&gt;
+        &lt;package&gt;@antora/pdf-extension&lt;/package&gt;
+      &lt;/additionalPackages&gt;
+    &lt;/configuration&gt;
+  &lt;/execution&gt;
+&lt;/executions&gt;</code></pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="title">CLI</div>
+<div class="content">
+<pre>$ mvn antora:antora "-DadditionalOptions=extension[] @antora/pdf-extension" -DadditionalPackages=@antora/pdf-extension</pre>
+</div>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>List&lt;String&gt;</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>false</p>
+</dd>
+<dt class="hdlist1">User property</dt>
+<dd>
+<p>antora.additionalPackages</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="skip"><a class="anchor" href="#skip"></a>&lt;skip&gt;</h3>
+<div class="paragraph">
+<p>Controls whether the Antora site generation is skipped.
+If this parameter is set, the <code>antora:antora</code> goal will return immediately and not perform any work.</p>
+</div>
+<div class="paragraph">
+<p>This parameter is typically only used when the <code>antora:antora</code> goal is bound to a common lifecycle phase and the user wants to skip the Antora site generation when that phase is included in the current Maven execution (i.e., build).</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;skip&gt;true&lt;/skip&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="title">CLI</div>
+<div class="content">
+<pre>$ mvn antora:antora -Dantora.skip=true</pre>
+</div>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>boolean</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>false</p>
+</dd>
+<dt class="hdlist1">Default</dt>
+<dd>
+<p>false</p>
+</dd>
+<dt class="hdlist1">User property</dt>
+<dd>
+<p>antora.skip</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="version"><a class="anchor" href="#version"></a>&lt;version&gt;</h3>
+<div class="paragraph">
+<p>The version of Antora to install and use.
+The value can be an exact version (e.g., <code>3.1.7</code>), a version tag (e.g., <code>latest</code>), or a version range specifier (e.g., <code>~3.1</code>).</p>
+</div>
+<div class="paragraph">
+<p>This parameter is ignored if packages are installed from <em class="path">packages.json</em> unless those packages do not include the Antora CLI.</p>
+</div>
+<div class="listingblock">
+<div class="title">pom.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;version&gt;testing&lt;/version&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="dlist properties">
+<dl>
+<dt class="hdlist1">Type</dt>
+<dd>
+<p>String</p>
+</dd>
+<dt class="hdlist1">Required</dt>
+<dd>
+<p>true</p>
+</dd>
+<dt class="hdlist1">Default</dt>
+<dd>
+<p>latest</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="individual-options"><a class="anchor" href="#individual-options"></a>Individual options</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Individual options may be specified on the command line using dedicated user properties prefixed with <code>antora.option.</code>.
+For multi-options, the name must be expressed in indexed form using a unique index (e.g., <code>[0]</code>) since user property names must be unique.
+For example:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ mvn antora:antora -Dantora.option.clean \
+  -Dantora.option.attribute[0]=product-name=ACME \
+  -Dantora.option.attribute[1]=product-url=https://example.org</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here&#8217;s another example that shows how to configure Antora to print its version without generating the site:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ mvn antora:antora -Dantora.option.version</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Options specified this way take precedence over a matching option defined using the <a href="#options">options</a> or <a href="#additionalOptions">additionalOptions</a> parameters.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="precedence"><a class="anchor" href="#precedence"></a>User property precedence</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In Maven, the user property for a parameter (e.g., <code>-Dproperty.name=value</code>) does not override the parameter set in the POM file.
+Consider the following scenario:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;playbookFile&gt;antora-playbook.yml&lt;/playbookFile&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now let&#8217;s say you want to override the <code>playbookFile</code> property using its user property (<code>antora.playbookFile</code>) when calling Maven:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ mvn antora:antora -Dantora.playbookFile=author-antora-playbook.yml</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In this case, the user property is ignored.
+That&#8217;s because the parameter has already been defined in the POM, which has higher precedence.
+The user property value is only considered if the parameter is not defined in the POM.</p>
+</div>
+<div class="paragraph">
+<p>(In contrast, an execution-level parameter will override/replace a plugin-level parameter with the same name).</p>
+</div>
+<div class="paragraph">
+<p>However, there&#8217;s a way to invert this precedence.
+The technique is to define a user property in your POM.
+The value of the user property in the POM should have the default value you want to use in the plugin configuration.
+For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;properties&gt;
+  &lt;antora.playbookFile&gt;antora-playbook.yml&lt;/antora.playbookFile&gt;
+&lt;/properties&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then, in the plugin configuration, reference this user property when assigning a value to the <code>playbookFile</code> parameter.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+  &lt;playbookFile&gt;${antora.playbookFile}&lt;/playbookFile&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+When using the user property name for the parameter, this step is not actually required, though it makes the behavior more clear.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Now, you can override the parameter value using the user property:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ mvn antora:antora -Dantora.playbookFile=author-antora-playbook.yml</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you want, you can use a custom property name (e.g., <code>user.antora.playbookFile</code>) for this technique instead of using the same one mapped to the parameter.</p>
+</div>
+<div class="paragraph">
+<p>This technique will only work when using basic parameters (i.e., parameters that are defined using a String value).
+But that&#8217;s why the goal offers the <code>additionalOptions</code> and <code>additionalPackages</code> parameters as an alternative.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="executions"><a class="anchor" href="#executions"></a>Executions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When you configure a plugin, you typically use plugin-level configuration.
+That configuration can be further specialized using <a href="https://maven.apache.org/guides/mini/guide-configuring-plugins.html#Using_the_.3Cexecutions.3E_Tag" target="_blank" rel="noopener">plugin executions</a>.
+The configuration on a plugin execution is refered to as execution-level configuration.</p>
+</div>
+<div class="paragraph">
+<p>You define a plugin execution either to call it directly from the CLI or to bind it to another phase.
+You can think of plugin executions as profiles for a single plugin.</p>
+</div>
+<div class="paragraph">
+<p>Executions are specified using nested <code>&lt;execution&gt;</code> tags inside an <code>&lt;executions&gt;</code> tag in the plugin declaration.
+Each execution accepts an ID (the <code>&lt;id&gt;</code> tag) and a configuration (the <code>&lt;configuration&gt;</code> tag).
+The ID is used to identify or select an execution.
+The configuration adds or replaces parameters from the plugin-level configuration.</p>
+</div>
+<div class="paragraph">
+<p>A good use case for a plugin execution is to specify parameters that are unique to the production build.
+Here&#8217;s an example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;executions&gt;
+  &lt;execution&gt;
+    &lt;id&gt;production&lt;/id&gt;
+    &lt;configuration&gt;
+      &lt;additionalOptions&gt;
+        &lt;option&gt;redirect-facility gitlab&lt;/option&gt;
+      &lt;/additionalOptions&gt;
+    &lt;/configuration&gt;
+  &lt;/execution&gt;
+&lt;/executions&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The plugin always has a default execution.
+The following table lists the ID of the default execution depending on which Maven command is used:</p>
+</div>
+<table class="tableblock frame-none grid-rows stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Command</th>
+<th class="tableblock halign-left valign-top">Default Execution ID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">antora:antora</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">default-cli</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">antora</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">default-antora</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>These IDs are important to know as you begin adding additional executions.</p>
+</div>
+<div class="paragraph">
+<p>To run the plugin using a specific execution, append <code>@&lt;id&gt;</code> to the goal, where <code>&lt;id&gt;</code> is the value of the <code>&lt;id&gt;</code> tag.
+For example, to use the <code>production</code> execution, you would run the following command:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ mvn antora:antora@production</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the log, you&#8217;ll see the <code>antora:antora</code> goal identified as <strong>(production)</strong> instead of <strong>(default-cli)</strong>.</p>
+</div>
+<div class="paragraph">
+<p>It&#8217;s not possible to specify the execution ID from the command line when running the <code>antora</code> phase.
+In that case, the execution ID will always be <code>default-antora</code>.
+However, it is possible to bind an execution to a phase so it will be used implicitly.</p>
+</div>
+<div class="paragraph">
+<p>As an alternative, you can use Maven profiles to customize how a plugin is configured and used.</p>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="prev"><a href="../usage/">Usage</a></span>
+  <span class="next"><a href="../help-goal/">antora:help</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>Copyright © <a href="https://opendevise.com" target="_blank" rel="noopener">OpenDevise Inc.</a> and individual contributors to <a href="https://antora.org">Antora</a>. Chat powered by <a href="https://zulip.com" title="Zulip is an open-source modern team chat app" target="_blank" rel="noopener">Zulip</a>. Site deploys by <a href="https://netlify.com" target="_blank" rel="noopener">Netlify</a>.</p>
+  <p>Except where otherwise noted, docs.antora.org, Antora, and the Antora UI, are licensed under the <a href="https://www.mozilla.org/en-US/MPL/2.0/">Mozilla Public License Version 2.0</a> (MPL-2.0).</p>
+  <p>AsciiDoc® is a trademark of the Eclipse Foundation, Inc.</p>
+</footer>
+<script id="site-script" src="../../../_/js/site.js" data-ui-root-path="../../../_"></script>
+<script async src="../../../_/js/vendor/highlight.js"></script>
+<script src="../../../_/js/vendor/docsearch.min.js"></script>
+<!-- fetched from https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js -->
+<script>
+var search = docsearch({
+  appId: 'E80Q5UHPOS',
+  apiKey: '6e7248a6d21038512a92145e9b903757',
+  indexName: 'antora-docs',
+  inputSelector: '#search-input',
+  autocompleteOptions: { hint: false, keyboardShortcuts: ['s'] },
+  algoliaOptions: { hitsPerPage: 10 }
+}).autocomplete
+search.on('autocomplete:closed', function () { search.autocomplete.setVal() })
+</script>
+  </body>
+</html>

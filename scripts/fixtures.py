@@ -15,7 +15,13 @@ network is touched only by the first and the last:
   under `fixtures/docs-fp-o/`, recording each page's size, hash and fetch
   date back in the manifest.
 
-A fourth, `antora-ui`, vendors the Fedora docs UI bundle that `mise run e2e`
+A fourth, `sites`, saves two other sites' pages, `docs.antora.org` and the
+Sphinx project's own documentation, from the hand-written lists in `SITES`
+(`fixtures/docs-antora-org/`, `fixtures/sphinx-doc-org/`): what compiled
+`antora` must get right with no config, and what a declarative profile is
+checked on end to end (P10's spec, "Other sites check the line").
+
+A fifth, `antora-ui`, vendors the Fedora docs UI bundle that `mise run e2e`
 builds its Antora site with (D24), into `fixtures/antora/`: the playbook's
 URL is a moving job artifact, so the bundle, its source commit and its
 sha256 are recorded in `ui-bundle.json` and a build refuses a bundle that
@@ -70,6 +76,46 @@ UI_PIPELINES = (
 WITNESSES = {
     f"{HOST}/en-US/quick-docs/bugzilla-file-a-bug/": "witness of I6",
     f"{HOST}/en-US/packaging-guidelines/ReviewGuidelines/": "witness of I8 and I9",
+}
+
+
+# The sites beside docs.fp.o whose pages are fixtures (P10's spec, "Other sites
+# check the line"). `dir` is under `fixtures/`; each page carries the reason it
+# is there. Both robots.txt files allow everything with no `Crawl-delay`, and
+# `DELAY` is kept to anyway.
+SITES = {
+    "docs-antora-org": {
+        "host": "https://docs.antora.org",
+        "pages": [
+            ("/antora/latest/", "a component's start page, the default UI: component, version, edit link"),
+            ("/antora/3.1/", "an older version of the same component, beside `latest`"),
+            ("/antora/latest/install/install-antora/", "a page under a section"),
+            ("/antora/latest/page/xref/", "a page about xrefs, holding xref links"),
+            ("/antora/latest/extend/extensions/", "a page two sections deep"),
+            ("/antora/latest/playbook/", "a long page with many anchors"),
+            ("/antora-ui-default/", "an unversioned component: data-version is empty and its URLs omit one"),
+            ("/antora-ui-default/add-fonts/", "a page of the unversioned component"),
+            ("/assembler/latest/", "a second versioned component, at version 1.0"),
+            ("/collector-extension/latest/concepts/", "a third versioned component, a repo of its own"),
+            ("/gradle-plugin/latest/", "a fourth versioned component, a small page"),
+            ("/maven-plugin/latest/antora-goal/", "a page with no canonical link"),
+            ("/antora/latest/no-such-page-bruce-fixture/", "a 404: the nav container renders with no component or version"),
+        ],
+    },
+    "sphinx-doc-org": {
+        "host": "https://www.sphinx-doc.org",
+        "pages": [
+            ("/en/master/", "the start page: a Sphinx site, no edit link, no generator meta"),
+            ("/en/master/usage/quickstart.html", "a page under a section"),
+            ("/en/master/usage/installation.html", "a sibling page"),
+            ("/en/master/tutorial/index.html", "a section's index page"),
+            ("/en/master/usage/restructuredtext/basics.html", "a page three sections deep, many anchors"),
+            ("/en/master/usage/extensions/autodoc.html", "a long page of signatures"),
+            ("/en/master/genindex.html", "the general index, links by the hundred"),
+            ("/en/master/development/index.html", "a page in another part of the tree"),
+            ("/en/master/no-such-page-bruce-fixture.html", "a 404"),
+        ],
+    },
 }
 
 
@@ -286,6 +332,9 @@ def select(pages: list[dict], target: int = TARGET) -> list[dict]:
 def rel_path(url: str, status: int = 200) -> str:
     """Where a page is stored under `fixtures/docs-fp-o/`."""
     path = urllib.parse.urlparse(url).path.strip("/")
+    if path.endswith(".html"):
+        # A Sphinx page is already a file: `usage/quickstart.html` stays one.
+        return path if status == 200 else f"{path[: -len('.html')]}.{status}.html"
     name = "index.html" if status == 200 else f"{status}.html"
     return f"{path}/{name}" if path else name
 
@@ -307,6 +356,23 @@ def save(manifest: Path) -> None:
         dest.write_bytes(body)
         print(status, len(body), entry["path"], flush=True)
     manifest.write_text(json.dumps(doc, indent=1) + "\n")
+
+
+def save_site(name: str) -> None:
+    """Write `SITES[name]`'s manifest, keeping what `save` recorded of a
+    page already in it, and fetch every page it names."""
+    site = SITES[name]
+    manifest = ROOT / "fixtures" / name / "manifest.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    old = {}
+    if manifest.exists():
+        old = {e["url"]: e for e in json.loads(manifest.read_text())["pages"]}
+    entries = []
+    for path, why in site["pages"]:
+        url = site["host"] + path
+        entries.append(old.get(url, {}) | {"url": url, "why": [why]})
+    manifest.write_text(json.dumps({"pages": entries}, indent=1) + "\n")
+    save(manifest)
 
 
 def ui_record(url: str, final_url: str, commit: str, body: bytes) -> dict:
@@ -365,10 +431,15 @@ def main() -> None:
     c.add_argument("--manifest", type=Path, default=MANIFEST)
     v = sub.add_parser("save", help="fetch every page the manifest names")
     v.add_argument("--manifest", type=Path, default=MANIFEST)
+    o = sub.add_parser("sites", help="save docs.antora.org's and the Sphinx docs' pages")
+    o.add_argument("name", nargs="*", choices=list(SITES), help="a site (default: both)")
     sub.add_parser("antora-ui", help="vendor the Fedora docs UI bundle for `mise run e2e`")
     args = ap.parse_args()
     if args.cmd == "antora-ui":
         vendor_ui()
+    elif args.cmd == "sites":
+        for name in args.name or SITES:
+            save_site(name)
     elif args.cmd == "survey":
         deep = {k: int(v) for k, v in (d.split("=") for d in args.deep)}
         survey(args.per_component, deep, args.out, args.partial, args.urls_from)

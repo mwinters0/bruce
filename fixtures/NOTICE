@@ -8,6 +8,20 @@ docs-fp-o/
   shared under the same licence. Each page's source file is named by its
   "Edit this Page" link. scripts/fixtures.py chooses and saves them.
 
+docs-antora-org/
+  Saved, unmodified, from https://docs.antora.org on the dates in
+  manifest.json, which also records why each page was chosen. Except where
+  otherwise noted, docs.antora.org, Antora and the Antora UI are licensed
+  under the Mozilla Public License 2.0 (https://www.mozilla.org/en-US/MPL/2.0/),
+  as the site's own footer says. scripts/fixtures.py sites saves them.
+
+sphinx-doc-org/
+  Saved, unmodified, from https://www.sphinx-doc.org on the dates in
+  manifest.json, which also records why each page was chosen. Copyright the
+  Sphinx developers; the Sphinx project's documentation is under its two-clause
+  BSD licence (https://github.com/sphinx-doc/sphinx/blob/master/LICENSE.rst).
+  scripts/fixtures.py sites saves them.
+
 generators/
   Written by hand for this project, under this repository's licence. They
   reproduce only the markup that the invariants register records (I9, I12) of

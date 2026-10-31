@@ -1,0 +1,103 @@
+{
+ "pages": [
+  {
+   "url": "https://www.sphinx-doc.org/en/master/",
+   "why": [
+    "the start page: a Sphinx site, no edit link, no generator meta"
+   ],
+   "status": 200,
+   "path": "en/master/index.html",
+   "bytes": 29981,
+   "sha256": "593bfef22d4cf16161405f86d93edc556690a5288af98de89d1590745fc60280",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://www.sphinx-doc.org/en/master/usage/quickstart.html",
+   "why": [
+    "a page under a section"
+   ],
+   "status": 200,
+   "path": "en/master/usage/quickstart.html",
+   "bytes": 32900,
+   "sha256": "fa4d4e67c373805eb33a6f7f5f99313d69397dff2afd57edd18b6c9c8b0e6e4f",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://www.sphinx-doc.org/en/master/usage/installation.html",
+   "why": [
+    "a sibling page"
+   ],
+   "status": 200,
+   "path": "en/master/usage/installation.html",
+   "bytes": 24195,
+   "sha256": "4771b30e6e3f2f4112dd64bd3f4e4889da4683c73e253545030a3dc6693fb866",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://www.sphinx-doc.org/en/master/tutorial/index.html",
+   "why": [
+    "a section's index page"
+   ],
+   "status": 200,
+   "path": "en/master/tutorial/index.html",
+   "bytes": 15207,
+   "sha256": "0859046dc9056e88b6de1db018d863f003e74327ed998327875007668902ef91",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html",
+   "why": [
+    "a page three sections deep, many anchors"
+   ],
+   "status": 200,
+   "path": "en/master/usage/restructuredtext/basics.html",
+   "bytes": 57570,
+   "sha256": "73ee81975eb259021f209b3fc72f48ff82c15d7699fe12a919c65bd6f44925a5",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html",
+   "why": [
+    "a long page of signatures"
+   ],
+   "status": 200,
+   "path": "en/master/usage/extensions/autodoc.html",
+   "bytes": 165190,
+   "sha256": "e5a873d7e65049701ba9d592baaa3428a904e3e9cae7e8c8ef9eb3be777fc954",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://www.sphinx-doc.org/en/master/genindex.html",
+   "why": [
+    "the general index, links by the hundred"
+   ],
+   "status": 200,
+   "path": "en/master/genindex.html",
+   "bytes": 316906,
+   "sha256": "82b220b948fb55c3b181a74055ecc5bce8ce9c93bb265f26eed4c5a72fb42def",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://www.sphinx-doc.org/en/master/development/index.html",
+   "why": [
+    "a page in another part of the tree"
+   ],
+   "status": 200,
+   "path": "en/master/development/index.html",
+   "bytes": 10402,
+   "sha256": "65cc87ea1b5042d1438da2ddb9cb7df5b9dcac0e0d623adac3cbde8e2c02568a",
+   "fetched": "2026-10-31"
+  },
+  {
+   "url": "https://www.sphinx-doc.org/en/master/no-such-page-bruce-fixture.html",
+   "why": [
+    "a 404"
+   ],
+   "status": 404,
+   "path": "en/master/no-such-page-bruce-fixture.404.html",
+   "bytes": 2538,
+   "sha256": "de0d170ec94e906e45197b30904407cb6c00a5ca1c5755622d06a6ea0e36afd4",
+   "fetched": "2026-10-31"
+  }
+ ]
+}
