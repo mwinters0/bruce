@@ -341,6 +341,10 @@ fn a_file_that_is_not_a_baseline_is_refused_and_left_alone() {
     let empty = dir.path().join("empty.duckdb");
     duckdb::Connection::open(&empty).unwrap();
     assert!(matches!(refused(&empty), Error::NotBruce));
+    assert!(
+        !refused(&empty).to_string().contains("has tables"),
+        "an empty file holds none"
+    );
 
     // Two runs: the history database itself.
     run(&store, 1, None, true);

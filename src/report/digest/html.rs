@@ -54,7 +54,8 @@ impl Digest {
         w!(
             out,
             "<footer>Written by bruce <span class=\"version\">{}</span>, document format {}. The \
-             JSON digest of this day holds the same data, and every broken and error row.\
+             JSON digest of this day holds the same figures and lists, and every broken and error \
+             row, but not the sentences that explain them.\
              </footer>\n</body>\n</html>\n",
             esc(env!("CARGO_PKG_VERSION")),
             super::FORMAT_VERSION

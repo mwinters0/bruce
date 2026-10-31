@@ -112,19 +112,19 @@ fn cause_words(cause: &str) -> (&'static str, &'static str, &'static str) {
             "Target removed",
             "The link was fine in the compared run and its target answers with an error now: \
              the page, or the page it redirects to, is gone.",
-            "Target's source, as the compared run recorded it",
+            "Target's source, as the compared run recorded it, else as this run does",
         ),
         "target_moved" => (
             "Target moved",
             "The link was fine in the compared run and its target now redirects somewhere it \
              did not, where the link breaks.",
-            "Target's source, as the compared run recorded it",
+            "Target's source, as the compared run recorded it, else as this run does",
         ),
         "anchor_removed" => (
             "Anchor removed",
             "The link was fine in the compared run, its target page had the fragment then, and \
              does not now.",
-            "Target's source, as the compared run recorded it",
+            "Target's source, as the compared run recorded it, else as this run does",
         ),
         "link_added" => (
             "Link added",

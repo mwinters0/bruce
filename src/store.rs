@@ -94,7 +94,7 @@ impl fmt::Display for Error {
                 f,
                 "database has schema version {found}, but this bruce reads version {expected}"
             ),
-            Error::NotBruce => f.write_str("not a bruce database: it has tables but no `meta`"),
+            Error::NotBruce => f.write_str("not a bruce database: it has no `meta` table"),
             Error::NoFinishedRun => {
                 f.write_str("the database holds no finished run; name one with --run")
             }
