@@ -248,9 +248,23 @@ fn a_file_names_the_outcomes_the_gate_fails_on_and_it_is_one_row() {
 }
 
 #[test]
+fn an_empty_fail_list_is_report_only_and_is_recorded_as_an_empty_row() {
+    let policy = parse("[gate]\nfail = []").unwrap();
+    assert!(policy.gate_fail.is_empty());
+    let row = policy
+        .entries()
+        .into_iter()
+        .find(|e| e.key == "gate.fail")
+        .unwrap();
+    assert_eq!(row.value, "");
+    assert_eq!(row.written_as(), "gate.fail = []");
+    // An empty row is a list naming nothing, not a run with no row.
+    assert!(FailOn::from_row(Some("")).is_empty());
+}
+
+#[test]
 fn a_fail_list_that_cannot_mean_anything_is_refused_naming_it() {
     for (extra, named) in [
-        ("[gate]\nfail = []", "gate.fail: names no outcome"),
         (
             "[gate]\nfail = [\"redirected\"]",
             "\"redirected\" is not an outcome",

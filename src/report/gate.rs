@@ -11,14 +11,18 @@
 //! `ok`, `unchecked` or another outcome, which the row names. Several links
 //! sharing a key are one row. An `error` fails only where the list names it
 //! (D16) and is listed either way, and breakage the baseline had stays a
-//! count until asked for. The **inverse** section is
-//! the baseline's links from pages outside the build to what the change
-//! removed (`inverse`); it fails the gate while the request's mode is `Fail`.
+//! count until asked for. A `broken_url` or `broken_anchor` the list leaves
+//! out is **introduced, not failing** where the baseline lacks the key at one
+//! of the left-out outcomes, a section of its own (D83). The **inverse**
+//! section is the baseline's links from pages outside the build to what the
+//! change removed (`inverse`): those whose outcome, once the change deploys,
+//! the list names fail the gate while the request's mode is `Fail`, the rest
+//! are listed apart.
 
 use duckdb::Connection;
 
 use super::error::Error;
-use super::inverse::{counts, inverse};
+use super::inverse::{counts, inverse, split};
 use super::links::errors;
 use super::request::{InverseMode, Request};
 use super::sql::{Cols, Sql, pedantic};
@@ -48,9 +52,15 @@ pub struct Gate {
     /// `new` where the baseline has no such link. These fail the gate, in the
     /// outcomes of the CI run's `fail` list (D83).
     pub introduced: Table,
+    /// Broken here and not in the baseline in an outcome the `fail` list leaves
+    /// out, with the same columns. Never failing (D83).
+    pub introduced_not_failing: Table,
     /// Baseline links from pages outside the build to what this run removed
-    /// from it. These fail the gate unless `mode` is `Warn`.
+    /// from it, to an outcome the `fail` list names. These fail the gate
+    /// unless `mode` is `Warn`.
     pub inverse: Table,
+    /// The same, to an outcome the list leaves out. Never failing (D83).
+    pub inverse_not_failing: Table,
     /// Whether `inverse` fails the gate (`--inverse`).
     pub mode: InverseMode,
     /// Redirected here and not in the baseline. Never failing (D7).
@@ -89,8 +99,18 @@ impl Gate {
     /// The sections after the introduced breakage: the inverse breakage, which
     /// fails under `--inverse=fail`, and the rest, which never fail.
     pub(super) fn rest(&self, all: bool) -> String {
+        let title = match self.mode {
+            InverseMode::Fail => "inverse breakage",
+            InverseMode::Warn => "inverse breakage (warning only)",
+        };
         [
-            self.inverse_section(),
+            section(
+                "introduced breakage not failing",
+                &self.introduced_not_failing,
+                true,
+            ),
+            inverse_section(title, &self.inverse),
+            inverse_section("inverse breakage not failing", &self.inverse_not_failing),
             section("introduced redirected links", &self.redirected, true),
             section("errors", &self.errors, true),
             section("breakage already in the baseline", &self.already, all)
@@ -103,24 +123,6 @@ impl Gate {
         .join("\n\n")
     }
 
-    /// The inverse breakage, and how many pages across how many components
-    /// link to what was removed (D56).
-    fn inverse_section(&self) -> String {
-        let title = match self.mode {
-            InverseMode::Fail => "inverse breakage",
-            InverseMode::Warn => "inverse breakage (warning only)",
-        };
-        let links = self.inverse.rows.len();
-        if links == 0 {
-            return format!("{title}: none");
-        }
-        let (pages, groups) = counts(&self.inverse);
-        format!(
-            "{title}: {links} links, {pages} inbound pages across {groups} components\n{}",
-            self.inverse.render(Format::Text)
-        )
-    }
-
     /// One JSON object holding every section; the breakage already in the
     /// baseline is a count, and its links only with `all`.
     pub fn json(&self, all: bool) -> String {
@@ -130,19 +132,36 @@ impl Gate {
             "null".to_owned()
         };
         format!(
-            "{{\"run\":{},\"baseline_run\":{},\"baseline_date\":{},\"introduced\":{},\"inverse\":{},\
+            "{{\"run\":{},\"baseline_run\":{},\"baseline_date\":{},\"introduced\":{},\
+             \"introduced_not_failing\":{},\"inverse\":{},\"inverse_not_failing\":{},\
              \"redirected\":{},\"errors\":{},\"already_broken\":{{\"count\":{},\"links\":{}}}}}",
             self.run.0,
             self.baseline.0,
             quoted(&self.baseline_date),
             self.introduced.render(Format::Json),
+            self.introduced_not_failing.render(Format::Json),
             self.inverse.render(Format::Json),
+            self.inverse_not_failing.render(Format::Json),
             self.redirected.render(Format::Json),
             self.errors.render(Format::Json),
             self.already.rows.len(),
             links,
         )
     }
+}
+
+/// An inverse section: its links, and how many pages across how many
+/// components link to what was removed (D56).
+fn inverse_section(title: &str, table: &Table) -> String {
+    let links = table.rows.len();
+    if links == 0 {
+        return format!("{title}: none");
+    }
+    let (pages, groups) = counts(table);
+    format!(
+        "{title}: {links} links, {pages} inbound pages across {groups} components\n{}",
+        table.render(Format::Text)
+    )
 }
 
 /// A title and the number of rows, and with `rows` the table.
@@ -165,12 +184,16 @@ pub(super) fn gate(conn: &Connection, run: RunId, request: &Request) -> Result<G
     // The baseline's links are judged by the CI run's policy (D81).
     let _judged = JudgedBy::new(conn, run.0)?;
     let fail = recorded_fail(conn, run)?;
+    let left_out = left_out(&fail);
+    let (inverse, inverse_not_failing) = split(inverse(conn, run, baseline, request)?, &fail);
     Ok(Gate {
         run,
         baseline,
         baseline_date,
         introduced: broken(conn, run, baseline, request, &fail, true)?,
-        inverse: inverse(conn, run, baseline, request)?,
+        introduced_not_failing: broken(conn, run, baseline, request, &left_out, true)?,
+        inverse,
+        inverse_not_failing,
         mode: request.inverse,
         redirected: redirected(conn, run, baseline, request)?,
         errors: errors(conn, run, request)?,
@@ -189,8 +212,21 @@ fn recorded_fail(conn: &Connection, run: RunId) -> Result<Vec<FailOn>, Error> {
     Ok(FailOn::from_row(value.as_deref()))
 }
 
-/// The outcomes as a SQL list. They are a closed set, written into the text.
+/// The broken outcomes `fail` leaves out: what is reported and fails nothing
+/// (D83). An `error` is listed in its own section either way.
+fn left_out(fail: &[FailOn]) -> Vec<FailOn> {
+    [FailOn::BrokenUrl, FailOn::BrokenAnchor]
+        .into_iter()
+        .filter(|o| !fail.contains(o))
+        .collect()
+}
+
+/// The outcomes as a SQL list, which matches nothing where there are none. They
+/// are a closed set, written into the text.
 fn outcomes(fail: &[FailOn]) -> String {
+    if fail.is_empty() {
+        return "(NULL)".to_owned();
+    }
     let quoted: Vec<String> = fail.iter().map(|o| format!("'{}'", o.as_str())).collect();
     format!("({})", quoted.join(", "))
 }
@@ -232,8 +268,9 @@ fn base_links(sql: &mut Sql, base: RunId, request: &Request) {
     .push(") ");
 }
 
-/// The links of `run` failing in an outcome of `fail` that the baseline does
-/// not have at one, with `introduced`, else those it has.
+/// The links of `run` in an outcome of `fail` (the outcomes the gate fails on,
+/// or the ones it leaves out) that the baseline does not have at one, with
+/// `introduced`, else those it has.
 fn broken(
     conn: &Connection,
     run: RunId,

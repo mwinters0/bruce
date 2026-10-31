@@ -174,7 +174,9 @@ fn a_filter_that_keeps_nothing_leaves_a_gate_that_does_not_fail() {
         g.text(false),
         "against baseline run 1, crawled on 2026-10-19\n\n\
          introduced breakage: none\n\n\
+         introduced breakage not failing: none\n\n\
          inverse breakage: none\n\n\
+         inverse breakage not failing: none\n\n\
          introduced redirected links: none\n\n\
          errors: none\n\n\
          breakage already in the baseline: none"
@@ -228,7 +230,10 @@ fn the_introduced_report_prints_the_rows_and_the_rest_in_notes() {
         out.notes[0],
         "against baseline run 1, crawled on 2026-10-19"
     );
-    assert!(out.notes[1].starts_with("inverse breakage: none\n\nintroduced redirected links: 1\n"));
+    assert!(out.notes[1].starts_with(
+        "introduced breakage not failing: none\n\ninverse breakage: none\n\n\
+         inverse breakage not failing: none\n\nintroduced redirected links: 1\n"
+    ));
 }
 
 #[test]
@@ -322,6 +327,53 @@ fn the_ci_runs_fail_list_says_which_outcomes_are_introduced() {
     fail_on(&quiet, "broken_anchor");
     let g = gate_of(&quiet, |r| r.repo = Some("r/two".into()));
     assert!(!g.fails());
+}
+
+#[test]
+fn a_broken_outcome_the_list_leaves_out_is_introduced_not_failing() {
+    // Only `broken_anchor` fails: the broken URLs the baseline lacked are listed
+    // beside it, with the same columns, and the anchor still fails the gate.
+    let anchors = store();
+    fail_on(&anchors, "broken_anchor");
+    let g = gate_of(&anchors, |_| {});
+    assert_eq!(
+        column(&g.introduced_not_failing, "raw_href"),
+        ["1>11#", "1>12#", "1>15#", "2>13#"]
+    );
+    assert_eq!(g.introduced_not_failing.columns, g.introduced.columns);
+    assert_eq!(
+        column(&g.introduced_not_failing, "baseline"),
+        ["ok", "new", "new", "unchecked"]
+    );
+    // 10 was broken in the baseline in the same left-out outcome: not introduced.
+    assert!(!column(&g.introduced_not_failing, "raw_href").contains(&"1>10#".to_owned()));
+    assert!(g.fails());
+    let text = g.text(false);
+    assert!(text.contains("introduced breakage: 1\n"));
+    assert!(text.contains("introduced breakage not failing: 4\n"));
+    assert!(g.json(false).contains("\"introduced_not_failing\":[{"));
+    // The default list leaves out no broken outcome.
+    let by_default = gate_of(&store(), |_| {});
+    assert!(by_default.introduced_not_failing.rows.is_empty());
+    // An `error` is the errors section's, never this one's.
+    assert!(!column(&g.introduced_not_failing, "raw_href").contains(&"1>14#".to_owned()));
+}
+
+#[test]
+fn an_empty_list_is_report_only() {
+    let store = store();
+    fail_on(&store, "");
+    let g = gate_of(&store, |_| {});
+    assert!(!g.fails());
+    assert!(g.introduced.rows.is_empty());
+    assert!(g.already.rows.is_empty());
+    assert_eq!(
+        column(&g.introduced_not_failing, "raw_href"),
+        ["1>11#", "1>12#", "1>15#", "2>13#", "1>2#nope"]
+    );
+    assert_eq!(column(&g.errors, "raw_href"), ["1>14#"]);
+    assert!(g.text(false).contains("introduced breakage: none\n"));
+    assert!(g.json(false).contains("\"introduced\":[],"));
 }
 
 #[test]

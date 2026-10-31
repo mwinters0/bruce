@@ -21,18 +21,11 @@ What the next slice inherits. The decision is D83.
 - **`--config` (P7.6) writes `gate.fail` too**: a trial policy's
   `Policy::entries()` already carries it, and the gate reads it off rows like
   `Digest.severity` is read.
-- **The inverse check does not follow the list.** A site leaving
-  `broken_anchor` out still fails on an `anchor` removal the inverse check
-  finds, unless `--inverse warn`; D83's Reopens.
 
 ## Negative results
 
 - Nothing measured: the gate's SQL gains an `IN` list and, with `error` named,
   a union of two inlined views.
-- An outcome left off the list is in no gate section. A section for it was not
-  built: `report broken --run` lists it (the digest reads no `check-dir` run),
-  and the gate's output then
-  grows for every site to hold what a default list never leaves out.
-- An empty list is refused, not read as "never fail": a spelling for that
-  (`--inverse warn` and no check at all being the alternatives) was not
-  asked for.
+- An outcome left off the list was in no gate section, and the inverse check
+  ignored the list, with an empty list refused; 7.5.3 replaced all three
+  (D83).

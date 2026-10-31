@@ -263,9 +263,13 @@ each once, in any order. A site that does not want a missing anchor to fail CI
 leaves `broken_anchor` out; one that wants a 5xx to fail it adds `error`. The
 list is the **CI run's**: it judges the baseline's links as well, as its other
 judging keys do. An outcome left out stays in `bruce report broken`, the digest and
-every other report. A list naming no outcome is refused, a gate that can never
-fail being no gate, and a redirect is no outcome. The inverse check is not
-this list's: `check-dir --inverse` says whether it fails.
+every other report, and `check-dir` lists the introduced links at it in a section
+that never fails. The inverse check follows the list: a link to a page or a file
+the change removed will read `broken_url`, and one to an anchor `broken_anchor`,
+so a row fails where the list names that outcome and is listed apart where it does
+not; `check-dir --inverse warn` only ever loosens it. An empty list, `fail = []`,
+is report only: everything is listed and nothing fails, the exit status 2 still
+meaning the check could not run. A redirect is no outcome.
 
 | Key | Default | Meaning |
 |---|---|---|

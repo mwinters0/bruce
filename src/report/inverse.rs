@@ -32,7 +32,8 @@ use url::{Position, Url};
 use super::error::Error;
 use super::request::Request;
 use super::sql::{Cols, Sql};
-use super::table::Table;
+use super::table::{Cell, Table};
+use crate::config::FailOn;
 use crate::store::RunId;
 
 /// The columns of a baseline link's crawled page.
@@ -178,6 +179,39 @@ pub(super) fn inverse(
         ))
         .limit(request);
     sql.fetch(conn)
+}
+
+/// `table`'s rows split by whether the outcome their links will have once the
+/// change deploys is one `fail` names: `page` and `file` are `broken_url`,
+/// `anchor` `broken_anchor` (D83). Order is kept.
+pub(super) fn split(table: Table, fail: &[FailOn]) -> (Table, Table) {
+    let Some(removed) = table.columns.iter().position(|c| c == "removed") else {
+        return (
+            table.clone(),
+            Table {
+                rows: Vec::new(),
+                ..table
+            },
+        );
+    };
+    let (failing, quiet) = table.rows.into_iter().partition(|row| {
+        let outcome = match &row[removed] {
+            Cell::Text(t) if t == "anchor" => FailOn::BrokenAnchor,
+            _ => FailOn::BrokenUrl,
+        };
+        fail.contains(&outcome)
+    });
+    let columns = table.columns;
+    (
+        Table {
+            columns: columns.clone(),
+            rows: failing,
+        },
+        Table {
+            columns,
+            rows: quiet,
+        },
+    )
 }
 
 /// How many linking pages and groups of them (a component, else a repo, else

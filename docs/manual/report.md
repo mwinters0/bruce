@@ -191,8 +191,9 @@ exit status: `broken`'s columns but `hint`, with one more, `baseline`, after `st
 is `new` where the baseline has no such link (the same page, target and
 fragment), else the outcome the baseline had (`ok`, `unchecked`, `error` or an outcome the
 list leaves out).
-Below the text table are the baseline run and its day, the inverse breakage
-(`inverse`'s rows), the redirected links the baseline did not have redirected, the links whose outcome is `error` and
+Below the text table are the baseline run and its day, the introduced links in
+an outcome the list leaves out, the inverse breakage (`inverse`'s rows, those
+whose outcome the list names, and the rest apart), the redirected links the baseline did not have redirected, the links whose outcome is `error` and
 the count of breakage the baseline already had, as `check-dir` prints them.
 A run that names no baseline is an error. The report's exit status is 0
 whatever it finds.

@@ -14,7 +14,12 @@ impl Entry {
     /// path, then `=` and the value, `+=` for an element of `judge.schemes`.
     pub fn written_as(&self) -> String {
         if self.host.is_none() && self.key == "gate.fail" {
-            let list: Vec<String> = self.value.split(',').map(|o| format!("{o:?}")).collect();
+            let list: Vec<String> = self
+                .value
+                .split(',')
+                .filter(|o| !o.is_empty())
+                .map(|o| format!("{o:?}"))
+                .collect();
             return format!("gate.fail = [{}]", list.join(", "));
         }
         let value = if matches!(self.value.as_str(), "true" | "false") {

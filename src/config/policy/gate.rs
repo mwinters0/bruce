@@ -39,8 +39,8 @@ impl FailOn {
     }
 
     /// The list a file writes, each outcome once, in the order of
-    /// [`FailOn::ALL`] whatever order it was written in; empty is refused,
-    /// a gate that fails on nothing being no gate.
+    /// [`FailOn::ALL`] whatever order it was written in. Empty is "report
+    /// only": everything listed, nothing failing.
     pub(super) fn from_raw(written: &[String]) -> Result<Vec<FailOn>, String> {
         let mut list = Vec::new();
         for outcome in written {
@@ -48,9 +48,6 @@ impl FailOn {
         }
         list.sort();
         list.dedup();
-        if list.is_empty() {
-            return Err("names no outcome, so the gate could never fail".to_owned());
-        }
         Ok(list)
     }
 

@@ -244,7 +244,7 @@ fn the_text_counts_the_inbound_pages_across_the_components_between_the_sections(
             < at("inverse breakage: 7 links, 2 inbound pages across 2 components")
     );
     assert!(at("inverse breakage: 7 links") < at("introduced redirected links: none"));
-    assert!(g.json(false).contains("\"introduced\":[],\"inverse\":[{"));
+    assert!(g.json(false).contains("\"inverse\":[{"));
 }
 
 #[test]
@@ -384,4 +384,55 @@ fn a_prefix_runs_through_the_components_segment_and_a_named_versions() {
     assert_eq!(prefix(&at("handbook/"), "handbook", Some("1.0")), None);
     assert_eq!(prefix(&url, "other", None), None);
     assert_eq!(prefix(&at("a%20b/p/"), "a b", None), Some(at("a%20b/")));
+}
+
+/// The CI run's `gate.fail` row.
+fn fail_on(store: &Store, list: &str) {
+    store
+        .connection()
+        .execute(
+            "INSERT INTO policy VALUES (2, NULL, 'gate.fail', ?)",
+            [list],
+        )
+        .unwrap();
+}
+
+#[test]
+fn an_inverse_row_fails_where_the_outcome_its_links_will_have_is_on_the_list() {
+    // A page or a file removed will read `broken_url`, an anchor `broken_anchor`.
+    let anchors = store();
+    fail_on(&anchors, "broken_anchor");
+    let g = gate_of(&anchors, |_| {});
+    assert_eq!(rows(&g.inverse), ["anchor 1>2#lost"]);
+    assert_eq!(
+        rows(&g.inverse_not_failing),
+        [
+            "page 20>3#",
+            "page 20>7#",
+            "page 1>3#",
+            "file 1>4#",
+            "file 1>5#",
+            "page 1>7#",
+        ]
+    );
+    assert_eq!(g.inverse_not_failing.columns, g.inverse.columns);
+    assert!(g.fails());
+    assert!(
+        g.text(false)
+            .contains("inverse breakage not failing: 6 links, 2 inbound pages across 2 components")
+    );
+    // `--inverse warn` only loosens it.
+    assert!(!gate_of(&anchors, |r| r.inverse = InverseMode::Warn).fails());
+    let urls = store();
+    fail_on(&urls, "broken_url");
+    let g = gate_of(&urls, |_| {});
+    assert_eq!(rows(&g.inverse_not_failing), ["anchor 1>2#lost"]);
+    assert!(g.fails());
+    // An empty list fails nothing, the inverse check included.
+    let none = store();
+    fail_on(&none, "");
+    let g = gate_of(&none, |_| {});
+    assert!(g.inverse.rows.is_empty());
+    assert_eq!(g.inverse_not_failing.rows.len(), 7);
+    assert!(!g.fails());
 }

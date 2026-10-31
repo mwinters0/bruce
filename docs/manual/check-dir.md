@@ -87,9 +87,11 @@ the baseline's links on a page not built are not this change's.
 
 An `error` (a timeout, a 5xx, a refusal to answer) fails the check only where
 `gate.fail` names it, and a redirect never does. The list is the one the CI run
-recorded, which also judges the baseline's links. An outcome it leaves out
-fails nothing and is not listed here; `bruce report broken --run N` over the
-same database lists it, and the digest reads no `check-dir` run.
+recorded, which also judges the baseline's links. A `broken_url` or
+`broken_anchor` it leaves out fails nothing and is listed in a section of its
+own, **introduced breakage not failing**, for the links the baseline did not
+have at that outcome. An empty list is report only: everything is listed and
+nothing fails.
 
 ### The inverse check
 
@@ -103,6 +105,10 @@ component-version the build lacks is the baseline's, unchanged. The output lists
 the component it is on, and the count of inbound pages across components. `--inverse=warn` lists them and
 leaves the exit status alone, for a repo whose CI is not yet ready to be that
 strict; the same list is `bruce report inverse --run N` ([`report.md`](report.md)).
+`gate.fail` decides which of them fail. A link to a page or a file the change
+removed will read `broken_url` once it deploys, and one to a removed anchor
+`broken_anchor`; a row whose outcome the list leaves out is listed as **inverse
+breakage not failing**, with a count of its own, and fails nothing.
 
 ## Output
 
@@ -113,19 +119,25 @@ Text lists, in order:
    what the baseline had for it: `new` where it had no such link, else the
    outcome it had (`ok`, `unchecked`, `error`, or a `broken_url` or
    `broken_anchor` that `gate.fail` leaves out).
-2. **Inverse breakage**: the baseline's links from pages outside the build to
+2. **Introduced breakage not failing**: the links broken in an outcome
+   `gate.fail` leaves out that the baseline did not have at one, with the same
+   columns. They never fail the check.
+3. **Inverse breakage**: the baseline's links from pages outside the build to
    what the change removed, with the columns [`report.md`](report.md)'s
-   `inverse` has. They fail the check unless `--inverse=warn`.
-3. **Introduced redirected links**: links through a redirect that the
+   `inverse` has, those `gate.fail` names the outcome of. They fail the check
+   unless `--inverse=warn`.
+4. **Inverse breakage not failing**: the same, those it leaves out. They never
+   fail the check.
+5. **Introduced redirected links**: links through a redirect that the
    baseline did not have redirected: `page`, `raw_href`, `target`,
    `fragment`, `kind`, `landing`, `reason`, `chain` and the source columns. They
    never fail the check. `reason` is `pedantic_trailing_slash` where the
    landing differs from the target only by a final `/` added or removed, and
    those links are listed last.
-4. **Errors**: the links whose outcome is `error` in this run, with `broken`'s
+6. **Errors**: the links whose outcome is `error` in this run, with `broken`'s
    columns, whether or not `gate.fail` names `error`, which also lists them as
    introduced or already there.
-5. **Breakage already in the baseline**: a count, and with `--all` the links,
+7. **Breakage already in the baseline**: a count, and with `--all` the links,
    those in the outcomes of `gate.fail` that the baseline had too, which never
    fail the check.
 
@@ -137,7 +149,11 @@ introduced breakage: 1
 page                         raw_href  target                       fragment  kind    outcome        reason  status  baseline  source_repo  source_path
 https://docs.example.org/a/  b/#gone   https://docs.example.org/b/  gone      anchor  broken_anchor  -          200  ok        -            -
 
+introduced breakage not failing: none
+
 inverse breakage: none
+
+inverse breakage not failing: none
 
 introduced redirected links: none
 
@@ -154,10 +170,10 @@ age.
 stderr, prefixed `bruce check-dir: `:
 
 ```json
-{"run":7,"baseline_run":1,"baseline_date":"2026-10-19","introduced":[],"inverse":[],"redirected":[],"errors":[],"already_broken":{"count":4,"links":null}}
+{"run":7,"baseline_run":1,"baseline_date":"2026-10-19","introduced":[],"introduced_not_failing":[],"inverse":[],"inverse_not_failing":[],"redirected":[],"errors":[],"already_broken":{"count":4,"links":null}}
 ```
 
-`introduced`, `inverse`, `redirected` and `errors` are arrays of objects whose field
+`introduced`, `introduced_not_failing`, `inverse`, `inverse_not_failing`, `redirected` and `errors` are arrays of objects whose field
 names are the columns above; `already_broken.links` is `null` unless `--all`
 is given.
 
