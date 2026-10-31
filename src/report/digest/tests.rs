@@ -1057,40 +1057,52 @@ fn a_run_judges_a_reason_unless_its_policy_turns_it_off_everywhere() {
     assert!(judged().doubled_slash && !judged().pedantic_trailing_slash);
 }
 
+/// The digest of run `of` compared with run `from`, in [`compared`]'s store.
+fn digest_of_with(store: &Store, of: u64, from: u64) -> Digest {
+    digest(
+        store,
+        Some(RunId(of)),
+        Against::Run(RunId(from)),
+        &crate::report::tests::registry(),
+    )
+    .unwrap()
+}
+
 #[test]
-fn the_compared_run_is_judged_by_the_digests_policy() {
+fn both_runs_are_judged_by_the_newer_runs_policy_whichever_the_digest_is_of() {
+    // Run 4 is the later: it maps a 404 to `ok`, and run 1 records no policy.
     let store = compared();
-    let digest = || {
-        digest(
-            &store,
-            Some(RunId(1)),
-            Against::Run(RunId(4)),
-            &crate::report::tests::registry(),
+    let broken = |d: &Digest| {
+        (
+            d.totals.broken_url,
+            d.compared.as_ref().unwrap().totals.broken_url,
         )
-        .unwrap()
     };
-    assert_eq!(digest().compared.as_ref().unwrap().totals.broken_url, 1);
-    // Run 1 maps a 404 to `ok`; run 4, which recorded none, is read as run 1 is.
+    let (own, then) = broken(&digest_of_with(&store, 1, 4));
+    assert!(own > 0 && then > 0);
+    let (own, then) = broken(&digest_of_with(&store, 4, 1));
+    assert!(own > 0 && then > 0);
     store
         .connection()
         .execute(
-            "INSERT INTO policy VALUES (1, NULL, 'status.404', 'ok')",
+            "INSERT INTO policy VALUES (4, NULL, 'status.404', 'ok')",
             [],
         )
         .unwrap();
-    let digest = digest();
-    assert_eq!(digest.compared.as_ref().unwrap().totals.broken_url, 0);
-    assert_eq!(digest.totals.broken_url, 0);
+    // `--from` names the later run: its policy judges the digest's run too.
+    assert_eq!(broken(&digest_of_with(&store, 1, 4)), (0, 0));
+    // `--from` names the earlier one: the digest's run judges both.
+    assert_eq!(broken(&digest_of_with(&store, 4, 1)), (0, 0));
     // The run's own verdicts are its own again once the digest is built.
     let own: i64 = store
         .connection()
         .query_row(
-            "SELECT count(*) FROM link_verdicts WHERE run_id = 4 AND outcome = 'broken_url'",
+            "SELECT count(*) FROM link_verdicts WHERE run_id = 1 AND outcome = 'broken_url'",
             [],
             |row| row.get(0),
         )
         .unwrap();
-    assert_eq!(own, 1);
+    assert!(own > 0);
 }
 
 #[test]

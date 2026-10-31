@@ -44,7 +44,9 @@ deployment that keeps no history: the digest imports its run, reads it, and
 removes it again, so the database holds the runs it held before and a bare
 [`bruce report`](report.md) still reads its latest finished run. A digest of a
 database that holds no earlier run, given neither, says so in the header, has
-neither section, and has `null` for `compared_with`. The comparison is of two runs
+neither section, and has `null` for `compared_with`. Both runs are judged by the policy of the
+newer, the later in the database, so a setting changed between them is no
+breakage. The comparison is of two runs
 of one site: a run of other roots shows as pages gained and lost.
 
 ## A trial policy

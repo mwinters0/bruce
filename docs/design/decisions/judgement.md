@@ -101,13 +101,13 @@ landing's disagreeing. Code: `store::views`. Evidence:
 
 ### D81 A comparison judges both runs by the newer run's policy, through a session variable the macro reads
 `store::JudgedBy` sets the connection's `judged_by` for a whole read: the gate and `report inverse` at the CI run,
-`diff` at `--to`, a digest with a comparison at its own run (KD24). A policy change then shows as no breakage. Why: the
-views take no parameter (D6), and one variable reaches every section a comparison re-queries, with no copy of any query.
+`diff` at `--to`, a digest at the later of its run and `--from` (its own against a baseline file). A policy change
+then shows as no breakage. Why: the views take no parameter (D6); one variable reaches every section a comparison reads.
 Rejected: `policy_run` named in each comparison's SQL, a parameterised copy of every section; a table of overrides, a
-write in a read; each run by its own policy, the change named a cause (D74), failing a gate on a setting nobody broke.
+write in a read; each run by its own policy, failing a gate on a setting nobody broke.
 Reopens: readers sharing a connection, or a comparison wanting the older run's policy. Code: `store::JudgedBy`.
-Evidence: `report::gate::tests::the_baseline_is_judged_by_the_ci_runs_policy`,
-`report::diff::tests::both_runs_are_judged_by_the_newer_runs_policy`.
+Evidence: `report::diff::tests::both_runs_are_judged_by_the_newer_runs_policy`,
+`report::digest::tests::both_runs_are_judged_by_the_newer_runs_policy_whichever_the_digest_is_of`.
 
 ### D84 A trial policy is a temporary table of the policy rows every reader asks for, one set per run
 `report --config FILE` puts the file's judging rows, once per run, in a temporary `policy_in_force`, shadowing the view

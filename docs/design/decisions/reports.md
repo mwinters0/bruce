@@ -38,7 +38,7 @@ Code: `report::digest`. Evidence: `report::digest::tests`, `scripts/e2e.py`'s go
 ### D73 A digest compares with the crawl run before it, a named run, or a baseline file imported for the digest and removed after
 `--from N` or `--since FILE|URL` (`check-dir --baseline`'s file) names it, else it is the finished crawl run before. A
 file's run is imported (D52) and deleted once the document is built, unless the database already held it. Both runs are
-judged as D81 says (KD24). Maintainer, 2026-10-23: a deployment with no history compares with the baseline it published
+judged as D81 says. Maintainer, 2026-10-23: a deployment with no history compares with the baseline it published
 the day before.
 Why: left in place, the import, a finished run later than the digest's, is what a bare `report` reads (D59).
 Rejected: attaching the file read-only, the views being bound to `main` (D52); comparing with the previous digest's

@@ -91,12 +91,14 @@ fn build(
     profiles: &Registry,
 ) -> Result<Digest, Error> {
     let id = read.id;
-    // The compared run is judged by this run's policy (D81).
-    // deficiency: KD24 This run is the newer one only where `from` is older:
-    // `Against::Run` takes any crawl run, so `--from` naming a later one
-    // judges both by the older run's policy. Holding the guard at the later
-    // of the two would close it.
-    let _judged = from.map(|_| JudgedBy::new(conn, id.0)).transpose()?;
+    // Both runs are judged by the newer one's policy (D81): by run number, as
+    // `compare::previous` orders them, and by this run's where the compared
+    // one is a baseline file, imported later than anything and older in fact.
+    let judge = match from {
+        Some(from) if !file && from.0 > id.0 => from,
+        _ => id,
+    };
+    let _judged = from.map(|_| JudgedBy::new(conn, judge.0)).transpose()?;
     let run = sections::run(conn, id)?;
     let counts = sections::page_counts(conn, id)?;
     let pages = sections::pages(conn, id, counts)?;

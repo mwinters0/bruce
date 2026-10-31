@@ -99,10 +99,6 @@ roadmap's phase index.
   targets for those queries to read would promote it. Detail:
   `src/store/views.rs`
 
-- **KD24** — A digest whose `--from` names a later run judges both runs by
-  the digest's run's policy, the older, where every other comparison judges
-  by the newer run's (D81). **(b) owned by M26**. Detail: `src/report/digest.rs`
-
 - **KD25** — Under `--externals=skip`, a redirect's hop onto a URL on a root's
   host outside every scope and locale is asked for its status, where a link
   to it asks nothing and an allowlisted hop stays `externals_skipped`.
