@@ -1,6 +1,7 @@
 //! The statement every report builds: its text, its bound arguments and the
 //! filters they share. Every value a user gives is bound, never written into
-//! the text, bar `--top`'s number and the run ids `inverse` writes in.
+//! the text, bar `--top`'s number, the run ids `inverse` writes in and the
+//! gate's `fail` outcomes, a closed set.
 
 use duckdb::types::Value;
 use duckdb::{Connection, params_from_iter};

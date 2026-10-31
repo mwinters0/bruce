@@ -73,7 +73,7 @@ configured, which an escape or a stripped query fails to match. Code: `report::v
 ### D47 A run reads its sitemaps before any page, and each root links to its sitemaps
 A listed page is then claimed by its sitemap before a link can name it, so `pages.in_sitemap` holds
 for every listed page; the files (69 at docs.fp.o) cost about a minute on a pace-bound run. A
-root links `sitemap_file` to each top-level sitemap it names or found, an index to the files it lists, so a broken one shows as any
+root links `sitemap_file` to each `http(s)` top-level sitemap it names or found, an index to the files it lists, so a broken one shows as any
 broken link and "no sitemap" is per root; a probe that misses writes nothing, nothing having named it. Rejected: reading
 sitemaps beside the pages (`in_sitemap` left to a race); a target per failed probe; a `runs` column,
 per run and naming no broken file. Code: `crawl::Shared::discover`.
@@ -147,7 +147,7 @@ Detect claims a generator string (D35). Extract hands the core's lol_html pass (
 content region (selectors, D34), element handlers and a finish step run over the core's settled
 result; handlers write a sink: a fact, a tag on the link being read (I6), a preferred edit link (D36).
 Resolve maps a tagged reference to a URL through the store's lookup (D19, D20, D22). Views is its SQL
-(D37), and a view named `<profile>_hints` is its hint for an unresolved xref, which the reports read through `link_hints` (D87). `generic` leaves Resolve and Views empty, having no reference that is not a URL and no facts to
+(D37), and a view named `<profile>_hints` is its hint for an unresolved xref, which the reports read through `link_hints` (D87); beside the four, `sitemap_note` is a sentence the digest prints (D87). `generic` leaves Resolve and Views empty, having no reference that is not a URL and no facts to
 pivot. Rejected: region handlers in each profile, each re-deciding `unknown` (D34), which a page's end
 alone settles. Reopens: a hook empty in `generic` for any other reason, the trait bending around Antora.
 
@@ -224,7 +224,7 @@ against the fragment as written or percent-decoded. Each anchor stores its tag a
 template chrome are reportable (I9). Text fragments are `unchecked`.
 Rejected: every `name` attribute, which makes `#viewport` and `#generator` pass on every page.
 
-### D16 Five outcomes; `error` is separate from broken and never fails CI alone
+### D16 Five outcomes; `error` is separate from broken and fails CI only where a site's `fail` list names it
 `ok`, `broken_url` (4xx except below, NXDOMAIN, a redirect loop, a 3xx that led nowhere, a scheme no reader can follow, D66, a doubled slash in the path, D71, a final `/` that answers toggled, D72), `broken_anchor`, `error` (timeouts,
 TLS, 5xx after 3 retries with backoff, and 401/403/429 with status kept; a site's `status` map judges a code otherwise, D79), `unchecked`. A `Retry-After`
 over 60 s is `error` at once rather than stalling the run. A 2xx body over 16 MiB is `ok`, reason
@@ -328,7 +328,7 @@ from the first logins; `*` crossing `/` in a query, or the query unmatched, whic
 Code: `crawl::frontier::Frontier::hop_plan`. Evidence: `crawl::tests::a_redirect_onto_a_skipped_url_ends_the_chain`.
 
 ### D6 Reports are SQL views stored in the DB and run by `bruce report <kind>`
-A one-run report is a `report_*` view, which ad-hoc `duckdb` users see as the CLI does; `diff`, `introduced` and `inverse`
+A one-run report reads the `report_*` views, which ad-hoc `duckdb` users see as the CLI does; `diff`, `changed`, `anchors-removed`, `introduced` and `inverse`
 compare two runs, so `bruce report` composes them, `inverse` over base tables. A view takes no parameter, so each holds every
 run and `bruce report` names the run and filters; `cli` installs them at every open and into the file `export-baseline` writes
 (D21), `store` being below `report` (D39). Output is text, or `--format json`. Rejected: a view per run; installing them only
@@ -356,7 +356,7 @@ Rejected: a sixth outcome, which every report and the gate would have to place (
 Reopens: a second class of pedantic redirect, which would make the reason a list or the view a table. `judge.pedantic_trailing_slash = false` makes the redirect plain `ok`, no reason (D77). Code: `store::views`, `report::redirects`, `report::gate`. Evidence: `store::views::tests::a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic`.
 
 ### D71 A doubled slash in a URL's path is the linking page's fault: the link is `broken_url`, reason `doubled_slash`, and the page there counts only what it owns
-A link to a URL whose path doubles a slash (`a//b`; not a `scheme://` inside the path, nor a query or fragment), or that redirected to one, is `broken_url`, reason `doubled_slash`, whatever the target answered, asked or not (a `skip`, `robots` or a host off the allowlist included; only `http(s)` URLs are read), and a page's link to itself is judged as any (a `#fragment` on a doubled page is not the fault). A page at such a URL whose twin (the URL with its slashes collapsed) is a page of the run counts no link (`link_verdicts.counted`); one without a twin counts all but its broken or errored relative links (`../`, `committee/`, `?query`: they keep the doubled path), which the doubled slash breaks. Those are the linking page's: the digest's `through`, a row's broken relative links on every doubled page its doubled-slash links reach, each page once, bar a link broken on the twin too (same `raw_href` and kind), the twin's row counting it, ranked with the row's red (maintainer, 2026-10-24).
+A link to a URL whose path doubles a slash (`a//b`; not a `scheme://` inside the path, nor a query or fragment), or that redirected to one, is `broken_url`, reason `doubled_slash`, whatever the target answered, asked or not (a `skip`, `robots` or a host off the allowlist included; only `http(s)` URLs are read), and a page's link to itself is judged as any (a `#fragment` on a doubled page is not the fault). A page at such a URL whose twin (the URL with its slashes collapsed) is a page of the run counts no link in a report of breakage (`link_verdicts.counted`); one without a twin counts all but its broken or errored relative links (`../`, `committee/`, `?query`: they keep the doubled path), which the doubled slash breaks. Those are the linking page's: the digest's `through`, a row's broken relative links on every doubled page its doubled-slash links reach, each page once, bar a link broken on the twin too (same `raw_href` and kind), the twin's row counting it, ranked with the row's red (maintainer, 2026-10-24).
 Why: Fedora's, and most sites', doubled slashes are always written by a linking page, and a crawler following one meets hundreds of 404s the target page cannot fix: on the 2026-10-24 crawl `en-US/project/` has one link, a 302 to `code-of-conduct//`, and 562 broken relative links on the three pages it reaches.
 Rejected: a page reached only by a redirect from off a root not being the root's page, a page at a clean URL being the root's; the doubled slash pedantic or amber, the target's relative links then breaking for the reader; `unchecked` left `unchecked`, the URL being the fault whoever asked, and D50's `skip` being about asking (a deployer wanting silence has P7's config); a page's link to itself `doubled_slash`, which works for its reader (`#legal` scrolls, `./` reloads) and would put the page at fault, 6 `./` links on the 2026-10-24 crawl; `through` counting a doubled page once per link reaching it, which multiplies breakage the one fix removes, a `broken_anchor` there amber, the slash being the fault, or a repo's row counting such a page once, its other counts being its pages' sums; the redirecting server, not the linking page, at fault where a redirect doubles the slash, a broken experience being reported whatever breaks it (`roadmap.md`, "Project goals"), with the landing shown; every scheme's path read, where `ftp://host//etc` names the absolute `/etc` (RFC 1738, 3.2.2), a `data:` body's base64 holds `//`, and no other unchecked scheme has a path, none of that crawl's 128 other targets changing; a link and its twin copy matched by the resolved target, collapsed or not, where the fix leaves the reader on the twin's HTML, every one of its 556 broken relative links on a doubled page having a copy there by `raw_href` and kind, and 7 of 536 a collapsed match, most climbing past the `//`, or by outcome, a fragment missing on the twin being amber after the fix (all affirmed by the maintainer, 2026-10-24).
 Reopens: a site that writes a doubled slash on purpose, which `doubled_slash = false` per host judges by what the URL answered (D79); its reach is `judge.doubled_slash_reach` (D80).
@@ -493,8 +493,8 @@ a report that looks whole. Code: `report::run::one`. Evidence: `report::tests::t
 ### D51 A target records where its answer came from, in a column the writer fills and no view reads
 `targets.answered_by` is `local`, `baseline` or `live`, `NOT NULL` with no default, so a path that copies or
 writes a target must say which. A target the build answers, and the `not_built` verdict on one it lacks, is
-`local`; every other row a crawl writes is `live`, `unchecked` included (a held URL `skip` or scope leaves
-unchecked among them): the run decided it, as a copy does not. The verdict views ignore it, so the gate
+`local`; every other row a crawl writes is `live`, `unchecked` included (a held URL a link's `skip` or scope leaves
+unchecked among them, a hop's landing the build holds being `local` whatever its outcome): the run decided it, as a copy does not. The verdict views ignore it, so the gate
 compares like with like (D28); `report::inverse` alone reads it, `local` meaning built (D56). Rejected: a default of `live`, which
 labels a forgotten copy as a request; a table of copies, giving `link_verdicts` a second path. Reopens: a report
 wanting to split a run's answers by route. Code: `store::schema`, `store::AnsweredBy`. Evidence: `store::tests::a_target_records_where_its_answer_came_from`.
@@ -642,9 +642,9 @@ Rejected: a row per element, where a list shorter than the default differs in no
 Reopens: a site wanting the left-off section to hold a link whose baseline had a failing outcome. Code: `config::policy::gate`, `report::gate`. Evidence: `report::gate::tests::the_ci_runs_fail_list_says_which_outcomes_are_introduced`, `report::gate::tests::an_empty_list_is_report_only`, `report::inverse::tests::an_inverse_row_fails_where_the_outcome_its_links_will_have_is_on_the_list`, `config::policy::tests::a_file_names_the_outcomes_the_gate_fails_on_and_it_is_one_row`.
 
 ### D84 A trial policy is a temporary table of the policy rows every reader asks for, one set per run
-`report --config FILE` loads the file whole (D5) and `Store::try_policy` puts its `Policy::entries` (D78) into a temporary table named `policy_in_force`, once for each run of the database; the macro (D77), the digest's reads of the policy (D78, D80) and the gate's `gate.fail` (D83) read that name, a view over `policy` that the temporary table shadows on the connection. A comparison then judges both runs by it through D81's variable, and the digest names the file (`trial`).
+`report --config FILE` loads the file whole (D5) and `Store::try_policy` puts its `Policy::entries` (D78), the asking rows left out (D85), into a temporary table named `policy_in_force`, once for each run of the database; the macro (D77), the digest's reads of the policy (D78, D80) and the gate's `gate.fail` (D83) read that name, a view over `policy` that the temporary table shadows on the connection. A comparison then judges both runs by it through D81's variable, and the digest names the file (`trial`).
 Why: the reports hold one connection and the policy is read in the macro and in four report queries, so one name shadowed reaches all of them with no copy of any query and no write; the stored `policy` stays the runs' record, and the connection's end removes the trial, a crash leaving nothing.
-Rejected: rows under a scratch run, a write in a read that a crash leaves behind and that an import numbered after it collides with; a parameter on every report, D81's rejected parameterised copies; shadowing `policy` itself, which `main.policy` (the import's and the delete's qualified name) also finds, so an import would write the trial's table.
+Rejected: rows under a scratch run, a write in a read that a crash leaves behind and that an import numbered after it collides with; a parameter on every report, D81's rejected parameterised copies; shadowing `policy` itself, which `main.policy` (the import's qualified name) also finds, so an import would write the trial's table.
 Reopens: a reader of `policy` that bypasses the view, but for D85's asking rows, or a report holding a second connection.
 Code: `store::trial`, `store::views`, `cli::report`. Evidence: `store::views::tests::a_trial_policy_judges_every_run_and_writes_nothing_to_the_database`, `cli::report::tests::a_report_judged_by_a_trial_config_leaves_the_database_as_it_was`, `report::gate::tests::a_trial_policy_names_the_list_in_place_of_the_ci_runs_own`.
 

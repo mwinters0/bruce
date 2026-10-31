@@ -1,9 +1,9 @@
 //! How loudly the digest shows each kind of finding (D82): a severity per
 //! outcome, per reason, and for a redirect, the site's to set.
 //!
-//! D76's three levels are fixed, with *none* for a kind a site wants listed
-//! and quiet; what a site chooses is the level of each kind. A map is keyed by
-//! an outcome (`broken_url`, `broken_anchor`, `error`), `redirected` or a
+//! D76's three levels are fixed, with *none* for a kind that is no finding;
+//! what a site chooses is the level of each kind. A map is keyed by an
+//! outcome (`broken_url`, `broken_anchor`, `error`), `redirected` or a
 //! reason, and a reason's level beats its outcome's, so `doubled_slash =
 //! "attention"` softens that kind of `broken_url` alone.
 
@@ -59,10 +59,13 @@ pub const OUTCOMES: [&str; 3] = ["broken_url", "broken_anchor", "error"];
 /// The key for a redirected link.
 pub const REDIRECTED: &str = "redirected";
 
-/// The reasons a link that is `broken_url`, `error` or a redirect can carry,
-/// which a severity may be set for. The test
+/// The reasons a link can carry, whatever its outcome (`too_large` and
+/// `pedantic_trailing_slash` on an `ok` one), which a severity may be set for. The test
 /// `crawl::outcome::tests::every_reason_the_crawl_writes_takes_a_severity`
 /// holds it to what the crawl and the views write.
+// deficiency: KD26 `invalid_url`, which `Crawl::invalid` writes on a
+// `broken_url` target, is not here and not in that test's list, so a key
+// naming it is refused at load. Adding it to both would close it.
 pub const REASONS: [&str; 15] = [
     "nxdomain",
     "timeout",

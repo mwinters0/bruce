@@ -30,8 +30,8 @@ pub use policy::{
     Reach, SEVERITY_REASONS, Severity, SeverityMap, WORKING_SCHEMES, backoff, group_by_from_row,
 };
 
-/// Requests a second to one host that no `Crawl-delay`, `[host]` or `[rate]`
-/// governs (D40).
+/// Requests a second to one host that no `Crawl-delay`, `[host]` or
+/// `[default]` governs (D40).
 pub const DEFAULT_PER_SECOND: f64 = 2.0;
 
 /// Requests in flight to one host at once, when neither `[host]` nor `[default]`

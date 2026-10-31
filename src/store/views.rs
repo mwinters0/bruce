@@ -5,8 +5,9 @@
 //! link's outcome, reason and whether its target was redirected, read off
 //! `links`, its target, the target's landing target and the landing page's
 //! `anchors`. A column holds the link's own fields, so a report reads one
-//! relation. It is the call, with the link's own run's policy, of the table
-//! macro `link_verdicts_with` (D77, D78), which reads the `policy_in_force`
+//! relation. It is the call, naming no run, of the table macro
+//! `link_verdicts_with` (D77, D78), judging by D81's `judged_by` where it is
+//! set and else by the link's own run's policy, which reads the `policy_in_force`
 //! view (D84). The target's answer is first read
 //! through the policy: a status code the policy judges, a scheme it counts
 //! unchecked or not. The first rule that applies then decides:
@@ -310,7 +311,8 @@ LEFT JOIN pr ON pr.run_id = j.run_id
 LEFT JOIN policy_in_force pe ON pe.run_id = pr.prun AND pe.host IS NULL
     AND pe.key = 'pedantic_trailing_slash'";
 
-/// A link and its verdict (D28), judged by its own run's policy (D77).
+/// A link and its verdict (D28), judged by its own run's policy unless D81's
+/// guard names another (D77).
 const LINK_VERDICTS: View = View {
     name: "link_verdicts",
     select: "SELECT * FROM link_verdicts_with()",

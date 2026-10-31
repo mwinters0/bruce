@@ -70,7 +70,8 @@ pub enum Error {
         /// The version this build reads.
         expected: u32,
     },
-    /// The file holds tables but no `meta`, so it is not ours to write in.
+    /// The file holds no `meta`, so it is not ours: one opened that holds
+    /// tables, or any imported as a baseline, an empty one included.
     NotBruce,
     /// No run was named, and none in the database has finished.
     NoFinishedRun,

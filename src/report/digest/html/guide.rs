@@ -1,6 +1,6 @@
 //! The guide closing the document, "How to read this report": an entry for
-//! each term a row uses that the legend does not explain, and the ⓘ beside
-//! the term, linking to its entry. HTML only, prose for a reader (D64). The
+//! each reason the run's policy judges, and the ⓘ beside the term, linking
+//! to its entry. HTML only, prose for a reader (D64). The
 //! section is open, so an ⓘ lands on its entry in every browser, one that
 //! opens no closed `<details>` for a fragment included. The ⓘ is an `i` in a
 //! ring the stylesheet draws, as it draws the severity dots, a font lacking

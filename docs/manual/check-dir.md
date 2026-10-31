@@ -43,7 +43,9 @@ not on the allowlist) stays `unchecked`:
 - **A page of a component the build holds, but not built**, is `broken_url`,
   reason `not_built`: the build is the truth for the components it holds,
   where the baseline would pass a link to a page the change deletes. The build
-  holds the components whose pages it carries, by their component and version.
+  holds the components whose pages it carries, by their component and the
+  version segment those pages sit at (a version served at `latest/` is held
+  there, not at its own name).
 - **A page of a component the build does not hold** is the baseline's answer;
   a URL the baseline never saw is asked of the live site.
 - **An `xref:` into a component the build lacks**, which Antora leaves as
@@ -52,7 +54,7 @@ not on the allowlist) stays `unchecked`:
   Antora may still have resolved it through a page-alias, so the URL the
   reference names is answered as any other the build lacks: from the baseline,
   else by a request to the live site, and a URL that answers broken is an
-  `unresolved_xref`. One into a component the build holds stays
+  `unresolved_xref`. One into a component-version the build holds stays
   `unresolved_xref`.
 - **A link whose scheme no reader can follow**, as `file:`, is `broken_url`,
   reason `bad_scheme`, as in a crawl
@@ -135,7 +137,7 @@ Text lists, in order:
    landing differs from the target only by a final `/` added or removed, and
    those links are listed last.
 6. **Errors**: the links whose outcome is `error` in this run, with `broken`'s
-   columns, whether or not `gate.fail` names `error`, which also lists them as
+   columns but `hint`, whether or not `gate.fail` names `error`, which also lists them as
    introduced or already there.
 7. **Breakage already in the baseline**: a count, and with `--all` the links,
    those in the outcomes of `gate.fail` that the baseline had too, which never
@@ -189,7 +191,7 @@ database ([`report.md`](report.md)).
 | 2 | The check could not run: the command line was not understood, the configuration or the baseline could not be read, the baseline or the database is of another schema version, the prefix is outside every root's scope, or the build could not be read. |
 | 128 plus the signal | Stopped by a signal before the build was judged. |
 
-An `error` never moves the status, nor does a redirected link or a warned inverse breakage.
+An `error` moves the status only where `gate.fail` names it, and a redirected link or a warned inverse breakage never does.
 
 ## Stopping a check
 
@@ -205,4 +207,4 @@ for SIGINT and 143 for SIGTERM.
 ## Not beside a crawl
 
 DuckDB lets one process write a file. `bruce check-dir` on a database a crawl
-has open fails at once with status 2.
+has open fails with status 2 before its run begins.

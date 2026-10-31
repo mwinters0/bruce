@@ -16,7 +16,7 @@ pub enum Report {
     Stats,
     /// Crawled pages ranked by the distinct pages linking to them.
     Inbound,
-    /// Every crawled page, and every sitemap entry that was not fetched.
+    /// Every crawled page, and every sitemap entry no page was fetched for.
     Sitemap,
     /// Sitemap pages no other page links to.
     Orphans,

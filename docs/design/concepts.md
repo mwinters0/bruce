@@ -81,8 +81,8 @@ decisions each carries are cited in its module's doc.
   the body-to-text decoding in the `charset` child, and the build-directory
   fetcher in the `local` child, which holds a map from URL to file and no
   directory logic, that being `ci`'s, and reuses `charset`; the `routed` child
-  sends a URL the build holds to it and any other to the live fetcher. It sits above `config` (it reads the rate, the hosts, the roots and
-  the robots token; `cli` passes the user agent in) and `url`; the crawler above it follows the hops (D39).
+  sends a URL the build holds to it and any other to the live fetcher. It sits above `config` (it reads the rate, the hosts, the roots, the
+  robots token, the user agent and how a run asks) and `url`; the crawler above it follows the hops (D39).
 
 ## The extraction pass and its core heuristics
 

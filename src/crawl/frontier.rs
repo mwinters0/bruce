@@ -61,8 +61,9 @@ pub enum Plan {
     /// only (D3).
     Anchors,
     /// As [`Plan::Anchors`] but named by any other kind of link, or reached
-    /// by a redirect where a link would leave it unchecked, broken, waiting,
-    /// unbuilt or to the baseline: asked for its status alone, HEAD with the GET fallback
+    /// by a redirect where a link would leave it unchecked (but skipped, or
+    /// allowlisted under `--externals=skip`), broken, waiting, unbuilt or to
+    /// the baseline: asked for its status alone, HEAD with the GET fallback
     /// (D13).
     Status,
     /// Not requested; the target row says why.
@@ -110,8 +111,8 @@ pub struct Outside {
 /// host outside every scope and locale (D22).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Externals {
-    /// Nothing is requested: the baseline's rows are copied where it holds
-    /// the target, else the URL is `unchecked` (D54).
+    /// Nothing is requested for a link (a hop, KD25): the baseline's rows are
+    /// copied where it holds the target, else the URL is `unchecked` (D54).
     Skip,
     /// The baseline's verdict where it holds one, else a request.
     Baseline,
@@ -368,6 +369,10 @@ impl Frontier {
 
     /// Whether `url` is on an allowlisted host, in no root's scope, in a run
     /// whose `--externals` is `skip`.
+    // deficiency: KD25 A URL on a root's host outside every scope and locale
+    // is answered as an allowlisted one is (`external`), but this test names
+    // the allowlist alone, so a hop onto one under `skip` plans `Status` and
+    // is asked. Naming that URL here too would close it.
     fn is_skipped_external(&self, url: &Url) -> bool {
         let host = url.host().map(|h| h.to_string()).unwrap_or_default();
         self.baseline()

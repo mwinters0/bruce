@@ -103,7 +103,7 @@ is kept by default, since a query can pick a different page.
 - `"antora"` also reads what an Antora site adds, such as each page's
   component and version.
 - `"auto"` picks one for each page from its `<meta name="generator">`, and
-  uses `"generic"` when there is none.
+  uses `"generic"` when there is none or no profile claims it.
 
 **The content hash** tells a changed page from an unchanged one. It covers
 each page's tags, attributes and text within a scope that `hash_root` and
@@ -206,17 +206,17 @@ precedence over it, and `[host]` (below) says when a host's own rate does.
 | `default.status` | `{ 401 = "error", 403 = "error", 429 = "error" }` | What a status code is judged to be, for a host that sets none; the file's codes are laid over these, a code at a time ([Judging](#judging)). |
 | `default.connect_timeout` | `10` | Seconds to connect to a host, for a host that sets none ([Asking](#asking)). At least 1. |
 | `default.timeout` | `30` | Seconds for a whole response, body included, for a host that sets none ([Asking](#asking)). At least 1. |
-| `default.retries` | `3` | Times a request that failed transiently is sent again, for a host that sets none ([Asking](#asking)). At most 10. |
+| `default.retries` | `3` | Times a request answered by a 5xx or a 429, or failed by a timeout or a lost connection, is sent again, for a host that sets none ([Asking](#asking)). At most 10. |
 | `default.max_retry_after` | `60` | Seconds of the longest `Retry-After` waited out, for a host that sets none ([Asking](#asking)). |
-| `default.slash_probe` | `true` | Whether a broken 404 is asked again with its final `/` toggled, for a host that sets none ([Asking](#asking)). |
+| `default.slash_probe` | `true` | Whether a broken 4xx is asked again with its final `/` toggled, for a host that sets none ([Asking](#asking)). |
 
 ## Judging
 
 A run **records the policy it was crawled with**, and a report reads the run,
 never the file: a run is judged by its own policy, and changing a key changes
-the runs that follow. A comparison (`check-dir`'s gate, `report diff`, a
-digest's changes since) judges both runs by the newer one's policy, so changing
-a key breaks nothing by itself. Every key is at the value `bruce` has always judged by.
+the runs that follow. A comparison (`check-dir`'s gate, `report diff`) judges
+both runs by the newer one's policy, and a digest's changes since by the
+digest's run's, so changing a key breaks nothing by itself. Every key is at the value `bruce` has always judged by.
 To see what a key does to a run already crawled, [`bruce report --config`](report.md#a-trial-policy)
 judges it by a file's keys instead, writing nothing.
 
@@ -291,10 +291,10 @@ slash_probe = false
 double from a second: `retries = 3` waits 1, 2 and 4 seconds, and `0` sends
 nothing again. A 429 or 503 naming a `Retry-After` is waited out instead, when
 it is no longer than `max_retry_after`; a longer one is `error` at once, and
-`0` gives up on every `Retry-After`. The retries and the timeout of a host are
+`0` waits out only a `Retry-After` of `0` or a date already past. The retries and the timeout of a host are
 the ones its robots.txt is read with too.
 
-**`slash_probe`** is the host of the URL asked: off, a 404 on that host is
+**`slash_probe`** is the host of the URL asked: off, a broken 4xx on that host is
 `broken_url` with no `wrong_trailing_slash` reason and no request for it.
 
 ## The gate
@@ -338,7 +338,7 @@ are of their links by level, and they rank by their red links, then their amber
 ones, so `doubled_slash = "attention"` moves the page counting those links down
 the ranking. A kind at `"none"` is no finding in the digest: it leaves the link
 lists, the counts and the ranking, a page whose only findings are at `"none"` has
-no row, and the legend names what it leaves out. The run's outcomes, the figures,
+no row, and the legend names what it leaves out. The run's outcomes, the figures' numbers,
 the JSON's rows and order, every other report and the gate are untouched. A level on a link
 that is neither broken nor errored (a redirect, a reason on an `ok` link) moves
 its dot where it is listed and counts nothing.
@@ -421,9 +421,9 @@ per_second = 10
 | `host."<host>".status` | `{}` | What a status code that host answered is judged to be, over `default.status` ([Judging](#judging)). |
 | `host."<host>".connect_timeout` | `default.connect_timeout` | Seconds to connect to that host ([Asking](#asking)). |
 | `host."<host>".timeout` | `default.timeout` | Seconds for a whole response from that host ([Asking](#asking)). |
-| `host."<host>".retries` | `default.retries` | Times a request to that host that failed transiently is sent again ([Asking](#asking)). |
+| `host."<host>".retries` | `default.retries` | Times a request to that host is sent again after a 5xx, a 429, a timeout or a lost connection ([Asking](#asking)). |
 | `host."<host>".max_retry_after` | `default.max_retry_after` | Seconds of the longest `Retry-After` that host's answer is waited out for ([Asking](#asking)). |
-| `host."<host>".slash_probe` | `default.slash_probe` | Whether a broken 404 on that host is asked again with its final `/` toggled ([Asking](#asking)). |
+| `host."<host>".slash_probe` | `default.slash_probe` | Whether a broken 4xx on that host is asked again with its final `/` toggled ([Asking](#asking)). |
 
 **Which rate applies** to a host:
 - With `robots = false`: its `per_second` if written, else `default.per_second`.

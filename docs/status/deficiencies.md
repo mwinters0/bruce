@@ -99,4 +99,20 @@ roadmap's phase index.
   targets for those queries to read would promote it. Detail:
   `src/store/views.rs`
 
-<!-- deficiency-watermark: KD23 -->
+- **KD24** — A digest whose `--from` names a later run judges both runs by
+  the digest's run's policy, the older, where every other comparison judges
+  by the newer run's (D81). **(c) unowned**: anyone digesting against a later
+  run would promote it. Detail: `src/report/digest.rs`
+
+- **KD25** — Under `--externals=skip`, a redirect's hop onto a URL on a root's
+  host outside every scope and locale is asked for its status, where a link
+  to it asks nothing and an allowlisted hop stays `externals_skipped`.
+  **(c) unowned**: a `check-dir` that must ask nothing outside the build
+  would promote it. Detail: `src/crawl/frontier.rs`
+
+- **KD26** — `[severity]` cannot name `invalid_url`, a reason the crawl writes
+  on a `broken_url` link, so a site cannot move such links off red.
+  **(c) unowned**: a site wanting to would promote it. Detail:
+  `src/config/policy/severity.rs`
+
+<!-- deficiency-watermark: KD26 -->

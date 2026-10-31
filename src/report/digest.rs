@@ -8,7 +8,8 @@
 //! from breakage (D16) and the housekeeping. Every section is a [`Table`] whose
 //! rows are already in the order a reader wants them, so a rendering walks
 //! them and ranks nothing but a page's drill-down, its errors joined to its
-//! broken links by severity. Everything counts every kind of link (D13), and
+//! broken links by severity, and the HTML's pages and repos, by the severity
+//! map (D82). Everything counts every kind of link (D13), and
 //! reads the pages a root covers alone.
 
 mod cause;
@@ -91,6 +92,10 @@ fn build(
 ) -> Result<Digest, Error> {
     let id = read.id;
     // The compared run is judged by this run's policy (D81).
+    // deficiency: KD24 This run is the newer one only where `from` is older:
+    // `Against::Run` takes any crawl run, so `--from` naming a later one
+    // judges both by the older run's policy. Holding the guard at the later
+    // of the two would close it.
     let _judged = from.map(|_| JudgedBy::new(conn, id.0)).transpose()?;
     let run = sections::run(conn, id)?;
     let counts = sections::page_counts(conn, id)?;

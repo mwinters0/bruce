@@ -314,7 +314,8 @@ fn the_ci_runs_fail_list_says_which_outcomes_are_introduced() {
     assert!(g.fails());
     // The breakage already there is read by the same list.
     assert!(g.already.rows.is_empty());
-    // A list naming neither leaves no introduced link, and the gate passes.
+    // A list naming neither leaves the broken links out, and the error it
+    // names is introduced.
     let errors = store();
     fail_on(&errors, "error");
     let g = gate_of(&errors, |_| {});

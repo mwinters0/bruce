@@ -163,8 +163,9 @@ pub struct Settled<'a> {
 
 /// What a profile's handlers and finish step write to (D38): the page's
 /// facts, a tag for the link being read, a preferred edit link, and where
-/// the page's other locales are. The core reads the sink after the pass,
-/// the edit link before the finish step, so only a handler may prefer one.
+/// the page's other locales are. The core reads the link's tag as the pass
+/// meets each link and the rest after the pass, the edit link before the
+/// finish step, so only a handler may prefer one.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Sink {
     facts: Facts,

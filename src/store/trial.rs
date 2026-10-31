@@ -10,8 +10,10 @@ impl Store {
     /// connection finds first, holding the policy's rows once for each run the
     /// database holds, the judging rows alone: how a run asked is not
     /// judged and stays as it recorded it (D85). The stored `policy` is not
-    /// written and the connection's end removes the table. A run imported afterwards keeps the rows its
-    /// file carried.
+    /// written and the connection's end removes the table. A run imported
+    /// afterwards has its file's rows in `policy` and none in the table, so it
+    /// is judged by the defaults unless D81's guard names another run, as a
+    /// digest's `--since` baseline always is.
     pub fn try_policy(&self, policy: &Policy) -> Result<(), Error> {
         self.conn.execute_batch(
             "CREATE OR REPLACE TEMP TABLE policy_in_force (run_id UBIGINT NOT NULL, host VARCHAR, \

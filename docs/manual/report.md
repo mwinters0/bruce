@@ -62,13 +62,13 @@ those, and `--from` or `--to` with any other report, are command-line errors.
 
 `--config FILE` judges the run, and any run compared with it, by the **judging
 settings** of a [configuration file](config.md#judging) (`[judge]`, `[severity]`,
-`[gate]`, and the `status` and `doubled_slash` of `[default]` and `[host]`), as
-if each run had recorded them. It is how to see what a severity map, a
+`[gate]`, and the `status` and `doubled_slash` of `[default]` and `[host]`), and
+by its `[digest]`, as if each run had recorded them. It is how to see what a severity map, a
 `status` map or a `fail` list does without a crawl, which takes 75 minutes for
 en-US. The file's asking settings are ignored, a run being unable to be asked
 again, and its roots are not read. The file stands in whole, as for any command
 ([`config.md`](config.md)): a key it leaves out is at its default, not at the
-run's recorded value. Nothing is written to the database. The command says on
+run's recorded value. The trial is not written to the database. The command says on
 stderr that it is judging by a trial, an invalid file is refused, and the
 [digest](digest.md#a-trial-policy) says so on its page and in its JSON.
 
@@ -177,7 +177,7 @@ page was ([the content hash](config.md#roots)).
 true for a page hashed `whole` under a root that sets `hash_root`, a root
 whose `hash_root` matched nothing on it, so that its chrome is hashed and it
 reads as changed on every build; such a page is a row whether or not its hash
-moved (`change` then `root_missed`), and does not need to be in `--from`. The
+moved (`change` is `root_missed` where nothing else is), and does not need to be in `--from`. The
 rows are `changed`, then `scope_changed`, then `root_missed`, by page. Pages
 no root covers, as the forge's and the allowlisted ones, are not read, and a
 page in only one of the runs is never `changed` or `scope_changed` (`diff` and
@@ -190,7 +190,7 @@ links still name: `page`, `anchor`, `links`, `pages`, `source_repo` and
 `anchor` is the fragment as the links write it; `links` counts the links in
 `--to` that name it (the same links `broken` lists as `broken_anchor`, a link
 that was redirected counted for the page it landed on) and `pages` the pages
-they are on. The most linked first, then by page. An anchor lost that nothing
+they are on. The most linked first, then the most linking pages, then by page. An anchor lost that nothing
 links to is no row, nor is a missing fragment the page never had, nor an
 anchor on a page `--from` did not hold. `--kind` chooses the links counted.
 `source_repo` is the repo of the page that lost the anchor, the one to restore it
@@ -251,7 +251,7 @@ Opening a database with `bruce` installs the views the reports read, so
 `report_pages`, `report_inbound`, `report_roots`, `report_sitemap` and
 `report_redirects`, and beneath them `link_verdicts`, every link with its
 outcome and reason (`ok`, reason `pedantic_trailing_slash`, for a link through
-a redirect that only adds or drops a final `/`), and whether it is `counted`: the reports leave out the links of a
+a redirect that only adds or drops a final `/`), and whether it is `counted`: `broken`, `errors`, `stats` and `redirects` leave out the links of a
 page whose URL doubles a slash and whose twin, the URL with the slashes collapsed, is a page of the run, and its
 broken relative links (`../`, `?query`) where it has no twin, which the doubled slash breaks and the linking page answers for
 ([the digest's *broken through it*](digest.md#the-html)). Each holds every run, so filter on `run_id`.
@@ -264,5 +264,5 @@ judges every link by run 2's.
 | Status | Meaning |
 |---|---|
 | 0 | The report ran. Finding broken links does not change this. |
-| 1 | The database could not be read, or has no such run or no finished one, `diff`, `changed` or `anchors-removed` has no finished run to compare, the run a bare report would read is the baseline of a later unfinished `check-dir` run, or an `introduced` or `inverse` run names no baseline; the message says which. |
+| 1 | The database could not be read, or has no such run or no finished one, `diff`, `changed` or `anchors-removed` has no finished run to compare, the run a bare report would read is the baseline of a later unfinished `check-dir` run, an `introduced` or `inverse` run names no baseline, or the `--config` file cannot be read or is not a valid configuration; the message says which. |
 | 2 | The command line was not understood. |

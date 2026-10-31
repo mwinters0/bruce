@@ -64,8 +64,8 @@ pub struct Digest {
     pub totals: Totals,
     /// What the run's policy judges.
     pub judged: Judged,
-    /// The run's whole recorded policy, as its rows (D78), or a trial's where
-    /// `trial` names one (D84).
+    /// The run's whole recorded policy, as its rows (D78), or a trial's judging
+    /// rows and the run's asking ones where `trial` names one (D84, D85).
     pub policy: Vec<Entry>,
     /// The configuration file whose judging settings stood in for the runs'
     /// own, which the caller that made the trial sets (D84).
@@ -89,8 +89,8 @@ pub struct Digest {
     /// The pages holding a broken link or one that errored, ranked by
     /// `broken_url` plus `error` plus `through`, then `broken_anchor`: `page`,
     /// `title`, `source_repo`, `source_path`, `source_url`, `links`,
-    /// `broken_url`, `broken_anchor`, `error` and `through`, the broken
-    /// path-relative links on the doubled-slash pages its links reach (D71).
+    /// `broken_url`, `broken_anchor`, `error` and `through`, the broken or
+    /// errored path-relative links on the doubled-slash pages its links reach (D71).
     pub pages: Table,
     /// Every broken link, a page's together and the pages in `pages`' order:
     /// `page`, `raw_href`, `target`, `landing`, `fix`, `fragment`, `kind`,

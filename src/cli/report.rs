@@ -6,8 +6,8 @@
 //! crawl run's dated digest instead (D64), compared with another run (D73).
 //!
 //! `--config FILE` judges the run, and any run compared with it, by the judging
-//! settings of that file in place of those each run recorded, writing nothing
-//! to the database (D84).
+//! settings of that file in place of those each run recorded, the trial
+//! written nowhere in the database (D84).
 //!
 //! A report reads a database a crawl wrote and never creates one; opening it
 //! installs the views, so a database from before them gains them here.

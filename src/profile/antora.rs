@@ -98,8 +98,9 @@ fn component_under(page: &Url, root_path: &str) -> Option<String> {
 
 /// The prefix of the locale a language menu's `link` on `page` names: the
 /// link's path up to the first segment where it departs from the page's, as a
-/// directory (I25). `None` for a link to the page itself, on another origin,
-/// or whose path the page's begins with.
+/// directory (I25). `None` for a link on another origin, or one departing at
+/// an empty segment: the page itself, a path the page's begins with, or the
+/// page's path with a final `/`.
 fn other_locale(page: &Url, link: &Url) -> Option<Url> {
     if link.origin() != page.origin() {
         return None;

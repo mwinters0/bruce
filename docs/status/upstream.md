@@ -64,7 +64,7 @@ back. Numbers up to the watermark are allocated, and none is reused.
   fails: a debug-built DuckDB plans the query below.
 - **Workaround.** `link_verdicts_with`'s `policy_run` is read in one place, the
   `pr` CTE mapping each run to the run whose policy judges it, and every join to
-  `policy` is on `pr.prun` (`store/views.rs`). Rejected: `policy_run` in each
+  `policy_in_force` is on `pr.prun` (`store/views.rs`). Rejected: `policy_run` in each
   condition, the plainer SQL, which fails every test; a view per policy.
   The query, in `macro_parameter_in_a_join_condition_child`: `CREATE MACRO m(r :=
   NULL) AS TABLE SELECT a.x, b.v FROM a LEFT JOIN b ON b.x = coalesce(r, a.x)`,

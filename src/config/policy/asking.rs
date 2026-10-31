@@ -58,7 +58,7 @@ pub struct Asking {
     /// MiB a page's body may come to, whichever host it comes from.
     pub max_body_mib: u64,
     /// The hosts' own settings, by host as `Host` prints it, only those a file
-    /// names.
+    /// gives an asking key of their own.
     pub hosts: BTreeMap<String, HostAsking>,
 }
 

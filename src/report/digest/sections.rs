@@ -26,14 +26,14 @@ pub(super) const ON_CRAWLED: &str = " JOIN report_pages pg ON pg.run_id = b.run_
 /// The page counts the pages, repos and groups rank by, computed once into
 /// the temporary table `digest_page_counts` (D71): each crawled page's counted
 /// links, `links`, `broken_url`, `broken_anchor` and `error`, and the broken
-/// links reached *through* a link to a URL that doubles a slash, `through`.
+/// or errored links reached *through* a link to a URL that doubles a slash, `through`.
 ///
 /// A doubled-slash page is one of the run's whose own URL doubles one (`dp`),
 /// with its `twin_id`. Its relative links resolve against the doubled path (or
 /// are a `?query` on it), so they break there and nowhere else. A link with
 /// reason `doubled_slash` reaches the page it lands on, if that is in `dp`,
 /// and from it every page in `dp` its relative links reach in turn (`reach`);
-/// the broken relative links on those pages (`brk`) are the linking page's,
+/// the broken or errored relative links on those pages (`brk`) are the linking page's,
 /// each counted once however many links of the page reach the same page, bar
 /// one whose copy on the page's twin, the same `raw_href` and kind, is broken
 /// too, which the twin's row counts. The run's `doubled_slash_reach` (D80)
@@ -66,8 +66,9 @@ const PAGE_COUNTS: &str = "CREATE OR REPLACE TEMP TABLE digest_page_counts AS \
      SELECT s.url_id, s.links, s.broken_url, s.broken_anchor, s.error, \
      coalesce(th.through, 0)::BIGINT AS through FROM s LEFT JOIN th ON th.url_id = s.url_id";
 
-/// Proof that [`page_counts`] ran for the run being read, which [`pages`],
-/// [`by_repo`] and [`by_group`] join.
+/// Proof that [`page_counts`] ran, which [`pages`], [`by_repo`] and
+/// [`by_group`] join; the table holds the run it last ran for, so a reader of
+/// another run runs it again (`novelty`).
 #[derive(Clone, Copy)]
 pub(super) struct PageCounts(());
 
@@ -276,7 +277,7 @@ pub(super) fn unchecked_groups(conn: &Connection, run: RunId) -> Result<Table, E
 
 /// The hosts no root starts on whose links the run asked about, the most
 /// links first: the allowlist (D3) as far as the pages link to it, the run
-/// recording no configuration (D64).
+/// recording no allowlist (D64).
 pub(super) fn checked_hosts(conn: &Connection, run: RunId) -> Result<Table, Error> {
     let mut sql = link_urls(run);
     sql.push(

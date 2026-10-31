@@ -128,7 +128,7 @@ new or all fixed. In this order:
    page it is written on. A link to a URL whose path doubles a slash is red,
    reason `doubled_slash`, whatever that URL answered and whether it was
    asked, and the page that writes it also counts, as "● 579 broken through
-   it", the broken relative links (`../`, `committee/`, `?query`) on the
+   it", the broken or errored relative links (`../`, `committee/`, `?query`) on the
    doubled-slash pages the link reaches, which the doubled slash breaks, each
    page once and none that is broken on the page's twin too (`judge.doubled_slash_reach`
    in [`config.md`](config.md) narrows that to the page the link lands on, or to none): "● 1 broken
@@ -159,7 +159,7 @@ new or all fixed. In this order:
    written on, which may not be the repo section 7 names for its target.
 7. **Broken targets, by the links to them** ("fix once, fix many"): the
    targets that more than one broken link names, from whatever pages, the
-   most links first, each with the pages linking to it and the target's own
+   most links first, each with the number of pages linking to it and the target's own
    source, where restoring a missing fragment mends every link in its row.
    The targets one link names are not listed; their links are in section 5.
 8. **Links that could not be verified**, apart from the breakage: their
@@ -252,7 +252,7 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `compared_with` | The run compared with: its `id` (`null` for a baseline file's run, `from_file` true, whose number is that of a run the database held only while the digest was made), its start and finish (`finished_at` `null` for a run that never finished), the `bruce` that crawled it, its `roots` and its `totals`, which a loader subtracts to give a figure's change. |
 | `totals` | The pages the roots cover and the links on them, and the links by outcome, over every kind. `unchecked` links are not broken: `housekeeping.unchecked` says why. |
 | `broken_targets` | Each target a broken link names, with its `fragment` when the link names one, the target named by the most `links` first, then by `pages`: one anchor restored in the target's repo removes that many links. `outcome` is `broken_url` or `broken_anchor`, and `reason` and `status` are the target's answer. `landing` is, for a target whose `reason` is `doubled_slash` and whose own URL doubles no slash, the URL it redirected to, which does, and for a target whose `reason` is `wrong_trailing_slash` and which redirected, the URL it landed on; else `null`. `fix` is, for a target whose `reason` is `wrong_trailing_slash`, its URL (its `landing` where it has one) with the final `/` added or dropped, which answered when the crawl asked it; else `null`. `source_repo`, `source_path` and `source_url` are those of the target page, where the run holds it: the repo that would restore a missing anchor. |
-| `pages` | The pages that hold a broken link or one whose outcome is `error`, the most `broken_url` plus `error` plus `through` first, then the most `broken_anchor`. `links` counts every link on the page that counts, `error` its links that could not be verified, and `through` the broken relative links (a `?query` is one) on the pages at doubled-slash URLs that its `doubled_slash` links reach, each page once, less those broken on the page's twin too (zero for nearly every page). A page at a doubled-slash URL counts no link where the URL with its slashes collapsed is a page of the run, and else all but its broken relative links. `source_url` is the forge's view of the page's file. |
+| `pages` | The pages that hold a broken link or one whose outcome is `error`, the most `broken_url` plus `error` plus `through` first, then the most `broken_anchor`. `links` counts every link on the page that counts, `error` its links that could not be verified, and `through` the broken or errored relative links (a `?query` is one) on the pages at doubled-slash URLs that its `doubled_slash` links reach, each page once, less those broken on the page's twin too (zero for nearly every page). A page at a doubled-slash URL counts no link where the URL with its slashes collapsed is a page of the run, and else all but its broken relative links. `source_url` is the forge's view of the page's file. |
 | `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order; a link whose outcome is `error` is in `errors`, where the HTML's drill-down finds it. `page` joins to `pages`. `hint` is, for an Antora `xref:` that names no page, the nearest page ID in the run, as `component:module:path` with an empty module for `ROOT`, where one is close enough to be a typo of it, else `null`. `landing` and `fix` are as in `broken_targets`. |
 | `by_repo` | Each repo the pages were built from, ranked as `pages` are, `through` the sum of its pages'; `repo` is `null` for the pages that record none. `pages` counts the repo's pages, `broken_pages` those holding a broken link or an error. |
 | `by_group` | The same by the value of the fact [`[digest]` `group_by`](config.md#digest) names, as `group`, a page without the fact being in no group. Empty for a site that groups by nothing, which is the default. |
@@ -268,8 +268,8 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `housekeeping.unchecked` | The `unchecked` links by `reason` ([below](#why-a-link-is-unchecked)), and the distinct `targets` they name. |
 | `housekeeping.unchecked_groups` | The same links by `reason` and by `group`, where they point, every group listed: the reasons in `unchecked`'s order, a reason's groups the most `links` first. A `group` is the scheme, as `mailto:`, for a URL that is not `http` or `https`; for `skipped`, the host and the path's last two segments, as `forge.example.org/…/issues/new`, the part a `skip` glob usually matches; on a root's host, the URL up to the path's first segment, as `https://docs.example.org/de/`, with the `/` after it where the path goes on; and else the host. It is `null` for a link the run stopped before asking about. |
 | `policy` | The whole policy the run was judged by, as it recorded it ([`config.md`](config.md#judging)): a row to a setting, `host` `null` for a run-wide one and a host's name for its own, `key` as the store spells it (`status.403`, `severity.doubled_slash`, a `schemes` row to each scheme) and `value` its text. A setting the file leaves out is a row at its default. |
-| `trial` | The path of the configuration file the digest was judged by in place of the run's recorded policy ([a trial](#a-trial-policy)), as `--config` gave it, else `null`; `policy` is then that file's. |
-| `housekeeping.checked_hosts` | The hosts no root starts on whose links' targets were asked about, the most `links` first: the [`allowlist`](config.md#allowlist) as far as the pages link to it. The run records no configuration, so a host the allowlist names that no page links to is in no row. |
+| `trial` | The path of the configuration file the digest was judged by in place of the run's recorded policy ([a trial](#a-trial-policy)), as `--config` gave it, else `null`; `policy` is then that file's judging rows and the run's asking ones. |
+| `housekeeping.checked_hosts` | The hosts no root starts on whose links' targets were asked about, the most `links` first: the [`allowlist`](config.md#allowlist) as far as the pages link to it. The run records no allowlist, so a host the allowlist names that no page links to is in no row. |
 
 ## Why a link is newly broken
 
@@ -301,9 +301,9 @@ An `unchecked` link is not broken: the run did not learn whether it is. Its
 | `scheme` | Names a URL whose scheme is not `http` or `https` but one a public web page uses: `mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`, `magnet` or `sms`, or `data` or `javascript`, which work in the page itself, as an embedded image or a script's link. A link with any other scheme, as `file:` or a mistyped `hhttps:`, cannot work for a reader and is `broken_url`, reason `bad_scheme`; [`judge.schemes`](config.md#judging) adds to the list. |
 | `robots` | Names a URL its host's `robots.txt` forbids, where that is obeyed ([Hosts](config.md#hosts)). |
 | `robots_unavailable` | Names a URL on a host that answered its `robots.txt` request with no file to read (a server error, a 429 that outlasts the retries, or redirects that lead nowhere), which leaves that scheme and port of the host unrequested for the rest of the run ([Hosts](config.md#hosts)). A host that gives no answer at all has its links `broken_url` or `error` instead. |
-| `externals_skipped` | In a `check-dir` run given `--externals skip`, names a URL on an allowlisted host, or on a root's host outside every scope and every other locale, that the baseline has no answer for, or that a redirect's hop reaches, and a redirect onto one ([`bruce check-dir`](check-dir.md)). |
+| `externals_skipped` | In a `check-dir` run given `--externals skip`, names a URL on an allowlisted host, or on a root's host outside every scope and every other locale, that the baseline has no answer for, an allowlisted one a redirect's hop reaches, and a redirect onto one ([`bruce check-dir`](check-dir.md)). |
 | `too_deep` | Is a sitemap listed by an index three files deep, which is not read ([Roots](config.md#roots)). |
-| `no_anchors` | Has a fragment, and its target answered with no HTML page read to look for it in: an asset, a page too large to read, or a URL on an allowlisted host first named by a link other than an `<a href>`. |
+| `no_anchors` | Has a fragment, and its target answered with no HTML page read to look for it in: an asset, a page too large to read, or a URL on an allowlisted host, or on a root's host outside every scope, first named by a link other than an `<a href>`. |
 | `text_fragment` | Has a text fragment (`#:~:text=`), which names words rather than an anchor, and its target answered. |
 | `cut` | Names a target the run stopped before asking about. |
 
@@ -312,5 +312,5 @@ An `unchecked` link is not broken: the run did not learn whether it is. Its
 | Status | Meaning |
 |---|---|
 | 0 | The files were written. Finding broken links does not change this. |
-| 1 | The database could not be read or has no such run or no finished one, the run or the run compared with is a `check-dir` run, `--since` names no baseline (a file that is not one, or of another schema version), the run a bare digest would read is the baseline of a later unfinished `check-dir` run, or a file could not be written; the message says which. |
+| 1 | The database could not be read or has no such run or no finished one, the run or the run compared with is a `check-dir` run, `--since` names no baseline (a file or URL that cannot be read, is not one, or is of another schema version), the `--config` file cannot be read or is not a valid configuration, the run a bare digest would read is the baseline of a later unfinished `check-dir` run, or a file could not be written; the message says which. |
 | 2 | The command line was not understood. |

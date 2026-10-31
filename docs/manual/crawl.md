@@ -44,12 +44,12 @@ one found unreadable, and every page was found by following links. A
 sitemap's pages outside every root, or matching `skip`, are counted and
 dropped; an index's sitemaps are followed wherever they are.
 
-A URL that answers 404 is asked about once more: the same URL with its final
+A URL that answers a broken 4xx, a 404 say, is asked about once more: the same URL with its final
 `/` added or dropped, for its status alone, under the host's robots.txt and
 pace. If that answers 2xx the link is still broken, reason
 `wrong_trailing_slash`, and the digest names the URL to link to instead; a redirect is not an answer, and nothing is written for the extra
-request. A URL that redirects onto a 404 is asked about the same way for the 404's
-URL, the one the redirect lands on. `slash_probe = false` on the host asked
+request. A URL that redirects onto a broken 4xx is asked about the same way for the
+4xx's URL, the one the redirect lands on. `slash_probe = false` on the host asked
 sends neither ([`config.md`](config.md#asking)).
 
 ## Stopping a crawl

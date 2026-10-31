@@ -143,7 +143,7 @@ pub struct Policy {
     /// none groups by nothing (D86).
     pub group_by: Option<String>,
     /// The hosts' own settings, by host as `Host` prints it, only those a
-    /// file names.
+    /// file gives a judging key of their own.
     pub hosts: BTreeMap<String, HostJudging>,
     /// How the run asks, which no report judges by (D85).
     pub asking: Asking,
@@ -183,7 +183,7 @@ impl Policy {
     /// The settings as the rows the store records: every setting, the
     /// defaults included, so a run's policy is whole in its own rows and a
     /// later default changes none (D78). A status is the key `status.<code>`,
-    /// a list one row to an element.
+    /// `schemes` one row to an element and `gate.fail` one row (D83).
     pub fn entries(&self) -> Vec<Entry> {
         let run = |key: &str, value: String| Entry {
             host: None,
