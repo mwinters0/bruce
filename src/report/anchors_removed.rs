@@ -4,7 +4,7 @@
 //! A row is a page that lost an anchor, one of `from`'s `anchors` that `to`'s
 //! page lacks, and the fragment as the links name it. The links are `to`'s
 //! `broken_anchor` ones (`report_broken`), which leave out the links that do
-//! not count (D71), each resolved here to the page a redirect landed on;
+//! not count (D88), each resolved here to the page a redirect landed on;
 //! one that names an anchor `from`'s page had is a link the loss broke. An
 //! anchor no link names is no row, and nor is a link to an anchor the page
 //! never had. The page is listed by the URL the links landed on, and

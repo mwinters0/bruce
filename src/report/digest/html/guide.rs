@@ -16,7 +16,7 @@ use crate::store::{DOUBLED_SLASH, PEDANTIC_TRAILING_SLASH};
 /// An entry of the guide.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum Entry {
-    /// `doubled_slash`, and the links broken through it (D71).
+    /// `doubled_slash`, and the links broken through it (D71, D88).
     DoubledSlash,
     /// `pedantic_trailing_slash` (D70).
     Pedantic,

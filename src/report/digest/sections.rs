@@ -24,7 +24,7 @@ pub(super) const ON_CRAWLED: &str = " JOIN report_pages pg ON pg.run_id = b.run_
                           AND pg.url_id = b.src_url_id AND pg.crawled ";
 
 /// The page counts the pages, repos and groups rank by, computed once into
-/// the temporary table `digest_page_counts` (D71): each crawled page's counted
+/// the temporary table `digest_page_counts` (D88): each crawled page's counted
 /// links, `links`, `broken_url`, `broken_anchor` and `error`, and the broken
 /// or errored links reached *through* a link to a URL that doubles a slash, `through`.
 ///
@@ -291,7 +291,7 @@ pub(super) fn checked_hosts(conn: &Connection, run: RunId) -> Result<Table, Erro
 
 /// The crawled pages holding a broken link or one that errored, ranked by
 /// their red links (`broken_url` and `error`) with those broken through them
-/// (`through`, D71) and then their amber ones (`broken_anchor`): by outcome,
+/// (`through`, D88) and then their amber ones (`broken_anchor`): by outcome,
 /// as the JSON carries them, the HTML ranking by the map's levels (D82).
 pub(super) fn pages(conn: &Connection, run: RunId, _: PageCounts) -> Result<Table, Error> {
     let mut sql = Sql::new(

@@ -21,7 +21,7 @@ entries touching the same mechanism, whose answers constrain each other.
 
 It was written by a session that has since ended, about code and docs that have
 moved. Before framing a single question: read the mechanism it governs — the
-source it names, the `decisions.md` entry or spec documenting it, and the
+source it names, the register entry (`docs/design/decisions/`) or spec documenting it, and the
 `docs/status/deficiencies.md` entries naming that source; check its claims
 against what is actually there; and look for what it did *not* consider,
 its author's framing being the likeliest thing to be too narrow — a binary where

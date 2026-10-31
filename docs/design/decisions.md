@@ -1,670 +1,135 @@
 # Decisions
 
-The decisions the code cannot explain: shapes kept for a deliverable not yet built, defaults chosen
-over an alternative, and obvious changes argued and refused. Nothing here says how the code works
-(the named module does). External facts are cited by `I<n>` from `site-invariants.md`. Cite an
-entry as `docs/design/decisions.md`, "D12"; the rest of the rules, the line cap included, are
-`docs/process.md`, "The decision register".
+The decisions the code cannot explain: shapes kept for a deliverable not yet built, defaults chosen over an alternative,
+and obvious changes argued and refused. Nothing here says how the code works (the named module does); external facts are
+cited by `I<n>` from `site-invariants.md`. Each entry lives in its topic's file under `decisions/`, which opens with
+what the topic is and is read on its own; this file is the index and the citation target: cite as
+`docs/design/decisions.md`, "D12". The rules, the caps and the meter included, are `docs/process.md`, "The decision
+register".
 
-The modules follow D39's layering. D1–D30 were settled in the bootstrap grilling (2026-10-17,
-frozen as `historical/initial.md`), D31 the same day, D32 onward in the phases' grillings and slices, and an entry's
-**Code** is the item that holds it. D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s
-phase index.
+D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s phase index. The en-US crawls the
+entries quote are named by their day: 2026-10-23's is `runs/p8.1-en-us-20261023-2004/`, 2026-10-24's
+`runs/p8.14-en-us-20261024-1322/`, 2026-10-25's `runs/en-us-20261025-1301/`, run 2 of a copy of 2026-10-24's
+database, and 2026-10-28's `runs/en-us-20261028-1452/`.
 
-The en-US crawls the entries quote are named by their day: 2026-10-23's is `runs/p8.1-en-us-20261023-2004/`,
-2026-10-24's `runs/p8.14-en-us-20261024-1322/`, and 2026-10-25's `runs/en-us-20261025-1301/`, run 2 of a copy of
-2026-10-24's database.
+<!-- decision-watermark: D89 -->
 
-<!-- decision-watermark: D85 -->
+## Modes, commands and deployment
+[`decisions/modes.md`](decisions/modes.md)
+- **D1** Two fetchers behind one trait: live HTTP crawl first, local build directory second
+- **D27** One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
+- **D30** The name is `bruce`, after the Bruce claw anchor
+- **D40** A run needs no config: the URL given is the root, and every other setting has a default
+- **D41** This repo builds the tool and never deploys it
+- **D42** The simulated deployment is the manual's deployment guide, executed
 
-## Scope and modes
+## Configuration and scope
+[`decisions/config.md`](decisions/config.md)
+- **D5** Configuration is optional TOML, and no flag overrides a key; roots are separate from the allowlist
+- **D3** Allowlisted external hosts are checked one hop deep and never crawled
+- **D10** Default scope: en-US, every fedora version; locales are a root that is off by default
+- **D44** A root's scope is its path prefix until `include` names globs, which match the whole canonical URL
+- **D50** A config `skip` list makes a matching page link or seed `unchecked`, reason `skipped`, before scope and the allowlist
+- **D67** Another locale is a prefix the roots' pages' language menus name, and a URL no locale covers yet waits for the last page
+- **D68** An `allowlist` entry `*.<domain>` names every host below the domain, and none names a root's own host
 
-### D1 Two fetchers behind one trait: live HTTP crawl first, local build directory second
-Parsing and the DB writer are shared. The local-dir mode exists for CI verification of a docs change
-before it deploys. A full site build takes hours, so nobody runs one locally. Rejected: local-only,
-which cannot see the deployed site or external hosts; a CI pipeline of its own walking the build and
-querying the baseline, which rebuilds the frontier, the hops (a local alias is one), D16 and the writer.
-Reopens: a published full-site build artifact. Code: `cli::check_dir`, `fetch::routed::Routed`.
+## The crawl
+[`decisions/crawl.md`](decisions/crawl.md)
+- **D7** Canonical URLs keep the fragment apart; redirects are followed and stated
+- **D14** Discovery is sitemap and link-following both, and each page records which
+- **D47** A run reads its sitemaps before any page, and each root links to its sitemaps
+- **D46** Where a redirect lands is a target of its own, written by whoever claims it first
+- **D61** Live slots are shared among the hosts with work, and a build's reads have a budget of their own
+- **D48** A stop drops each target's hops 30 s after it; "cut" is every target found and not written
+- **D49** An abandoned run waits for the writes it has begun, and only for them
+- **D58** SIGINT and SIGTERM are each a press, and a stopped `check-dir` judges nothing
 
-### D3 Allowlisted external hosts are checked one hop deep and never crawled
-An allowlisted target an anchor link names first gets a full GET, so its fragment can be checked; any other kind
-of link gets a HEAD (KD4), and so does a URL on a root's host in no root's scope and no other locale (D10). A link to any other host is stored as `unchecked` with no request, keeping the link graph whole. Rejected: crawling allowlisted
-hosts, which would make them roots by another name (D5 holds roots).
+## Fetching and politeness
+[`decisions/fetch.md`](decisions/fetch.md)
+- **D45** TLS is rustls on ring and DNS is hickory's, so a failure arrives typed
+- **D8** Rate limits, concurrency and robots.txt are per host; only a root's host may skip robots.txt
+- **D69** A robots.txt is an origin's; pace, concurrency and D8's switch stay the name's
+- **D18** A host's `Crawl-delay` is obeyed unless a root's host overrides it with `per_second`
+- **D85** How a crawl asks is recorded with the policy and judged by nothing: a host's own settings over `[default]`'s, a body cap the site's
 
-### D10 Default scope: en-US, every fedora version; locales are a root that is off by default
-Frozen f26–f43 pages are cheap and current pages link into them, so their anchors must be known. Translated
-heading ids can break fragments, but the translation team owns that (I9). A URL on a root's host in no root's scope is
-asked as an allowlisted URL is (D3, `--externals` included, D22), unless it is another locale's page
-(D67), which is `unchecked`, reason `out_of_scope`, with no request (maintainer, 2026-10-24). Why: such a link can be broken, `https:/kubernetes.io` resolving to a 404 on docs.fp.o; on the 2026-10-23 crawl 12 URLs are asked and 154,569 left unasked.
-Rejected: latest-only, which leaves inbound links to frozen versions unverifiable; another locale's page one hop deep, 67 requests a page (`grep -o 'class="language" href' fixtures/docs-fp-o/en-US/a11y/index.html`, less its own); every such URL unasked, which hid three broken ones on en-US.
-Code: `crawl::frontier::Frontier::plan`. Evidence: `crawl::tests::an_out_of_scope_url_is_asked_unless_another_locales_page`.
-
-### D67 Another locale is a prefix the roots' pages' language menus name, and a URL no locale covers yet waits for the last page
-The `antora` profile reads a page's menu (`a.language`, I25), a locale being the path where a menu link leaves the page's URL: `/ar/a11y/` on `/en-US/a11y/` gives `/ar/`. A root's page teaches the frontier its locales before its links are planned; an out-of-scope URL on a root's host that none covers yet is claimed and judged once every page is read, again while a hop's landing page names more.
-Why: the locales only grow, so a URL covered when met stays covered, and judging the rest last makes no verdict depend on which page was read first, which comparing two runs needs.
-Rejected: locales as config globs, one more list to keep as locales are added; a locale told by its segment's shape (`pt_BR`), which takes `f28` or `infra` for one; judging every URL when met, which a page with no menu read before one with it turns into a request; every such URL waiting, 154,569 on en-US held to the end.
-Reopens: a site naming its locales otherwise, as `hreflang` alternates do; a menu naming some locales on some pages only (docs.fp.o's is one list, I25).
-Code: `profile::antora::other_locale`, `crawl::frontier::Frontier::judge_outside`. Evidence: `profile::antora::tests::a_locale_is_where_a_menu_link_departs_from_the_page`, `crawl::frontier::tests::a_waiting_url_is_judged_by_the_locales_learned_since`, `crawl::baseline::tests::an_out_of_scope_url_is_answered_as_an_external_unless_another_locales`.
-
-### D13 Every reference kind is extracted, each target fetched once per run
-`<a>`, `<area>`, `<img>`/`srcset`, `<link>` (canonical included), `<script>`, `<iframe>`, media
-(`src` on `<video>`, `<audio>`, `<source>`, `<track>`; `poster`) and the `url=` of a meta refresh,
-each link carrying its `kind`; no page yields `sitemap` (an entry) or `sitemap_file` (a file, D47).
-Assets get a HEAD request with GET fallback; reports default to `kind = anchor`, the gate (D9) to every
-kind. A scheme other than `http(s)` is never requested (D66). A `<link>` with no `href`, or
-whose `rel` is empty or only `preconnect` or `dns-prefetch`, is skipped; the first `<base href>` resolves every href after it. Rejected:
-`<a href>` only (misses broken images, canonicals); ignoring `<base>` (resolves a site wrongly).
-
-### D66 A scheme a public web page uses is `unchecked`; any other is `broken_url`, reason `bad_scheme`
-`mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`, `magnet` and `sms` take a reader somewhere no request can follow, and `data` and `javascript` work in the page itself, an embedded image or a script's link (maintainer, 2026-10-24), so they stay `unchecked`, reason `scheme`. Any other scheme but `http(s)`, `file:` and a mistyped `hhttps:` among them, no reader of the site can follow, so it is broken in every report and the gate (maintainer, 2026-10-24). On the 2026-10-23 crawl that is 2 of the 280 `scheme` links, one of each.
-Why its own reason: `reason = 'scheme'` keeps one outcome across runs, and the digest's Problem column says why, as `bad_redirect` does for a 3xx no browser could follow (D16).
-Rejected: every other scheme `unchecked`, which hid both links from every report; `scheme` under both outcomes, one name meaning two verdicts. The list is `config::WORKING_SCHEMES` and a site's `judge.schemes` extends it, read when a run is read (D79).
-Reopens: a listed scheme found broken, or an unlisted one found working, which this reads as broken.
-Code: `config::WORKING_SCHEMES`, `crawl::frontier`. Evidence: `crawl::frontier::tests::a_scheme_a_public_web_page_uses_is_unchecked_and_any_other_broken`, `crawl::tests::a_scheme_no_reader_can_follow_is_reported_broken_and_a_working_one_unchecked`.
-
-### D14 Discovery is sitemap and link-following both, and each page records which
-Each root's sitemap is discovered (D40) or set (docs.fp.o's is under its en-US root, I1). Recording both
-sources yields orphans (in the sitemap, with no inbound link) and unlisted pages (reachable, absent
-from the sitemap). Each page records the root whose scope claimed it, and each run its roots, both
-canonical, so a root is its own target's `url`. Rejected: either source alone, which loses one of those
-reports; matching a page to its root by scope in SQL, which `include` globs (D44) defeat; the root as
-configured, which an escape or a stripped query fails to match. Code: `report::views`, `store::rows`.
-
-### D47 A run reads its sitemaps before any page, and each root links to its sitemaps
-A listed page is then claimed by its sitemap before a link can name it, so `pages.in_sitemap` holds
-for every listed page; the files (69 at docs.fp.o) cost about a minute on a pace-bound run. A
-root links `sitemap_file` to each `http(s)` top-level sitemap it names or found, an index to the files it lists, so a broken one shows as any
-broken link and "no sitemap" is per root; a probe that misses writes nothing, nothing having named it. Rejected: reading
-sitemaps beside the pages (`in_sitemap` left to a race); a target per failed probe; a `runs` column,
-per run and naming no broken file. Code: `crawl::Shared::discover`.
-Evidence: `crawl::tests::each_root_links_once_to_each_sitemap_it_read`.
+## Extraction
+[`decisions/extract.md`](decisions/extract.md)
+- **D13** Every reference kind is extracted, each target fetched once per run
+- **D12** A fragment is valid where a browser would scroll to it
+- **D34** An anchor's placement is `content`, `chrome` or `unknown`; the profile draws the line
+- **D15** Pages store metadata, a content hash and their profile's facts; bodies only on request
 
 ## Profiles
-
-### D32 Two extension layers: generator profiles in code, the deployment in config
-The core knows the web. A profile knows a site generator (`generic`, `antora`). A deployment
-(docs.fp.o) is config only, owned outside this repo (D41). Forge edit-URL shapes are core, as every
-generator links to a forge. Rejected: a `fedora` profile above `antora`, empty on day one; a report
-`--component` filter, Antora in the core, where `--fact antora.component=…` reads `page_facts` (D37).
-Reopens: a deployment quirk that config and profile settings cannot express.
-
-### D33 Profiles are compiled in; declarative per-root rules come later, as their own phase
-A profile is a module behind a trait, so a new generator is a PR. Facts a profile records are
-key/value strings, so a TOML rule (selector + attribute, region selector, URL regex) can produce
-the same facts later without a schema change. Resolution logic stays code. Rejected now: WASM or
-out-of-process plugins (an ABI, sandbox and versioning burden for no second user).
-
-### D34 An anchor's placement is `content`, `chrome` or `unknown`; the profile draws the line
-Antora's region is `<article class="doc">` (I8). `generic` takes `<main>` or `[role=main]`, and
-records `unknown` on a page with neither, so a heuristic guess never poses as a fact and the
-chrome report says only what it knows. Rejected: everything `content` when no landmark exists;
-`hash_root` setting the region too, a root of `html` putting every chrome id in `content` (D15), a
-per-root region being D33's rules. Code: `extract`, `extract::hash`.
-
-### D35 A root's profile defaults to `auto`, which picks one per page by its generator meta
-`profile = "auto" | "generic" | "antora"` per root. Under `auto`, `<meta name="generator">` picks
-the profile, falling back to `generic` (Docsy and Sphinx emit none, I12), and the page row stores
-the result. The meta precedes anything a profile extracts. Rejected: deciding once per root, which
-mislabels a root spanning generators; config only, which makes every Antora user opt in.
-
-### D36 The page → source tie-back is core: an edit-link heuristic and forge URL shapes
-Every generator's edit link points at a forge, so any site gets page → file with no config. The core
-ranks the `<a href>`s earning a tier: `rel=edit`, an edit phrase in `title` or text, a known class
-(I12); inside a tier a forge-shaped URL, then document order. A link in no tier is none. docs.fp.o
-needs no override (I8): its title is a phrase. `pages` keeps `source_url`, plus `source_repo`,
-`source_ref` and `source_path` when a path shape parses on any host, the ref one segment (KD1).
-Rejected: discovery in the Antora profile only, which leaves routing a breakage to its repo (D17) on
-one generator; a `title` match in `antora`, a docs.fp.o quirk in a generator profile (D32).
-
-### D37 Profile facts live in one core table, `page_facts`, under namespaced keys
-`(run_id, url_id, key, value)`, keys like `antora.component`. A profile ships views pivoting its
-keys into columns for `duckdb` users; D19 resolves through `Lookup` over `page_facts`. D33's rules can write only a key and a value.
-Rejected: a typed table per profile (a migration story each); a JSON column (no typed joins, no
-simpler).
-
-### D40 A run needs no config: the URL given is the root, and every other setting has a default
-Without a file, the URL is the only root, scoped to its path prefix. Its sitemap comes from
-robots.txt `Sitemap:` lines, then `sitemap.xml` under the root, then at the host. Profile `auto`
-(D35), robots.txt and its `Crawl-delay` obeyed (D18), 2 req/s per host otherwise, no allowlist. A config
-overrides each. Rejected for now: a required config, and `bruce init`, until someone asks for it.
-
-### D41 This repo builds the tool and never deploys it
-A deployment (docs.fp.o's config, its nightly crawl, where its baseline is published) lives with
-its deployer. The manual documents how to configure one, and a gitignored simulated deployment here
-verifies that the tool supports it. Rejected: a shipped `fedora.toml`, or a preset compiled in,
-either of which puts a deployment into the tool's release.
-
-### D42 The simulated deployment is the manual's deployment guide, executed
-`mise run sim` extracts the guide's tagged code blocks into a gitignored `sim/` and checks its config
-loads, so a guide that drifts from the tool fails there, and any machine rebuilds it. docs.fp.o's config
-exists here only as that guide's worked example. Rejected: a committed template directory, which drifts
-from the guide describing it; a hand-built `sim/`, which no other machine can rebuild; running the
-crawl there, a two-hour job at every sim.
-Code: `scripts/sim.py`. Evidence: `scripts/test_sim.py`.
-
-### D38 A profile has four hooks: detect, extract, resolve, views
-Detect claims a generator string (D35). Extract hands the core's lol_html pass (D11), which follows, under `auto`, a pre-pass reading the generator meta (D35), a declared
-content region (selectors, D34), element handlers and a finish step run over the core's settled
-result; handlers write a sink: a fact, a tag on the link being read (I6), a preferred edit link (D36).
-Resolve maps a tagged reference to a URL through the store's lookup (D19, D20, D22). Views is its SQL
-(D37), and a view named `<profile>_hints` is its hint for an unresolved xref, which the reports read through `link_hints` (D87); beside the four, `sitemap_note` is a sentence the digest prints (D87). `generic` leaves Resolve and Views empty, having no reference that is not a URL and no facts to
-pivot. Rejected: region handlers in each profile, each re-deciding `unknown` (D34), which a page's end
-alone settles. Reopens: a hook empty in `generic` for any other reason, the trait bending around Antora.
-
-### D39 The layering: `cli` › `crawl`, `ci`, `report` › `fetch`, `extract`, `store` › `profile` › `forge`, `config` › `url`
-Edges point down only. `config` reads `url`, its scope matching the canonical form (D44). `store`
-implements `profile`'s lookup trait and asks each profile for its views, so a profile never reaches
-the DB. Only `cli` names a concrete profile in production code, to build the registry. Rejected: `profile` above
-`extract`, driving the pass, which makes the core a library of the profile, the inverse of D32;
-scope moved to `crawl` to keep `config` lowest, splitting it and losing D44's refusal at load; a tier
-check in `module_graph.py`, its cycle check catching nearly every upward edge. Reopens: a skip-tier
-edge passing review.
+[`decisions/profiles.md`](decisions/profiles.md)
+- **D32** Two extension layers: generator profiles in code, the deployment in config
+- **D33** Profiles are compiled in; declarative per-root rules come later, as their own phase
+- **D35** A root's profile defaults to `auto`, which picks one per page by its generator meta
+- **D36** The page → source tie-back is core: an edit-link heuristic and forge URL shapes
+- **D17** Each page stores its source file and repo, read from its edit link
+- **D37** Profile facts live in one core table, `page_facts`, under namespaced keys
+- **D38** A profile has four hooks: detect, extract, resolve, views
+- **D19** Pages carry Antora resource IDs, and unresolved refspecs resolve through them
+- **D65** An unresolved xref's hint is the nearest page ID by edit distance, within three tenths of the longer, read in the page's own context
+- **D87** The reports read a profile's generator knowledge through the profile: `link_hints` for a hint, `sitemap_note` for the sitemap's sentence
 
 ## Storage and history
-
-### D2 Runs are append-only: every row but `meta`'s carries a `run_id`, and only a run's `finished_at` is updated
-This answers when a link broke and which upstream change did it, and allows run diffs. Old runs are
-pruned explicitly (`bruce prune`). A stopped run is never resumed: its rows stay, `finished_at` NULL,
-and the next starts afresh. Rejected: latest-state upsert, which cannot date a breakage; a persisted
-frontier to resume from, much machinery for a job that fits in a night.
-
-### D15 Pages store metadata, a content hash and their profile's facts; bodies only on request
-The hash detects change because validators are unreliable (I3). Profile facts (D37) group reports by what owns a page. The opt-in,
-prunable `bodies` table exists and nothing writes it yet. The hash is xxh3-128 (not adversarial; faster than BLAKE3) over tags, attributes
-and decoded text in a scope `hash_root`/`hash_exclude` set, by default the profile's region; a page matching no root is hashed whole, less
-exclusions. Rejected: storing bodies by default (about 330 MB per en-US run, uncompressed: `select sum(size) from pages` over
-`runs/p5.2-en-us-20261020/en-us.duckdb`); raw bytes (docs.fp.o's `Last build:` changes every page every build, I19); a hash of the
-extracted record, blind to a prose edit; one fixed default root (an exclusion alone would barely act); an empty or region fallback for a
-set root matching nothing, hiding the misconfiguration a page changing every build shows. A page records the scope its hash covered (`root`, `region`, `whole`) and a run its roots' keys (schema 5, D43), so a changed scope is told from changed content. `changed` reads only the pages a root covers, the forge's being hashed under no root's keys: 137 of the 138 pages whose hash moved between two crawls 3 hours apart were the forge's (`runs/p4.10-en-us-20261019-2125/combined.duckdb`). Rejected: a note where `runs.config_hash` differs, which cannot tell a scope edit from a rate edit; a `run_roots` table for the keys, changing `prune`'s and the baseline's table lists, where a list on `runs` holds them. Code: `extract::hash`, `report::changed`. Evidence: `tests/extract.rs`.
-
-### D17 Each page stores its source file and repo, read from its edit link
-This routes a breakage to the repo and file that own it, and groups more precisely than component
-(some repos supply several). A CI build's pages carry none (I15), so CI maps a build by its
-component-versions (D54, D56). Finding the link is core (D36); docs.fp.o's markup is I8.
-
-### D26 A URL's identity is a u64 hash of its canonical form, stable across runs
-A link's page then joins across runs by id with no URL comparison; its target joins by URL text. `links` keeps one row per occurrence, raw href
-included, so a report can point at the link in its source. The tables and columns are `store::schema`'s (`page_facts` D37, opt-in `bodies` D15). An href resolving to no URL is a
-target keyed by its raw text (`url` that text, `broken_url`, `invalid_url`), one per text per run.
-Rejected: deduplicated links with a count, which is smaller but loses the raw href; for an
-unresolvable href, no link row (reported nowhere) or a crawl-time `links.outcome` and no target.
-
-### D43 A DB records its schema version, and `bruce` refuses a DB of another version
-A `meta` table holds `schema_version`, and the refusal names both versions. A 0.x release migrates no DB: the release workflow names a
-schema change in the release's body, comparing the tag's `SCHEMA_VERSION` with the latest published release's, and the user starts a new
-DB, the old binary still reading the old one, so migrations wait for a release that promises them. Views are outside the version:
-`Store::install` replaces each at every open, so a changed view needs no bump and refuses no baseline. Rejected: recreating on mismatch,
-which destroys the history D2 keeps; migrations from day one, for no user; a one-off script rewriting an old DB, a migration in all but
-name; a notes file in the tag, or a hand edit after Publish, which an unattended Publish forgets. Code: `store::schema`, `store::Store::install`,
-`release.yml`'s "Name the schema change". Evidence: `scripts/test_workflows.py`, `SchemaStep`; `v0.2.0-rc.1`'s and `v0.2.0`'s bodies, each naming schema 5, changed from 4 in `v0.1.0` (`runs/release-v0.2.0/rc1-body.md`, `body.md`).
-
-### D28 Fragment verdicts are computed in SQL after the crawl, not during it
-The crawler holds no anchor state and need not order fetches around targets. The verdict is a view, `link_verdicts`, computed at
-each read, so a stopped run needs no second path and no stored column can disagree with it; the reports and the gate (D9) read
-the same join. One writer feeds DuckDB appenders through a bounded channel, DuckDB allowing one writing process per file.
-Rejected: checking fragments in memory as pages arrive; a table written at a run's end. Reopens: a read slow enough to
-materialise (0.2 s warm over 587839 links: run 1 of `runs/p4.10-en-us-20261019-2125/combined.duckdb`, the view as a `TEMP` view
-under `.timer on` in `duckdb -readonly`, the DB being schema 3, which `bruce` refuses). Code: `store::views`. Evidence:
-`store::views::tests`.
-
-## Classification
-
-### D7 Canonical URLs keep the fragment apart; redirects are followed and stated
-Lowercase the scheme and host, drop default ports, percent-decode only unreserved bytes (a `%2F`
-must not move the path), keep the query (per root it may be stripped), and keep `/foo` and `/foo/`
-distinct. Follow up to 10 hops, a 2xx page's delay-0 refresh one of them (I14); a loop or more hops
-is `broken_url`. The fragment is checked against the final page, and `redirected` is a non-failing
-modifier (I4, I5), a final `/` alone pedantic (D70). `crawl` follows hops, not `fetch`: a refresh is found only by reading the page.
-Rejected: normalising the trailing slash, which servers do not; a delayed refresh as a hop, its page
-having content of its own. Code: `url::canonical`, `crawl::hops`. Evidence: `url::tests`.
-
-### D12 A fragment is valid where a browser would scroll to it
-Valid: any non-empty `id`, `name` on `<a>` only, and always `#` and `#top` in any case. Matching is exact,
-against the fragment as written or percent-decoded. Each anchor stores its tag and its placement (D34), so links to
-template chrome are reportable (I9). Text fragments are `unchecked`.
-Rejected: every `name` attribute, which makes `#viewport` and `#generator` pass on every page.
-
-### D16 Five outcomes; `error` is separate from broken and fails CI only where a site's `fail` list names it
-`ok`, `broken_url` (4xx except below, NXDOMAIN, a redirect loop, a 3xx that led nowhere, a scheme no reader can follow, D66, a doubled slash in the path, D71, a final `/` that answers toggled, D72), `broken_anchor`, `error` (timeouts,
-TLS, 5xx after 3 retries with backoff, and 401/403/429 with status kept; a site's `status` map judges a code otherwise, D79), `unchecked`. A `Retry-After`
-over 60 s is `error` at once rather than stalling the run. A 2xx body over 16 MiB is `ok`, reason
-`too_large`, and not extracted, half a page's anchors giving false `broken_anchor`s. Rejected: `error`
-folded into `broken_url`, which fails CI on a flaky proxy; `too_large` as `error`, for a URL that
-works, or as a sixth outcome, which every report and the gate would have to place. The timeouts, retries, 60 s
-and 16 MiB are a site's to set (D85). Code: `crawl::outcome`, `fetch::http`.
-
-### D20 An unresolved xref is a broken page reference, never a same-page fragment
-Live crawl: `broken_url`, reason `unresolved_xref`, raw refspec kept, with a "did you mean" hint
-from a fuzzy match over resource IDs, run only on failures. CI: resolved via D19 first (I6).
-Rejected: checking `#comp::page.adoc` against the page's own ids, which is what a naive checker does.
-The hint's measure and floor are D65.
-
-### D46 Where a redirect lands is a target of its own, written by whoever claims it first
-A `final_url` then names a `targets` row bar a stopped run's, so D28's fragment join finds the landing
-target by that URL and the final page's `anchors` by key. The redirecting target is claimed at discovery, its landing
-URL after the hops end; the first claim writes the landing target and, if it reads it, its page, a loser
-still has its own answer from the chain. Rejected: holding the hops open on the landing URL's own task,
-which makes one target's outcome wait on another's; a memo of settled targets, to save a repeat request
-to a landing URL already claimed. Reopens: that repeat mattering at docs.fp.o's pace.
-Code: `crawl::Shared::write`. Evidence: `crawl::tests::a_redirect_is_a_chain_and_its_landing_page_is_recorded_once`.
-
-## Antora and CI
-
-### D4 CI resolves targets outside its build against a published baseline, then live
-A scheduled full crawl publishes a baseline holding each page's anchor set. CI also runs the
-inverse check: pages outside the build linking to pages, files or anchors this change removes (D56). Rejected: live-only
-(slow and non-deterministic), and skipping cross-component links (the breakage this tool exists for).
-
-### D9 CI fails only on breakage the change introduced
-A link is `(source URL, target URL, fragment)` of any kind (D13), with the build dir mapped to production URLs; only built
-pages' links count. It is introduced if it is broken here and the baseline's is not, or is absent. The inverse check fails by
-default; `--inverse=warn` turns it down (D27). The baseline's links are judged by the CI run's policy (D81), and the outcomes that fail are that policy's `gate.fail`, `broken_url` and `broken_anchor` unless a site says otherwise (D83). Accepted noise: a renamed page's links all look new. `report introduced` judges
-every kind too, so re-reporting a CI run gives the rows that set its exit under `--inverse=fail`, which `report` assumes: in text,
-or in JSON as `report inverse`'s beside its own (D6). Rejected: failing on all breakage, which keeps CI permanently red;
-`check-dir --kind`, narrowing the gate, D50's `skip` silencing a noisy URL instead.
-Code: `report::gate`. Evidence: `report::gate::tests::the_gate_reads_every_kind_unless_a_report_narrows_it`.
-
-### D19 Pages carry Antora resource IDs, and unresolved refspecs resolve through them
-The Antora profile records `(component, version, module, rel_path)` as facts (D37): module and
-`rel_path` from the edit URL (I8); component and version, verbatim, from the nav container, or on a
-page with none the component from the URL under the site root (I13) and no version. A refspec
-resolves by Antora's rules; a placeholder or absent version (I8) means the DB's only or latest one.
-Rejected: the module from the URL (ambiguous with subdirectories); no component without a nav
-container (xrefs into it unresolvable); a version from the URL (no versioned component lacks one); the
-fallback keyed on a nav container lacking `data-component`, inert where that happens (no lunr, I12).
-
-### D21 CI consumes a single-run baseline file, not the history DB
-`bruce export-baseline` writes one finished run into a fresh DB of the current schema, so the views,
-reports and D43's refusal read it unchanged and the gate compares like with like (D28). CI takes
-`--baseline <path|url>`. A deployment's scheduled job produces it, and where it is hosted is the
-deployment's (D41). Its verdicts stand whatever their age; the gate prints the crawl's date.
-Rejected: shipping the full history DB to CI; a slim schema of its own, a second version and set of
-queries; a `--max-age` refusal, failing a PR for a reason its author cannot fix, until one is asked for.
-Code: `store::baseline`.
-
-### D22 A local build's links resolve locally, then against the baseline, then by allowlist
-A relative href is resolved against the page's production URL, one beginning `/` against the build's site root (D53). Under the prefix and built: check
-locally (`foo/` → `foo/index.html`). Under the prefix and not built: `broken_url` in a
-component-version the build holds, else baseline, then live. An unresolved xref: D19 outside what
-the build holds, then the same steps. Externals default to the baseline's verdict
-(`--externals=skip|baseline|live`), so a slow host never blocks a PR. Rejected: the baseline for a
-held page, which passes a link to a page the change deletes; `--externals` reaching an in-scope URL
-the build lacks, a URL on the site new to the gate being the one most worth asking.
-
-## Operation
-
-### D5 Configuration is optional TOML, and no flag overrides a key; roots are separate from the allowlist
-`[[root]]` entries are crawled fully, each with include/exclude globs, its own sitemap URL and its
-profile (D35); `allowlist` lists hosts and domains (D68) checked one hop deep, `[default]` holds the default limit and
-`[host."<h>"]` a host's own `per_second`, `concurrency` and `robots` (D8). Roots are configurable so the tool is not
-tied to Fedora, and every key but a root's `url` has a default (D40). `bruce crawl`'s URL stands in
-for a file's absent roots and nothing else; per-key flags wait for someone to ask (`cli::crawl`). Keys
-are snake_case and `[[root]]` singular, as Cargo's `[[bin]]`. Rejected: kebab-case, which lychee and
-mise do not use; `allowlist` inside `[host]`, a root's own host belonging there and in no allowlist (D68).
-
-### D68 An `allowlist` entry `*.<domain>` names every host below the domain, and none names a root's own host
-A bare entry is one host; `*.<domain>` is every host below the domain at any depth, the domain itself an entry of its own, and a `*` anywhere else or a domain with no dot is refused at load. A `*.` entry never matches a root's own host, and an entry naming one outright is refused: its URLs outside every scope are asked already (D10), so the entry's one effect would be asking another locale's pages (maintainer, 2026-10-24).
-Why: on the 2026-10-23 crawl, 3,521 `host_not_allowlisted` targets sit on 161 hosts below the guide's nine domains, a list named host by host going stale as hosts come and go; `"*.fedoraproject.org"` matching docs.fp.o would ask its 154,569 locale targets.
-Rejected: the hosts most linked, named one by one; a root's host named outright asking its other locales, D10's rejected one-hop check by the back door, as it did before (the refusal affirmed by the maintainer, 2026-10-24); the locale rule tested first, leaving such an entry loaded and inert; host globs, whose cost per link grows with the list where a lookup per label of the host does not.
-Reopens: a deployer wanting another locale's pages asked one hop deep rather than crawled as a root.
-Code: `config::Config::is_allowlisted`, `config::Config::check_allowlisted_roots`. Evidence: `config::tests::a_roots_host_is_never_matched_by_a_domain_nor_allowlisted_outright`, `crawl::tests::an_allowlisted_domain_names_its_hosts_and_never_the_roots`.
-
-### D44 A root's scope is its path prefix until `include` names globs, which match the whole canonical URL
-`include` replaces the prefix rather than narrowing it, so one root can span locales; `exclude` always
-wins. Globs are globset's, `*` and `?` stopping at `/`, so a version segment matches as `f2?`. They
-match the canonical form (D7), so a glob written with an unreserved character (`~`) matches its
-escape too, and one written with an escape the form decodes (`%7E`) never does. Rejected: globs over the path alone,
-which cannot scope by host; regexes; `include` narrowing the prefix. Reopens: a root needing both
-its prefix and an include. A root's `url` must be in its own scope, refused at load.
-Code: `config::Root::in_scope`. Evidence: `config::tests::scope_is_matched_on_the_canonical_form`.
-
-### D50 A config `skip` list makes a matching page link or seed `unchecked`, reason `skipped`, before scope and the allowlist
-Top-level globs on the plain canonical form (D44's, the query kept), any host, a root's scope included:
-the deployer said not to ask. A hop onto one ends the chain, a sitemap's too, as a robots.txt-forbidden
-hop does; a root's `url` matching one is refused at load. Why: the forge answers `issues/new` with a 303
-to `/user/login` for any repo (I17), a false `ok`, and skipping `/user/login*` marks every link sent there.
-Rejected: detecting a login from a 401 or a login-like redirect, which misfires elsewhere; learning it
-from the first logins; `*` crossing `/` in a query, or the query unmatched, which forks D44's globs.
-Code: `crawl::frontier::Frontier::hop_plan`. Evidence: `crawl::tests::a_redirect_onto_a_skipped_url_ends_the_chain`.
-
-### D6 Reports are SQL views stored in the DB and run by `bruce report <kind>`
-A one-run report reads the `report_*` views, which ad-hoc `duckdb` users see as the CLI does; `diff`, `changed`, `anchors-removed`, `introduced` and `inverse`
-compare two runs, so `bruce report` composes them, `inverse` over base tables. A view takes no parameter, so each holds every
-run and `bruce report` names the run and filters; `cli` installs them at every open and into the file `export-baseline` writes
-(D21), `store` being below `report` (D39). Output is text, or `--format json`. Rejected: a view per run; installing them only
-when `bruce report` runs, hiding them from `duckdb` after a crawl; a view for `inverse`, its held set (D56) being I16's layout
-parsed in SQL; a JSON shape carrying `stats`' totals, `unlisted`'s bare roots or `introduced`'s other sections, until a
-consumer needs one, a script reading `link_verdicts` or `report_roots` meanwhile. Code: `report`, `cli::db`.
-
-### D8 Rate limits, concurrency and robots.txt are per host; only a root's host may skip robots.txt
-Defaults in config (D40), per-host settings in `[host]`. Back off on 429/503, honouring `Retry-After`. robots.txt is always
-honoured for external hosts and switchable only for a host a root starts on, refused at load otherwise. Every run refetches
-every page (I3). A host's robots.txt follows RFC 9309: a 4xx allows all; a 5xx, a 429 outlasting the retries (no word on the
-file) or redirects leading nowhere close the origin for the run; no response on its own name fails the origin's targets for the run
-(D16); the file is an origin's (D69). Rejected: one global rate, throttling the root to the slowest host's courtesy; RFC 9309 closing a silent host, hiding
-a dead one's links as `unchecked`; asking a failed host again per link, a timeout a link where `error` fails no CI; `robots`
-on a root, two roots on a host disagreeing and an `include`'s host unset. Code: `fetch::http::host`. Evidence: its tests.
-
-### D69 A robots.txt is an origin's; pace, concurrency and D8's switch stay the name's
-RFC 9309, 2.3, scopes the file to scheme, host and port, so a name silent on one origin fails only that origin's links, whichever a crawl asked first. A redirect ending at another origin's own `/robots.txt` takes that origin's read, found, absent or silent, so `http` and `https` cannot disagree by a flicker between two requests; a silence fails the asking origin only when it is on the asking origin's name, and a loop between two origins is a redirect leading nowhere. A redirect that gets no response fails the asking origin's links when the silent hop is on its name, and leaves them `robots_unavailable` on another's. The slowest `Crawl-delay` among a name's origins read paces it (D18).
-Rejected: the name's first hop alone, or any hop on it, leaving a verdict to the order a name's origins were asked in; a pace per origin, asking one server at twice the rate it set; a visited set per redirect chain for a loop between two origins' files, which misses two reads starting at once.
-Reopens: a site whose origins disagree in a way that costs links. Code: `fetch::http::host`, `fetch::http`. Evidence: `fetch::http::host::tests::a_name_silent_on_one_origin_fails_only_that_origin`.
-
-### D70 A redirect that only adds or drops a final `/` is `ok`, reason `pedantic_trailing_slash`
-A link through a redirect whose final URL differs from the URL linked only by a final `/` (before a query, if any), whatever the hops between, has the reason in `link_verdicts` where its verdict is `ok`; a missing fragment still makes it `broken_anchor`. The redirects report groups by landing and reason and lists the pedantic rows last, and the gate's introduced redirected links show each row's reason, the pedantic ones last, failing nothing as no redirect does (D7). Maintainer, 2026-10-24: a slash is to be corrected, below a 404 or a missing fragment; the class is named for one form so that others (a scheme upgrade, a moved page) can stand beside it.
-Rejected: a sixth outcome, which every report and the gate would have to place (D16) for a link a reader follows; leaving the slash with `redirected` alone, which hid 496 links to 259 targets among the rest of the 2026-10-24 crawl's redirects.
-Reopens: a second class of pedantic redirect, which would make the reason a list or the view a table. `judge.pedantic_trailing_slash = false` makes the redirect plain `ok`, no reason (D77). Code: `store::views`, `report::redirects`, `report::gate`. Evidence: `store::views::tests::a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic`.
-
-### D71 A doubled slash in a URL's path is the linking page's fault: the link is `broken_url`, reason `doubled_slash`, and the page there counts only what it owns
-A link to a URL whose path doubles a slash (`a//b`; not a `scheme://` inside the path, nor a query or fragment), or that redirected to one, is `broken_url`, reason `doubled_slash`, whatever the target answered, asked or not (a `skip`, `robots` or a host off the allowlist included; only `http(s)` URLs are read), and a page's link to itself is judged as any (a `#fragment` on a doubled page is not the fault). A page at such a URL whose twin (the URL with its slashes collapsed) is a page of the run counts no link in a report of breakage (`link_verdicts.counted`); one without a twin counts all but its broken or errored relative links (`../`, `committee/`, `?query`: they keep the doubled path), which the doubled slash breaks. Those are the linking page's: the digest's `through`, a row's broken relative links on every doubled page its doubled-slash links reach, each page once, bar a link broken on the twin too (same `raw_href` and kind), the twin's row counting it, ranked with the row's red (maintainer, 2026-10-24).
-Why: Fedora's, and most sites', doubled slashes are always written by a linking page, and a crawler following one meets hundreds of 404s the target page cannot fix: on the 2026-10-24 crawl `en-US/project/` has one link, a 302 to `code-of-conduct//`, and 562 broken relative links on the three pages it reaches.
-Rejected: a page reached only by a redirect from off a root not being the root's page, a page at a clean URL being the root's; the doubled slash pedantic or amber, the target's relative links then breaking for the reader; `unchecked` left `unchecked`, the URL being the fault whoever asked, and D50's `skip` being about asking (a deployer wanting silence has P7's config); a page's link to itself `doubled_slash`, which works for its reader (`#legal` scrolls, `./` reloads) and would put the page at fault, 6 `./` links on the 2026-10-24 crawl; `through` counting a doubled page once per link reaching it, which multiplies breakage the one fix removes, a `broken_anchor` there amber, the slash being the fault, or a repo's row counting such a page once, its other counts being its pages' sums; the redirecting server, not the linking page, at fault where a redirect doubles the slash, a broken experience being reported whatever breaks it (`roadmap.md`, "Project goals"), with the landing shown; every scheme's path read, where `ftp://host//etc` names the absolute `/etc` (RFC 1738, 3.2.2), a `data:` body's base64 holds `//`, and no other unchecked scheme has a path, none of that crawl's 128 other targets changing; a link and its twin copy matched by the resolved target, collapsed or not, where the fix leaves the reader on the twin's HTML, every one of its 556 broken relative links on a doubled page having a copy there by `raw_href` and kind, and 7 of 536 a collapsed match, most climbing past the `//`, or by outcome, a fragment missing on the twin being amber after the fix (all affirmed by the maintainer, 2026-10-24).
-Reopens: a site that writes a doubled slash on purpose, which `doubled_slash = false` per host judges by what the URL answered (D79); its reach is `judge.doubled_slash_reach` (D80).
-Code: `store::views`, `report::views`, `report::digest::sections`. Evidence: `store::views::tests::a_link_to_a_url_with_a_doubled_slash_is_broken_whatever_it_answered`, `report::digest::tests::a_link_broken_on_the_twin_too_is_not_broken_through_it_and_a_query_link_is`.
-
-### D72 A broken 4xx whose URL with its final `/` toggled answers is `broken_url`, reason `wrong_trailing_slash`
-A target whose hops end in a 4xx that is broken (not 401, 403 or 429), in a plan a link would be asked in and not forbidden by robots.txt, has the final URL's own `/` added or dropped and asked once for its status alone (`Mode::Asset`); a 2xx sets the reason on the target's row and, for a redirected one, its landing's, and the digest toggles the same URL again, the landing's where there is one, to name the fix. The toggled URL is no target: it is not claimed, written, read or followed, so it adds no page, orphan or link. The root's own `/` has no toggle. Maintainer, 2026-10-24: a slash the server does not supply is still broken, with the fix named; where a redirect lands on the 404 the landing is toggled and shown, the reader's experience being broken whichever of the link or the redirect supplies the `/` (`roadmap.md`, "Project goals").
-Why: the toggled URL is seldom one a link asked, none of the 2026-10-24 crawl's 826 `broken_url` targets having its toggle among the run's targets, so only asking finds the fix, and asking costs little: of the 2026-10-25 crawl's probes, only docs.fp.o's 399 ran on its long pole, about 11 s of 75 minutes at that host's average rate, every other host finishing half an hour before it.
-Rejected: a target row for the toggled URL, a page nothing links to counted and its links followed; a column or a table for the fix, a schema change for what the reason and the URL's own toggle carry; a 3xx as an answer, which leads nowhere known (a toggled URL that moves is not a fix), or following its hops (maintainer, 2026-10-24: of the 2026-10-24 crawl's targets probed, one toggle redirected back to its own 404, and one off a redirected target reached a moved page, a class of its own); the redirecting URL's own toggle for a redirected target, the landing's reason being shared by every URL that lands there, so a reason set by one URL's toggle would be read as every other's; a memo per landing, two URLs landing on one 404 making two probes, its shared state not worth that crawl's 3 such targets of 34.
-Reopens: the probes showing on a crawl's long pole; a host switches it off with `slash_probe` (D85). Code: `crawl::slash`, `url::toggle_slash`, `report::digest::sections`. Evidence: `crawl::tests::a_404_whose_url_with_its_slash_toggled_answers_says_so`, `crawl::tests::a_redirect_onto_a_404_whose_url_toggled_answers_says_so`; none of 74 of the 2026-10-24 crawl's unredirected 4xx targets sampled has a toggle answering 2xx (`runs/d72-toggle-probe-20261024/`); the 2026-10-25 crawl's full yield is 5 targets of 764 probed, all landing on two wiki pages with a stray `/`.
-
-### D73 A digest compares with the crawl run before it, a named run, or a baseline file imported for the digest and removed after
-`report digest` compares its run with `--from N`, else `--since FILE|URL` (`check-dir --baseline`'s file, `cli::file`), else the finished crawl run before it; with none the sub-title says so, and the HTML leaves out the two-run sections the JSON holds empty. A file's run is imported (D52) and its run deleted again once the document is built (`Store::discard_import`), unless the database already held it. `compared_with` in the JSON gives the run's start, finish, roots and totals, its `id` null for a file's run, the number being one the database held for a moment. Maintainer, 2026-10-23: a deployment with no history compares with the baseline it published the day before. The compared run is judged by the digest's run's policy (D81).
-Why: the imported run is a finished run later than the digest's, so left in place a bare `report` would read the baseline as the latest run (D59); a digest is written and the database is as it was.
-Rejected: attaching the file read-only, the views being bound to `main` (D52); leaving the import, a trap for the next report; comparing with the previous digest's JSON, which holds no hash or anchor; a `format_version` bump for `compared_with` going from always `null` to an object, no loader having read a value there.
-Reopens: a database too large to import into for a digest (the file grows by the import and reuses its blocks after, 33.6 to 55.3 MB on the 2026-10-24 crawl's, then 0.5 MB more). Code: `report::digest`, `report::digest::compare`, `store::baseline::import`. Evidence: `report::digest::compare::tests::a_baseline_file_is_imported_for_the_digest_and_removed_after`.
-
-### D74 A new break is attributed by the first thing the compared run held that explains it, and a link is keyed by its page, target and fragment
-A link broken in the digest's run and not in the compared one (`report_broken`, `diff`'s key without its `raw_href` or `kind`) has the first cause that holds: no crawled page there, `new_page`; the page without the key, `link_added`; the key `error` or `unchecked` there, `first_judged`; broken or uncounted there, `unexplained`; else, the key `ok` there, the target now `broken_url`, `target_removed`; now redirected where it was not or elsewhere, `target_moved`; its landing page having the fragment there, `anchor_removed`; else `unexplained`. The source shown is the target's for the three target causes, each field as the compared run recorded it where it did, else as this run does, and the linking page's for the rest. Rows are links, not keys; `fixed_breakage` is the converse with what each `became`. Maintainer, 2026-10-23: attribution by what the comparison held, never a hash.
-Why: the removal is tested before the move because a redirect onto a 404 is a page gone, and the move before the anchor because a page that moved lost the fragment by moving; `unexplained` is a rule that judges differently since (a doubled slash), which no table row names. On the 2026-10-24 crawl against 2026-10-23's all 671 new breaks are `first_judged` (the figures' +569 and +102), none fixed: en-US drifted nowhere in a day.
-Rejected: "the linking page changed", read off the hash, which blames a page for a break its edit did not make; a `cause` for each reason (`doubled_slash`, `unresolved_xref`), the reason column already saying it; a row to a key, which hides the links a maintainer edits.
-Reopens: a real pair of runs that differ, where `unexplained` is large or `target_moved` is mostly removals; a consumer wanting every anchor a page lost, `anchors-removed` listing only those a link still names. Code: `report::digest::cause`. Evidence: `report::digest::cause::tests::each_new_break_says_what_the_comparison_held`.
-
-### D75 A row is new where the compared run's same section lacked it, a broken link where section 3 lists it, and a bar marks it
-Each section a reader acts on (`pages`, `by_repo`, `broken`, `errors`, `broken_targets`, the redirects, orphans, unlisted pages and sitemap entries) gets `new`, against the compared run's same section queried again: absent by the section's key (a page; a target and fragment; a landing; a link's page, target and fragment), a repo new where it holds a broken page now and held none, a broken link new where `new_breakage` lists it. `pages` and `by_repo` count `new_links`. With no comparison both are `null`. The HTML marks a new row or drill-down with a 3px bar at its left edge in the accent colour, and a drill-down that is not new counts its new links in its summary. Maintainer, 2026-10-25: new entries are marked in every section in as little room as possible, the bar and a drill-down's count chosen.
-Why: one rule, so a mark means the same in every section; section 3's list and the marks agree. The bar takes no width on a row, 2px on a drill-down's border, and prints, with hidden text for a screen reader. Costs the compared run's sections again: 5.6 s to 7.2 s on the 2026-10-25 en-US crawl (release build).
-Rejected: a "NEW" pill, four characters on every row; a glyph by the dot, read as a severity; marking a row whenever a link under it is new, which makes a long-broken page look new; HTML-only marks, the HTML showing nothing the JSON lacks (D64); marks on the unchecked counts and hosts, aggregates with no row to act on; `false` with no comparison, which claims what is not known.
-Reopens: a section whose key a run-to-run change moves wholesale (a site moving host), marking everything new. Code: `report::digest::novelty`. Evidence: `report::digest::novelty::tests`, `report::digest::html::tests::what_is_new_is_marked_by_a_bar_and_a_drill_down_counts_its_new_links`.
-
-### D76 A link's severity is one of three levels read off its outcome and reason, and only the HTML shows it
-*Broken* (`broken_url`, `error`: the reader gets nothing) is red; *attention* (`broken_anchor`, a redirect that is not pedantic: it lands, but not where it says) amber; *pedantic* (`pedantic_trailing_slash`) a grey ring. An `unchecked` link has none, nor has a list that is not of links. A dot marks a finding, in the first column of a row naming a link or a target; a page's and a repo's summary counts its broken links, its unverifiable ones apart, and its amber ones, each at its kind's level (D82), and ranks by red then amber, a page whose only findings are errors being a row. Maintainer, 2026-10-24: the digest is skimmed by severity, and each kind's level is a default a site's `[severity]` replaces (D82).
-Why: the colour repeats the row's text and never carries it alone, each dot named by its level for a screen reader, and the ring reads apart from the filled dots without colour and in print.
-Rejected: a `severity` field in the JSON, a second statement of the outcome and reason; a column of words, read where a dot is seen; a dot on a section's summary, a heading being no finding; keeping error-only pages out of the pages, which leaves a repo's red holding links no listed page shows.
-Reopens: a level of a kind D82 cannot name. Code: `report::digest::html::severity`. Evidence: `report::digest::html::tests::a_level_is_read_off_a_links_outcome_and_reason`, `report::digest::tests::pages_and_repos_are_ranked_by_their_red_links_then_their_amber_ones`.
-
-### D77 Links are judged by a table macro reading the recorded policy, and `link_verdicts` is its call with each link's own run's
-`link_verdicts_with(policy_run := NULL)` holds the verdict SQL (D28) and reads the policy rows (D78, through D84's `policy_in_force`) of `policy_run`, else of the link's own run; a setting with no row is at today's default. The view is `SELECT * FROM link_verdicts_with()`; a view takes no parameter (D6), and a comparison judges both runs by the newer run's policy (D81).
-Why: one copy of the judgement serves a run read by its own policy and a comparison under another's; the macro is inlined, so a view's reads cost what they did: on the 2026-10-28 crawl the verdicts of one run cost 3 to 8 percent more, the digest 5 to 10 percent more CPU.
-Rejected: a second copy of the SQL for comparisons; a view per setting; a scalar parameter per setting, which a host's `doubled_slash` or a status map cannot be (P7.1's one parameter, `pedantic_trailing_slash`, was that).
-Reopens: a setting a stored fact cannot judge, which the crawl must keep (P7's rule), or the digest's cost mattering on a larger site.
-Code: `store::views`. Evidence: `store::views::tests::a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic`, `runs/p7.1-verdicts/`, `runs/p7.3-verdicts/` (every report and the digest byte-identical to P7.2's on the 2026-10-28 crawl's DB).
-
-### D78 A run records the policy it was judged by, whole, as rows of a `policy` table
-`policy(run_id, host, key, value)`: one row per setting, a list one row per element (`schemes`; `gate.fail` is one, D83), a status `status.<code>` with its outcome as the value, `host` NULL for the run-wide value and a host's name for that host's own, which only a host's settings write. `Store::begin_run` writes every setting, the defaults included, with the run in one transaction; the baseline file carries the rows (D21) and `prune` deletes them (D2). A key is a row, so a slice adding a setting changes no schema.
-Why: a report reads a run and never the file (P7), the macro must join a host's own value to the default, and the judging of a run must outlive a later default, so the rows hold the whole policy.
-Rejected: a `runs` column, a struct fixing the keys so each slice bumps the schema, or JSON, a feature `Cargo.toml` does not enable, giving the macro no join; only values differing from the default, which a later default would silently change.
-Reopens: a setting that is not text in a row. Code: `config::policy`, `store::Store::begin_run`, `store::schema`. Evidence: `store::tests::a_run_records_its_whole_policy_beside_itself`, `store::baseline::tests::a_run_policy_travels_in_the_baseline_file_and_into_the_run_that_imports_it`.
-
-### D79 A status is judged by the host that answered, a URL's shape by the host linked, and a scheme by the URL
-At read time (D77): a status code's outcome (`ok`, `broken_url` or `error`, any code but a 3xx) is the policy's for the host of the last URL of the target's hops, else the default map, else the outcome the crawl stored; `doubled_slash` is the setting of the host in the target's own URL, and of the page's host for the page's relative links; a target with reason `scheme` or `bad_scheme` is `unchecked` or `broken_url` by whether its URL's scheme is in the policy's list. A remapped status keeps the stored reason where the outcome it gives is the stored one and drops it otherwise, so a map changing nothing erases no `wrong_trailing_slash` or `too_large`; a fragment on one remapped to `ok` is `unchecked`, reason `no_anchors` (D12).
-Why: a status is what a host answered, so a redirect onto a forge's 403 is the forge's; a doubled slash is the host's whose URL or redirect wrote it, the host linked: on the 2026-10-28 crawl all 35 landings doubling a slash their link did not were another host's, each reached by the linked host's redirect (`meetbot` to `meetbot-raw`, `apps` to four hosts), and the 401s another host answered were `id.fedoraproject.org`'s login wall, one line for every linking host; a stored outcome the policy does not name stays what the crawl saw, so the default map changes nothing (`crawl::outcome::tests`).
-Rejected: the linked host for a status, a redirect onto another host's 403 then judged by the wrong host; the landing's host for a doubled slash, which a redirect wrote, switching off the landing host's own doubled URLs with it; a `status` map replacing the one beneath it rather than laid over it a code at a time, which judges the same, the crawl's D16 class standing behind every code (maintainer, 2026-10-30); the crawl keeping the policy's answer, so that a trial policy or a comparison (D77) needs a crawl; a class such as `4xx`, which makes the map ambiguous with a host's single codes.
-Reopens: a site setting both a host's code and a landing's that disagree. Code: `store::views`, `config::policy`, `crawl::frontier`. Evidence: `store::views::tests::a_status_the_policy_judges_is_read_over_the_outcome_the_crawl_stored`.
-
-### D80 The doubled slash's reach is the digest's, and it moves what is blamed on the linking page, not what is counted
-`judge.doubled_slash_reach` is `full` (every doubled-slash page the linking page's link reaches by relative links), `immediate` (the landing page alone) or `off` (none), top-level, and the digest's `through` reads the run's recorded one; `link_verdicts` and its `counted` do not.
-Why: the broken relative links on a twinless doubled page are already no page's own count (D71), so a reach only decides whether the linking page is charged for them: `off` leaves them counted nowhere, as the spec says, and `counted` is the same under all three. A report that moved with the reach in the macro would change every report and the gate for a digest's attribution.
-Rejected: `off` counting those links on their own page, which blames a page for what its linking page wrote (D71); a reach per host, the attribution being the report's and not a host's.
-Reopens: a reach the gate should read, were the gate to fail on `through`. Code: `report::digest::sections`, `config::policy`, `report::digest::html::guide`. Evidence: `report::digest::tests::the_reach_says_how_far_the_links_broken_through_a_doubled_slash_are_counted`.
-
-### D81 A comparison judges both runs by the newer run's policy, through a session variable the macro reads
-`store::JudgedBy::new(conn, run)` sets the connection's DuckDB variable `judged_by` and resets it on drop; `link_verdicts_with` takes `policy_run`, else `judged_by`, else the link's own run (D77). The gate and `report inverse` hold it at the CI run, `diff` at `--to`, a digest with a comparison at its own run, for the whole read: the compared run's figures, its `new` marks and causes (D74, D75) and the baseline's links are judged as the newer run is, so a policy change shows as no breakage of its own.
-Why: every view the reports read takes no parameter (D6), and the digest re-queries eight sections of the compared run through them (D75); a variable reaches all of them with no second copy of any query, and a run's policy rows are the newer run's, whatever the older recorded.
-Rejected: naming `policy_run` in each comparison's SQL, which needs a parameterised copy of `report_broken` and every section; a table of overrides, a write in a read; each run judged by its own policy with the change named as a cause (D74), which fails a gate on a setting nobody broke.
-Reopens: readers sharing one connection (a variable is the connection's), or a comparison wanting the older run's own policy. Code: `store::views`, `report::gate`, `report::diff`, `report::digest`. Evidence: `report::gate::tests::the_baseline_is_judged_by_the_ci_runs_policy`, `report::diff::tests::both_runs_are_judged_by_the_newer_runs_policy`, `report::digest::tests::the_compared_run_is_judged_by_the_digests_policy`.
-
-### D82 A site maps each kind to one of D76's levels in `[severity]`, and the run's recorded policy states itself in the digest
-`[severity]` keys an outcome (`broken_url`, `broken_anchor`, `error`), `redirected` or a reason, to `broken`, `attention`, `pedantic` or `none`; a reason's level beats its outcome's, `unchecked` and an unknown key are refused at load, and the map is recorded whole as `severity.<key>` rows (D78). The digest reads it off the rows, never the file: the dots, the figures' classes and the legend (each level with the kinds at it) follow it, and the pedantic guide entry names how such a redirect is marked. A page's and a repo's counts are of their links by level, ranked by red then amber, and a kind at `none` is no finding: it leaves the HTML's lists, counts and ranking (a page with only such findings has no row) and the legend names it. Housekeeping lists the rows differing from the defaults as a file writes them, and the JSON carries all of them as `policy`, its rows counted and ordered by outcome.
-Why: a level touches no outcome (the spec's reach (i)), so it needs no comparison rule; stating it is what keeps a digest whose map differs from D76's honest to a reader who sees only the page.
-Rejected: levels a site defines, which turn the legend, the ranking and the print styling into data; a `severity` field per row in the JSON, a second statement of what outcome, reason and policy already say; the map moving dots alone, which leaves a reason's key unable to move its page; ranking in SQL or dropping a `none` kind's rows from the JSON, which makes the data the policy (the HTML ranks and filters, `report::digest::html::standing`); a level on a link that is not broken or errored counting it or listing its page; a redirect at `none` listed undotted, giving `none` a second meaning, no dot where it is otherwise no finding (maintainer, 2026-10-31); the legend silent about a kind at `none`, leaving a reader of the page alone unable to tell a kind hidden from a kind absent (maintainer, 2026-10-31).
-Reopens: a loader wanting the JSON ranked by the levels. Code: `config::policy::severity`, `report::digest::html::severity`, `report::digest::html::standing`, `report::digest::html::policy`. Evidence: `config::policy::tests::a_file_moves_a_kind_to_another_level_and_a_reason_beats_its_outcome`, `report::digest::html::tests::the_severity_map_moves_the_dots_the_legend_and_the_figures`, `report::digest::html::standing::tests::pages_rank_by_their_mapped_red_links_then_their_amber_ones`, `crawl::outcome::tests::every_reason_the_crawl_writes_takes_a_severity`.
-
-### D61 Live slots are shared among the hosts with work, and a build's reads have a budget of their own
-Each host holds at most the 64 slots divided by the hosts with a target waiting or running, taken in turn,
-so the forge's waiters for its one-a-second pace leave docs.fp.o its half and the hosts overlap; a host
-alone has every slot. A URL the build holds runs in 64 slots of its own, so no waiter for production's pace
-(the prefix being its host) holds one a read wants. Rejected: a fixed cap per host; turn-taking alone;
-asking the fetcher whether a pace is free, a trait method; the build as a third lane of the 64, each cut to
-21; `available_parallelism`, differing by machine. Reopens: a host whose concurrency (D8) exceeds its share.
-Code: `crawl::schedule`. Evidence: `crawl::schedule::tests::the_builds_reads_run_whatever_waits_on_the_prefix_host`.
-
-### D18 A host's `Crawl-delay` is obeyed unless a root's host overrides it with `per_second`
-The default (D40). A `per_second` written for a host a root starts on beats `Crawl-delay`: a faster
-crawl is an explicit override by whoever has permission. On any other host the slower wins, and the
-default rate never beats it. The guide's docs.fp.o example (I2) sets `robots = false` with `per_second = 1`,
-D8's switch for a root's host: its `Disallow`s, written for search engines, hid nine live 404s. A deployer
-controlling the site writes a `robots.txt` group for its agent instead. Rejected: a `crawl_delay` key;
-`robots = false` alone passing `Crawl-delay`, reading the file it switches off. Evidence:
-`config::tests::the_guide_turns_robots_off_for_the_root_host_alone`.
-
-### D48 A stop drops each target's hops 30 s after it; "cut" is every target found and not written
-Every started target's hops end at the same instant, the stop plus `STOP_GRACE`, and one whose hops
-ended still writes whole, so a stopped run holds whole targets and its counts are exact. "Cut" is
-claimed less written, the queued included: a lower bound on what the run lacks, unfound URLs not in
-it. Rejected: aborting the tasks in `drive`, which cannot reach a write already on the blocking pool,
-its rows landing after `drive` returns; counting only targets started and dropped, which says how the
-stop went, not what the run lacks. Code: `crawl::Shared::in_grace`, `crawl::Summary::cut`.
-Evidence: `crawl::tests::a_target_unfinished_at_the_grace_is_cut`.
-
-### D49 An abandoned run waits for the writes it has begun, and only for them
-The second press closes the run's `Writes`: a write not yet begun sends nothing, and the close blocks,
-unbounded, until each begun has sent its last row, the writer draining meanwhile. Rejected: dropping
-the runtime, whose wait covers all blocking work, an extraction or a parse nobody reads and whatever a
-dependency adds (a resolver off hickory runs `getaddrinfo` there), and whose skipping of queued work
-tokio does not guarantee; a bound on the wait, which can only end it mid-target; a third press, a
-wedged DuckDB being a bug to fix. Code: `crawl::Writes`, `cli::interrupt::drive`.
-Evidence: `crawl::tests::an_abandoned_run_holds_the_page_it_was_writing_whole`.
-
-### D58 SIGINT and SIGTERM are each a press, and a stopped `check-dir` judges nothing
-`crawl` and `check-dir` stop at the first signal of either kind (D48) and abandon at the second (D49), and
-exit 128 plus the first's number (130, 143). A stopped `check-dir` runs no gate, says on stderr the build was
-not judged, and leaves its run unfinished (D2): a gate over a cut build reads what was never written as
-absent. GitHub's SIGTERM comes 7.5 s after its SIGINT and its kill 2.5 s after that (I24), inside the
-30 s grace, so the second press must abandon. Rejected: one flat 130, which hides which signal ended the run
-from a runner's log; judging what was written. Code: `cli::interrupt`, `cli::check_dir::Checked`.
-Evidence: `tests/signals.rs`.
-
-### D64 The digest is one document over a crawl run's crawled pages in every kind, its JSON holds every broken and error row, and its HTML is that document rendered with no script
-The sections (figures, broken targets ranked by the links naming them, then their pages, pages, repos, groups, errors, housekeeping) are tables built once from SQL, already ranked, and written with the run's context under a `format_version` apart from the schema's (D43), changed only by a change a loader would misread. It counts every kind (D13) on the pages a root covers, an allowlisted page holding no links (D3): a sitemap's entries are in no section but the redirects and the housekeeping's list of those no page was fetched for. The HTML lists the targets that more than one link names, the rest being in its per-page drill-downs, is dark on every screen and light in print, and is held by a golden file over the e2e site. A file is named for its run's start day in UTC, so a digest made again later is the same file, a second run that day replacing the first's, and `--name` lets two deployments' digests share an archive. Why: the CI database is truncated, and a loader dating a breakage needs the rows its runs no longer hold. Rejected: aggregates alone, which cannot date a breakage; a flag on `bruce crawl`, which cannot digest an earlier run and puts a report into the crawl (D6); a cap on the HTML's rows chosen before an every-locale run is measured; `serde_json` in production for what a few `format!`s write, a dependency joining the notices (D60); a Rust golden file beside the e2e one, a second copy to bless; the reasons' meanings in the JSON, prose for a reader; Kind `anchor` shown as `<a>`, parting the HTML's word from `--kind`'s; ranking targets by pages, which hides behind three generated pages the 266 links one restored anchor removes; an HTML per report, eleven pages with no ranking across them; a run recording its `allowlist`, `skip` and scopes for the housekeeping to name, a schema change for what the rows show as far as any page links (the hosts checked, and where each unchecked reason's links point); a digest of a `check-dir` run, whose gate prints its sections; an HTML that fetches the JSON beside it, which a file opened from disk cannot read, or renders an embedded copy by script, a blank page without one; `report digest` writing its JSON alone unless `--format` asks for the page, the file a person reads being the one a default leaves out, so `--format` defaults to `both`; no `--format`, which keeps a loader archiving only the JSON from saying so; "By repo" counting broken links by their target's repo too (maintainer, 2026-10-24), the targets' "Target's source" naming it per target; an `error` link called external, D16's `error` being any host's refusal, 5xx or silence, docs.fp.o's included, where "could not be verified" says what it is. Reopens: a reader missing a sortable table, the one thing a script would add; an every-locale digest too large to open (P9), a consumer for the gate's page.
-Code: `report::digest`. Evidence: `report::digest::tests::the_json_has_the_fields_the_manual_documents`.
-
-### D65 An unresolved xref's hint is the nearest page ID by edit distance, within three tenths of the longer, read in the page's own context
-`antora_hints` completes the refspec as Antora read it on its page (no component or module takes the page's, `ROOT` is the empty module), compares it with each `component:module:rel_path` of the run, and keeps the nearest within 3 edits in 10 of the longer, nearest by ID on a tie, none for an ID already there. On the 2026-10-23 crawl's 92 it names 47 links' hint and 34 are the page meant, by one reader. Why: Levenshtein found the typo, the missing directory and the moved module, where Jaro-Winkler weighed the shared prefix and hinted `Langpacks` for `WhatCanBePackaged`; the completion lets a refspec with no component find its page. Floors by link, hints and right: 0.8 gives 31 and 25, 0.75 41 and 30, 0.7 47 and 34, 0.65 49 and 36, 0.6 83 and 48. Rejected: Jaro-Winkler; a floor above 0.7, which loses the `:w` typos and `pgm_guide/release_process.adoc`; 0.6, whose 34 further hints hold 12 right; a hint naming a version, which the build may not hold (KD10), a refspec's version being dropped. Reopens: a hint naming the wrong page often enough on another site, or Resolve taking over the refspec grammar (I21).
-Code: `profile::antora::hints`. Evidence: `report::tests::an_unresolved_xref_names_the_nearest_page_id_within_the_distance`.
-
-### D59 A bare `report` keeps the latest finished run, says of a later unfinished one, and refuses a baseline it imported
-Without `--run` a report reads the latest finished run (D2), says on stderr that a later run stopped before
-the end, and **refuses** where that run is a later unfinished run's `baseline_run` (D58 leaves such a run):
-the rows would be the imported baseline's, read as the build's. `diff`'s default `to` does likewise.
-`--run`, `--to` and `--from` read what they name. Rejected: the latest run, finished or not, which would
-read a stopped crawl's partial rows over the last whole run; a warning alone, which a CI log buries under
-a report that looks whole. Code: `report::run::one`. Evidence: `report::tests::the_default_refuses_the_baseline_of_a_later_unfinished_run`.
-
-### D51 A target records where its answer came from, in a column the writer fills and no view reads
-`targets.answered_by` is `local`, `baseline` or `live`, `NOT NULL` with no default, so a path that copies or
-writes a target must say which. A target the build answers, and the `not_built` verdict on one it lacks, is
-`local`; every other row a crawl writes is `live`, `unchecked` included (a held URL a link's `skip` or scope leaves
-unchecked among them, a hop's landing the build holds being `local` whatever its outcome): the run decided it, as a copy does not. The verdict views ignore it, so the gate
-compares like with like (D28); `report::inverse` alone reads it, `local` meaning built (D56). Rejected: a default of `live`, which
-labels a forgotten copy as a request; a table of copies, giving `link_verdicts` a second path. Reopens: a report
-wanting to split a run's answers by route. Code: `store::schema`, `store::AnsweredBy`. Evidence: `store::tests::a_target_records_where_its_answer_came_from`.
-
-### D52 A baseline file is imported as a run of its own, and a target is copied between runs row by row
-`import_baseline` copies the file's one run in under the next number, or finds the run whose `started_at`
-and `config_hash` match (the file keeps both): the gate is then a two-run query in one database, as `diff`
-is. `copy_target` copies a target, its landing target, and each one's `pages` row and `anchors`, as
-`baseline`; a target the run already holds is untouched, `page_facts` stay behind so a copied page is
-never one the build holds (D22). Rejected: attaching the file, the gate reading across two databases and
-`baseline_run` naming a run in a file gone after the job. Reopens: a reuse that misses on a hand-edited
-file. Code: `store::baseline`. Evidence: `store::baseline::tests::a_baseline_already_imported_is_reused_and_copies_nothing`.
-
-### D53 In a local build, an href beginning `/` resolves against the prefix
-The build directory's root is the site's root, what a static server serving it at `/` shows, so
-`extract` joins such an href (not `//`) onto `--prefix`, a `<base href>` that is root-relative too.
-Why: a partial build has no `site.url` (I11), so the UI's footer writes `/legal/privacy/` with an empty
-`site.path`, which against the production origin is a 404 on every built page, a break the tool made.
-Rejected: the production origin, with the guide telling deployers to `skip` those URLs. Reopens: a
-build whose root-relative hrefs are meant for the origin, not the prefix. Code: `extract::links::Links::resolve`.
-Evidence: `extract::tests::in_a_local_build_an_href_beginning_a_slash_resolves_against_the_site_root_d53`.
-
-### D54 A URL the build lacks waits for the held set, and a copy from the baseline waits for the end
-An in-scope URL under the prefix and not built is judged after every built page is read: in a component-version one carried
-(I16) it is `broken_url`, reason `not_built`; otherwise it goes where a URL outside the build goes: the baseline's rows if
-held, else a request one hop deep. The copies are sent last, `targets` having no key to stop a copied landing page doubling
-the build's own. `--externals=skip` means never ask: an allowlisted URL gets the baseline's rows where held (a new link to
-one broken there is introduced), else `unchecked`, reason `externals_skipped`, as does a hop onto one (D50's way); in-scope
-URLs are not reached. Rejected: a pre-scan of the build (D38); `skip` as no verdict, passing that link. Reopens: a prefix
-below the site root. Code: `crawl::baseline`. Evidence: `crawl::baseline::tests`.
-
-### D55 An xref waits for the held set, resolves through the baseline's pages, and keeps its refspec
-A built page's tagged link is written once every built page is read (D54's wait). A refspec whose component-version the build holds stays `unresolved_xref`; else the
-profile's Resolve maps it through the baseline's pages, loaded before the run as its targets are (D52), and the link points at that page with the refspec's fragment,
-`xref_refspec` kept, so `link_verdicts` reads a refspec as unresolved where the link is to its own page or its fragment is the refspec (I6). No version: the one whose pages
-sit off their own segment (I5), named under it where no page is found (D57); none or several, Antora's order (I20). Rejected: a column or cleared refspec marking a resolved
-link (schema 5 refusing every published baseline, D43); a config key of prerelease versions; `rawhide` by name (D32). Reopens: Antora marking an unresolved xref other than
-as `#<refspec>` (I6). Code: `crawl::xref`, `profile::antora::resolve`. Evidence:
-`crawl::baseline::tests::an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline`, `profile::antora::resolve::tests`.
-
-### D56 The inverse check reads the held component-versions back from the CI run, and counts the links of pages outside them
-A built page's `antora.*` facts and URL give the held prefixes (I16), so `report inverse --run` works from the DB alone. The
-linking pages are the baseline's crawled pages in no held prefix and not built. A removed file is a baseline file in a held
-prefix with no `local` `ok` target, every file of the build being a seed (`ci`). Rejected: every page not built, a deleted page
-failing it on links gone with it, while those it misses are KD5's; `Held` moved under `crawl` and `report`, a `crawl`-to-`ci`
-edge against D39; a held set stored in the run, schema 5 refusing the baseline (D43); touched pages by `source_repo`, CI's pages
-carrying no edit link (I15); seeding the baseline's targets under the held prefixes, known only once the built pages are read.
-Reopens: I16 changing, its layout read in three places (D57). Code: `report::inverse`. Evidence: `report::inverse::tests`.
-
-### D57 An xref no page's facts find is the URL its refspec names, answered as any URL the build lacks
-Antora resolves a refspec through a page-alias, and to either of two files sharing an output URL; the baseline holds facts once
-per URL, and an alias only if crawled. So where Resolve's facts find no page it returns the URL I16 names, under the prefix read
-off a baseline page of the component-version, at the segment its pages sit at (I5), the refspec naming the version or not; D22's
-chain answers it: the baseline's rows, else a request. A URL answering `broken_url` makes the link `unresolved_xref`
-(`link_verdicts` rule 1); `error` and `unchecked` stay. Rejected: the baseline's redirect targets alone (an uncrawled alias is missed); `newest` skipping the candidates that give no prefix, which hides the bare-version case and still fails a component whose only baseline page is its root;
-live alone; any outcome but `ok` as unresolved, failing a PR on a timeout or refusal its author cannot fix (D16) and judging a derived
-URL more harshly than a page the facts found (D55). Reopens: I16 changing (the layout in three places). Code: `profile::antora::resolve`. Evidence: `crawl::baseline::tests::an_xref_no_page_has_the_coordinates_of_resolves_by_the_url_it_names` (a bare component's root page), `profile::antora::resolve::tests::a_refspec_no_page_has_the_coordinates_of_names_its_url` (a lookup ordered as `BaselineIndex` orders it).
-
-### D27 One binary, `bruce`, with subcommands `crawl`, `check-dir`, `report`, `export-baseline`, `prune`
-`check-dir` writes its results to a local DB too, so reports work on CI runs, and its exit status
-follows D9 and D16. It reads the config `crawl` reads, `--prefix` naming the build's production URL,
-so `skip`, the allowlist and the scopes plan a URL as they did for the baseline. `--inverse` is a flag,
-not a key: the config is the deployment's, shared by every repo, and one repo's strictness is its own.
-Rejected: a CI-only config section or file, or flags alone, a difference from the baseline's config
-reading as breakage. The flags are the manual's (`docs/manual/`). Code: `cli`.
-
-### D30 The name is `bruce`, after the Bruce claw anchor
-It was free on crates.io on 2026-10-17. `anchorage` (D25) was taken there.
-
-## Build
-
-### D11 Our own stack, not lychee-lib; lol_html is the tokenizer
-reqwest, texting_robots, lol_html and duckdb, a host's pace its own next-allowed instant (`fetch::http::host`),
-governor having no per-key quota (boinkor-net/governor#193). What is ours (crawl frontier, link graph,
-anchor semantics) lychee does not model, and its extractor would need working around (D12's rejection).
-lol_html and html5gum tied on the spike's workload; lol_html matches CSS selectors while streaming,
-which profiles and D33's rules want. Rejected: html5gum (2 crates to lol_html's 42), which leaves us an
-open-element stack and a selector matcher to write; a governor limiter per host, rebuilt as a host's rate changes.
-Evidence: `historical/initial.md`, "Existing tools"; `cargo bench` in `spikes/tokenizer/` at b436db8, `runs/tokenizer-spike/`.
-
-### D23 DuckDB is bundled; distribution is a release binary on GitHub
-The `duckdb` crate's `bundled` feature makes a binary that a CI job in the Fedora-minimal docs image
-fetches in one step. Rust is pinned in `mise.toml`, whose cargo tasks sit beside `check`, which runs
-the same commands with its own flags. A `v*` tag builds the binary in a `debian:trixie` container,
-glibc 2.41 its floor (Fedora 42 and later meet it), `libstdc++` and `libgcc_s` linked in so glibc is
-its only library, and publishes it at `mwinters0/bruce`'s releases, immutable once published.
-Rejected: `check` calling the tasks, which would make `mise run fmt` stop writing or lose the summaries; F44's glibc, shutting out Trixie and F42; static musl, DuckDB's C++ being untried there; a release built from a maintainer's tree; the Fedora forge, whose policy admits Fedora software only; for now, a container image, RPM or aarch64; `-static-libstdc++` as a linker argument, with or without `-C linker=g++`, a no-op because rustc names `-lstdc++` and `-lgcc_s` itself (hence the `-L native=` directory of static ones).
-Code: `.github/workflows/release.yml`. Evidence: `scripts/workflows.py`, the workflow's glibc and `ldd` checks.
-
-### D62 A release is tried as `-rc.N` prereleases, since a published release is immutable
-A tag with a `-` suffix is a GitHub prerelease, so Latest never names one, and the workflow is iterated on `v<x>.<y>.<z>-rc.<N>` tags until it
-is right; the bare tag follows. The repo's releases are immutable, so a fault in a published release's assets is fixed in the next patch,
-never in place, and a tag can move only while nothing has published from it (`v0.1.0` moved once, after two failed Publish runs). Every tag
-push is the maintainer's. Rejected: full releases from the start, each fix an immutable `v0.1.x`. Code: `.github/workflows/release.yml`.
-Evidence: every tag from `v0.1.0-rc.1` to `v0.2.0`, each downloaded, verified and run on `debian:trixie`, `fedora:44` and `fedora-minimal:42`
-by `runs/release-v0.1.0/recipe.sh <image> <tag>` (README's quickstart), logs in `runs/release-rc2/`, `runs/release-v0.1.0/` and
-`runs/release-v0.2.0/`; D23's static link in `runs/release-static/` (`build-a.log`, `build-b.log`: the two arguments that left it dynamic).
-
-### D63 The release workflow publishes the draft its create call returned, by id
-`gh api -X POST` creates the draft and its id is kept; both assets are uploaded to it with `curl`, the id is read back and must hold both, and
-the release is published by it. The one listing deletes a failed run's drafts, logging each id. Why: a draft is found neither by tag (`GET
-/releases/tags/<tag>` omits drafts) nor reliably by listing: `v0.1.0`'s Publish failed twice seconds after a create, inside GitHub incidents,
-its listing missing a 15-minute-old draft. Rejected: `gh release create`, which prints a URL and not an id, and `gh release upload`, which
-finds its draft by tag; finding the release by listing. Code: `.github/workflows/release.yml`.
-Evidence: runs 39820173534 (`v0.1.0-rc.3`) and 39822121858 (`v0.1.0`) on `mwinters0/bruce`, Publish logging `draft <id>` and what it holds.
-
-### D60 `bruce` is `MIT OR Apache-2.0`, and a release carries every notice its binary owes, made offline
-`LICENSE-MIT` names the holder once, its year first publication and never bumped. `THIRD-PARTY-NOTICES.txt` is committed, generated from
-`Cargo.lock` and from the license files of every `third_party/` directory DuckDB's tarball holds, compiled in or not, vendored at the
-tarball's source id so generating and the drift check stay offline. mbedtls is taken under Apache-2.0; an MPL-2.0 crate names its
-crates.io source (§3.2(a)); libpg_query's PostgreSQL License paragraphs, absent from its source, are copied from postgresql.org, held by
-their header alone. Rejected: `cargo about`; exactly the libraries linked, needing an include scan; fetching at generation; `duckdb.cpp`'s
-trailer; a pointer to DuckDB's repository; the Bison skeleton's FSF notice, its exception asking none; `The bruce contributors`; a year
-range. Reopens: a DuckDB tag whose commit is not the tarball's source id. Code: `scripts/notices.py`. Evidence: `test_notices.ThisRepo`.
-
-### D45 TLS is rustls on ring and DNS is hickory's, so a failure arrives typed
-reqwest's default `rustls` feature builds aws-lc-rs, a C build, against D23's one self-contained
-binary for the Fedora CI image; `rustls-no-provider` plus ring avoids it. hickory-dns makes NXDOMAIN
-(`broken_url`, D16) a `NetError` down the error chain, where the system resolver gives a message
-string. Cost: about 30 crates, a resolver reading `resolv.conf`
-itself, and a client that loads the system's CA bundle when built, so a crawl needs one even over `http://` (the README says so).
-Rejected: aws-lc-rs; matching the system resolver's message. Reopens: ring failing to build
-on the CI image; a use case crawling with no bundle. Code: `fetch::http`. Evidence: `fetch::http::tests::the_cause_is_found_down_the_chain`.
-
-### D31 One crate, `bruce`; its concepts are separated by top-level module, not by crate
-The binary is the only consumer, so a crate boundary buys nothing a module boundary does not.
-Segregation is still enforced: each concept in one place (`concepts.md`), module edges one-way
-(`module_graph.py`), files under `file_limits.py`'s caps. The layering between top-level modules is
-D39. Rejected: a workspace (core / I/O / CLI crates).
-Reopens: a second consumer of the core, or the evidence the `seams` skill's §4 names.
-
-### D24 Tests run on saved real pages, a mock HTTP server, and an optional Antora build
-Fixture pages from docs.fp.o (I6, I8, I9), hand-written pages for other generators' markup (I12),
-wiremock for redirects, 429 and robots, and a criterion
-parser bench that `mise run check` runs once, in test mode, as a nextest test; `mise run bench`
-times it. An end-to-end 2–3-component Antora site sits behind a task, as it is slow. The mock servers speak `http`
-alone, so two origins differ by port, and no test resolves a name to NXDOMAIN through the crawl. Rejected: a
-timing threshold in `check`, flaky at the spike's 8% run-to-run noise (`runs/tokenizer-spike/`) and tied
-to one machine.
-
-### D83 The gate fails on the outcomes the CI run's `gate.fail` names, recorded as one row
-`[gate]` `fail` is a list of `broken_url`, `broken_anchor` and `error`, `broken_url` and `broken_anchor` by default (D9); an introduced link is one whose outcome is on it and which the baseline lacks on it, so `error` fails only where named. The CI run's recorded row is read (D81), and the baseline's links are judged by that run's policy. It is one `gate.fail` row, comma-joined in a fixed order, not a row to an element (D78). An empty list is report only, the row empty and the key present. A `broken_url` or `broken_anchor` left off is listed in "introduced breakage not failing", for a link the baseline lacks at a left-off outcome, and the errors section lists every `error` whether or not it fails. The inverse check follows the list: a removed page or file will read `broken_url`, an anchor `broken_anchor`, and a row whose outcome is off it is "inverse breakage not failing", `--inverse warn` only loosening it.
-Why: a site keeps a finding in every report and stops it failing CI, which reclassifying would not (the spec's "What becomes a setting"); one row is what lets Housekeeping state a list that has lost a default element, which a row per element cannot, a dropped row being no row differing.
-Rejected: a row per element, where a list shorter than the default differs in nothing and an empty one has no rows; the left-off outcome in no gate section, which leaves a CI author nothing to read (`report broken --run` holds it, and the digest reads no `check-dir` run); the section printed only for a non-default list; an empty list refused, which sends a rollout into each repo's job as an ignored exit status that hides status 2 too.
-Reopens: a site wanting the left-off section to hold a link whose baseline had a failing outcome. Code: `config::policy::gate`, `report::gate`. Evidence: `report::gate::tests::the_ci_runs_fail_list_says_which_outcomes_are_introduced`, `report::gate::tests::an_empty_list_is_report_only`, `report::inverse::tests::an_inverse_row_fails_where_the_outcome_its_links_will_have_is_on_the_list`, `config::policy::tests::a_file_names_the_outcomes_the_gate_fails_on_and_it_is_one_row`.
-
-### D84 A trial policy is a temporary table of the policy rows every reader asks for, one set per run
-`report --config FILE` loads the file whole (D5) and `Store::try_policy` puts its `Policy::entries` (D78), the asking rows left out (D85), into a temporary table named `policy_in_force`, once for each run of the database; the macro (D77), the digest's reads of the policy (D78, D80) and the gate's `gate.fail` (D83) read that name, a view over `policy` that the temporary table shadows on the connection. A comparison then judges both runs by it through D81's variable, and the digest names the file (`trial`).
-Why: the reports hold one connection and the policy is read in the macro and in four report queries, so one name shadowed reaches all of them with no copy of any query and no write; the stored `policy` stays the runs' record, and the connection's end removes the trial, a crash leaving nothing.
-Rejected: rows under a scratch run, a write in a read that a crash leaves behind and that an import numbered after it collides with; a parameter on every report, D81's rejected parameterised copies; shadowing `policy` itself, which `main.policy` (the import's qualified name) also finds, so an import would write the trial's table.
-Reopens: a reader of `policy` that bypasses the view, but for D85's asking rows, or a report holding a second connection.
-Code: `store::trial`, `store::views`, `cli::report`. Evidence: `store::views::tests::a_trial_policy_judges_every_run_and_writes_nothing_to_the_database`, `cli::report::tests::a_report_judged_by_a_trial_config_leaves_the_database_as_it_was`, `report::gate::tests::a_trial_policy_names_the_list_in_place_of_the_ci_runs_own`.
-
-### D85 How a crawl asks is recorded with the policy and judged by nothing: a host's own settings over `[default]`'s, a body cap the site's
-`connect_timeout` and `timeout` (seconds, 10 and 30), `retries` (three; the waits double from a second, so 1, 2 and 4 s), `max_retry_after` (60 s, D16) and `slash_probe` (D72) are keys of `[default]` and `[host]`, `max_body_mib` (16) a top-level key; each is a `policy` row, the defaults included (D78). `fetch::http::Settings` holds the run-wide values and a named host's own win; a client is built per distinct connect timeout, the total timeout set on each request; D72's probe asks the toggled URL's host.
-Why: a trial policy answers for a run read again, and a run cannot be asked again, so `Store::try_policy` writes the judging rows alone and the digest reads the asking rows from the stored `policy`: a trial's Housekeeping states the file's judging and the run's asking.
-Rejected: the file's asking rows in a trial, which state a crawl that asked otherwise; one total timeout on the client, which cannot be a host's; a list of waits, where a count with the doubling is the one thing a site tunes; a body cap per host, a page's size not being its host's.
-Reopens: a second reader of the asking rows that needs the trial's, or a wait that is not a doubling.
-Code: `config::policy::asking`, `fetch::http`, `crawl::slash`, `store::trial`, `report::digest::sections`. Evidence: `fetch::http::tests::a_hosts_own_timeout_replaces_the_fetchers`, `crawl::tests::a_host_with_its_slash_probe_off_is_not_asked_for_the_toggle`, `report::digest::tests::a_trial_judges_the_digest_and_leaves_how_the_run_asked_as_it_recorded`.
-
-### D86 The digest groups its pages by the fact `[digest]` `group_by` names, and by nothing unless a site says so
-`group_by` is a full fact key (D37), `antora.component` for Fedora; it is one `digest.group_by` row (D78), empty where unset, read by the digest from the policy in force (D84) as the severity map is (D82). `by_group` in the JSON is `by_repo`'s columns for each value of the fact, as `group`, and has no row for a run that groups by nothing or by a fact no page carries; the HTML renders no section for it, as it never did for components. `format_version` is 2: `by_component` is renamed.
-Why: the core named one generator's fact (D32); the key is the site's, as P7's rule says of every policy, and a core default of `antora.component` would put Antora back in it.
-Rejected: a default of `antora.component`; a key validated against the profiles' facts at load, the loader not knowing them (a key no page carries groups nothing, which the digest shows as none); keeping `by_component` beside `by_group`, two names for one table.
-Reopens: a site grouping by two facts, or the HTML wanting the section.
-Code: `config::policy::digest`, `report::digest::sections`. Evidence: `report::digest::tests::pages_are_grouped_by_the_fact_the_policy_names_and_by_nothing_otherwise`, `config::policy::tests::a_file_names_the_fact_the_digest_groups_by_and_it_is_one_row`.
-
-### D87 The reports read a profile's generator knowledge through the profile: `link_hints` for a hint, `sitemap_note` for the sitemap's sentence
-The store makes `link_hints` from each registered profile's view named `<profile>_hints` (the columns `run_id`, `src_url_id`, `xref_refspec`, `hint`), a view of no rows where none ships one, and `report_broken` joins it. `Profile::sitemap_note` is a sentence the digest prints above the sitemap entries no page was fetched for, once for each profile that read a crawled page of the run (`pages.profile`), so `digest` takes the `Registry`.
-Why: a core view naming `antora_hints` failed to create on a registry without Antora, and the digest said Antora of every site; neither is core's to know (D32, D38).
-Rejected: a fifth hook for hints, a name convention being the precedent Views already has; the note stored as a fact or a view, a sentence being no data; `Digest.sitemap_notes` set by the caller as `trial` is, a digest silently without its sentence.
-Reopens: a second profile shipping hints with a different measure, whose rows `link_hints` would merge by the least text.
-Code: `store::views::link_hints`, `profile::Profile`, `report::digest::sections`. Evidence: `report::tests::a_registry_whose_profiles_ship_no_hints_still_has_the_broken_view`, `report::digest::tests::the_sitemap_note_is_what_the_profiles_of_the_crawled_pages_say`.
+[`decisions/store.md`](decisions/store.md)
+- **D2** Runs are append-only: every row but `meta`'s carries a `run_id`, and only a run's `finished_at` is updated
+- **D26** A URL's identity is a u64 hash of its canonical form, stable across runs
+- **D43** A DB records its schema version, and `bruce` refuses a DB of another version
+- **D28** Fragment verdicts are computed in SQL after the crawl, not during it
+- **D51** A target records where its answer came from, in a column the writer fills and no view reads
+- **D52** A baseline file is imported as a run of its own, and a target is copied between runs row by row
+
+## Outcomes and the recorded policy
+[`decisions/judgement.md`](decisions/judgement.md)
+- **D16** Five outcomes; `error` is separate from broken and fails CI only where a site's `fail` list names it
+- **D20** An unresolved xref is a broken page reference, never a same-page fragment
+- **D66** A scheme a public web page uses is `unchecked`; any other is `broken_url`, reason `bad_scheme`
+- **D70** A redirect that only adds or drops a final `/` is `ok`, reason `pedantic_trailing_slash`
+- **D71** A doubled slash in a URL's path is the linking page's fault: the link is `broken_url`, reason `doubled_slash`
+- **D88** A page at a doubled-slash URL counts only what it owns; what the slash breaks is the linking page's `through`
+- **D72** A broken 4xx whose URL with its final `/` toggled answers is `broken_url`, reason `wrong_trailing_slash`
+- **D77** Links are judged by a table macro reading the recorded policy, and `link_verdicts` is its call with each link's own run's
+- **D78** A run records the policy it was judged by, whole, as rows of a `policy` table
+- **D79** A status is judged by the host that answered, a URL's shape by the host linked, and a scheme by the URL
+- **D81** A comparison judges both runs by the newer run's policy, through a session variable the macro reads
+- **D84** A trial policy is a temporary table of the policy rows every reader asks for, one set per run
+
+## CI mode
+[`decisions/ci.md`](decisions/ci.md)
+- **D4** CI resolves targets outside its build against a published baseline, then live
+- **D9** CI fails only on breakage the change introduced
+- **D21** CI consumes a single-run baseline file, not the history DB
+- **D22** A local build's links resolve locally, then against the baseline, then by allowlist
+- **D53** In a local build, an href beginning `/` resolves against the prefix
+- **D54** A URL the build lacks waits for the held set, and a copy from the baseline waits for the end
+- **D55** An xref waits for the held set, resolves through the baseline's pages, and keeps its refspec
+- **D56** The inverse check reads the held component-versions back from the CI run, and counts the links of pages outside them
+- **D57** An xref no page's facts find is the URL its refspec names, answered as any URL the build lacks
+- **D83** The gate fails on the outcomes the CI run's `gate.fail` names, recorded as one row
+
+## Reports and the digest
+[`decisions/reports.md`](decisions/reports.md)
+- **D6** Reports are SQL views stored in the DB and run by `bruce report <kind>`
+- **D59** A bare `report` keeps the latest finished run, says of a later unfinished one, and refuses a baseline it imported
+- **D64** The digest is one document over a crawl run's crawled pages in every kind, its JSON holds every broken and error row, and its HTML is that document rendered with no script
+- **D73** A digest compares with the crawl run before it, a named run, or a baseline file imported for the digest and removed after
+- **D74** A new break is attributed by the first thing the compared run held that explains it, and a link is keyed by its page, target and fragment
+- **D75** A row is new where the compared run's same section lacked it, a broken link where section 3 lists it, and a bar marks it
+- **D76** A link's severity is one of three levels read off its outcome and reason, and only the HTML shows it
+- **D80** The doubled slash's reach is the digest's, and it moves what is blamed on the linking page, not what is counted
+- **D82** A site maps each kind to one of D76's levels in `[severity]`, and the run's recorded policy states itself in the digest
+- **D86** The digest groups its pages by the fact `[digest]` `group_by` names, and by nothing unless a site says so
+
+## Build, layering and release
+[`decisions/build.md`](decisions/build.md)
+- **D31** One crate, `bruce`; its concepts are separated by top-level module, not by crate
+- **D39** The layering: `cli` › `crawl`, `ci`, `report` › `fetch`, `extract`, `store` › `profile` › `forge`, `config` › `url`
+- **D11** Our own stack, not lychee-lib; lol_html is the tokenizer
+- **D24** Tests run on saved real pages, a mock HTTP server, and an optional Antora build
+- **D23** DuckDB is bundled; distribution is a release binary on GitHub
+- **D60** `bruce` is `MIT OR Apache-2.0`, and a release carries every notice its binary owes, made offline
+- **D62** A release is tried as `-rc.N` prereleases, since a published release is immutable
+- **D63** The release workflow publishes the draft its create call returned, by id
+- **D89** A release's notes are its annotated tag's message, drafted by `/release` from a template

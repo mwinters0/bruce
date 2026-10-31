@@ -7,7 +7,8 @@ the next reads the standing record against the code, and nothing caps what each
 landing adds to it, so a record left alone grows faster than anyone re-reads
 it and its claims rot unseen. Both halves are mechanical, so both are here:
 
-* **The caps.** `decisions.md` at its line cap and seven lines an entry; every
+* **The caps.** Each register entry at its character cap, no line of one that
+  could wrap, the index and the topic files naming the same entries; every
   dated entry at the length `docs/status/history/README.md` states;
   `CLAUDE.md`, `docs/process.md` and each skill at the sizes that keep
   orientation cheap. Adding under a full one means striking; a session never
@@ -23,7 +24,8 @@ it and its claims rot unseen. Both halves are mechanical, so both are here:
   red. Red is the trigger for a repoint; the phase docs are centering and
   history is deleted at a keystone, so neither is counted. **`none` is no
   baseline yet**: before any commit has been read against, growth is measured
-  from the empty tree.
+  from the empty tree. The decision register's growth is metered apart, in
+  bytes, red meaning an audit of every entry rather than a repoint.
 
 Usage:
 
@@ -45,9 +47,19 @@ from typing import Iterable, Sequence
 
 REPO = Path(__file__).resolve().parent.parent
 
-#: The register's caps: `docs/process.md`, "The decision register".
-REGISTER_LINES = 700
-ENTRY_LINES = 7
+#: The register: `docs/process.md`, "The decision register". The index is
+#: `decisions.md`, one `- **D<k>** <title>` line an entry; the bodies are the
+#: topic files under `REGISTER_DIR`. An entry is capped in characters, the
+#: unit a writer cannot absorb by reformatting (a line cap is met by
+#: lengthening lines, never by striking), and a line that could wrap under
+#: `LINE_COLUMNS` is named. The register whole has no cap: a full one strikes
+#: a live decision to admit the next. Its growth since the repoint stamp is a
+#: meter (`REGISTER_GROWTH_BYTES`), red meaning an audit of every entry
+#: against the code.
+REGISTER_DIR = "docs/design/decisions"
+ENTRY_CHARS = 850
+LINE_COLUMNS = 120
+REGISTER_GROWTH_BYTES = 16 * 1024
 #: The one statement of this is `docs/status/history/README.md`; this is that
 #: number, held against every entry.
 HISTORY_LINES = 350
@@ -68,7 +80,9 @@ STAMP_RE = re.compile(r"<!-- repointed: ([0-9a-f]{7,40}|none) -->")
 NO_BASELINE = "none"
 #: How the meter names the base it measured from when there is no stamp.
 EMPTY_BASE = "the empty tree"
-ENTRY_RE = re.compile(r"^### (D\d+)\b")
+ENTRY_RE = re.compile(r"^### (D\d+)\b ?(.*)$")
+INDEX_RE = re.compile(r"^- \*\*(D\d+)\*\* (.*)$")
+WATERMARK_RE = re.compile(r"<!-- decision-watermark: D(\d+) -->")
 HISTORY_NAME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.md$")
 #: Provenance: a slice, a ledger row, a date. `D<k>`, `KD<k>`, `I<n>`, `S<k>`
 #: and `UF<k>` are handles, not provenance, and are what a comment should carry.
@@ -92,28 +106,69 @@ def _lines(path: Path) -> list[str]:
     return path.read_text(encoding="utf-8").splitlines()
 
 
+def register_files(repo: Path) -> list[Path]:
+    """The index and every topic file, the paths the register's size is read over."""
+    index = repo / "docs" / "design" / "decisions.md"
+    topics = sorted((repo / REGISTER_DIR).glob("*.md")) if (repo / REGISTER_DIR).exists() else []
+    return [index, *topics]
+
+
 def register_problems(repo: Path) -> list[str]:
-    path = repo / "docs" / "design" / "decisions.md"
-    if not path.exists():
-        return [f"{path.relative_to(repo)}: missing"]
-    lines = _lines(path)
+    index, *topics = register_files(repo)
+    if not index.exists():
+        return [f"{index.relative_to(repo)}: missing"]
     problems = []
-    if len(lines) > REGISTER_LINES:
-        problems.append(
-            f"decisions.md is {len(lines)} lines against a cap of {REGISTER_LINES}"
-        )
-    entry, body = None, 0
-    for line in lines + ["## end"]:
-        if line.startswith("## ") or ENTRY_RE.match(line):
-            if entry and body > ENTRY_LINES:
-                problems.append(
-                    f"decisions.md {entry} runs {body} lines against {ENTRY_LINES}"
-                )
+    text = index.read_text(encoding="utf-8")
+    indexed: dict[str, str] = {}
+    for line in text.splitlines():
+        m = INDEX_RE.match(line)
+        if m and m.group(1) in indexed:
+            problems.append(f"decisions.md indexes {m.group(1)} twice")
+        elif m:
+            indexed[m.group(1)] = m.group(2).strip()
+    watermark = WATERMARK_RE.search(text)
+    entries: dict[str, tuple[str, str]] = {}
+    for path in topics:
+        rel = path.relative_to(repo)
+        entry, chars = None, 0
+
+        def close() -> None:
+            if entry and chars > ENTRY_CHARS:
+                problems.append(f"{rel} {entry} runs {chars} characters against {ENTRY_CHARS}")
+
+        for n, line in enumerate(_lines(path) + ["## end"], 1):
             m = ENTRY_RE.match(line)
-            entry, body = (m.group(1) if m else None), 0
-        elif line.strip():
-            body += 1
+            if m or line.startswith("## "):
+                close()
+                entry, chars = (m.group(1) if m else None), 0
+                if m and m.group(1) in entries:
+                    problems.append(f"{m.group(1)} is held by {entries[m.group(1)][0]} and {rel}")
+                elif m:
+                    entries[m.group(1)] = (str(rel), m.group(2).strip())
+            elif line.strip():
+                chars += len(line.strip())
+            if len(line) > LINE_COLUMNS and " " in line[LINE_COLUMNS:] and not line.startswith("#"):
+                problems.append(f"{rel}:{n} runs past {LINE_COLUMNS} columns and could wrap")
+    for d, (rel, title) in sorted(entries.items(), key=lambda kv: int(kv[0][1:])):
+        if d not in indexed:
+            problems.append(f"{rel} holds {d}, which decisions.md does not index")
+        elif indexed[d] != title:
+            problems.append(f"{d} is indexed as {indexed[d]!r} but headed {title!r} in {rel}")
+    for d in sorted(set(indexed) - set(entries), key=lambda d: int(d[1:])):
+        problems.append(f"decisions.md indexes {d}, which no topic file holds")
+    if watermark is None:
+        problems.append("decisions.md carries no `<!-- decision-watermark: D<k> -->`")
+    elif entries and int(watermark.group(1)) < max(int(d[1:]) for d in entries):
+        problems.append(f"the decision watermark D{watermark.group(1)} is below an entry")
     return problems
+
+
+def register_bytes(repo: Path, rev: str | None = None) -> int:
+    """The register's size in bytes, in the working tree or at `rev`."""
+    if rev is None:
+        return sum(p.stat().st_size for p in register_files(repo) if p.exists())
+    listing = _git(repo, "ls-tree", "-r", "-l", rev, "--", "docs/design/decisions.md", REGISTER_DIR)
+    return sum(int(row.split()[3]) for row in listing.splitlines() if row.strip())
 
 
 def history_problems(repo: Path) -> list[str]:
@@ -296,14 +351,19 @@ def meter_problems(repo: Path, stamp: str | None, budget: int, out) -> list[str]
             return [f"the repoint stamp {stamp} is not an ancestor of HEAD"]
         base, named = stamp, stamp
     g = growth_since(repo, base)
+    register = register_bytes(repo) - register_bytes(repo, base)
     print(
         f"since {named}: live docs {g.docs:+d}, source comments {g.comments:+d}, "
-        f"net {g.total:+d} of a {budget}-line budget",
+        f"net {g.total:+d} of a {budget}-line budget; the decision register "
+        f"{register:+d} of a {REGISTER_GROWTH_BYTES}-byte budget",
         file=out,
     )
+    problems = []
     if g.total > budget:
-        return [f"the live record has grown {g.total} lines since {named}; repoint"]
-    return []
+        problems.append(f"the live record has grown {g.total} lines since {named}; repoint")
+    if register > REGISTER_GROWTH_BYTES:
+        problems.append(f"the decision register has grown {register} bytes since {named}; audit it")
+    return problems
 
 
 def check(

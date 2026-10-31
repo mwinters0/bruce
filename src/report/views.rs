@@ -21,7 +21,7 @@ FROM pages p
 JOIN targets t ON t.run_id = p.run_id AND t.url_id = p.url_id",
 };
 
-/// The links of one outcome set that count (D71), with the page they are on and
+/// The links of one outcome set that count (D88), with the page they are on and
 /// what their target answered. `$outcomes` is the `IN` list; `$columns` and `$joins` add
 /// to the select list and the `FROM`.
 macro_rules! link_rows {
@@ -63,7 +63,7 @@ const ERRORS: View = View {
     select: link_rows!("", "", "('error')"),
 };
 
-/// A page's counted links (D71) by kind, one row for each kind it links by. A
+/// A page's counted links (D88) by kind, one row for each kind it links by. A
 /// page with no links has no row; `bruce report stats` joins this to
 /// `report_pages` to keep it.
 const STATS: View = View {

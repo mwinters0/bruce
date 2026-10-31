@@ -13,6 +13,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Sequence
 
 import workflows
 
@@ -156,42 +157,92 @@ class ThisRepo(unittest.TestCase):
         self.assertEqual(done.returncode, 0, done.stderr)
 
 
-class SchemaStep(unittest.TestCase):
-    """The release's "Name the schema change" step, run as `script` prints it
-    in a workspace whose `src` is a clone of a repo with a tag per release, and
-    a `gh` that answers the latest-release call."""
+NOTES = (
+    "Every link checked twice, and a renamed flag.\n\n"
+    "## 💥 Breaking changes\n- BREAKING(cli): `--a` is now `--b`.  ( url )\n\n"
+    "## 🚀 Features\n- feat(crawl): x.  ( url )\n"
+)
 
-    STEP = "Name the schema change"
+
+def git(cwd: Path, *args: str) -> None:
+    env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
+    subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True)
+
+
+def release_step(name: str) -> workflows.Step:
+    release = workflows.REPO / workflows.WORKFLOWS / "release.yml"
+    chosen = [s for s in workflows.steps(release.read_text(), "release.yml") if s.name == name]
+    assert len(chosen) == 1, name
+    return chosen[0]
+
+
+class TagStep(unittest.TestCase):
+    """The release's "Check the tag against the crate" step: the notes are the
+    tag's message, so only an annotated tag with text is a release."""
+
+    def run_step(self, tag_args: Sequence[str]) -> tuple[int, str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            src = work / "src"
+            src.mkdir()
+            git(src, "init", "-q")
+            (src / "Cargo.toml").write_text('[package]\nname = "bruce"\nversion = "0.3.0"\n')
+            git(src, "add", ".")
+            git(src, "commit", "-q", "-m", "release")
+            git(src, "tag", *tag_args, "v0.3.0")
+            env = {**os.environ, "GITHUB_WORKSPACE": str(work), "GITHUB_REF_NAME": "v0.3.0"}
+            done = subprocess.run(["bash"], input=workflows.script([release_step("Check the tag against the crate")]),
+                                  text=True, capture_output=True, env=env, cwd=work)
+            return done.returncode, done.stdout + done.stderr
+
+    def test_an_annotated_tag_with_notes_passes(self):
+        code, out = self.run_step(["-a", "-m", "Notes."])
+        self.assertEqual(code, 0, out)
+
+    def test_a_lightweight_tag_is_refused(self):
+        code, out = self.run_step([])
+        self.assertNotEqual(code, 0)
+        self.assertIn("lightweight tag", out)
+
+    def test_an_empty_annotation_is_refused(self):
+        code, out = self.run_step(["-a", "-m", "", "--cleanup=verbatim"])
+        self.assertNotEqual(code, 0)
+        self.assertIn("annotation is empty", out)
+
+
+class BodyStep(unittest.TestCase):
+    """The release's "Write the release body" step, run as `script` prints it
+    in a workspace whose `src` is a clone of a repo with a tag per release, the
+    release's own annotated with its notes, and a `gh` that answers the
+    latest-release call."""
+
+    STEP = "Write the release body"
 
     def schema(self, n: int) -> str:
         return f"pub const SCHEMA_VERSION: u32 = {n};\n"
 
-    def git(self, cwd: Path, *args: str) -> None:
-        env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
-               "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
-        subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True)
-
-    def body(self, released: tuple[str, int] | None, now: int, gh_fails: str | None = None):
+    def body(self, released: tuple[str, int] | None, now: int, gh_fails: str | None = None,
+             notes: str = NOTES):
         """The step's exit code, its output and the body file, for a repo
         whose latest release is `(tag, schema)` and whose tree is at `now`."""
-        release = workflows.REPO / workflows.WORKFLOWS / "release.yml"
-        chosen = [s for s in workflows.steps(release.read_text(), "release.yml") if s.name == self.STEP]
-        self.assertEqual(len(chosen), 1)
         with tempfile.TemporaryDirectory() as tmp:
             work = Path(tmp)
             origin = work / "server" / "owner" / "repo"
             src = work / "src"
             (origin / "src" / "store").mkdir(parents=True)
-            self.git(origin, "init", "-q")
+            git(origin, "init", "-q")
             if released:
                 (origin / "src" / "store" / "schema.rs").write_text(self.schema(released[1]))
-                self.git(origin, "add", ".")
-                self.git(origin, "commit", "-q", "-m", "release")
-                self.git(origin, "tag", released[0])
+                git(origin, "add", ".")
+                git(origin, "commit", "-q", "-m", "release")
+                git(origin, "tag", released[0])
             (origin / "src" / "store" / "schema.rs").write_text(self.schema(now))
-            self.git(origin, "add", ".")
-            self.git(origin, "commit", "-q", "--allow-empty", "-m", "tag")
-            self.git(work, "clone", "-q", f"file://{origin}", "src")
+            git(origin, "add", ".")
+            git(origin, "commit", "-q", "--allow-empty", "-m", "tag")
+            (work / "notes.md").write_text(notes)
+            git(origin, "tag", "-a", "v0.3.0", "-F", str(work / "notes.md"), "--cleanup=whitespace")
+            git(work, "clone", "-q", "--branch", "v0.3.0", f"file://{origin}", "src")
             bin_ = work / "bin"
             bin_.mkdir()
             gh = bin_ / "gh"
@@ -204,28 +255,46 @@ class SchemaStep(unittest.TestCase):
             gh.write_text(f"#!/bin/sh\n{answer}\n")
             gh.chmod(0o755)
             env = {**os.environ, "PATH": f"{bin_}:{os.environ['PATH']}", "GITHUB_WORKSPACE": str(work),
-                   "GITHUB_REPOSITORY": "owner/repo", "GH_TOKEN": "x"}
-            done = subprocess.run(["bash"], input=workflows.script(chosen), text=True,
+                   "GITHUB_REPOSITORY": "owner/repo", "GH_TOKEN": "x", "GITHUB_REF_NAME": "v0.3.0"}
+            done = subprocess.run(["bash"], input=workflows.script([release_step(self.STEP)]), text=True,
                                   capture_output=True, env=env, cwd=work)
             path = src / "dist" / "release-body.md"
             return done.returncode, done.stdout + done.stderr, path.read_text() if path.exists() else None
 
-    def test_a_changed_schema_is_named_with_both_numbers(self):
+    def test_a_changed_schema_is_a_caution_ahead_of_the_notes_first_section(self):
         code, out, body = self.body(("v0.1.0", 4), 5)
         self.assertEqual(code, 0, out)
-        self.assertIn("**Database schema 5, changed from 4 in v0.1.0.**", body)
+        self.assertTrue(body.startswith("Every link checked twice, and a renamed flag.\n\n## ⚠️ CAUTION\n"), body)
+        self.assertIn("- **Database schema 5, changed from 4 in v0.1.0.**", body)
         self.assertIn("refuses a database made by v0.1.0", body)
+        self.assertLess(body.index("## ⚠️ CAUTION"), body.index("## 💥 Breaking changes"))
+        self.assertIn("## 🚀 Features\n- feat(crawl): x.  ( url )", body)
 
-    def test_an_unchanged_schema_says_so(self):
+    def test_a_changed_schema_joins_the_notes_own_caution(self):
+        notes = NOTES.replace("## 💥", "## ⚠️ CAUTION\n- No stability is promised until v1.0.\n\n## 💥")
+        code, out, body = self.body(("v0.1.0", 4), 5, notes=notes)
+        self.assertEqual(code, 0, out)
+        self.assertEqual(body.count("## ⚠️ CAUTION"), 1)
+        self.assertIn("## ⚠️ CAUTION\n- **Database schema 5, changed from 4 in v0.1.0.**", body)
+        self.assertIn("- No stability is promised until v1.0.", body)
+
+    def test_notes_with_no_section_take_the_caution_at_their_end(self):
+        code, out, body = self.body(("v0.1.0", 4), 5, notes="Only a summary.\n")
+        self.assertEqual(code, 0, out)
+        self.assertTrue(body.startswith("Only a summary.\n"), body)
+        self.assertTrue(body.rstrip().endswith("so start a new database."), body)
+
+    def test_an_unchanged_schema_is_a_closing_line(self):
         code, out, body = self.body(("v0.1.0", 5), 5)
         self.assertEqual(code, 0, out)
-        self.assertIn("Database schema 5, as in v0.1.0", body)
+        self.assertTrue(body.rstrip().endswith("Database schema 5, as in v0.1.0: a database made by either opens in the other."))
+        self.assertNotIn("CAUTION", body)
         self.assertNotIn("changed from", body)
 
     def test_the_first_release_has_no_earlier_one(self):
         code, out, body = self.body(None, 5)
         self.assertEqual(code, 0, out)
-        self.assertIn("Database schema 5. There is no earlier release.", body)
+        self.assertTrue(body.rstrip().endswith("Database schema 5. There is no earlier release."))
 
     def test_a_failed_lookup_that_is_no_404_fails_the_step(self):
         code, out, body = self.body(("v0.1.0", 4), 5, gh_fails="gh: Bad gateway (HTTP 502)")
@@ -233,10 +302,11 @@ class SchemaStep(unittest.TestCase):
         self.assertIn("HTTP 502", out)
         self.assertIsNone(body)
 
-    def test_the_publish_step_sends_the_body_file(self):
+    def test_the_publish_step_sends_the_body_file_and_nothing_generated(self):
         release = workflows.REPO / workflows.WORKFLOWS / "release.yml"
         publish = workflows.steps(release.read_text(), "release.yml")[-1]
         self.assertIn("-F body=@release-body.md", publish.run)
+        self.assertNotIn("generate_release_notes", publish.run)
 
 
 if __name__ == "__main__":

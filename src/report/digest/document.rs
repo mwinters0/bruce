@@ -90,7 +90,7 @@ pub struct Digest {
     /// `broken_url` plus `error` plus `through`, then `broken_anchor`: `page`,
     /// `title`, `source_repo`, `source_path`, `source_url`, `links`,
     /// `broken_url`, `broken_anchor`, `error` and `through`, the broken or
-    /// errored path-relative links on the doubled-slash pages its links reach (D71).
+    /// errored path-relative links on the doubled-slash pages its links reach (D88).
     pub pages: Table,
     /// Every broken link, a page's together and the pages in `pages`' order:
     /// `page`, `raw_href`, `target`, `landing`, `fix`, `fragment`, `kind`,

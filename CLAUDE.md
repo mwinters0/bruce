@@ -54,9 +54,10 @@ rates is not a measurement. Over 30 minutes inside `/gosub`, follow
 - `docs/process.md`: the development process. **Don't read it directly.
   Invoke the `process` skill** before implementing or wrapping a phase or
   slice, writing a spec, repointing, or updating `STATUS.md`.
-- `docs/design/decisions.md`: the `D<k>` register, capped at 700 lines.
-  **Read the entries for a mechanism before changing it or proposing an
-  optimization to it.** Cite an entry, never restate it.
+- `docs/design/decisions.md`: the `D<k>` register's index, the bodies by
+  topic under `decisions/`. **Read the topic file for a mechanism before
+  changing it or proposing an optimization to it.** Cite an entry, never
+  restate it; an entry is capped, the register metered.
 - `docs/design/site-invariants.md` (`I<n>`): what docs.fp.o and Antora do
   that decisions rely on. **Add an entry when a decision starts depending on
   external behaviour. Walk the file at a new Antora version, or when the site

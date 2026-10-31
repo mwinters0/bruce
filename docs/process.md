@@ -84,17 +84,29 @@ one being unable to say which phase is short.
 
 ## The decision register
 
-`docs/design/decisions.md` is **capped at 700 lines** of numbered entries, each
-at most seven lines: **Decision**, **Why**, **Rejected** (and why), **Reopens**,
-**Code** (the item), **Evidence** (an invariant, a test, a `runs/` artifact).
+`docs/design/decisions.md` is the **index and the citation target** — one
+`- **D<k>** <title>` line per entry under its topic's heading, and the
+allocation watermark — and each entry's body lives in its topic's file under
+`docs/design/decisions/`, which opens with what the topic is and reads on its
+own. An entry is **Decision**, **Why**, **Rejected** (and why), **Reopens**,
+**Code** (the item), **Evidence** (an invariant, a test, a `runs/` artifact),
+**at most `ENTRY_CHARS` characters** (`scripts/repoint.py`), wrapped at 120
+columns.
 
 - **`D<k>` is allocated on discovery, never renumbered and never reused**, as
   `P<k>` is: entries get cited, and a citation that renumbers lies.
 - **Mechanism description is not an entry**: how the thing works lives in the
   code and its rustdoc, and an entry says why it is that shape.
+- **A `Rejected` item is an alternative a reader of the code would propose**,
+  never the record of what one session tried; an entry cites no dated history
+  entry, which would hold that file past its keystone.
 - **A code comment cites `D<k>` in one line**, never re-arguing it.
-- **The cap is the mechanism**: folding a phase's decisions in prunes those that
-  no longer bind.
+- **The entry cap is the mechanism against padding; the audit is the mechanism
+  against dead weight.** No cap bounds the register whole, since a full one
+  strikes a live decision to admit the next: `repoint.py` meters the register's
+  growth in bytes since the last repoint, and red means every entry is read
+  against the code — mechanism, duplicate and spent rejection cut, an entry that
+  no longer binds struck — never that something is struck to fit.
 
 ## STATUS.md
 
@@ -240,7 +252,7 @@ the record has grown rather than by phase boundaries.
 **Three rules prevent most of what a repoint would otherwise find.**
 
 - **A cap is a check.** Everything that accretes has a ceiling asserted by
-  `scripts/repoint.py`: the register's line and entry caps, a dated entry at
+  `scripts/repoint.py`: the register's entry cap, a dated entry at
   its stated length, `CLAUDE.md`, this document and each skill at the
   sizes that keep orientation cheap, no phase provenance in a source comment.
   Adding under a full cap means striking; a session never raises one to fit
@@ -340,10 +352,10 @@ question**: every use case has an implementation, however crude, and what
 remains is expansion or ergonomics. The test is a reader — **can one who knows
 the domain read the code and predict where a new feature goes?**
 
-1. **Harvest**, then **prune to the cap.** Pull each decision the code cannot
-   explain into `decisions.md` as a `D<k>` entry, and each negative result with
-   it — the code records what was built, never what was tried and abandoned —
-   then drop the entries that no longer bind.
+1. **Harvest**, then **prune.** Pull each decision the code cannot explain
+   into the register as a `D<k>` entry, and each negative result with it — the
+   code records what was built, never what was tried and abandoned — then drop
+   the entries that no longer bind.
 2. **Retarget.** Repoint `CLAUDE.md`'s read-triggers. **This is where the token
    cost actually drops** — orientation cost is what the triggers pull into
    context, not what exists on disk.

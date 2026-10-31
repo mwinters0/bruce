@@ -26,7 +26,7 @@ one exactly this and nothing else:
   `docs/design/decisions.md`, `docs/design/roadmap.md`,
   `docs/design/site-invariants.md`, `docs/design/concepts.md`,
   `docs/status/STATUS.md`, `docs/status/deficiencies.md`,
-  `docs/status/upstream.md`, `docs/manual/` and `README.md` where they exist, plus the register section headed with that module's name and
+  `docs/status/upstream.md`, `docs/manual/` and `README.md` where they exist, plus the register's topic file (`docs/design/decisions/`) for that module and
   the `docs/status/seam-findings.md` line of each `seam: S<k>` marker in it.
 
 > Read the source in full. Then read only the record lines given. For every

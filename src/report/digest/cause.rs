@@ -50,7 +50,7 @@ fn cause_order() -> String {
 /// are written into the text, being numbers.
 ///
 /// What `from` held of a key is read off every link of its run, counted or
-/// not (D71), and a key it held broken is no new break.
+/// not (D88), and a key it held broken is no new break.
 pub(super) fn new_breakage(conn: &Connection, from: RunId, to: RunId) -> Result<Table, Error> {
     let (c, r) = (from.0, to.0);
     let order = cause_order();
@@ -109,7 +109,7 @@ pub(super) fn new_breakage(conn: &Connection, from: RunId, to: RunId) -> Result<
 /// The links `from` had broken that are not in `to`, with what each is there
 /// in `became`: `ok`, `error` or `unchecked`; `link_removed`, the page no
 /// longer holding it; `page_removed`, `to` not reaching the page; or
-/// `uncounted`, a link `to` holds on a page whose twin answers for it (D71).
+/// `uncounted`, a link `to` holds on a page whose twin answers for it (D88).
 /// The page's source is `to`'s where it holds the page, else `from`'s. Ranked
 /// as [`new_breakage`]'s rows are, without a cause.
 pub(super) fn fixed_breakage(conn: &Connection, from: RunId, to: RunId) -> Result<Table, Error> {

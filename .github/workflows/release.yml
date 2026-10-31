@@ -1,6 +1,7 @@
 # A release: the binary built from a `v*` tag in a Debian Trixie container, so
 # its glibc floor is Trixie's (D23), archived with the notices and licenses,
-# and published on GitHub, its body naming a schema change (D43). No step uses
+# and published on GitHub, its body the annotated tag's release notes with the
+# schema change named in them (D43). No step uses
 # an action (`roadmap.md`, "Standing rules"): each is a command in the
 # container, and `scripts/workflows.py` fails on a `uses:`. `uv run workflows.py script release.yml` prints the steps
 # as one shell script, to run in a `debian:trixie` container by hand.
@@ -47,6 +48,17 @@ jobs:
           base=${base%%-*}
           if [ "$base" != "$crate" ]; then
             echo "$GITHUB_REF_NAME is not a release of Cargo.toml's $crate"
+            exit 1
+          fi
+          # The release notes are the tag's message, so a lightweight tag,
+          # or an annotation with no text, is no release.
+          ref=refs/tags/$GITHUB_REF_NAME
+          if [ "$(git cat-file -t "$ref")" != tag ]; then
+            echo "$GITHUB_REF_NAME is a lightweight tag: the release notes are an annotated tag's message"
+            exit 1
+          fi
+          if ! git for-each-ref --format='%(contents:subject)' "$ref" | grep -q '[^[:space:]]'; then
+            echo "$GITHUB_REF_NAME's annotation is empty: it is the release notes"
             exit 1
           fi
 
@@ -100,10 +112,14 @@ jobs:
           cat "$name.tar.gz.sha256"
           tar -tzf "$name.tar.gz"
 
-      # D43: a 0.x release migrates no database, so the body says whether this
-      # release's schema is the latest published release's. `scripts/workflows.py`'s
-      # tests rehearse this step against a repo and a stand-in `gh`.
-      - name: Name the schema change
+      # The body is the annotated tag's message, the notes the `release` skill
+      # drafts from its template, with D43's schema line placed in them: a 0.x
+      # release migrates no database, so a schema changed since the latest
+      # published release is an item under the notes' "⚠️ CAUTION", a section
+      # of that name added ahead of their first where they have none, and an
+      # unchanged one a closing line. `scripts/workflows.py`'s tests rehearse
+      # this step against a repo and a stand-in `gh`.
+      - name: Write the release body
         working-directory: src
         run: |
           ver() { sed -n 's/^pub const SCHEMA_VERSION: u32 = \([0-9][0-9]*\);.*/\1/p' | head -n 1; }
@@ -124,17 +140,36 @@ jobs:
             exit 1
           fi
           mkdir -p dist
+          ref=refs/tags/$GITHUB_REF_NAME
           {
-            echo "A 0.x release migrates no database: a schema change is named here, and the new binary starts a new one."
+            git for-each-ref --format='%(contents:subject)' "$ref"
             echo
-            if [ -z "$prev" ]; then
-              echo "Database schema $now. There is no earlier release."
-            elif [ "$now" = "$before" ]; then
-              echo "Database schema $now, as in $prev: a database made by either opens in the other."
-            else
-              echo "**Database schema $now, changed from $before in $prev.** This release refuses a database made by $prev, and $prev refuses one made by this: start a new database."
-            fi
-          } > dist/release-body.md
+            git for-each-ref --format='%(contents:body)' "$ref"
+          } > dist/notes.md
+          heading='## ⚠️ CAUTION'
+          item=
+          closing=
+          if [ -z "$prev" ]; then
+            closing="Database schema $now. There is no earlier release."
+          elif [ "$now" = "$before" ]; then
+            closing="Database schema $now, as in $prev: a database made by either opens in the other."
+          else
+            item="- **Database schema $now, changed from $before in $prev.** A 0.x release migrates no database: this release refuses a database made by $prev, and $prev refuses one made by this, so start a new database."
+          fi
+          if [ -z "$item" ]; then
+            cp dist/notes.md dist/release-body.md
+          elif grep -qxF "$heading" dist/notes.md; then
+            awk -v h="$heading" -v item="$item" '{ print } !done && $0 == h { print item; done = 1 }' \
+              dist/notes.md > dist/release-body.md
+          else
+            awk -v h="$heading" -v item="$item" '
+              !done && /^## / { print h; print item; print ""; done = 1 }
+              { print }
+              END { if (!done) { print ""; print h; print item } }' dist/notes.md > dist/release-body.md
+          fi
+          if [ -n "$closing" ]; then
+            printf '\n%s\n' "$closing" >> dist/release-body.md
+          fi
           cat dist/release-body.md
 
       # Releases are immutable once published, so the draft carries both assets
@@ -158,7 +193,7 @@ jobs:
           id=$(gh api -X POST "$repo" --jq .id \
             -f tag_name="$GITHUB_REF_NAME" -f name="$GITHUB_REF_NAME" \
             -F body=@release-body.md \
-            -F draft=true -F prerelease=$pre -F generate_release_notes=true)
+            -F draft=true -F prerelease=$pre)
           echo "draft $id"
           test -n "$id"
           for f in "$name.tar.gz" "$name.tar.gz.sha256"; do

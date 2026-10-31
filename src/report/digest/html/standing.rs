@@ -21,7 +21,7 @@ use crate::store::DOUBLED_SLASH;
 #[derive(Clone, Copy)]
 enum Kind {
     Broken,
-    /// Broken through a link to a URL that doubles a slash (D71).
+    /// Broken through a link to a URL that doubles a slash (D88).
     Through,
     Unverifiable,
     Fragment,
@@ -180,7 +180,7 @@ pub(super) fn repos<'a>(d: &'a Digest, pages: &[Page<'_>]) -> Vec<Repo<'a>> {
 /// A page's or a repo's summary count: its links by level, red first, each
 /// kind of a level behind the level's dot and a kind of none left out, and no
 /// total (D82). Under D76's map: the broken links, those broken through a
-/// link to a URL that doubles a slash (D71), the unverifiable ones, then the
+/// link to a URL that doubles a slash (D88), the unverifiable ones, then the
 /// missing fragments.
 pub(super) fn tally(counts: &Counts) -> String {
     let mut parts = Vec::new();

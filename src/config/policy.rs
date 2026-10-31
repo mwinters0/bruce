@@ -78,7 +78,7 @@ impl Answer {
 }
 
 /// How far the links broken by a doubled slash are counted on the page that
-/// wrote it (D71, D80): the broken relative links on the doubled-slash pages
+/// wrote it (D88, D80): the broken relative links on the doubled-slash pages
 /// its link reaches.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Reach {
@@ -130,7 +130,7 @@ pub struct Policy {
     /// reason `doubled_slash`, where a host sets none (D71).
     pub doubled_slash: bool,
     /// How far the breakage a doubled slash causes is counted on the page that
-    /// wrote the link (D71, D80).
+    /// wrote the link (D88, D80).
     pub doubled_slash_reach: Reach,
     /// What a status code is judged to be where a host sets none, a code
     /// not here being judged as the crawl classed it (D16).

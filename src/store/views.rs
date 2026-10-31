@@ -45,7 +45,7 @@
 //!
 //! `relative` says the link's `raw_href` keeps its page's path: it is resolved
 //! against it (`../`, `committee/`) or is a `?query` on it. `counted` says the
-//! link counts in the reports (D71): not a link on a page whose URL doubles a
+//! link counts in the reports (D88): not a link on a page whose URL doubles a
 //! slash and whose twin, the URL with its slashes collapsed, is a page of the
 //! run, and not a broken or errored `relative` one on such a page without a twin, which
 //! the doubled slash breaks and the linking page answers for. `doubled_slash`
@@ -159,7 +159,7 @@ pub const TARGET_URL_DOUBLES: &str = doubled!("t.url");
 
 /// The targets whose URL doubles a slash (`own`) or that redirected to a URL
 /// that does, with their `url`, and for the first its `twin_id`, the page of
-/// the run at its URL with the slashes collapsed, if any (D71). It joins the
+/// the run at its URL with the slashes collapsed, if any (D88). It joins the
 /// few, not every target of the run, to look for the twin.
 const DOUBLED_SLASH_TARGETS: View = View {
     name: "doubled_slash",

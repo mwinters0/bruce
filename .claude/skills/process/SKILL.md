@@ -11,7 +11,7 @@ Then, for the work at hand: `docs/design/roadmap.md` (phase index, standing
 rules); the phase spec `docs/wip/roadmap-P<N>-<slug>.md`, binding what the
 phase committed to; `docs/status/STATUS.md`; this phase's landed slices' notes
 (beside the spec in `docs/wip/`);
-the `docs/design/decisions.md` entries for every mechanism the slice touches; and
+the register's topic files (`docs/design/decisions/`) for every mechanism the slice touches; and
 `docs/design/roadmap-P<N>-<slug>-inbox.md` if one exists — **specifying or
 grilling a phase drains its inbox**, folding each entry into the spec or
 discarding it as stale, then deleting the file.
@@ -23,9 +23,11 @@ Every one of these is in the *same* change as the code, never a follow-up.
 1. **A notes doc**, `docs/wip/roadmap-P<N>.<M>-<slug>-notes.md`, even for a slice landing
    no code: what the next slice inherits and the negative results — not a
    restatement of the spec, not a changelog.
-2. **A `D<k>` entry** in `decisions.md` for each decision the code cannot
+2. **A `D<k>` entry** in its topic's file under `docs/design/decisions/`, and
+   its line in the `decisions.md` index, for each decision the code cannot
    explain, **cited from the code comment in one line** that never re-argues
-   it. The register is capped, so an entry added may mean one pruned.
+   it. An entry is capped in characters, and the register's growth is metered
+   (`repoint.py`), red meaning an audit, not a strike.
 3. **The STATUS checklist ticked**, linking the notes doc, plus any change to
    "Not started" or the deficiency register the slice caused. **The last
    slice's box is ticked like any other**; the wrap is a separate change.
