@@ -1171,6 +1171,35 @@ fn the_profiles_a_run_extracted_by_are_housekeeping_and_a_trial_leaves_them_as_r
 }
 
 #[test]
+fn a_profiles_source_rules_are_listed_in_file_order_their_index_read_as_a_number() {
+    let store = store();
+    store
+        .connection()
+        .execute_batch(
+            "INSERT INTO policy VALUES (1, NULL, 'profile.site.source.10.from', 'url'), \
+             (1, NULL, 'profile.site.source.2.pattern', 'p'), \
+             (1, NULL, 'profile.site.source.2.from', 'url'), \
+             (1, NULL, 'profile.site.source.1.from', 'url')",
+        )
+        .unwrap();
+    let keys: Vec<String> = of(&store)
+        .policy
+        .iter()
+        .filter(|e| e.is_profile())
+        .map(|e| e.key.clone())
+        .collect();
+    assert_eq!(
+        keys,
+        [
+            "profile.site.source.1.from",
+            "profile.site.source.2.from",
+            "profile.site.source.2.pattern",
+            "profile.site.source.10.from",
+        ]
+    );
+}
+
+#[test]
 fn a_trial_judges_the_digest_and_leaves_how_the_run_asked_as_it_recorded() {
     let store = store();
     store

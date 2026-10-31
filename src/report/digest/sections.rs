@@ -115,7 +115,7 @@ pub(super) fn judged(conn: &Connection, run: RunId) -> Result<Judged, Error> {
     })
 }
 
-/// The rows of the run's recorded policy (D78), the run-wide ones first: the
+/// The rows of the run's recorded policy (D78) in `Entry::listed_order`: the
 /// judging rows as in force (D84), and the asking rows (D85) and the
 /// profiles' (`profile.`) as the run recorded them, which a trial cannot
 /// change.
@@ -126,8 +126,7 @@ pub(super) fn policy(conn: &Connection, run: RunId) -> Result<Vec<Entry>, Error>
          SELECT host, key, value FROM policy_in_force WHERE run_id = $1 AND key NOT IN ({asking}) \
          AND key NOT LIKE 'profile.%' \
          UNION ALL SELECT host, key, value FROM policy WHERE run_id = $1 \
-         AND (key IN ({asking}) OR key LIKE 'profile.%')) \
-         ORDER BY host NULLS FIRST, key, value"
+         AND (key IN ({asking}) OR key LIKE 'profile.%'))"
     ))?;
     let rows = stmt.query_map([run.0], |row| {
         Ok(Entry {
@@ -136,7 +135,9 @@ pub(super) fn policy(conn: &Connection, run: RunId) -> Result<Vec<Entry>, Error>
             value: row.get(2)?,
         })
     })?;
-    Ok(rows.collect::<Result<_, _>>()?)
+    let mut entries = rows.collect::<Result<Vec<Entry>, _>>()?;
+    entries.sort_by(Entry::listed_order);
+    Ok(entries)
 }
 
 /// The run's context, or why it has no digest.

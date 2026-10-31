@@ -10,6 +10,27 @@ pub struct Entry {
 }
 
 impl Entry {
+    /// Where the row is listed (D91): the run-wide rows first, then by key, a
+    /// dotted segment of digits compared as a number, so a declared profile's
+    /// `source.2.*` precedes `source.10.*`, its rules in file order (D93);
+    /// then by value.
+    pub fn listed_order(&self, other: &Self) -> std::cmp::Ordering {
+        fn segments(key: &str) -> impl Iterator<Item = (Option<u64>, &str)> {
+            key.split('.').map(|s| {
+                let number = if s.bytes().all(|b| b.is_ascii_digit()) {
+                    s.parse().ok()
+                } else {
+                    None
+                };
+                (number, s)
+            })
+        }
+        self.host
+            .cmp(&other.host)
+            .then_with(|| segments(&self.key).cmp(segments(&other.key)))
+            .then_with(|| self.value.cmp(&other.value))
+    }
+
     /// Whether the row is part of a declarative profile's definition (D78),
     /// which a run extracted by and no report judges by.
     pub fn is_profile(&self) -> bool {
