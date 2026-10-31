@@ -339,9 +339,8 @@ ones, so `doubled_slash = "attention"` moves the page counting those links down
 the ranking. A part of a count that a reason's key moved off its outcome's level names that reason,
 "● 2 broken links (`doubled_slash`)". A kind at `"none"` is no finding in the digest: it leaves the link
 lists, the counts and the ranking, a page whose only findings are at `"none"` has
-no row, and the legend names what it leaves out; a list the map empties says so, but
-for "By: Link Target", which says no broken target is named by more than one link, and
-the sections since the compared run, which are left out. The run's outcomes, the figures' numbers,
+no row, and the legend names what it leaves out; a list the map empties says so, "By: Link Target" and the
+sections since the compared run included. The run's outcomes, the figures' numbers,
 the JSON's rows and order, every other report and the gate are untouched. A level on a link
 that is neither broken nor errored (a redirect, a reason on an `ok` link) moves
 its dot where it is listed and counts nothing.

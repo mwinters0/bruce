@@ -1171,7 +1171,14 @@ fn a_target_at_none_leaves_the_targets_and_their_held_count() {
             ("severity.broken_anchor", "none"),
         ],
     );
-    assert!(held(&digest).contains("No broken target is named by more than one link"));
+    let emptied = held(&digest);
+    assert!(
+        emptied.contains(
+            "No broken target named by more than one link is a finding under this report's severity map."
+        ),
+        "{emptied}"
+    );
+    assert!(!emptied.contains("is named by more than one link"));
 }
 
 #[test]
@@ -1216,5 +1223,37 @@ fn the_breakage_since_leaves_out_a_kind_at_none_and_a_section_it_empties() {
         ],
     );
     let html = digest.html();
-    assert!(!html.contains("broken-since"));
+    let since = section(&html, "broken-since");
+    assert!(
+        since.contains("No link broken since run 4 is a finding under this report's severity map.")
+    );
+    assert!(html.contains("<a href=\"#broken-since\">"));
+    assert!(!since.contains("<details class=\"fold") && !since.contains("<table"));
+}
+
+#[test]
+fn the_fixed_since_section_says_where_the_map_empties_it() {
+    let mut digest = crate::report::digest(
+        &crate::report::digest::tests::compared_with_a_fix(),
+        Some(RunId(1)),
+        crate::report::Against::Run(RunId(4)),
+        &crate::report::tests::registry(),
+    )
+    .unwrap();
+    assert!(!section(&digest.html(), "fixed-since").contains("severity map"));
+    with_policy(
+        &mut digest,
+        &[
+            ("severity.broken_anchor", "none"),
+            ("severity.broken_url", "none"),
+        ],
+    );
+    let html = digest.html();
+    let fixed = section(&html, "fixed-since");
+    assert!(
+        fixed.contains("is a finding under this report's severity map."),
+        "{fixed}"
+    );
+    assert!(!fixed.contains("<table"));
+    assert!(html.contains("<a href=\"#fixed-since\">"));
 }

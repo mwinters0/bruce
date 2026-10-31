@@ -322,18 +322,18 @@ fn figures(out: &mut String, d: &Digest) {
     );
 }
 
-// deficiency: KD32 A list the map empties says so (`docs/manual/config.md`,
-// Severity), but this one, where every target more than one link names is at
-// `none`, says there is none, and `compared::shown` leaves sections 3 and 4
-// out where the map empties them, as where no link broke or was fixed. Saying
-// what the map left out, as the pages' and redirects' lists do, is the fix.
 fn fix_once(out: &mut String, d: &Digest) {
     open_section(out, "fix-once", "By: Link Target", None);
     let (shown, hidden): (Vec<Row>, Vec<Row>) = rows(&d.broken_targets)
         .partition(|r| listed(&d.severity, r.text("outcome"), r.text("reason")));
     let (many, single): (Vec<Row>, Vec<Row>) = shown.into_iter().partition(|r| r.int("links") > 1);
     if many.is_empty() {
-        out.push_str("<p>No broken target is named by more than one link.</p>\n");
+        out.push_str(if hidden.iter().any(|r| r.int("links") > 1) {
+            "<p>No broken target named by more than one link is a finding under this report's \
+             severity map.</p>\n"
+        } else {
+            "<p>No broken target is named by more than one link.</p>\n"
+        });
     } else {
         let held: i64 = many.iter().map(|r| r.int("links")).sum();
         let all = d.totals.broken_url + d.totals.broken_anchor

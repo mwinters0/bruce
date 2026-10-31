@@ -99,13 +99,6 @@ roadmap's phase index.
   unowned**: a CI run whose redirects reach another locale would promote it.
   Detail: `src/crawl/frontier.rs`
 
-- **KD32** — "By: Link Target" says no broken target is named by more than one
-  link where the severity map puts every such target at `none`, and the
-  sections since the compared run are left out where it empties them, where
-  every other list says nothing there is a finding under the map. **(c)
-  unowned**: a site mapping a broken kind to `none` would promote it.
-  Detail: `src/report/digest/html.rs`
-
 - **KD33** — A page or repo whose only findings in the compared run were at
   `none` is not marked new once one is above it, the marks reading every
   finding the JSON holds while the HTML listed none of them. **(c) unowned**:

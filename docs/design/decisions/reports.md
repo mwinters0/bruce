@@ -120,7 +120,7 @@ prose in config), false for a site's digest until then. Code: `report::digest::h
 
 ### D92 A kind at `none` is no finding in the digest, and its JSON and figures keep it
 Its links leave the HTML's lists, counts and ranking, and a page whose only findings are at `none` has no row; the
-legend names the kinds at `none`, and a list it empties says so (but KD32). The JSON keeps every row, counted and
+legend names the kinds at `none`, and a list it empties says so. The JSON keeps every row, counted and
 ordered by outcome, its levels derivable from `policy`; the run's outcomes, the other reports and the gate are
 untouched. Why: a level is the report's, never the data's (D76). Rejected: `none` as no dot alone, a finding a site
 silenced still ranking its page; ranking or dropping `none` rows in the JSON, making the data the policy; a redirect at

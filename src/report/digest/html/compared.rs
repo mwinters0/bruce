@@ -255,12 +255,13 @@ fn found<'a>(d: &Digest, table: &'a Table) -> Vec<Row<'a>> {
         .collect()
 }
 
-/// Whether sections 3 and 4 are shown: each is left out where it would list
-/// nothing, as with no comparison, which the sub-title says.
+/// Whether sections 3 and 4 are shown: each is left out where nothing broke
+/// or was fixed, as with no comparison, which the sub-title says. A section
+/// the severity map empties is shown, saying so.
 pub(super) fn shown(d: &Digest) -> (bool, bool) {
     (
-        !found(d, &d.new_breakage).is_empty(),
-        !found(d, &d.fixed_breakage).is_empty(),
+        !d.new_breakage.rows.is_empty(),
+        !d.fixed_breakage.rows.is_empty(),
     )
 }
 
@@ -277,6 +278,15 @@ pub(super) fn broken_since(out: &mut String, d: &Digest) {
     );
     let new_breakage = found(d, &d.new_breakage);
     let new = new_breakage.len();
+    if new == 0 {
+        w!(
+            out,
+            "<p>No link broken since {} is a finding under this report's severity map.</p>\n",
+            then(c)
+        );
+        close_section(out);
+        return;
+    }
     w!(
         out,
         "<p>{} to a broken URL or a missing fragment {} broken since {}. A new break is laid \
@@ -311,6 +321,16 @@ pub(super) fn fixed_since(out: &mut String, d: &Digest) {
     open_section(out, "fixed-since", "Fixed since the previous run", None);
     let all = found(d, &d.fixed_breakage);
     let fixed = all.len();
+    if fixed == 0 {
+        w!(
+            out,
+            "<p>No link broken in {} and not broken in this run is a finding under this report's \
+             severity map.</p>\n",
+            then(c)
+        );
+        close_section(out);
+        return;
+    }
     w!(
         out,
         "<p>{} broken in {} {} not broken in this one: mended, or gone with the page. The \
