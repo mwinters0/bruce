@@ -98,7 +98,7 @@ decisions each carries are cited in its module's doc.
 - **bruce** — `store/`: the connection, the schema's version check and a
   profile's views in the parent file, the tables in the `schema` child, the
   row types in the `rows` child, the views over them (`link_verdicts`, the table macro it calls and the `doubled_slash` targets it joins) in the
-  `views` child, a run's recorded policy among the tables (D78) and a trial's in its place for a connection in the `trial` child (D84), deleting old runs (D2) in the `prune` child, writing one run as a baseline file
+  `views` child, a run's recorded policy among the tables (D78) and a trial's judging rows in its place for a connection in the `trial` child (D84), deleting old runs (D2) in the `prune` child, writing one run as a baseline file
   (D21), importing one as a run, listing the targets a run holds with its pages' facts, which a profile resolves through (D55), and copying a target's rows between runs (D52) in the `baseline` child and the single
   writer thread, which also runs a requested copy, in the `writer` child. It sits above `profile`
   because it asks each profile for its views and answers its lookups (D39).
@@ -127,5 +127,5 @@ below `profile` (D39).
 
 - **bruce** — `config.rs`: the loader, its defaults and its validation, and
   the allowlist's matching of a host (D68), and `config/policy.rs`, the
-  judging settings a run is judged by and records, with their defaults (D78), a row of the record and how a file writes it in `config/policy/entry.rs`, the severity map in `config/policy/severity.rs` (D82) and the outcomes that fail the gate in `config/policy/gate.rs` (D83), at
+  judging settings a run is judged by and records, with their defaults (D78), a row of the record and how a file writes it in `config/policy/entry.rs`, the severity map in `config/policy/severity.rs` (D82) and the outcomes that fail the gate in `config/policy/gate.rs` (D83) and how a crawl asks, recorded with them and judged by nothing, in `config/policy/asking.rs` (D85), at
   the bottom of the layering but for `url`, so every module may read a setting (D39).

@@ -204,6 +204,11 @@ precedence over it, and `[host]` (below) says when a host's own rate does.
 | `default.concurrency` | `4` | Requests in flight to any one host at once. At the default rate it binds only on a host slow to answer. At least 1. |
 | `default.doubled_slash` | `true` | Whether a link to a URL that doubles a slash is broken, for a host that sets none ([Judging](#judging)). |
 | `default.status` | `{ 401 = "error", 403 = "error", 429 = "error" }` | What a status code is judged to be, for a host that sets none; the file's codes are laid over these, a code at a time ([Judging](#judging)). |
+| `default.connect_timeout` | `10` | Seconds to connect to a host, for a host that sets none ([Asking](#asking)). At least 1. |
+| `default.timeout` | `30` | Seconds for a whole response, body included, for a host that sets none ([Asking](#asking)). At least 1. |
+| `default.retries` | `3` | Times a request that failed transiently is sent again, for a host that sets none ([Asking](#asking)). At most 10. |
+| `default.max_retry_after` | `60` | Seconds of the longest `Retry-After` waited out, for a host that sets none ([Asking](#asking)). |
+| `default.slash_probe` | `true` | Whether a broken 404 is asked again with its final `/` toggled, for a host that sets none ([Asking](#asking)). |
 
 ## Judging
 
@@ -256,6 +261,41 @@ the outcome the crawl stored keeps the crawl's reason (`wrong_trailing_slash`, `
 any other drops it. A fragment on a URL judged `ok`
 by this map is `unchecked`, reason `no_anchors`, as on any `ok` URL whose body
 was not read.
+
+## Asking
+
+How a crawl **asks** is recorded with the policy and judged by nothing: a run
+cannot be asked again, so [`bruce report --config`](report.md#a-trial-policy)
+leaves it as the run recorded it, and the digest's Housekeeping lists what
+differs from the defaults. The `default.*` keys above and the `host."<host>".*`
+keys set it per host, the host's own over the default; the body cap is the
+site's.
+
+```toml
+max_body_mib = 64
+
+[default]
+timeout = 60
+
+[host."pagure.io"]
+connect_timeout = 5
+retries = 1
+slash_probe = false
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `max_body_mib` | `16` | MiB a page's body may come to. A larger one is `ok`, reason `too_large`, and is not read for its anchors; `check-dir` holds a built file to it too. At least 1. |
+
+**Retries** are of a 5xx, a 429, a timeout or a lost connection. The waits
+double from a second: `retries = 3` waits 1, 2 and 4 seconds, and `0` sends
+nothing again. A 429 or 503 naming a `Retry-After` is waited out instead, when
+it is no longer than `max_retry_after`; a longer one is `error` at once, and
+`0` gives up on every `Retry-After`. The retries and the timeout of a host are
+the ones its robots.txt is read with too.
+
+**`slash_probe`** is the host of the URL asked: off, a 404 on that host is
+`broken_url` with no `wrong_trailing_slash` reason and no request for it.
 
 ## The gate
 
@@ -360,6 +400,11 @@ per_second = 10
 | `host."<host>".robots` | `true` | Whether the host's `robots.txt` is obeyed, its `Crawl-delay` included. |
 | `host."<host>".doubled_slash` | `default.doubled_slash` | Whether a link to a URL on that host that doubles a slash is broken ([Judging](#judging)). |
 | `host."<host>".status` | `{}` | What a status code that host answered is judged to be, over `default.status` ([Judging](#judging)). |
+| `host."<host>".connect_timeout` | `default.connect_timeout` | Seconds to connect to that host ([Asking](#asking)). |
+| `host."<host>".timeout` | `default.timeout` | Seconds for a whole response from that host ([Asking](#asking)). |
+| `host."<host>".retries` | `default.retries` | Times a request to that host that failed transiently is sent again ([Asking](#asking)). |
+| `host."<host>".max_retry_after` | `default.max_retry_after` | Seconds of the longest `Retry-After` that host's answer is waited out for ([Asking](#asking)). |
+| `host."<host>".slash_probe` | `default.slash_probe` | Whether a broken 404 on that host is asked again with its final `/` toggled ([Asking](#asking)). |
 
 **Which rate applies** to a host:
 - With `robots = false`: its `per_second` if written, else `default.per_second`.

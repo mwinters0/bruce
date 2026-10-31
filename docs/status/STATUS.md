@@ -16,7 +16,7 @@ Red means a repoint is due ([`../process.md`](../process.md),
 
 The `bruce` crate is D39's top-level modules, a binary whose subcommands
 are `bruce crawl`, `bruce check-dir`, `bruce report`, `bruce prune` and `bruce export-baseline`, and Rust 1.99.1 pinned in `mise.toml`. Eleven modules hold
-code: `cli`, the command line, the five subcommands and the profile registry; `config`, the loader and the policy a run is judged by; `store`, the DuckDB schema, its version check, the
+code: `cli`, the command line, the five subcommands and the profile registry; `config`, the loader and the policy a run is judged by and asks with; `store`, the DuckDB schema, its version check, the
 `link_verdicts` view, the policy a run records, the deleting of old runs, the baseline export and import, the index of a baseline's targets and its pages' facts, the copy of a target's rows between runs, which the writer also runs on request, and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry and the
 `generic` and `antora` profiles' Detect, Views, Extract and Resolve; `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
@@ -85,8 +85,9 @@ The spec is [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
 - [x] **7.6** `bruce report --config`, judging by a trial policy: every report
   and the digest, the digest naming the file (D84). Notes:
   [`../wip/roadmap-P7.6-trial-notes.md`](../wip/roadmap-P7.6-trial-notes.md).
-- [ ] **7.7** The asking settings: per-host timeouts, retries, the
-  `Retry-After` ceiling and D72's probe, and the body cap.
+- [x] **7.7** The asking settings: per-host timeouts, retries, the
+  `Retry-After` ceiling and D72's probe, and the body cap (D85). Notes:
+  [`../wip/roadmap-P7.7-asking-notes.md`](../wip/roadmap-P7.7-asking-notes.md).
 - [ ] **7.8** Antora leaves the output: `[digest]` `group_by`, the profile's
   sitemap sentence, `report_broken`'s hint through Views.
 

@@ -231,12 +231,10 @@ fn check(args: &Args, registry: Registry) -> Result<Checked, String> {
         .import_baseline(baseline_file.path())
         .map_err(|e| format!("{}: {e}", args.baseline))?;
     let index = store.baseline_index(imported.run).map_err(in_db)?;
-    let settings = Settings {
-        user_agent: config.user_agent.clone(),
-        ..Settings::default()
-    };
-    let live = HttpFetcher::new(settings, Hosts::new(&config)).map_err(|e| e.to_string())?;
-    let local = LocalFetcher::new(build.prefix(), build.served());
+    let live =
+        HttpFetcher::new(Settings::of(&config), Hosts::new(&config)).map_err(|e| e.to_string())?;
+    let local = LocalFetcher::new(build.prefix(), build.served())
+        .with_max_body(config.policy.asking.max_body());
     let site = local.site();
     let fetcher = Routed::new(local, live);
     let run = store

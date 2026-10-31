@@ -5,17 +5,22 @@
 //! has a default, today's value (D77); [`Policy::default`] is the policy of a
 //! run given no file. A setting is a field and a row of [`Policy::entries`],
 //! so a new one changes no schema. A setting that is a host's own is a field
-//! of [`HostJudging`], its rows carrying the host.
+//! of [`HostJudging`], its rows carrying the host. The settings that decide how
+//! a crawl asks are recorded beside them and judged by nothing ([`Asking`],
+//! D85).
 
 use std::collections::BTreeMap;
 
 use serde::Deserialize;
 
+pub(in crate::config) use self::asking::RawAsking;
+pub use self::asking::{Asking, HostAsking, KEYS as ASKING_KEYS, backoff};
 pub use self::entry::Entry;
 pub(in crate::config) use self::gate::RawGate;
 pub use self::gate::{DEFAULT_FAIL, FailOn};
 pub use self::severity::{REASONS as SEVERITY_REASONS, Severity, SeverityMap};
 
+mod asking;
 mod entry;
 mod gate;
 mod severity;
@@ -134,6 +139,8 @@ pub struct Policy {
     /// The hosts' own settings, by host as `Host` prints it, only those a
     /// file names.
     pub hosts: BTreeMap<String, HostJudging>,
+    /// How the run asks, which no report judges by (D85).
+    pub asking: Asking,
 }
 
 /// The settings one host sets for itself, beside its politeness (D8).
@@ -160,6 +167,7 @@ impl Default for Policy {
             severity: SeverityMap::default(),
             gate_fail: DEFAULT_FAIL.to_vec(),
             hosts: BTreeMap::new(),
+            asking: Asking::default(),
         }
     }
 }
@@ -188,6 +196,7 @@ impl Policy {
         rows.extend(statuses(None, &self.status));
         rows.extend(self.severity.entries());
         rows.push(run("gate.fail", FailOn::row(&self.gate_fail)));
+        rows.extend(self.asking.entries());
         for (host, h) in &self.hosts {
             if let Some(on) = h.doubled_slash {
                 rows.push(Entry {
@@ -209,6 +218,7 @@ impl Policy {
         severity: &BTreeMap<String, String>,
         gate: &RawGate,
         hosts: BTreeMap<String, HostJudging>,
+        asking: Asking,
     ) -> Result<Policy, String> {
         let mut policy = Policy::default();
         if let Some(on) = judge.pedantic_trailing_slash {
@@ -235,6 +245,7 @@ impl Policy {
             policy.gate_fail = FailOn::from_raw(fail).map_err(|e| format!("gate.fail: {e}"))?;
         }
         policy.hosts = hosts;
+        policy.asking = asking;
         Ok(policy)
     }
 }

@@ -103,11 +103,8 @@ fn crawl(args: &Args, registry: Registry) -> Result<(RunId, Option<Summary>, Pre
     let db = db::path(args.db.as_deref());
     let in_db = |e: crate::store::Error| format!("{}: {e}", db.display());
     let store = db::open(db, &registry).map_err(in_db)?;
-    let settings = Settings {
-        user_agent: config.user_agent.clone(),
-        ..Settings::default()
-    };
-    let fetcher = HttpFetcher::new(settings, Hosts::new(&config)).map_err(|e| e.to_string())?;
+    let fetcher =
+        HttpFetcher::new(Settings::of(&config), Hosts::new(&config)).map_err(|e| e.to_string())?;
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()

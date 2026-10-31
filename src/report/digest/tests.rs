@@ -1018,3 +1018,39 @@ fn the_run_s_whole_recorded_policy_is_in_the_digest_and_its_json() {
         ])
     );
 }
+
+#[test]
+fn a_trial_judges_the_digest_and_leaves_how_the_run_asked_as_it_recorded() {
+    let store = store();
+    store
+        .connection()
+        .execute_batch(
+            "INSERT INTO policy VALUES (1, NULL, 'timeout', '60'), \
+             (1, 'pagure.io', 'slash_probe', 'false'), (1, NULL, 'status.404', 'ok')",
+        )
+        .unwrap();
+    let mut trial = crate::config::Policy::default();
+    trial.asking.timeout = 5;
+    trial.status.insert(403, crate::config::Answer::Ok);
+    store.try_policy(&trial).unwrap();
+    let rows: Vec<String> = of(&store)
+        .policy
+        .iter()
+        .map(|e| e.written_as())
+        .filter(|w| w.contains("timeout") || w.contains("slash_probe") || w.contains("status.4"))
+        .collect();
+    // The judging rows are the trial's and the asking rows the run's.
+    assert!(
+        rows.contains(&"default.timeout = 60".to_owned()),
+        "{rows:?}"
+    );
+    assert!(
+        rows.contains(&"host.\"pagure.io\".slash_probe = false".to_owned()),
+        "{rows:?}"
+    );
+    assert!(!rows.iter().any(|w| w.contains("status.404")), "{rows:?}");
+    assert!(
+        !rows.contains(&"default.timeout = 5".to_owned()),
+        "{rows:?}"
+    );
+}

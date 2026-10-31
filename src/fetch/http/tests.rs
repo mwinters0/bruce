@@ -12,6 +12,7 @@ use wiremock::matchers::{header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use super::*;
+use crate::config::Config;
 
 const LATIN1_E_ACUTE: u8 = 0xE9;
 
@@ -345,6 +346,127 @@ async fn a_retry_after_over_the_cap_is_not_waited_for() {
         .unwrap();
     assert_eq!(got.status, 503);
     assert_eq!(requests(&server).await, 1);
+    assert!(started.elapsed() < Duration::from_secs(5));
+}
+
+/// A fetcher whose hosts are paced and set by `config`, over `quick()`.
+fn configured(config: &str) -> HttpFetcher {
+    let config = Config::parse(&format!("[default]\nper_second = 1000\n{config}")).unwrap();
+    HttpFetcher::new(quick(), Hosts::new(&config)).unwrap()
+}
+
+#[test]
+fn the_retries_wait_a_second_and_then_twice_the_wait_before() {
+    assert_eq!(backoff(0), []);
+    assert_eq!(
+        backoff(4),
+        [1, 2, 4, 8].map(Duration::from_secs).to_vec(),
+        "three retries wait 1, 2 and 4 seconds, as D16 has them"
+    );
+    let defaults = Settings::default();
+    assert_eq!(defaults.backoff, backoff(3));
+    assert_eq!(
+        (defaults.connect_timeout, defaults.timeout),
+        (Duration::from_secs(10), Duration::from_secs(30))
+    );
+    assert_eq!(defaults.max_retry_after, Duration::from_secs(60));
+    assert_eq!(defaults.max_body, 16 * 1024 * 1024);
+}
+
+#[test]
+fn a_configuration_sets_what_a_host_is_held_to_where_it_sets_none() {
+    let config = Config::parse(
+        "max_body_mib = 2\n[default]\nconnect_timeout = 3\ntimeout = 7\nretries = 2\n\
+         max_retry_after = 9\n",
+    )
+    .unwrap();
+    let settings = Settings::of(&config);
+    assert_eq!(settings.connect_timeout, Duration::from_secs(3));
+    assert_eq!(settings.timeout, Duration::from_secs(7));
+    assert_eq!(settings.backoff, backoff(2));
+    assert_eq!(settings.max_retry_after, Duration::from_secs(9));
+    assert_eq!(settings.max_body, 2 * 1024 * 1024);
+}
+
+#[tokio::test]
+async fn a_hosts_own_timeout_replaces_the_fetchers() {
+    let server = MockServer::start().await;
+    Mock::given(path("/p"))
+        .respond_with(html("late").set_delay(Duration::from_millis(400)))
+        .mount(&server)
+        .await;
+    let url = url_of(&server, "/p");
+    let short = Settings {
+        timeout: Duration::from_millis(100),
+        ..quick()
+    };
+    let hosts = |extra: &str| {
+        Hosts::new(&Config::parse(&format!("[default]\nper_second = 1000\n{extra}")).unwrap())
+    };
+    let slow = HttpFetcher::new(
+        short.clone(),
+        hosts("[host.\"127.0.0.1\"]\ntimeout = 5\nretries = 0"),
+    )
+    .unwrap();
+    let got = slow.fetch(&url, Mode::Page).await.unwrap();
+    assert_eq!(
+        got.status, 200,
+        "the host's five seconds, not the fetcher's tenth"
+    );
+    let strict = HttpFetcher::new(short, hosts("[host.\"127.0.0.1\"]\nretries = 0")).unwrap();
+    let failure = strict.fetch(&url, Mode::Page).await.unwrap_err();
+    assert_eq!(failure.kind, FailureKind::Timeout, "{failure}");
+}
+
+#[tokio::test]
+async fn a_hosts_own_connect_timeout_gets_a_client_of_its_own() {
+    let server = MockServer::start().await;
+    Mock::given(path("/p"))
+        .respond_with(html("ok"))
+        .mount(&server)
+        .await;
+    let f = configured("[host.\"127.0.0.1\"]\nconnect_timeout = 3");
+    let url = url_of(&server, "/p");
+    assert_eq!(f.fetch(&url, Mode::Page).await.unwrap().status, 200);
+    assert_eq!(f.fetch(&url, Mode::Page).await.unwrap().status, 200);
+    let others = f.others.lock().unwrap();
+    assert_eq!(others.keys().collect::<Vec<_>>(), [&Duration::from_secs(3)]);
+}
+
+#[tokio::test]
+async fn a_hosts_own_retries_replace_the_fetchers() {
+    let server = MockServer::start().await;
+    Mock::given(path("/p"))
+        .respond_with(ResponseTemplate::new(503))
+        .mount(&server)
+        .await;
+    let url = url_of(&server, "/p");
+    let got = configured("[host.\"127.0.0.1\"]\nretries = 0")
+        .fetch(&url, Mode::Page)
+        .await
+        .unwrap();
+    assert_eq!((got.status, requests(&server).await), (503, 1));
+    // A host not named keeps the fetcher's three.
+    let got = configured("[host.\"other.invalid\"]\nretries = 0")
+        .fetch(&url, Mode::Page)
+        .await
+        .unwrap();
+    assert_eq!((got.status, requests(&server).await), (503, 1 + 4));
+}
+
+#[tokio::test]
+async fn a_hosts_own_retry_after_ceiling_replaces_the_fetchers() {
+    let server = MockServer::start().await;
+    Mock::given(path("/p"))
+        .respond_with(ResponseTemplate::new(503).insert_header("retry-after", "30"))
+        .mount(&server)
+        .await;
+    let started = Instant::now();
+    let got = configured("[host.\"127.0.0.1\"]\nmax_retry_after = 10")
+        .fetch(&url_of(&server, "/p"), Mode::Page)
+        .await
+        .unwrap();
+    assert_eq!((got.status, requests(&server).await), (503, 1));
     assert!(started.elapsed() < Duration::from_secs(5));
 }
 

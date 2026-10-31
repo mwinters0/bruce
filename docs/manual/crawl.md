@@ -49,7 +49,8 @@ A URL that answers 404 is asked about once more: the same URL with its final
 pace. If that answers 2xx the link is still broken, reason
 `wrong_trailing_slash`, and the digest names the URL to link to instead; a redirect is not an answer, and nothing is written for the extra
 request. A URL that redirects onto a 404 is asked about the same way for the 404's
-URL, the one the redirect lands on.
+URL, the one the redirect lands on. `slash_probe = false` on the host asked
+sends neither ([`config.md`](config.md#asking)).
 
 ## Stopping a crawl
 

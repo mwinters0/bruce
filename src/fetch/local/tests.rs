@@ -94,8 +94,8 @@ async fn a_url_outside_the_prefix_is_a_failure_not_an_answer() {
 #[tokio::test]
 async fn a_file_over_the_cap_is_too_large_and_an_unreadable_one_is_a_failure() {
     let dir = tempfile::tempdir().unwrap();
-    let big = vec![b' '; MAX_BODY + 1];
-    let f = serving(&dir, &[("https://x.org/en-US/big/", "big.html", &big)]);
+    let big = vec![b' '; 2049];
+    let f = serving(&dir, &[("https://x.org/en-US/big/", "big.html", &big)]).with_max_body(2048);
     let page = ask(&f, "https://x.org/en-US/big/", Mode::Page)
         .await
         .unwrap();
@@ -105,6 +105,15 @@ async fn a_file_over_the_cap_is_too_large_and_an_unreadable_one_is_a_failure() {
         .await
         .unwrap_err();
     assert_eq!(gone.kind, FailureKind::Other);
+}
+
+#[tokio::test]
+async fn a_file_at_the_cap_is_read() {
+    let dir = tempfile::tempdir().unwrap();
+    let f =
+        serving(&dir, &[("https://x.org/en-US/a/", "a.html", &[b' '; 2048])]).with_max_body(2048);
+    let page = ask(&f, "https://x.org/en-US/a/", Mode::Page).await.unwrap();
+    assert!(matches!(page.body, Body::Html { .. }));
 }
 
 #[test]

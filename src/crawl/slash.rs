@@ -17,13 +17,17 @@ fn is_requested(plan: Plan) -> bool {
 
 /// The URL to ask about for `url`, where a target's hops ended and which
 /// answered `status`: its own with the final `/` toggled, where the 4xx makes
-/// it `broken_url`, a link to it is requested, and so is a link to the toggled
-/// URL. For a redirected target `url` is its landing, whose reason the rows of
-/// every URL that lands there share, so they share its fix.
+/// it `broken_url`, a link to it is requested, so is a link to the toggled
+/// URL, and the toggled URL's host is one the configuration lets be probed
+/// (`slash_probe`, D85). For a redirected target `url` is its landing, whose
+/// reason the rows of every URL that lands there share, so they share its fix.
 pub(super) fn toggled(frontier: &Frontier, url: &Url, plan: Plan, status: u16) -> Option<Url> {
     let broken = outcome::answered(status, &Body::Unread, false) == (Outcome::BrokenUrl, None);
     let toggled = toggle_slash(url).filter(|_| broken && is_requested(plan))?;
-    is_requested(frontier.plan(&toggled, Kind::Anchor).0).then_some(toggled)
+    let probed = toggled
+        .host()
+        .is_some_and(|host| frontier.config().policy.asking.probes(&host.to_string()));
+    (probed && is_requested(frontier.plan(&toggled, Kind::Anchor).0)).then_some(toggled)
 }
 
 /// Whether `url`, planned `plan`, where a target's hops ended with `status`,

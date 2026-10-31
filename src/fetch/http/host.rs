@@ -20,7 +20,7 @@ use tokio::sync::{OnceCell, OwnedSemaphorePermit, Semaphore};
 use tokio::time::{Instant, sleep_until};
 use url::Url;
 
-use crate::config::{Config, HostSettings, Rate};
+use crate::config::{Config, HostAsking, HostSettings, Rate};
 use crate::fetch::{Access, Failure};
 
 /// The longest wait between two requests to a host. A `Crawl-delay` past it
@@ -75,6 +75,7 @@ pub struct Hosts(Arc<Inner>);
 struct Inner {
     rate: Rate,
     settings: BTreeMap<String, HostSettings>,
+    asking: BTreeMap<String, HostAsking>,
     root_hosts: HashSet<String>,
     token: String,
     hosts: Mutex<HashMap<String, Arc<Host>>>,
@@ -96,6 +97,7 @@ pub struct Host {
     name: String,
     token: String,
     settings: HostSettings,
+    asking: HostAsking,
     default_per_second: f64,
     is_root: bool,
     permits: Arc<Semaphore>,
@@ -128,6 +130,7 @@ impl Hosts {
         Hosts(Arc::new(Inner {
             rate: config.rate.clone(),
             settings: config.hosts.clone(),
+            asking: config.policy.asking.hosts.clone(),
             root_hosts,
             token: config.robots_token().to_owned(),
             hosts: Mutex::new(HashMap::new()),
@@ -164,6 +167,7 @@ impl Hosts {
                 is_root: self.0.root_hosts.contains(&name),
                 token: self.0.token.clone(),
                 settings,
+                asking: self.0.asking.get(&name).copied().unwrap_or_default(),
                 default_per_second: self.0.rate.per_second,
                 permits: Arc::new(Semaphore::new(concurrency as usize)),
                 pace: Mutex::new(Pace {
@@ -229,6 +233,12 @@ impl Drop for Wait<'_> {
 }
 
 impl Host {
+    /// What the configuration sets for asking this host, each over the
+    /// fetcher's own where it is written (D85).
+    pub fn asking(&self) -> HostAsking {
+        self.asking
+    }
+
     /// Waits for a place among the host's in-flight requests and then for
     /// its next slot. The permit is held until dropped, so a request holds
     /// its place while its body is read.

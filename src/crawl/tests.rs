@@ -1922,6 +1922,36 @@ fn has_requested(requests: &[(String, String)], at: &str) -> bool {
     requests.iter().any(|(_, p)| p == at)
 }
 
+/// A host whose `slash_probe` is off is not asked for the toggled URL, and a
+/// host's own setting beats `[default]`'s (D85).
+#[tokio::test]
+async fn a_host_with_its_slash_probe_off_is_not_asked_for_the_toggle() {
+    let server = MockServer::start().await;
+    page(&server, "/docs/", r#"<a href="/docs/a">a</a>"#).await;
+    page(&server, "/docs/a/", "<title>a</title>").await;
+
+    let off = "[default]\nslash_probe = false";
+    let done = crawl(&server, off, quick()).await;
+    assert_eq!(
+        done.target("/docs/a"),
+        t("/docs/a", "broken_url", None, Some(404))
+    );
+    assert!(!has_requested(&requests(&server).await, "/docs/a/"));
+
+    let own = format!("{off}\n[host.\"127.0.0.1\"]\nslash_probe = true");
+    let done = crawl(&server, &own, quick()).await;
+    assert_eq!(
+        done.target("/docs/a"),
+        t(
+            "/docs/a",
+            "broken_url",
+            Some("wrong_trailing_slash"),
+            Some(404)
+        )
+    );
+    assert!(has_requested(&requests(&server).await, "/docs/a/"));
+}
+
 /// A stop lets the request in flight finish and starts nothing after it,
 /// counting what it left unwritten as cut.
 #[tokio::test]

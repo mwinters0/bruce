@@ -22,7 +22,9 @@ impl Entry {
                 .collect();
             return format!("gate.fail = [{}]", list.join(", "));
         }
-        let value = if matches!(self.value.as_str(), "true" | "false") {
+        let value = if matches!(self.value.as_str(), "true" | "false")
+            || self.value.parse::<u64>().is_ok()
+        {
             self.value.clone()
         } else {
             format!("{:?}", self.value)
@@ -33,7 +35,9 @@ impl Entry {
             (None, key @ ("pedantic_trailing_slash" | "doubled_slash_reach")) => {
                 (format!("judge.{key}"), "=")
             }
-            (None, key) if key.starts_with("severity.") => (key.to_owned(), "="),
+            (None, key) if key.starts_with("severity.") || key == "max_body_mib" => {
+                (key.to_owned(), "=")
+            }
             (None, key) => (format!("default.{key}"), "="),
         };
         format!("{path} {op} {value}")

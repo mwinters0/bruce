@@ -32,10 +32,6 @@ pub mod routed;
 /// the sitemap protocol's own limit.
 pub const MAX_SITEMAP: usize = 50 * 1024 * 1024;
 
-/// The most an HTML body may come to, after decompression; a larger one is
-/// [`Body::TooLarge`].
-pub const MAX_BODY: usize = 16 * 1024 * 1024;
-
 /// What the caller wants from a URL.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {

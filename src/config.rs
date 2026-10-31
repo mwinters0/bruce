@@ -7,8 +7,9 @@
 //! and then validated into [`Config`]: URLs parsed, globs compiled, hosts
 //! normalised, numbers range-checked. Nothing past this module sees a string
 //! it would have to check again, but a profile's name, which only `cli` can
-//! check against the registry (D39). The judging keys are read into
-//! [`Policy`], which the `policy` child holds.
+//! check against the registry (D39). The judging keys, and the keys that decide
+//! how a crawl asks (D85), are read into [`Policy`], which the `policy` child
+//! holds.
 
 use std::collections::{BTreeMap, HashSet};
 use std::fmt;
@@ -22,11 +23,11 @@ use crate::url::{Canonical, canonical};
 
 mod policy;
 
-use policy::{RawGate, RawJudge, RawJudging};
+use policy::{RawAsking, RawGate, RawJudge, RawJudging};
 
 pub use policy::{
-    Answer, DEFAULT_FAIL, Entry, FailOn, HostJudging, Policy, Reach, SEVERITY_REASONS, Severity,
-    SeverityMap, WORKING_SCHEMES,
+    ASKING_KEYS, Answer, Asking, DEFAULT_FAIL, Entry, FailOn, HostAsking, HostJudging, Policy,
+    Reach, SEVERITY_REASONS, Severity, SeverityMap, WORKING_SCHEMES, backoff,
 };
 
 /// Requests a second to one host that no `Crawl-delay`, `[host]` or `[rate]`
@@ -275,13 +276,22 @@ impl Config {
             doubled_slash: raw.default.doubled_slash,
             status: raw.default.status.clone(),
         };
-        let (hosts, judged) = host_settings(raw.host)?;
+        let default_asking = RawAsking {
+            connect_timeout: raw.default.connect_timeout,
+            timeout: raw.default.timeout,
+            retries: raw.default.retries,
+            max_retry_after: raw.default.max_retry_after,
+            slash_probe: raw.default.slash_probe,
+        };
+        let (hosts, judged, asked) = host_settings(raw.host)?;
+        let asking = Asking::from_raw(raw.max_body_mib, &default_asking, asked).map_err(invalid)?;
         let policy = Policy::from_raw(
             raw.judge,
             &default_judging,
             &raw.severity,
             &raw.gate,
             judged,
+            asking,
         )
         .map_err(invalid)?;
         let config = Config {
@@ -479,15 +489,17 @@ impl Rate {
     }
 }
 
-/// The hosts' politeness and, apart, the settings they judge by.
+/// The hosts' politeness and, apart, the settings they judge by and ask by.
 type Hosts = (
     BTreeMap<String, HostSettings>,
     BTreeMap<String, HostJudging>,
+    BTreeMap<String, HostAsking>,
 );
 
 fn host_settings(raw: BTreeMap<String, RawHost>) -> Result<Hosts, Error> {
     let mut hosts = BTreeMap::new();
     let mut judged = BTreeMap::new();
+    let mut asked = BTreeMap::new();
     for (name, h) in raw {
         let key = host(&name).map_err(|e| invalid(format!("host: {e}")))?;
         if let Some(n) = h.per_second {
@@ -509,14 +521,28 @@ fn host_settings(raw: BTreeMap<String, RawHost>) -> Result<Hosts, Error> {
             },
         )
         .map_err(invalid)?;
+        let asking = HostAsking::from_raw(
+            &format!("host.\"{name}\""),
+            &RawAsking {
+                connect_timeout: h.connect_timeout,
+                timeout: h.timeout,
+                retries: h.retries,
+                max_retry_after: h.max_retry_after,
+                slash_probe: h.slash_probe,
+            },
+        )
+        .map_err(invalid)?;
         if hosts.insert(key.clone(), settings).is_some() {
             return Err(invalid(format!("host: \"{name}\" is named twice")));
         }
         if judging != HostJudging::default() {
-            judged.insert(key, judging);
+            judged.insert(key.clone(), judging);
+        }
+        if asking != HostAsking::default() {
+            asked.insert(key, asking);
         }
     }
-    Ok((hosts, judged))
+    Ok((hosts, judged, asked))
 }
 
 impl Allowlist {
@@ -736,6 +762,7 @@ struct RawConfig {
     severity: BTreeMap<String, String>,
     #[serde(default)]
     gate: RawGate,
+    max_body_mib: Option<u64>,
     user_agent: Option<String>,
     #[serde(default)]
     host: BTreeMap<String, RawHost>,
@@ -767,6 +794,11 @@ struct RawRate {
     doubled_slash: Option<bool>,
     #[serde(default)]
     status: BTreeMap<String, String>,
+    connect_timeout: Option<u64>,
+    timeout: Option<u64>,
+    retries: Option<u32>,
+    max_retry_after: Option<u64>,
+    slash_probe: Option<bool>,
 }
 
 #[derive(Deserialize)]
@@ -778,6 +810,11 @@ struct RawHost {
     doubled_slash: Option<bool>,
     #[serde(default)]
     status: BTreeMap<String, String>,
+    connect_timeout: Option<u64>,
+    timeout: Option<u64>,
+    retries: Option<u32>,
+    max_retry_after: Option<u64>,
+    slash_probe: Option<bool>,
 }
 
 #[cfg(test)]

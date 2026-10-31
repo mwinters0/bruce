@@ -1,6 +1,6 @@
 //! Housekeeping's list of the settings this run was judged by that are not
 //! `bruce`'s defaults (D82), so a judgement the reader cannot otherwise see is
-//! stated. The JSON holds the whole policy.
+//! stated, with how the run asked (D85). The JSON holds the whole policy.
 
 use std::fmt::Write as _;
 
@@ -21,15 +21,16 @@ pub(super) fn list(out: &mut String, d: &Digest) {
         w!(
             out,
             "<p><strong>A trial.</strong> This report was judged by the judging settings of \
-             <code>{}</code>, in place of those the runs recorded; nothing was crawled again. \
-             The settings it was judged by that differ from the defaults, as the configuration \
-             file writes them:</p>\n",
+             <code>{}</code>, in place of those the runs recorded; nothing was crawled again, \
+             so the settings for asking are the run's own. The settings it was judged by and \
+             asked with that differ from the defaults, as the configuration file writes \
+             them:</p>\n",
             esc(file)
         );
     } else {
         out.push_str(
-            "<p>The settings this run was judged by that differ from the defaults, as the \
-             configuration file writes them. A report judges the run by the policy it recorded, \
+            "<p>The settings this run was judged by and asked with that differ from the \
+             defaults, as the configuration file writes them. A report judges the run by the policy it recorded, \
              and a comparison judges both runs by the newer one's.</p>\n",
         );
     }

@@ -53,8 +53,8 @@ of one site: a run of other roots shows as pages gained and lost.
 file's judging settings ([`report.md`](report.md#a-trial-policy)): the severity
 map, the `status` map, `doubled_slash` and the rest, and the comparison's run
 judged by them too. The HTML opens with a line naming the file, and
-Housekeeping's settings list is the file's. The JSON's `policy` is the file's
-rows and its `trial` the file's path as given. Name a trial's digest apart
+Housekeeping's settings list is the file's judging settings and the run's own
+[asking](config.md#asking) ones. The JSON's `policy` is those rows and its `trial` the file's path as given. Name a trial's digest apart
 (`--name`) from the digests to keep: its figures are not a run's.
 
 ## The files

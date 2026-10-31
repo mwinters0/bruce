@@ -12,7 +12,7 @@
 //! D22) are the crawl's to open before it asks, and it asks this module's
 //! [`Site`] which URLs are built. The query and the
 //! fragment are not part of a file's name. Bodies are read as `fetch::http`
-//! reads them: decoded HTML up to [`MAX_BODY`] for a page (a `.html` or
+//! reads them: decoded HTML up to [`LocalFetcher::with_max_body`] for a page (a `.html` or
 //! `.htm` file alone, `.xhtml` being unread here), bytes for a sitemap,
 //! nothing for a status.
 
@@ -23,7 +23,8 @@ use std::sync::Arc;
 use url::Url;
 
 use super::charset::decode;
-use super::{Body, Failure, FailureKind, Fetcher, MAX_BODY, MAX_SITEMAP, Mode, Response};
+use super::{Body, Failure, FailureKind, Fetcher, MAX_SITEMAP, Mode, Response};
+use crate::config::Asking;
 use crate::url::canonical;
 
 /// The URLs a build answers, and the file that holds each: what the fetcher
@@ -41,6 +42,8 @@ pub struct Site {
 #[derive(Debug, Clone)]
 pub struct LocalFetcher {
     site: Arc<Site>,
+    /// The most a page may come to; a larger one is [`Body::TooLarge`].
+    max_body: usize,
 }
 
 /// What the map says of a URL.
@@ -101,7 +104,14 @@ impl LocalFetcher {
     pub fn new(prefix: &Url, served: impl IntoIterator<Item = (Url, PathBuf)>) -> LocalFetcher {
         LocalFetcher {
             site: Arc::new(Site::new(prefix, served)),
+            max_body: Asking::default().max_body(),
         }
+    }
+
+    /// The same fetcher, a page past `max_body` bytes being [`Body::TooLarge`]
+    /// (D85).
+    pub fn with_max_body(self, max_body: usize) -> LocalFetcher {
+        LocalFetcher { max_body, ..self }
     }
 
     /// The URLs this fetcher answers, to share with the crawl.
@@ -118,6 +128,7 @@ impl Fetcher for LocalFetcher {
     ) -> impl Future<Output = Result<Response, Failure>> + Send {
         let found = self.site.lookup(url);
         let asked = url.to_string();
+        let max_body = self.max_body;
         async move {
             let answer = |status, location, content_type, body| {
                 Ok(Response {
@@ -142,7 +153,7 @@ impl Fetcher for LocalFetcher {
                         Mode::Page if !html => Body::Unread,
                         Mode::Page | Mode::Sitemap => {
                             let bytes = read(&file).await?;
-                            body_of(mode, bytes, content_type)
+                            body_of(mode, bytes, content_type, max_body)
                         }
                     };
                     answer(200, None, Some(content_type.to_owned()), body)
@@ -153,11 +164,11 @@ impl Fetcher for LocalFetcher {
 }
 
 /// The body of a 200 for `mode`, from the bytes of its file.
-fn body_of(mode: Mode, bytes: Vec<u8>, content_type: &str) -> Body {
+fn body_of(mode: Mode, bytes: Vec<u8>, content_type: &str, max_body: usize) -> Body {
     match mode {
         Mode::Sitemap if bytes.len() > MAX_SITEMAP => Body::TooLarge,
         Mode::Sitemap => Body::Raw(bytes),
-        _ if bytes.len() > MAX_BODY => Body::TooLarge,
+        _ if bytes.len() > max_body => Body::TooLarge,
         _ => Body::Html {
             size: bytes.len() as u64,
             text: decode(&bytes, Some(content_type)),

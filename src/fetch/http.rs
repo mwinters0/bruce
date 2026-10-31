@@ -1,6 +1,6 @@
 //! The HTTP fetcher: one hop over reqwest (D1, D11), with its retries,
-//! `Retry-After`, timeouts and body cap (D16) and an asset's HEAD falling back
-//! to GET (D13).
+//! `Retry-After`, timeouts and body cap (D16, D85) and an asset's HEAD falling
+//! back to GET (D13).
 //!
 //! reqwest's own redirect-following is off, so a 3xx is returned as an
 //! answer with its `Location` (D7). TLS is rustls on ring and DNS is
@@ -8,7 +8,8 @@
 //! connection is retried after each [`Settings::backoff`] in turn; a 429 or
 //! 503 naming a `Retry-After` waits that long instead, up to
 //! [`Settings::max_retry_after`], and a longer one is returned unretried for
-//! the crawler to settle `error` (D16). A fetcher that runs out of retries
+//! the crawler to settle `error` (D16). A host the configuration names sets
+//! its own timeouts, retries and ceiling (`host`, D85) over these. A fetcher that runs out of retries
 //! returns the last answer, a status, or the last [`Failure`].
 //!
 //! Every request a [`Fetcher`] method sends first takes its host's permit and
@@ -22,10 +23,11 @@
 //! sent (`super`'s doc). A robots.txt request it stops leaves that origin
 //! [`Access::Unavailable`] for the run.
 
+use std::collections::HashMap;
 use std::error::Error as _;
 use std::io;
 use std::pin::Pin;
-use std::sync::Once;
+use std::sync::{Arc, Mutex, Once};
 use std::time::{Duration, SystemTime};
 
 use hickory_resolver::net::NetError;
@@ -33,12 +35,10 @@ use reqwest::header::{CONTENT_TYPE, LOCATION, RETRY_AFTER};
 use reqwest::{Client, Method, redirect};
 use url::Url;
 
-use crate::config::DEFAULT_USER_AGENT;
+use crate::config::{Asking, Config, DEFAULT_USER_AGENT, backoff};
 
 use super::charset::decode;
-use super::{
-    Access, Body, Failure, FailureKind, Fetcher, MAX_BODY, MAX_SITEMAP, Mode, Response, Stopper,
-};
+use super::{Access, Body, Failure, FailureKind, Fetcher, MAX_SITEMAP, Mode, Response, Stopper};
 
 pub mod host;
 
@@ -55,9 +55,9 @@ const ROBOTS_REDIRECTS: usize = 5;
 /// for at least 500 KiB).
 const ROBOTS_MAX: usize = 512 * 1024;
 
-/// The limits a fetcher holds itself to. The defaults are the spec's; but for
-/// `user_agent`, they are fields so a test can shrink them, not keys a
-/// deployment sets.
+/// The limits a fetcher holds itself to where a host sets none of its own
+/// (`host`, D85): [`Settings::of`] reads them off a configuration, and a test
+/// shrinks them.
 #[derive(Debug, Clone)]
 pub struct Settings {
     /// Sent as `User-Agent`.
@@ -78,14 +78,25 @@ pub struct Settings {
 
 impl Default for Settings {
     fn default() -> Self {
+        Settings::asking(DEFAULT_USER_AGENT, &Asking::default())
+    }
+}
+
+impl Settings {
+    /// What `config` says a fetcher is held to where a host sets none.
+    pub fn of(config: &Config) -> Settings {
+        Settings::asking(&config.user_agent, &config.policy.asking)
+    }
+
+    fn asking(user_agent: &str, asking: &Asking) -> Settings {
         Settings {
-            user_agent: DEFAULT_USER_AGENT.to_owned(),
-            connect_timeout: Duration::from_secs(10),
-            timeout: Duration::from_secs(30),
-            max_body: MAX_BODY,
+            user_agent: user_agent.to_owned(),
+            connect_timeout: Duration::from_secs(asking.connect_timeout),
+            timeout: Duration::from_secs(asking.timeout),
+            max_body: asking.max_body(),
             max_sitemap: MAX_SITEMAP,
-            backoff: [1, 2, 4].map(Duration::from_secs).to_vec(),
-            max_retry_after: Duration::from_secs(60),
+            backoff: backoff(asking.retries),
+            max_retry_after: Duration::from_secs(asking.max_retry_after),
         }
     }
 }
@@ -94,6 +105,8 @@ impl Default for Settings {
 #[derive(Debug, Clone)]
 pub struct HttpFetcher {
     client: Client,
+    /// The clients of a host's own connect timeout, a client having one.
+    others: Arc<Mutex<HashMap<Duration, Client>>>,
     settings: Settings,
     hosts: Hosts,
     stop: Stopper,
@@ -123,26 +136,29 @@ struct Attempt {
 
 impl HttpFetcher {
     pub fn new(settings: Settings, hosts: Hosts) -> Result<HttpFetcher, Failure> {
-        // reqwest is built without a crypto provider (D45); ring is installed
-        // for the process, and a second install finding one is fine.
-        static PROVIDER: Once = Once::new();
-        PROVIDER.call_once(|| {
-            let _ = rustls::crypto::ring::default_provider().install_default();
-        });
-        let client = Client::builder()
-            .user_agent(&settings.user_agent)
-            .connect_timeout(settings.connect_timeout)
-            .timeout(settings.timeout)
-            .redirect(redirect::Policy::none())
-            .hickory_dns(true)
-            .build()
-            .map_err(|e| classify(&e))?;
+        let client = build(&settings.user_agent, settings.connect_timeout)?;
         Ok(HttpFetcher {
             client,
+            others: Arc::default(),
             settings,
             hosts,
             stop: Stopper::default(),
         })
+    }
+
+    /// The client that connects to a host in `connect`, the shared one unless
+    /// the host sets its own timeout.
+    fn client(&self, connect: Option<Duration>) -> Result<Client, Failure> {
+        let Some(connect) = connect.filter(|c| *c != self.settings.connect_timeout) else {
+            return Ok(self.client.clone());
+        };
+        let mut others = self.others.lock().expect("no panic holds the lock");
+        if let Some(client) = others.get(&connect) {
+            return Ok(client.clone());
+        }
+        let client = build(&self.settings.user_agent, connect)?;
+        others.insert(connect, client.clone());
+        Ok(client)
     }
 
     /// One request, no retry, after its host's permit and slot, unless the
@@ -154,9 +170,14 @@ impl HttpFetcher {
             _ = self.stop.stopped() => return Err(Failure::stopped()),
             permit = host.admit() => permit,
         };
+        let ask = host.asking();
         let mut response = self
-            .client
+            .client(ask.connect_timeout.map(Duration::from_secs))?
             .request(method, url.clone())
+            .timeout(
+                ask.timeout
+                    .map_or(self.settings.timeout, Duration::from_secs),
+            )
             .send()
             .await
             .map_err(|e| classify(&e))?;
@@ -223,10 +244,18 @@ impl HttpFetcher {
 
     /// A GET, retried as the module doc says.
     async fn get(&self, url: &Url, want: Want) -> Result<Attempt, Failure> {
-        let mut backoff = self.settings.backoff.iter().copied();
+        let ask = self.hosts.host(url).asking();
+        let mut backoff = match ask.retries {
+            Some(retries) => backoff(retries),
+            None => self.settings.backoff.clone(),
+        }
+        .into_iter();
+        let ceiling = ask
+            .max_retry_after
+            .map_or(self.settings.max_retry_after, Duration::from_secs);
         loop {
             let result = self.once(Method::GET, url, want).await;
-            let Some(asked) = retry_plan(&result, self.settings.max_retry_after) else {
+            let Some(asked) = retry_plan(&result, ceiling) else {
                 return result;
             };
             let Some(step) = backoff.next() else {
@@ -336,6 +365,24 @@ impl Fetcher for HttpFetcher {
     fn with_stop(self, stop: Stopper) -> HttpFetcher {
         HttpFetcher { stop, ..self }
     }
+}
+
+/// A client for `user_agent` that connects within `connect`, with no total
+/// timeout of its own: each request sets its host's (D85).
+fn build(user_agent: &str, connect: Duration) -> Result<Client, Failure> {
+    // reqwest is built without a crypto provider (D45); ring is installed
+    // for the process, and a second install finding one is fine.
+    static PROVIDER: Once = Once::new();
+    PROVIDER.call_once(|| {
+        let _ = rustls::crypto::ring::default_provider().install_default();
+    });
+    Client::builder()
+        .user_agent(user_agent)
+        .connect_timeout(connect)
+        .redirect(redirect::Policy::none())
+        .hickory_dns(true)
+        .build()
+        .map_err(|e| classify(&e))
 }
 
 /// Whether to retry an answer, and after how long: `None` for no retry,

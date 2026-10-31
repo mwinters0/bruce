@@ -33,7 +33,7 @@ fn the_default_policy_is_what_bruce_has_always_judged_by() {
 fn every_setting_is_an_entry_with_its_value_written_out() {
     let mut policy = Policy::default();
     let defaults = rows(&policy);
-    assert_eq!(defaults.len(), 1 + 12 + 1 + 1 + 3 + 5 + 1);
+    assert_eq!(defaults.len(), 1 + 12 + 1 + 1 + 3 + 5 + 1 + 6);
     for row in [
         "/pedantic_trailing_slash=true",
         "/schemes=mailto",
@@ -42,6 +42,10 @@ fn every_setting_is_an_entry_with_its_value_written_out() {
         "/doubled_slash_reach=full",
         "/status.403=error",
         "/gate.fail=broken_url,broken_anchor",
+        "/timeout=30",
+        "/retries=3",
+        "/slash_probe=true",
+        "/max_body_mib=16",
     ] {
         assert!(defaults.contains(&row.to_string()), "{row}");
     }
@@ -275,4 +279,97 @@ fn a_fail_list_that_cannot_mean_anything_is_refused_naming_it() {
         let err = parse(extra).unwrap_err();
         assert!(err.contains(named), "{extra}: {err}");
     }
+}
+
+#[test]
+fn a_file_sets_how_a_crawl_asks_over_the_defaults_and_a_host_over_both() {
+    let policy = Config::parse(
+        r#"
+        max_body_mib = 64
+        [default]
+        timeout = 60
+        retries = 0
+        [host."Pagure.io"]
+        connect_timeout = 5
+        slash_probe = false
+        "#,
+    )
+    .unwrap()
+    .policy;
+    let asking = &policy.asking;
+    assert_eq!(
+        (asking.connect_timeout, asking.timeout, asking.retries),
+        (10, 60, 0)
+    );
+    assert_eq!((asking.max_retry_after, asking.max_body_mib), (60, 64));
+    assert_eq!(asking.max_body(), 64 * 1024 * 1024);
+    assert!(asking.probes("docs.example.org") && !asking.probes("pagure.io"));
+    let written = |key: &str, host: Option<&str>| {
+        policy
+            .entries()
+            .into_iter()
+            .find(|e| e.key == key && e.host.as_deref() == host)
+            .map(|e| (e.written_as(), e.is_asking()))
+    };
+    assert_eq!(
+        written("timeout", None),
+        Some(("default.timeout = 60".to_owned(), true))
+    );
+    assert_eq!(
+        written("max_body_mib", None),
+        Some(("max_body_mib = 64".to_owned(), true))
+    );
+    assert_eq!(
+        written("connect_timeout", Some("pagure.io")),
+        Some(("host.\"pagure.io\".connect_timeout = 5".to_owned(), true))
+    );
+    assert_eq!(
+        written("slash_probe", Some("pagure.io")),
+        Some(("host.\"pagure.io\".slash_probe = false".to_owned(), true))
+    );
+    // A host's row exists only for a key it names.
+    assert_eq!(written("timeout", Some("pagure.io")), None);
+    assert!(!Policy::default().entries().iter().any(|e| e.host.is_some()));
+}
+
+#[test]
+fn a_judging_row_is_not_an_asking_one() {
+    for row in Policy::default().entries() {
+        assert_eq!(
+            row.is_asking(),
+            ASKING_KEYS.contains(&row.key.as_str()),
+            "{}",
+            row.key
+        );
+    }
+    assert!(!Policy::default().entries().iter().all(Entry::is_asking));
+}
+
+#[test]
+fn an_asking_key_that_cannot_mean_anything_is_refused_naming_it() {
+    for (extra, named) in [
+        ("[default]\ntimeout = 0", "default.timeout"),
+        ("[default]\nconnect_timeout = 0", "default.connect_timeout"),
+        ("[default]\nretries = 11", "default.retries"),
+        (
+            "[host.\"a.example\"]\ntimeout = 0",
+            "host.\"a.example\".timeout",
+        ),
+        (
+            "[host.\"a.example\"]\nretries = 99",
+            "host.\"a.example\".retries",
+        ),
+        ("[default]\nretries = -1", "retries"),
+    ] {
+        let err = parse(extra).unwrap_err();
+        assert!(err.contains(named), "{extra}: {err}");
+    }
+    let err = Config::parse("max_body_mib = 0").unwrap_err().to_string();
+    assert!(err.contains("max_body_mib"), "{err}");
+    // Zero is a ceiling that gives up on every Retry-After, and no retries.
+    let policy = parse("[default]\nretries = 0\nmax_retry_after = 0").unwrap();
+    assert_eq!(
+        (policy.asking.retries, policy.asking.max_retry_after),
+        (0, 0)
+    );
 }
