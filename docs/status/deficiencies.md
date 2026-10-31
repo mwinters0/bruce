@@ -86,12 +86,6 @@ roadmap's phase index.
   reading those counts under `--top` would promote it.
   Detail: `src/report/gate.rs`
 
-- **KD22** — A two-run report refused because its default `--to` is a later
-  unfinished `check-dir` run's baseline tells the user to name a run with
-  `--run`, which that report refuses; `--to` is the answer. **(c) unowned**:
-  anyone meeting the refusal on a two-run report would promote it.
-  Detail: `src/report/error.rs`
-
 - **KD23** — A target's answer is judged by the policy only inside
   `link_verdicts`, so the queries reading a target's stored outcome show the
   crawl's: a link a remapped status breaks is a new break's `unexplained`, not

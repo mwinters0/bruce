@@ -18,11 +18,13 @@ pub enum Error {
     NoBaseline(RunId),
     /// A digest of a run `check-dir` made, which only a crawl run has.
     NotCrawl(RunId),
-    /// No `--run`, and the latest finished run is the baseline of a later run
-    /// that never finished: a stopped `check-dir` (D59).
+    /// The default run is the baseline of a later run that never finished: a
+    /// stopped `check-dir` (D59). `flag` is the one that names the run it
+    /// defaults, `--run` or, for a two-run report, `--to`.
     BaselineOfLater {
         run: RunId,
         later: RunId,
+        flag: &'static str,
     },
     /// The baseline file a digest is compared with could not be imported (D52).
     Baseline(crate::store::Error),
@@ -53,13 +55,10 @@ impl fmt::Display for Error {
                 run.0
             ),
             Error::Baseline(e) => write!(f, "the baseline to compare with: {e}"),
-            // deficiency: KD22 The advice is `--run`'s, which `cli::report::check`
-            // refuses for `diff`, `changed` and `anchors-removed`: their default
-            // `--to` raises this too (`run::choose`), and is answered by `--to`.
-            Error::BaselineOfLater { run, later } => write!(
+            Error::BaselineOfLater { run, later, flag } => write!(
                 f,
                 "run {} is the baseline run {} was checked against, and run {} never finished; \
-                 name a run with --run",
+                 name a run with {flag}",
                 run.0, later.0, later.0
             ),
         }

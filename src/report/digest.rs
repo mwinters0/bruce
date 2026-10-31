@@ -54,7 +54,7 @@ pub fn digest(
     profiles: &Registry,
 ) -> Result<Digest, Error> {
     let conn = store.connection();
-    let (id, unfinished, later_unfinished) = run::one(conn, run)?;
+    let (id, unfinished, later_unfinished) = run::one(conn, run, "--run")?;
     let read = Read {
         id,
         unfinished,

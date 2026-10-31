@@ -129,9 +129,11 @@ fn the_default_pair_refuses_a_to_that_a_later_unfinished_run_was_checked_against
         err,
         Error::BaselineOfLater {
             run: RunId(2),
-            later: RunId(3)
+            later: RunId(3),
+            flag: "--to"
         }
     ));
+    assert!(err.to_string().ends_with("with --to"));
     assert_eq!(diff(&store, |r| r.to = Some(RunId(2))).run, RunId(2));
 }
 

@@ -322,11 +322,12 @@ fn the_default_refuses_the_baseline_of_a_later_unfinished_run() {
         err,
         Error::BaselineOfLater {
             run: RunId(1),
-            later: RunId(2)
+            later: RunId(2),
+            flag: "--run"
         }
     ));
     let text = err.to_string();
-    assert!(text.contains("run 1") && text.contains("run 2") && text.contains("--run"));
+    assert!(text.contains("run 1") && text.contains("run 2") && text.ends_with("with --run"));
     let mut gate = Request::new(Report::Introduced);
     assert!(matches!(
         super::gate(&store, &gate),

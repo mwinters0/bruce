@@ -21,7 +21,7 @@ pub(super) struct Chosen {
 /// run before `to`; every other report reads `run`.
 pub(super) fn choose(conn: &Connection, request: &Request) -> Result<Chosen, Error> {
     if !request.report.compares() {
-        let (run, unfinished, later_unfinished) = one(conn, request.run)?;
+        let (run, unfinished, later_unfinished) = one(conn, request.run, "--run")?;
         return Ok(Chosen {
             run,
             unfinished,
@@ -29,7 +29,7 @@ pub(super) fn choose(conn: &Connection, request: &Request) -> Result<Chosen, Err
             from: None,
         });
     }
-    let (to, unfinished, later_unfinished) = one(conn, request.to)?;
+    let (to, unfinished, later_unfinished) = one(conn, request.to, "--to")?;
     let from = match request.from {
         Some(from) => named(conn, from)?,
         None => {
@@ -57,10 +57,12 @@ pub(super) fn choose(conn: &Connection, request: &Request) -> Result<Chosen, Err
 ///
 /// **The default refuses a run a later unfinished run was checked against**
 /// (D59): that is a `check-dir` that stopped, and the report would read the
-/// baseline it imported as if it were the build.
+/// baseline it imported as if it were the build. `flag` names `wanted`'s
+/// option, which the refusal tells the user to give.
 pub(super) fn one(
     conn: &Connection,
     wanted: Option<RunId>,
+    flag: &'static str,
 ) -> Result<(RunId, bool, Option<RunId>), Error> {
     if let Some(run) = wanted {
         let (run, unfinished) = named(conn, run)?;
@@ -82,7 +84,11 @@ pub(super) fn one(
         })?
         .collect::<Result<Vec<_>, _>>()?;
     if let Some((later, _)) = later.iter().find(|(_, base)| *base == Some(run.0)) {
-        return Err(Error::BaselineOfLater { run, later: *later });
+        return Err(Error::BaselineOfLater {
+            run,
+            later: *later,
+            flag,
+        });
     }
     Ok((run, false, later.first().map(|(later, _)| *later)))
 }

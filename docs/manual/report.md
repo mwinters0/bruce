@@ -49,7 +49,7 @@ Where a later run never finished, `bruce report` says on stderr that it
 stopped before the end and which run it is reporting. If that later run is a
 [`check-dir`](check-dir.md) run checked against the run the report would read,
 the report is refused, since those rows are the baseline's and not the
-build's; name a run with `--run`. `diff`'s default `--to` does the same.
+build's; name a run with `--run`. `diff`'s default `--to` does the same, and `--to` is its answer.
 [`bruce prune`](prune.md) deletes the runs a database no longer needs.
 
 `diff`, `changed` and `anchors-removed` read two runs. With neither option it compares the latest two
