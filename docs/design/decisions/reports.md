@@ -111,13 +111,13 @@ the section. Code: `config::policy::digest`, `report::digest::sections::by_group
 
 ### D91 The digest states the policy it was judged by: Housekeeping what differs from the defaults and, compared, between the runs; the JSON all of it
 Housekeeping lists the run's settings off their defaults, a trial's file named (D84), and the JSON holds every row as
-`policy`. A comparison also lists each recorded row that differs between its runs (JSON `policy_changes`): a declared
-profile's among the profiles either run's pages used, a source rule by its place in each run's list, the lists aligned
-so a rule inserted is named alone. The guide shows an entry only while its reason is judged, and names a doubled slash by
-role (D71). Why: a judgement the reader cannot see is a broken experience; the defaults list shows no row removed, and
-rules alone would hide a changed root or scope. Rejected: the JSON alone; the guide's text left to a site's own wording.
-Code: `report::digest::html::policy`, `report::digest::changes`, `report::digest::html::guide`. Evidence:
-`report::digest::tests`.
+`policy`. A comparison also lists each recorded row that differs between its runs (JSON `policy_changes`, `{from, to}`
+pairs): a declared profile's if either run's pages used it, a source rule by its place in each list, aligned so one
+inserted is named alone. The guide shows an entry only while its reason is judged, and names a doubled slash by role
+(D71). Why: a judgement unseen is a broken experience; the defaults list shows no row removed, and rules alone
+would hide a changed root or scope. Rejected: the JSON alone; grouping by key, which a moved rule's two keys defeat;
+the guide's text left to a site's own wording. Code: `report::digest::changes`, `report::digest::html::{policy, guide}`.
+Evidence: `report::digest::tests`.
 
 ### D92 A kind at `none` is no finding in the digest, and its JSON and figures keep it
 Its links leave the HTML's lists, counts and ranking, and a page whose only findings are at `none` has no row; the

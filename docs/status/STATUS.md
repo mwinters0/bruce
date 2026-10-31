@@ -89,13 +89,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **The comparison's policy list reads the runs' recorded rows, and its JSON is
-  `policy_changes`, a list of `{from, to}` rows (10.5.1).** The spec fixed
-  neither the shape nor what a trial does to it. A trial (`--config`) changes
-  neither side, since D84 leaves what a run recorded as it is and the list says
-  what the runs configured; a key holding several values (`schemes`, `region`)
-  lists those lost and gained apart, never paired. Reconsidering changes the
-  JSON a loader reads (`format_version` stays 2, a field being added) and
-  whether a trial's judging rows show in the list
-  ([notes](../wip/roadmap-P10.5.1-report-notes.md)).
