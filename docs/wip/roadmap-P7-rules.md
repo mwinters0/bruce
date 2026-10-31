@@ -83,6 +83,24 @@ site-defined levels, which make the legend, the ranking and the print
 styling data; a fixed mapping with colours configurable. Drains the inbox's
 severity entry.
 
+Settled 2026-10-31 (maintainer). **The map ranks as well as dots.** A page's
+and a repo's counts are of their links by mapped level, each level naming its
+kinds, and they rank by red then amber, so `doubled_slash = "attention"`
+moves its links' page count to amber, not only their rows' dots. The counts
+cover the links they always have, broken and errored ones and those broken
+through a doubled slash, each at its level; a level on any other link (a
+redirect, a reason on an `ok` one) moves its dot where it is listed and never
+counts it or lists its page. **A kind at
+*none* is no finding in the digest**: it leaves the link lists, the counts and
+the ranking, a page whose only findings are at *none* having no row, as one
+whose only links are `unchecked` has none. The run's outcomes, `report`'s
+other commands and the gate are untouched. **The JSON stays the data**: every
+row, a *none* kind's included, counted and ordered by outcome, the levels
+derivable from its `policy`; the HTML ranks and filters. **The figures stay the
+run's outcome totals**, each coloured by its outcome's level. Rejected: an outcome-ranked order
+with the map moving dots alone, which leaves a reason's key unable to move its
+page ([`../status/history/2026-10-31.md`](../status/history/2026-10-31.md)).
+
 ## What becomes a setting
 
 Settled 2026-10-25 (maintainer). **A constant becomes a setting where a

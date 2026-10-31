@@ -32,10 +32,9 @@ gate's `fail` list, which is P7.5.1 (below).
 - **A trial policy (P7.6) must carry the map.** `Digest.severity` comes from
   `policy` rows, so `--config` hands the digest rows from a file's
   `Policy::entries()` and nothing else changes on the report's side.
-- **`none` keeps the rows.** A kind at `none` loses its dot, and stays in every
-  list, count and ranking: an outcome-ranked SQL order (`pages`, `by_repo`)
-  cannot move with a level without a second ordering in the JSON too (D82's
-  Rejected).
+- **`none` keeps the rows, and counts are by outcome**, which 7.5.2 changes:
+  a kind at `none` loses only its dot, and a reason key moves its rows' dots
+  but not their page's count or rank. The JSON's outcome order stays.
 
 ## Negative results
 

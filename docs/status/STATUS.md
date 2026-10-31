@@ -71,6 +71,11 @@ The spec is [`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md).
 - [ ] **7.5.1** The gate's `fail` list: `[gate]` `fail`, recorded, read by the
   gate and `report introduced`/`inverse` for the CI run, stated like any
   setting. Earned by 7.5 ([`history/2026-10-30.md`](history/2026-10-30.md)).
+- [ ] **7.5.2** The map ranks: the HTML's page and repo counts by level and
+  ranked by them, and a kind at `none` out of its lists, counts and ranking
+  ([`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md), "Severity: three
+  fixed levels, the site mapping each kind"). Earned by 7.5
+  ([`history/2026-10-31.md`](history/2026-10-31.md)).
 - [ ] **7.6** `bruce report --config`, judging by a trial policy.
 - [ ] **7.7** The asking settings: per-host timeouts, retries, the
   `Retry-After` ceiling and D72's probe, and the body cap.
@@ -91,15 +96,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **A severity map moves dots, not rankings or lists (7.5).** `[severity]` sets a
-  kind's level, `none` included, and the digest's dots, figures' classes, counts'
-  dots and legend follow it; the order of `pages` and `by_repo` (red kinds by
-  outcome first) and every list a `none` kind is in stay as the outcomes make
-  them. Made that way because the order is SQL that the JSON carries too, so a
-  level-ranked page list is a second ordering to define, and the spec says a
-  severity touches no outcome ([`../wip/roadmap-P7-rules.md`](../wip/roadmap-P7-rules.md),
-  "Severity: three fixed levels, the site mapping each kind"). Reconsidering
-  (D82's Reopens) means ranking by the map and, for `none`, dropping a kind's
-  rows from the lists: a change to `report::digest::sections` and the JSON's
-  order.
