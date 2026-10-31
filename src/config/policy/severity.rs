@@ -62,7 +62,12 @@ pub const REDIRECTED: &str = "redirected";
 /// The reasons a link can carry, whatever its outcome (`too_large` and
 /// `pedantic_trailing_slash` on an `ok` one), which a severity may be set for. The test
 /// `crawl::outcome::tests::every_reason_the_crawl_writes_takes_a_severity`
-/// holds it to what the crawl and the views write.
+/// holds it to the reasons it lists of what the crawl and the views write.
+// deficiency: KD31 The crawl also writes `unreadable` (an `error`,
+// `crawl::Shared::write`) and `not_built` (a `broken_url`, `crawl::baseline`),
+// which neither this list nor the test names, so a `[severity]` key naming
+// either is refused at load. Adding both, and the test's arms for them, is the
+// fix; the reasons on `unchecked` links take no level (D76).
 pub const REASONS: [&str; 16] = [
     "nxdomain",
     "timeout",

@@ -44,18 +44,20 @@ per profile, a migration story each; a JSON column, no typed joins and no simple
 ### D38 A profile has four hooks: detect, extract, resolve, views
 Detect claims a generator string (D35). Extract adds a content region (D34), handlers and a finish step to the core's
 one lol_html pass (D11), writing only to a `Sink`. Resolve maps a tagged reference to a URL through the store's `Lookup`
-(D19, D20, D22). Views is SQL (D37), one of which may be the profile's hints (D87). `generic` leaves Resolve and Views
-empty, having no reference that is not a URL and no facts. Rejected: region handlers in each profile, each re-deciding
-`unknown` (D34), which only a page's end settles; a profile driving the pass (D39). Reopens: a hook empty in `generic`
-for any other reason, the trait bending around Antora. Code: `profile::Profile`, `profile::Sink`.
+(D19, D20, D22). Views is SQL (D37), one of which may be the profile's hints (D87). Beside them, `sitemap_note` gives
+the digest a sentence (D87). `generic` leaves Resolve and Views empty, having no reference that is not a URL and no
+facts. Rejected: region handlers in each profile, each re-deciding `unknown` (D34), which only a page's end settles; a
+profile driving the pass (D39). Reopens: a hook empty in `generic` for any other reason, the trait bending around
+Antora. Code: `profile::Profile`, `profile::Sink`.
 
 ### D19 Pages carry Antora resource IDs, and unresolved refspecs resolve through them
 Antora records `(component, version, module, rel_path)` as facts (D37): module and `rel_path` from the edit URL (I8);
-component and version verbatim from the nav container, or on a page with none the component from the URL under the
-site root (I13) and no version. A refspec with no version takes the component's only or latest (KD18). Rejected: the
-module from the URL, ambiguous with subdirectories; no component without a nav container, leaving xrefs into it
-unresolvable; a version from the URL, no versioned component lacking one; the fallback keyed on a nav container lacking
-`data-component`, inert where that happens (I12). Code: `profile::antora`, `profile::antora::resolve`.
+component and version verbatim from the nav container, or on a page with none the component from the URL under the site
+root (I13) and no version. A refspec with no version takes the only or latest version among the pages holding its module
+and path, else the component's latest (KD18). Rejected: the module from the URL, ambiguous with subdirectories; no
+component without a nav container, leaving xrefs into it unresolvable; a version from the URL, no versioned component
+lacking one; the fallback keyed on a nav container lacking `data-component`, inert where that happens (I12). Code:
+`profile::antora`, `profile::antora::resolve`.
 
 ### D65 An unresolved xref's hint is the nearest page ID by edit distance, within three tenths of the longer, read in the page's own context
 The refspec is completed as Antora read it on its page, so a component-less one finds its page, then compared with the

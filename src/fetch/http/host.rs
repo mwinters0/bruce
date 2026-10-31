@@ -35,8 +35,8 @@ pub enum Listing {
     /// A 4xx answer but 429: no file, so everything is allowed (RFC 9309).
     Absent,
     /// The host answered, but with no file to read: a 5xx or a 429 that
-    /// outlasts the retries, or redirects that led nowhere, onto another host
-    /// that gave no response among them; or a stop. The origin is disallowed
+    /// outlasts the retries or the `Retry-After` ceiling, or redirects that led
+    /// nowhere, onto another host that gave no response among them; or a stop. The origin is disallowed
     /// for the run (RFC 9309), its targets `unchecked`, `robots_unavailable`.
     Unreachable,
     /// A request on `name`, the first or one a redirect kept there, produced

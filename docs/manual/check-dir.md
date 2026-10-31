@@ -18,7 +18,7 @@ have broken. The run is added to a database like a crawl's ([`crawl.md`](crawl.m
 
 | Argument | Default | Meaning |
 |---|---|---|
-| `DIR` | required | The build directory. Every `.html` or `.htm` file under it is a page checked, and every other file a target of the run. |
+| `DIR` | required | The build directory. Every `.html` or `.htm` file under it is a page checked, and every other file a target of the run; a symlinked directory is not walked. |
 | `--prefix URL` | required | The production URL of the directory's root, such as `https://docs.example.org/en-US`. A file is the page at the prefix plus its path, and `foo/index.html` is `foo/` too. It must be inside a root's scope. |
 | `--baseline FILE\|URL` | required | The baseline file, or an `http` or `https` URL to download it from. A gzipped file is decompressed, whatever its name. Nothing is cached. |
 | `--config FILE` | none | The configuration the baseline was crawled under ([`config.md`](config.md)). With none, the prefix is the only root. |
@@ -91,9 +91,10 @@ An `error` (a timeout, a 5xx, a refusal to answer) fails the check only where
 `gate.fail` names it, and a redirect never does. The list is the one the CI run
 recorded, which also judges the baseline's links. A `broken_url` or
 `broken_anchor` it leaves out fails nothing and is listed in a section of its
-own, **introduced breakage not failing**, for the links the baseline did not
-have at that outcome. An empty list is report only: everything is listed and
-nothing fails.
+own, **introduced breakage not failing**, for the links the baseline had at
+none of the outcomes it leaves out. An empty list is report only: what the
+change introduced is listed and nothing fails, and the breakage already in the
+baseline is in no section.
 
 ### The inverse check
 

@@ -14,8 +14,9 @@ fn count(store: &Store, sql: &str) -> i64 {
     store.connection().query_row(sql, [], |r| r.get(0)).unwrap()
 }
 
-/// A run holding `n` targets (the first redirected, so its chain is a
-/// `STRUCT[]`), one page with a fact and an anchor, one link and one body.
+/// A run holding `n` targets (the first with a hop in its chain, a
+/// `STRUCT[]`, and no `final_url`), one page with a fact and an anchor, one
+/// link and one body.
 fn run(store: &Store, n: u64, baseline: Option<RunId>, finished: bool) -> RunId {
     let run = store
         .begin_run(

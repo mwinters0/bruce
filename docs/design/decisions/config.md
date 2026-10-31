@@ -49,13 +49,13 @@ unmatched, which forks D44's globs.
 Code: `crawl::frontier::Frontier::hop_plan`. Evidence: `crawl::tests::a_redirect_onto_a_skipped_url_ends_the_chain`.
 
 ### D67 Another locale is a prefix the roots' pages' language menus name, and a URL no locale covers yet waits for the last page
-A locale is where a link in an `antora` page's language menu (I25) departs from the page's URL: `/ar/` for `/ar/a11y/`
-on `/en-US/a11y/`. Why: locales only grow, so judging what none covers yet once every page is read makes no verdict
-depend on which page came first, which comparing two runs needs. Rejected: locales as config globs, one more list to
-keep; a locale told by its segment's shape (`pt_BR`), which takes `f28` for one; judging every URL when met, which a
+A locale is where a link in an `antora` page's language menu (I25) departs from the page's URL. Why: locales only grow,
+so judging what none covers yet once every page is read makes no verdict depend on which page came first, which
+comparing two runs needs, a hop under `--externals=skip` aside (KD29). Rejected: locales as config globs, one more list
+to keep; a locale told by its segment's shape (`pt_BR`), which takes `f28` for one; judging every URL when met, which a
 page without a menu read first turns into a request; every such URL waiting, 154,569 on en-US held to the end. Reopens:
-a site naming locales otherwise (`hreflang`); a menu naming some locales on some pages only.
-Code: `profile::antora::other_locale`, `crawl::frontier::Frontier::judge_outside`. Evidence:
+a site naming locales otherwise (`hreflang`); a menu naming some locales on some pages only. Code:
+`profile::antora::other_locale`, `crawl::frontier::Frontier::judge_outside`. Evidence:
 `crawl::frontier::tests::a_waiting_url_is_judged_by_the_locales_learned_since`.
 
 ### D68 An `allowlist` entry `*.<domain>` names every host below the domain, and none names a root's own host

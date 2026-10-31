@@ -13,9 +13,9 @@
 //! it holds, else answered from the baseline or asked live, as `crawl`'s
 //! `baseline` module has it. The gate is `report`'s ([`Gate`]) over
 //! the finished run, and sets the exit status: 0 where nothing is introduced,
-//! 1 where a link is introduced or, under `--inverse=fail`, the change removed
-//! what a page outside the build links to, 2 where the tool could not run (D16: an `error` moves
-//! nothing). A SIGINT or SIGTERM stops the run as it does `crawl`'s (D58): a
+//! 1 where a link is introduced at an outcome `gate.fail` names (D83) or, under
+//! `--inverse=fail`, the change removed what a page outside the build links
+//! to, 2 where the tool could not run. A SIGINT or SIGTERM stops the run as it does `crawl`'s (D58): a
 //! build cut short is not judged, so no gate runs, the run is left unfinished
 //! and the exit status is 128 plus the signal.
 

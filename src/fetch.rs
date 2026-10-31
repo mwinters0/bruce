@@ -50,10 +50,11 @@ pub enum Mode {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Response {
     pub status: u16,
-    /// The `Location` header as written, relative or not; resolving it
-    /// against the URL asked is the crawler's.
+    /// The `Location` header as written, relative or not, and `None` where it
+    /// holds a byte no header value may; resolving it against the URL asked
+    /// is the crawler's.
     pub location: Option<String>,
-    /// The `Content-Type` header as written.
+    /// The `Content-Type` header as written, and `None` as for `location`.
     pub content_type: Option<String>,
     pub body: Body,
 }

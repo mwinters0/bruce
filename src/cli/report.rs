@@ -1,4 +1,4 @@
-//! `bruce report <kind> [--db f] [--run n | --from n --to n] [--repo r]
+//! `bruce report <report> [--db f] [--run n | --from n --to n] [--repo r]
 //! [--fact k=v] [--kind k] [--top n] [--format f]`: one report over one run,
 //! or `diff`, `changed` or `anchors-removed` over two (D6, D27): by default the
 //! latest finished run, and for those the two latest. `bruce report digest --out dir [--name s] [--db f]

@@ -48,7 +48,7 @@ const PAGES: View = View {
 /// What the pass read that the finish step needs.
 #[derive(Default)]
 struct Page {
-    /// The page has a nav container, which carries its component.
+    /// The page has a nav container, with or without a component.
     nav_container: bool,
     /// `data-site-root-path` on the search script (I13).
     site_root_path: Option<String>,

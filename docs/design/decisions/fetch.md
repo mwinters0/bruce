@@ -15,14 +15,14 @@ crawling with no bundle.
 Code: `fetch::http::build`, `fetch::http::classify`. Evidence: `fetch::http::tests::the_cause_is_found_down_the_chain`.
 
 ### D8 Rate limits, concurrency and robots.txt are per host; only a root's host may skip robots.txt
-Defaults in `[default]` (D40), a host's own in `[host]`; retries and `Retry-After` are D16's and D85's. robots.txt is
-always obeyed on an external host, its switch refused at load there. Every run refetches every page (I3). The file
-follows RFC 9309: a 4xx allows all; a 5xx, a 429 outlasting the retries or redirects leading nowhere close the origin
-for the run; no response on its own name fails the origin's targets (D16); the file is an origin's (D69). Rejected: one
-global rate, throttling the root to the slowest host's courtesy; RFC 9309 closing a silent host, hiding a dead one's
+Defaults in `[default]`, a host's own in `[host]`; retries and `Retry-After` are D16's and D85's. robots.txt is always
+obeyed on an external host, its switch refused there. Every run refetches every page (I3). The file follows RFC 9309: a
+4xx allows all; a 5xx, a 429 outlasting the retries or `Retry-After` ceiling, or redirects leading nowhere close the
+origin for the run; no response on its own name fails the origin's targets (D16); the file is an origin's (D69).
+Rejected: one global rate, pacing the root at the slowest host's; RFC 9309 closing a silent host, hiding a dead one's
 links as `unchecked`; asking a failed host again per link, a timeout a link where `error` fails no CI; `robots` on a
-root, which two roots on a host can disagree on and an `include`'s other host lacks.
-Code: `fetch::http::host`. Evidence: `fetch::http::host::tests`.
+root, which two roots on a host can disagree on and an `include`'s other host lacks. Code: `fetch::http::host`.
+Evidence: `fetch::http::host::tests`.
 
 ### D69 A robots.txt is an origin's; pace, concurrency and D8's switch stay the name's
 RFC 9309, 2.3, scopes the file to scheme, host and port, so a name silent on one origin fails only that origin's links.

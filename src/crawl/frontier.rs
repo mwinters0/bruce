@@ -64,10 +64,10 @@ pub enum Plan {
     /// only (D3).
     Anchors,
     /// As [`Plan::Anchors`] but named by any other kind of link, or reached
-    /// by a redirect where a link would leave it unchecked (but skipped, or
-    /// allowlisted under `--externals=skip`), broken, waiting, unbuilt or to
-    /// the baseline: asked for its status alone, HEAD with the GET fallback
-    /// (D13).
+    /// by a redirect where a link would leave it unchecked, broken, waiting,
+    /// unbuilt or to the baseline, but skipped or, under `--externals=skip`,
+    /// external ([`Frontier::hop_plan`]): asked for its status alone, HEAD with
+    /// the GET fallback (D13).
     Status,
     /// Not requested; the target row says why.
     Unchecked(&'static str),
@@ -114,8 +114,9 @@ pub struct Outside {
 /// host outside every scope and locale (D22).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Externals {
-    /// Nothing is requested for a link or a hop: the baseline's rows are
-    /// copied where it holds the target, else the URL is `unchecked` (D54).
+    /// Nothing is requested for a link or a hop: a link's target is copied
+    /// from the baseline where it holds it, else `unchecked`, and a hop ends
+    /// the chain `externals_skipped`, held or not (D54).
     Skip,
     /// The baseline's verdict where it holds one, else a request.
     Baseline,
@@ -351,6 +352,11 @@ impl Frontier {
     /// judged `not_built`: an Antora alias stays in its component, so no hop
     /// out of a built page is known to land there.
     pub fn hop_plan(&self, url: &Url, kind: Kind) -> (Plan, Canonical) {
+        // deficiency: KD29 A hop is planned when met, with no wait for the last
+        // page as a link's `Outside` has (D67), so under `--externals=skip` a
+        // hop onto another locale's page is `externals_skipped` while that
+        // locale is unlearned (`is_skipped_external`) and asked once it is.
+        // Holding such a hop's chain until the locales are final is the fix.
         match self.plan(url, kind) {
             (Plan::Unchecked(SKIPPED), form) => (Plan::Unchecked(SKIPPED), form),
             (Plan::Baseline | Plan::Outside | Plan::Unchecked(EXTERNALS_SKIPPED), form)

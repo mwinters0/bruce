@@ -82,7 +82,7 @@ and filled for a link to a broken URL or one that could not be verified, amber a
 a link to a missing fragment or a redirect to update, and a grey ring for a
 redirect that differs from its landing only by a final `/`. The ring differs
 from the others in shape, so the three read apart in print and without
-colour, and every dot is named for a screen reader. The figures' legend names
+colour, and every dot beside a finding is named for a screen reader. The figures' legend names
 the levels and the kinds at each; a site's [`[severity]`](config.md#severity)
 moves a kind to another level, or to none, which is no finding: it has no dot
 and is in no list, nor in a page's or a repo's count or the ranking of the HTML, and the legend
@@ -118,10 +118,10 @@ new or all fixed. In this order:
    and names, and the source of the page answering for it (the target's, as the compared
    run recorded it where it did, else as this run does, for a target removed, moved or
    without the anchor, else the linking page's). Left out, with its link in the header, where no link broke since,
-   or there was no compared run.
+   every one that did is at `"none"`, or there was no compared run.
 4. **Fixed since the previous run**: the links the compared run had broken that are
    not broken in this one, each with what it is now and the linking page's source.
-   Left out, as section 3 is, where none was fixed.
+   Left out, as section 3 is, where none was fixed or every one is at `"none"`.
 5. **Pages, by the broken links on them**: each page that holds one, or a
    link that could not be verified, as a drill-down of those links, with its live page and
    its source. Its summary reads, for a page of 181 links to a broken URL, 3
@@ -143,7 +143,7 @@ new or all fixed. In this order:
    the URL a redirect lands on that doubles it, not the link's, that landing
    is under *Resolves to*, "→ lands on fedoraproject.org//".
    A link to a URL that answered a broken 4xx, a 404 say, where the same URL with its final `/`
-   added or dropped answers 2xx (asked once, for its status alone) is
+   added or dropped answers 2xx (asked for its status alone) is
    broken all the same, reason `wrong_trailing_slash`, and *Resolves to*
    names that URL, "→ try docs.example.org/page/". Where a redirect lands
    on the 404, the landing is under *Resolves to* with its final `/` marked,
@@ -256,7 +256,7 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `compared_with` | The run compared with: its `id` (`null` for a baseline file's run, `from_file` true, whose number is that of a run the database held only while the digest was made), its start and finish (`finished_at` `null` for a run that never finished), the `bruce` that crawled it, its `roots` and its `totals`, which a loader subtracts to give a figure's change. |
 | `totals` | The pages the roots cover and the links on them, and the links by outcome, over every kind. `unchecked` links are not broken: `housekeeping.unchecked` says why. |
 | `broken_targets` | Each target a broken link names, with its `fragment` when the link names one, the target named by the most `links` first, then by `pages`: one anchor restored in the target's repo removes that many links. `outcome` is `broken_url` or `broken_anchor`, and `reason` and `status` are the target's answer. `landing` is, for a target whose `reason` is `doubled_slash` and whose own URL doubles no slash, the URL it redirected to, which does, and for a target whose `reason` is `wrong_trailing_slash` and which redirected, the URL it landed on; else `null`. `fix` is, for a target whose `reason` is `wrong_trailing_slash`, its URL (its `landing` where it has one) with the final `/` added or dropped, which answered when the crawl asked it; else `null`. `source_repo`, `source_path` and `source_url` are those of the target page, where the run holds it: the repo that would restore a missing anchor. |
-| `pages` | The pages that hold a broken link or one whose outcome is `error`, the most `broken_url` plus `error` plus `through` first, then the most `broken_anchor`. `links` counts every link on the page that counts, `error` its links that could not be verified, and `through` the broken or errored relative links (a `?query` is one) on the pages at doubled-slash URLs that its `doubled_slash` links reach, each page once, less those broken on the page's twin too (zero for nearly every page). A page at a doubled-slash URL counts no link where the URL with its slashes collapsed is a page of the run, and else all but its broken relative links. `source_url` is the forge's view of the page's file. |
+| `pages` | The pages that hold a broken link or one whose outcome is `error`, the most `broken_url` plus `error` plus `through` first, then the most `broken_anchor`. `links` counts every link on the page that counts, `error` its links that could not be verified, and `through` the broken or errored relative links (a `?query` is one) on the pages at doubled-slash URLs that its `doubled_slash` links reach, each page once, less those broken or errored on the page's twin too (zero for nearly every page). A page at a doubled-slash URL counts no link where the URL with its slashes collapsed is a page of the run, and else all but its broken relative links. `source_url` is the forge's view of the page's file. |
 | `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order; a link whose outcome is `error` is in `errors`, where the HTML's drill-down finds it. `page` joins to `pages`. `hint` is, for an Antora `xref:` that names no page, the nearest page ID in the run, as `component:module:path` with an empty module for `ROOT`, where one is close enough to be a typo of it, else `null`. `landing` and `fix` are as in `broken_targets`. |
 | `by_repo` | Each repo the pages were built from, ranked as `pages` are, `through` the sum of its pages'; `repo` is `null` for the pages that record none. `pages` counts the repo's pages, `broken_pages` those holding a broken link or an error. |
 | `by_group` | The same by the value of the fact [`[digest]` `group_by`](config.md#digest) names, as `group`, a page without the fact being in no group. Empty for a site that groups by nothing, which is the default. |
@@ -278,7 +278,8 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 ## Why a link is newly broken
 
 A link is the same link in both runs when its page, its target and its fragment
-are. The digest reads the compared run for the first of these that holds, and
+are. The digest reads the compared run for the one of these that holds, a page or
+link it lacked and a link it left unjudged tested before the rest, and
 never the pages' hashes, which would blame a page for a break its edit did not
 make:
 
@@ -304,8 +305,8 @@ An `unchecked` link is not broken: the run did not learn whether it is. Its
 | `skipped` | Names a URL a [`skip`](config.md#skip) glob matches, or one whose redirect leads to such a URL. |
 | `scheme` | Names a URL whose scheme is not `http` or `https` but one a public web page uses: `mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`, `magnet` or `sms`, or `data` or `javascript`, which work in the page itself, as an embedded image or a script's link. A link with any other scheme, as `file:` or a mistyped `hhttps:`, cannot work for a reader and is `broken_url`, reason `bad_scheme`; [`judge.schemes`](config.md#judging) adds to the list. |
 | `robots` | Names a URL its host's `robots.txt` forbids, where that is obeyed ([Hosts](config.md#hosts)). |
-| `robots_unavailable` | Names a URL on a host that answered its `robots.txt` request with no file to read (a server error, a 429 that outlasts the retries, or redirects that lead nowhere), which leaves that scheme and port of the host unrequested for the rest of the run ([Hosts](config.md#hosts)). A host that gives no answer at all has its links `broken_url` or `error` instead. |
-| `externals_skipped` | In a `check-dir` run given `--externals skip`, names a URL on an allowlisted host, or on a root's host outside every scope and every other locale, that the baseline has no answer for, and a redirect whose hop reaches one, which ends there ([`bruce check-dir`](check-dir.md)). |
+| `robots_unavailable` | Names a URL on a host that answered its `robots.txt` request with no file to read (a server error, a 429 that outlasts the retries or the `Retry-After` ceiling, or redirects that lead nowhere), which leaves that scheme and port of the host unrequested for the rest of the run ([Hosts](config.md#hosts)). A host that gives no answer at all has its links `broken_url` or `error` instead. |
+| `externals_skipped` | In a `check-dir` run given `--externals skip`, names a URL on an allowlisted host, or on a root's host outside every scope and every other locale, that the baseline has no answer for, and a redirect whose hop reaches such a URL, held or not, or a locale's page not yet learned, which ends there ([`bruce check-dir`](check-dir.md)). |
 | `too_deep` | Is a sitemap listed by an index three files deep, which is not read ([Roots](config.md#roots)). |
 | `no_anchors` | Has a fragment, and its target answered with no HTML page read to look for it in: an asset, a page too large to read, or a URL on an allowlisted host, or on a root's host outside every scope, first named by a link other than an `<a href>`. |
 | `text_fragment` | Has a text fragment (`#:~:text=`), which names words rather than an anchor, and its target answered. |

@@ -6,8 +6,10 @@
 //!
 //! The scan follows the WHATWG prescan's shape (comments and every start
 //! tag's attributes are walked, so a `charset` in a comment or in text is not
-//! read) without its corners: an end tag's attributes are not skipped, a
-//! `<meta>` is taken at its first `charset`, and the pragma's `content` is searched for a `charset=` as the header is.
+//! read) without its corners: an end tag's attributes are not skipped, nor is
+//! a `<!…>` or `<?…>` but a comment, a `<meta>` is taken at its first `charset`,
+//! one naming no encoding ends the scan, and the pragma's `content` is searched
+//! for a `charset=` as the header is.
 
 use encoding_rs::{Encoding, UTF_8, UTF_16BE, UTF_16LE, WINDOWS_1252, X_USER_DEFINED};
 
@@ -57,8 +59,8 @@ fn charset_param(text: &str) -> Option<&str> {
     None
 }
 
-/// The encoding the first `<meta>` in `window` names, if it names a usable
-/// one. A UTF-16 label read from the bytes is UTF-8, as the bytes are
+/// The encoding the first `<meta>` in `window` naming a charset names, if it
+/// names a usable one. A UTF-16 label read from the bytes is UTF-8, as the bytes are
 /// ASCII-compatible to have been read at all, and `x-user-defined` is
 /// windows-1252 (WHATWG).
 fn meta_charset(window: &[u8]) -> Option<&'static Encoding> {

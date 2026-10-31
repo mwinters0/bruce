@@ -47,8 +47,10 @@ impl BaselineIndex {
 }
 
 /// The baseline's pages that carry a fact, as a profile's [`Lookup`], from
-/// memory: for a non-empty filter, the pages a [`super::super::RunLookup`] of
-/// its run gives, sorted.
+/// memory: for a non-empty filter, the run's targets whose URL parses and whose
+/// `page_facts` match, sorted, which are the pages a
+/// [`super::super::RunLookup`] of its run gives where each such target has its
+/// `pages` row, as the crawl writes them.
 impl Lookup for BaselineIndex {
     fn pages_with_facts(&self, facts: &[(&str, &str)]) -> Result<Vec<Url>, BoxError> {
         let mut urls: Vec<Url> = self

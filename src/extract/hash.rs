@@ -4,7 +4,8 @@
 //! The scope is a root less its exclusions ([`HashScope`]). With neither key
 //! set the root is the profile's region; with only `hash_exclude` there is
 //! none. A page where no root element matches is hashed whole, less the
-//! exclusions, so a page with no region still hashes its content. Both
+//! exclusions and any text outside every element, so a page with no region
+//! still hashes its content. Both
 //! hashes are kept through the pass, since whether a root matched is known
 //! only at its end.
 //!

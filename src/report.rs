@@ -1,7 +1,7 @@
 //! Reports: SQL views over a run, read by `bruce report <kind>` (D6).
 //!
 //! A view takes no parameter, so each `report_*` view carries every run and
-//! the query binds the run and the filters (`query`). The views (`views`) are
+//! the query binds the run and the filters (`sql`). The views (`views`) are
 //! the same rows an ad-hoc `duckdb` user reads; this module chooses the run
 //! (`run`), runs one report and renders it (`table`).
 //!

@@ -76,8 +76,9 @@ impl EditLinks {
         ]
     }
 
-    /// The page's edit link: `preferred`, an href resolved as any other, if
-    /// the profile gave one that names a web page; else the best candidate.
+    /// The page's edit link: `preferred`, an href resolved as a link read
+    /// after the page's `<base>` is, if the profile gave one that names a web
+    /// page; else the best candidate.
     pub(super) fn choose(self, links: &Links, preferred: Option<&str>) -> Option<EditLink> {
         let page = |url: Url| matches!(url.scheme(), "http" | "https").then(|| EditLink::new(url));
         if let Some(link) = preferred.and_then(|raw| links.resolve(raw)).and_then(page) {
@@ -136,7 +137,7 @@ impl Candidate {
 
 /// Whether `text` reads as an edit phrase: "edit this page", "edit page" or
 /// "edit on …", in any case, whitespace collapsed and any icon, arrow or
-/// punctuation around it ignored.
+/// punctuation in or around it ignored.
 fn is_edit_phrase(text: &str) -> bool {
     let words: Vec<String> = text
         .split(|c: char| !c.is_alphanumeric())

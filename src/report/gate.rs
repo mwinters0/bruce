@@ -201,8 +201,8 @@ pub(super) fn gate(conn: &Connection, run: RunId, request: &Request) -> Result<G
     })
 }
 
-/// The outcomes the CI run's recorded policy fails the gate on (D83), the
-/// default where it has no row.
+/// The outcomes the policy in force for the CI run fails the gate on (D83):
+/// the recorded one, or a trial's (D84); the default where it has no row.
 fn recorded_fail(conn: &Connection, run: RunId) -> Result<Vec<FailOn>, Error> {
     let value: Option<String> = conn.query_row(
         "SELECT max(value) FROM policy_in_force WHERE run_id = ? AND host IS NULL AND key = 'gate.fail'",

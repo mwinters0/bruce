@@ -18,7 +18,7 @@ use crate::store::RunId;
 /// - page 5 to 6 (a redirect to page 3) at `#x`: lost, on the page it landed
 ///   on.
 ///
-/// Anchor `d` is lost and no link names it: no row.
+/// Anchor `d` is kept, and no link names it: no row.
 fn store() -> Store {
     let store = Store::open_in_memory(&registry()).unwrap();
     store.install(VIEWS).unwrap();

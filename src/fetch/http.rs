@@ -326,8 +326,8 @@ impl Fetcher for HttpFetcher {
     /// Whether `url` may be requested, by its origin's robots.txt (D8, D69),
     /// which is fetched the first time any URL of an origin whose host reads
     /// it (`robots`) is asked about. RFC 9309 decides what its answer means: a
-    /// 4xx allows everything; a 5xx, a 429 that outlasts the retries or
-    /// redirects that lead nowhere make the origin [`Access::Unavailable`]
+    /// 4xx allows everything; a 5xx, a 429 that outlasts the retries or the
+    /// `Retry-After` ceiling, or redirects that lead nowhere make the origin [`Access::Unavailable`]
     /// for the run. A request on the origin's own name that gets no response
     /// at all is the origin's [`Access::Failed`], its failure settling each of
     /// its targets (D8, D16).

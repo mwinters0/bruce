@@ -1,8 +1,8 @@
 //! The extraction pass and its core heuristics: anchors, links, placement,
 //! the edit link and the content hash (D12, D13, D15, D34, D36).
 //!
-//! [`extract`] is a pure function of one page: its body, its URL and the
-//! root's profile choice and hash scope in, an [`Extracted`] out. Under `auto` the generator
+//! [`extract`] is a pure function of one page: its body, its URL, the
+//! registry and the root's profile choice and hash scope in, an [`Extracted`] out. Under `auto` the generator
 //! meta is read first, by a pass that stops at `<body>`, so the profile is chosen before
 //! anything it extracts (D35); a named profile reads no meta. One `lol_html` rewriter then reads the page
 //! with the core's handlers and the profile's (D11, D38). The caller decides

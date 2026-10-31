@@ -22,7 +22,8 @@ use url::Url;
 pub struct Source {
     /// The URL up to the shape's marker, its userinfo dropped:
     /// `https://host/org/repo`. A URL with an opaque origin (not `http`,
-    /// `https`, `ftp`, `ws` or `wss`) gives `null` for the origin.
+    /// `https`, `ftp`, `ws` or `wss`, nor a `blob:` of one, which takes its
+    /// inner URL's) gives `null` for the origin.
     pub repo: String,
     /// The ref, one segment.
     pub git_ref: String,

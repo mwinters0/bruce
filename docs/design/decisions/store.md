@@ -29,9 +29,9 @@ forgets. Code: `store::schema`, `release.yml`'s "Write the release body". Eviden
 ### D28 Fragment verdicts are computed in SQL after the crawl, not during it
 The crawler holds no anchor state and need not order fetches around targets. The verdict is a view, `link_verdicts`,
 computed at each read, so a stopped run needs no second path and no stored column can disagree with it; the reports and
-the gate (D9) read the same join. One writer owns the store, DuckDB allowing one writing process per file
-(`store::writer`). Rejected: checking fragments in memory as pages arrive; a table written at a run's end. Reopens: a
-read slow enough to materialise (0.2 s warm over 587,839 links, run 1 of
+the gate (D9) read the same join, but for the reads KD23 names. One writer owns the store, DuckDB allowing one writing
+process per file (`store::writer`). Rejected: checking fragments in memory as pages arrive; a table written at a run's
+end. Reopens: a read slow enough to materialise (0.2 s warm over 587,839 links, run 1 of
 `runs/p4.10-en-us-20261019-2125/combined.duckdb`, a schema `bruce` now refuses). Code: `store::views`. Evidence:
 `store::views::tests`.
 

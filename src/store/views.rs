@@ -62,7 +62,7 @@ use crate::profile::{Registry, View};
 /// this lives: the run a comparison reports on, in one (D81). Dropping it puts each
 /// run back to its own. It sets the connection's session variable `judged_by`,
 /// which the macro reads where its `policy_run` is NULL, so the views, which
-/// take no parameter (D6), judge a comparison's older run by the newer's policy.
+/// take no parameter (D6), judge both runs of a comparison by one's policy.
 #[must_use = "the policy judges only while the guard lives"]
 pub struct JudgedBy<'c> {
     conn: &'c Connection,
@@ -92,7 +92,8 @@ pub const DOUBLED_SLASH: &str = "doubled_slash";
 
 /// The reason of a target that answered `broken_url` where its URL with its
 /// final `/` toggled answers 2xx, which the crawl asked (D72). The link keeps
-/// the target's outcome and reason, and the fix is read off the URL.
+/// the target's judged outcome and reason, the reason dropped where a status
+/// map changes the outcome (D79), and the fix is read off the URL.
 pub const WRONG_TRAILING_SLASH: &str = "wrong_trailing_slash";
 
 /// The `doubled_slash` view, created before the macro that joins it.

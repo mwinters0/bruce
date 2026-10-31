@@ -102,7 +102,8 @@ pub struct Digest {
     /// Each repo, ranked as `pages` are: `repo`, `pages`, `broken_pages`,
     /// `links`, `broken_url`, `broken_anchor`, `error` and `through`.
     pub by_repo: Table,
-    /// `by_repo`'s columns for each value of the fact `[digest]` `group_by`
+    /// `by_repo`'s counts, with no `new` or `new_links`, for each value of the
+    /// fact `[digest]` `group_by`
     /// names, as `group` (D86); no rows where the run groups by nothing.
     pub by_group: Table,
     /// Every link whose outcome is `error`: `page`, `source_url`, `raw_href`,

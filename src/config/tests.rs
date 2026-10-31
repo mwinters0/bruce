@@ -688,7 +688,8 @@ fn manual_keys(manual: &str) -> BTreeMap<String, String> {
 #[test]
 fn every_key_the_config_reads_is_in_the_manual_with_its_default() {
     let documented = manual_keys(include_str!("../../docs/manual/config.md"));
-    // `root`, `default` and `host` are tables, whose keys are rows of their own.
+    // Tables, whose keys are rows of their own: `[rate]` is refused and has
+    // none, and `[severity]`'s keys are outcomes and reasons, not settings.
     let mut read: Vec<String> = keys::<RawConfig>()
         .iter()
         .filter(|k| {

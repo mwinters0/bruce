@@ -32,8 +32,9 @@ pub enum Report {
     AnchorsRemoved,
     /// The redirected links, grouped by where they landed.
     Redirects,
-    /// A CI run's broken links that its baseline did not have broken, the
-    /// gate's failures (D9), and the sections `check-dir` prints beside them.
+    /// A CI run's links at an outcome its `gate.fail` names whose key its
+    /// baseline had at none of them, the gate's failures (D9, D83), and the
+    /// sections `check-dir` prints beside them.
     Introduced,
     /// The baseline's links from pages outside the build to what the change
     /// removed from it (D9).
@@ -90,7 +91,8 @@ impl Report {
 /// Whether an inverse breakage fails the gate (D9): the flag `--inverse`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InverseMode {
-    /// The default: an inverse breakage sets the exit status.
+    /// The default: an inverse breakage at an outcome `gate.fail` names sets
+    /// the exit status (D83).
     Fail,
     /// It is listed and moves nothing.
     Warn,

@@ -116,7 +116,12 @@ pub(super) struct Links {
     mark: Option<usize>,
 }
 
-/// The elements that can name a URL.
+/// The elements read for a URL.
+// deficiency: KD30 A browser also loads `<embed src>`, `<object data>`,
+// `<input type=image src>` and SVG's `<image>` and `<use>` (`href` or
+// `xlink:href`), which this selector leaves out, so a broken one is no link:
+// D13's every element that names a URL a browser loads or follows. Reading
+// them, each under a kind of its own, is the fix.
 const READ: &str = "a[href], area[href], img, source, link, script[src], iframe[src], \
                     video, audio, track, meta";
 
@@ -339,7 +344,8 @@ fn immediate_refresh(el: &Element) -> bool {
     refresh && attribute(el, "content").is_some_and(|c| refresh_delay(&c) == Some(0.0))
 }
 
-/// The delay in seconds a refresh's `content` starts with.
+/// The delay in seconds a refresh's `content` starts with, where its digits
+/// and dots parse as a number: `.` alone does not, though HTML reads it as 0.
 fn refresh_delay(content: &str) -> Option<f64> {
     let start = content.trim_start_matches(|c: char| c.is_ascii_whitespace());
     let digits = start

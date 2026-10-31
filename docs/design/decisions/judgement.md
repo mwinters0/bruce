@@ -50,22 +50,22 @@ false` per host, D79). Code: `store::views`. Evidence:
 `store::views::tests::a_link_to_a_url_with_a_doubled_slash_is_broken_whatever_it_answered`.
 
 ### D88 A page at a doubled-slash URL counts only what it owns; what the slash breaks is the linking page's `through`
-With a twin (its URL, slashes collapsed) among the run's pages it counts no link; without, none of its broken or errored
-relative links, which the doubled path breaks. Those are the linking page's `through`: each doubled page its
-doubled-slash links reach, once, bar a link broken on the twin too (same `raw_href` and kind), ranked with its red.
-Rejected (maintainer, 2026-10-24): `through` per link reaching a page, multiplying breakage one fix removes; a
-`broken_anchor` there amber, the slash being the fault; the twin's copy matched by resolved target, the fix leaving the
-reader on the twin's HTML (7 of 536 on the 2026-10-24 crawl), or by outcome. Reach: D80. Code: `link_verdicts.counted`,
+Under `doubled_slash` (D79), with a twin (slashes collapsed) among the run's pages it counts no link; without, none of
+its broken or errored relative links, which the doubled path breaks. Those are the linking page's `through`: each
+doubled page its doubled-slash links reach, once, bar a link broken or errored on the twin too (same `raw_href` and
+kind), ranked with its red. Rejected (maintainer, 2026-10-24): `through` per link reaching a page, multiplying breakage
+one fix removes; a `broken_anchor` there amber, the slash being the fault; the twin's copy matched by resolved target,
+the fix leaving the reader on the twin's HTML (7 of 536), or by outcome. Reach: D80. Code: `link_verdicts.counted`,
 `report::digest::sections::PAGE_COUNTS`. Evidence:
 `report::digest::tests::a_link_broken_on_the_twin_too_is_not_broken_through_it_and_a_query_link_is`.
 
 ### D72 A broken 4xx whose URL with its final `/` toggled answers is `broken_url`, reason `wrong_trailing_slash`
-The toggle is asked once, for its status alone, where `crawl::slash::toggled` allows; it is no target, never claimed or
-followed, and the digest names it as the fix. Maintainer, 2026-10-24: a slash the server does not supply is still
-broken; a redirect onto the 404 has its landing toggled. Why ask: no `broken_url` target of the 2026-10-24 crawl had its
-toggle among the targets, and on 2026-10-25's the probes cost about 11 s of a 75-minute long pole. Rejected: a target
-row or a column for the fix; a 3xx as an answer (maintainer: a toggle that moves is no fix); a redirected target's own
-toggle, the landing's reason being every URL's that lands there. Reopens: the probes on a long pole; `slash_probe`
+The toggle is asked for its status alone, by each target ending at the 4xx, where `crawl::slash::toggled` allows; it is
+no target, never followed, and the digest names it as the fix. Maintainer, 2026-10-24: a slash the server does not
+supply is still broken; a redirect onto the 404 has its landing toggled. Why: no `broken_url` target of the 2026-10-24
+crawl had its toggle among the targets, and on 2026-10-25's the probes cost 11 s of a 75-minute long pole. Rejected: a
+target row or column for the fix; a 3xx as an answer (maintainer: a toggle that moves is no fix); a redirected target's
+own toggle, the landing's reason being every URL's that lands there. Reopens: the probes on a long pole; `slash_probe`
 (D85). Code: `crawl::slash`. Evidence: `crawl::tests::a_404_whose_url_with_its_slash_toggled_answers_says_so`,
 `runs/d72-toggle-probe-20261024/`.
 

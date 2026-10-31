@@ -1,5 +1,6 @@
 //! The guide closing the document, "How to read this report": an entry for
-//! each reason the run's policy judges, and the ⓘ beside the term, linking
+//! the doubled slash and one for the pedantic redirect, each while the run's
+//! policy judges its reason, and the ⓘ beside the term, linking
 //! to its entry. HTML only, prose for a reader (D64). The
 //! section is open, so an ⓘ lands on its entry in every browser, one that
 //! opens no closed `<details>` for a fragment included. The ⓘ is an `i` in a
@@ -85,8 +86,8 @@ pub(super) fn info_of(reason: Option<&str>) -> String {
         .unwrap_or_default()
 }
 
-/// The guide, the document's last section: an entry for each reason the run's
-/// policy judges, there being no link to explain it otherwise.
+/// The guide, the document's last section: an entry for each of its reasons
+/// the run's policy judges, there being no link to explain it otherwise.
 pub(super) fn guide(out: &mut String, d: &Digest) {
     out.push_str("<section id=\"guide\">\n<h2>How to read this report</h2>\n");
     for (entry, body) in [

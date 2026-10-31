@@ -4,8 +4,8 @@
 //! A run reads the roots' sitemaps first, so a page a sitemap lists is
 //! claimed as listed before any link can name it (D47), and then seeds the
 //! roots' URLs and the pages the sitemaps listed. It writes each target
-//! once, at most [`WORKERS`] requests at a time and each host at most its share of
-//! them, and a build's reads in a budget of their own (`schedule`, D61), a host's own pace held by the fetcher (D8). One task follows one target's hops itself, so each passes
+//! once, at most [`WORKERS`] requests at a time and each host's targets, filed by
+//! their first URL's host, at most its share of them, and a build's reads in a budget of their own (`schedule`, D61), a host's own pace held by the fetcher (D8). One task follows one target's hops itself, so each passes
 //! robots.txt and its host's rate (D7), reads the answer, and then, on the
 //! blocking pool, extracts the page and sends its rows to the writer from
 //! there, so the writer's bounded channel pushes back on the pool and not on
@@ -27,7 +27,8 @@
 //! a page outside every root's scope or matching `skip`, which is only
 //! counted. A root's sitemap is the one it sets, or else those its host's
 //! robots.txt names, or else the first of `sitemap.xml` under the root and at
-//! the host that answers with one (D40), and the root links to each of them, kind
+//! the host that answers with one (D40), and the root links to each of them
+//! that is an `http` or `https` URL, kind
 //! `sitemap_file`, once though two roots share the file; a file probed and not
 //! found writes nothing, since nothing named it (D47). A root with no sitemap
 //! goes on by links alone, and has no `sitemap_file` link to show for it.
@@ -463,7 +464,8 @@ where
     }
 
     /// Asks about `start` and every target it leads to, at most [`WORKERS`]
-    /// requests at a time and each host at most its share of them, and at most
+    /// requests at a time and the targets filed under each host, by the host
+    /// of their first URL, at most its share of them, and at most
     /// [`BUILD_WORKERS`] reads of the build besides (D61). With `hold`,
     /// only sitemaps are asked about and every other target found goes there
     /// instead. Once stopped it starts nothing, and returns when the targets
@@ -517,7 +519,8 @@ where
                 break;
             }
             let (_, root_form) = self.frontier.plan(&root.url, Kind::Anchor);
-            // Each file the root read is a link from it, once (D13, D47).
+            // Each file the root names, or the probe found, is a link from it,
+            // once (D13, D47).
             let mut read = Vec::new();
             let mut link = |raw: &str, form: &Canonical| {
                 if !read.contains(&form.id()) {
@@ -1008,7 +1011,8 @@ where
         if let Some(prefix) = self.frontier.prefix() {
             self.note_held(prefix, form, e.facts.pairs());
         }
-        // Before its links are planned, so none it names waits (D67).
+        // Before its links are planned, so none into a locale its menu names
+        // waits (D67).
         self.frontier.learn(&e.other_locales);
         for (key, value) in e.facts.pairs() {
             self.rows.send(Row::Fact(FactRow {
@@ -1131,8 +1135,8 @@ where
 
     /// Writes the links of the xrefs waiting for the held set, now that every
     /// built page is read: one the profile resolves points at the page it
-    /// resolves to, claimed as a link's target is, and any other stays the
-    /// unresolved xref it was (D20). Returns the items to ask about.
+    /// resolves to, claimed as a link's target is, unless the run is stopping,
+    /// and any other stays the unresolved xref it was (D20). Returns the items to ask about.
     pub(super) async fn settle_xrefs(self: &Arc<Self>) -> Result<Vec<Item>, Error> {
         let shared = Arc::clone(self);
         tokio::task::spawn_blocking(move || {

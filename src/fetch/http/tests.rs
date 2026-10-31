@@ -361,7 +361,7 @@ fn the_retries_wait_a_second_and_then_twice_the_wait_before() {
     assert_eq!(
         backoff(4),
         [1, 2, 4, 8].map(Duration::from_secs).to_vec(),
-        "three retries wait 1, 2 and 4 seconds, as D16 has them"
+        "four retries wait 1, 2, 4 and 8 seconds, each wait twice the one before"
     );
     let defaults = Settings::default();
     assert_eq!(defaults.backoff, backoff(3));

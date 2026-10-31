@@ -47,8 +47,8 @@ fn anchor(store: &Store, run: u64, id: u64, name: &str) {
 ///
 /// - 2, a `handbook` page the build still has, at `#lost` (an anchor run 2
 ///   lacks) and at `#keep` (one it has);
-/// - 3, a `handbook` page the build lacks; 4, a `handbook` image a built page still
-///   names; 5, a `handbook` image no built page names and the build lacks; 10, one
+/// - 3, a `handbook` page the build lacks; 4, a `handbook` image the build holds and
+///   answers `broken_url`; 5, a `handbook` image no built page names and the build lacks; 10, one
 ///   the build keeps;
 /// - 6, a page of `other`; 7, a `named/1.0` page the build lacks; 8, a
 ///   `named/2.0` page it lacks.
@@ -127,7 +127,7 @@ fn store() -> Store {
         link(&store, 1, src, to, fragment, kind);
     }
     // The build: `handbook` has the page 2 and a `named/1.0` page, and the
-    // image 4, which a built page names, answers `broken_url`.
+    // image 4, a file of the build, answers `broken_url`.
     put(&store, 2, 2, "handbook/kept/", "ok", "local", true);
     put(&store, 2, 21, "named/1.0/kept/", "ok", "local", true);
     put(

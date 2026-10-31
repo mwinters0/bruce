@@ -55,13 +55,14 @@ roadmap's phase index.
 - **KD10** — Resolve's parse departs from Antora's resource-ID grammar (I21): it
   takes the family before the component, not after the module, refuses a version
   with no component, `_` and any family but `page`, and leaves `./` and `..`
-  unnormalised, so such an xref out of the build stays `unresolved_xref` and
-  fails the gate.
+  unnormalised, so such an xref out of the build stays `unresolved_xref` where
+  refused, or names a URL that misses the page the facts hold, and can fail
+  the gate.
   **(c) unowned**: a content repo writing any of these forms would promote it.
   Detail: `src/profile/antora/resolve.rs`
 
-- **KD14** — Where no version sits off its own segment, Resolve takes a
-  component's prerelease for its latest, so a versionless xref into a site
+- **KD14** — Where no version, or several, sit off their own segments,
+  Resolve takes a component's prerelease for its latest, so a versionless xref into a site
   serving its latest at its own name beside a prerelease (`2.0`, `3.0-beta`)
   resolves to the prerelease. **(c) unowned**: such a site checked in CI would
   promote it. Detail: `src/profile/antora/resolve.rs`
@@ -104,4 +105,33 @@ roadmap's phase index.
   be read back. **(c) unowned**: anyone wanting a page's HTML kept beside its
   run would promote it. Detail: `src/store/writer.rs`
 
-<!-- deficiency-watermark: KD28 -->
+- **KD29** — Under `--externals=skip` a redirect's hop onto another locale's
+  page ends `externals_skipped` before that locale is learned and is asked
+  after, so the verdict depends on which page came first (D67). **(c)
+  unowned**: a CI run whose redirects reach another locale would promote it.
+  Detail: `src/crawl/frontier.rs`
+
+- **KD30** — `<embed src>`, `<object data>`, `<input type=image src>` and SVG's
+  `<image>` and `<use>` hrefs yield no link, so a broken one is found nowhere
+  (D13). **(c) unowned**: a site whose pages load a resource through one would
+  promote it. Detail: `src/extract/links.rs`
+
+- **KD31** — `[severity]` cannot name `unreadable` or `not_built`, reasons the
+  crawl writes on an `error` and a `broken_url`, so a site cannot set their
+  level apart from their outcome's. **(c) unowned**: a site wanting to would
+  promote it. Detail: `src/config/policy/severity.rs`
+
+- **KD32** — "By: Link Target" says no broken target is named by more than one
+  link where the severity map puts every such target at `none`, and the
+  sections since the compared run are left out where it empties them, where
+  every other list says nothing there is a finding under the map. **(c)
+  unowned**: a site mapping a broken kind to `none` would promote it.
+  Detail: `src/report/digest/html.rs`
+
+- **KD33** — A page or repo whose only findings in the compared run were at
+  `none` is not marked new once one is above it, the marks reading every
+  finding the JSON holds while the HTML listed none of them. **(c) unowned**:
+  a site mapping a broken kind to `none` would promote it.
+  Detail: `src/report/digest/novelty.rs`
+
+<!-- deficiency-watermark: KD33 -->

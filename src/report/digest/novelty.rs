@@ -1,5 +1,6 @@
 //! What is new since the compared run (D75): a `new` column on each section a
-//! reader acts on, true for a row the compared run's same section lacked, and
+//! reader acts on, true for a row the compared run's same section lacked (a
+//! repo for one whose pages held no broken link or error then), and
 //! on the pages and repos a `new_links` count of the new links among theirs.
 //! A broken link is new where section 3 lists it, so the two agree. With
 //! nothing to compare with every such cell is null: nothing is known to be new.
@@ -75,6 +76,11 @@ pub(super) fn mark(conn: &Connection, d: &mut Digest) -> Result<(), Error> {
 }
 
 /// Marks `now`'s rows new where `then` has no row of the same `key`.
+// deficiency: KD33 `then` is the compared run's section as the JSON holds it,
+// a kind at `none` included (D82), so a page whose only findings then were at
+// `none`, listed in no HTML, is not new once one is above it; `repos` reads
+// `broken_pages` over every finding alike. Reading `then` through its run's
+// severity map, as the HTML lists, is the fix.
 fn absent(now: &mut Table, then: &Table, key: &[&str]) {
     let then = keys(then, key);
     let flags = column(now, key, |k| !then.contains(k));

@@ -6,7 +6,8 @@
 //! ranks by the severity map (D82).
 //!
 //! Dark on every screen and light in print, one stylesheet inline, drill-downs
-//! as `<details>` and navigation as in-page anchors. Every text is escaped, and
+//! as `<details>` and navigation as in-page anchors. Every text is escaped but
+//! a kind or reason, a name the config checks at load, and
 //! only an `http` or `https` URL becomes a link, so a page's own markup or a
 //! `javascript:` href cannot reach the document as anything but text.
 
@@ -322,6 +323,11 @@ fn figures(out: &mut String, d: &Digest) {
     );
 }
 
+// deficiency: KD32 A list the map empties says so (`docs/manual/config.md`,
+// Severity), but this one, where every target more than one link names is at
+// `none`, says there is none, and `compared::shown` leaves sections 3 and 4
+// out where the map empties them, as where no link broke or was fixed. Saying
+// what the map left out, as the pages' and redirects' lists do, is the fix.
 fn fix_once(out: &mut String, d: &Digest) {
     open_section(out, "fix-once", "By: Link Target", None);
     let (shown, hidden): (Vec<Row>, Vec<Row>) = rows(&d.broken_targets)

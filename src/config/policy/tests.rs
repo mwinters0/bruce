@@ -403,7 +403,7 @@ fn an_asking_key_that_cannot_mean_anything_is_refused_naming_it() {
     }
     let err = Config::parse("max_body_mib = 0").unwrap_err().to_string();
     assert!(err.contains("max_body_mib"), "{err}");
-    // Zero is a ceiling that gives up on every Retry-After, and no retries.
+    // Zero is a ceiling that waits out only a Retry-After of 0, and no retries.
     let policy = parse("[default]\nretries = 0\nmax_retry_after = 0").unwrap();
     assert_eq!(
         (policy.asking.retries, policy.asking.max_retry_after),

@@ -26,10 +26,10 @@ Code: `report::views`, `store::rows`.
 ### D47 A run reads its sitemaps before any page, and each root links to its sitemaps
 A listed page is then claimed by its sitemap before a link can name it, so `pages.in_sitemap` holds for every listed
 page, at the cost of the files' time (69 on docs.fp.o, about a minute at its pace). A root links, `sitemap_file`, to
-each top-level sitemap it names or found, an index to the files it lists, so a broken one shows as any broken link and
-"no sitemap" is per root; a probe that misses writes nothing, nothing having named it. Rejected: reading sitemaps beside
-the pages, `in_sitemap` left to a race; a target per failed probe; a `runs` column, per run and naming no broken file.
-Code: `crawl::Shared::discover`. Evidence: `crawl::tests::each_root_links_once_to_each_sitemap_it_read`.
+each `http(s)` top-level sitemap it names or found, an index to the files it lists, so a broken one shows as any broken
+link and "no sitemap" is per root; a probe that misses writes nothing, nothing having named it. Rejected: reading
+sitemaps beside the pages, `in_sitemap` left to a race; a target per failed probe; a `runs` column, per run and naming
+no broken file. Code: `crawl::Shared::discover`. Evidence: `crawl::tests::each_root_links_once_to_each_sitemap_it_read`.
 
 ### D46 Where a redirect lands is a target of its own, written by whoever claims it first
 A `final_url` then names a `targets` row, bar a stopped run's, so D28's fragment join finds the landing page's anchors.
@@ -40,12 +40,13 @@ repeat mattering at docs.fp.o's pace.
 Code: `crawl::Shared::write`. Evidence: `crawl::tests::a_redirect_is_a_chain_and_its_landing_page_is_recorded_once`.
 
 ### D61 Live slots are shared among the hosts with work, and a build's reads have a budget of their own
-A host holds at most the live slots divided by the hosts with a target waiting or running, taken in turn, so the forge's
-waiters for its one-a-second pace leave docs.fp.o its share; a host alone has every slot. A build's reads run in a
-budget of their own, so no waiter for production's pace (the prefix's host) holds a slot a read wants. Rejected: a fixed
-cap per host; turn-taking alone; asking the fetcher whether a pace is free, a trait method; the build as a third lane of
-the live slots; `available_parallelism`, differing by machine. Reopens: a host whose concurrency (D8) exceeds its share.
-Code: `crawl::schedule`. Evidence: `crawl::schedule::tests::the_builds_reads_run_whatever_waits_on_the_prefix_host`.
+A host's targets, filed by their first URL's host, hold at most the live slots divided by the hosts with a target
+waiting or running, taken in turn, so the forge's waiters for its one-a-second pace leave docs.fp.o its share; a host
+alone has every slot. A build's reads run in a budget of their own, so no waiter for production's pace (the prefix's
+host) holds a slot a read wants. Rejected: a fixed cap per host; turn-taking alone; asking the fetcher whether a pace is
+free, a trait method; the build as a third lane of the live slots; `available_parallelism`, differing by machine.
+Reopens: a host whose concurrency (D8) exceeds its share. Code: `crawl::schedule`. Evidence:
+`crawl::schedule::tests::the_builds_reads_run_whatever_waits_on_the_prefix_host`.
 
 ### D48 A stop drops each target's hops 30 s after it; "cut" is every target found and not written
 Every started target's hops end at one instant, the stop plus `STOP_GRACE`, and one whose hops ended still writes whole,

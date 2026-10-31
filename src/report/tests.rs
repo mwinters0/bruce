@@ -359,7 +359,7 @@ fn with_no_finished_run_a_report_says_so() {
     assert!(err.to_string().contains("--run"));
 }
 
-/// Page 1, of component `hb`, holds the xrefs; pages 2 to 4 are the pages
+/// Page 1, of component `hb`, holds the xrefs; pages 2 and 3 are the pages
 /// a refspec may mean, and page 5 is another component's.
 pub(super) fn xrefs(refspecs: &[&str]) -> Store {
     let store = Store::open_in_memory(&registry()).unwrap();

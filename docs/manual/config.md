@@ -309,7 +309,8 @@ that never fails. The inverse check follows the list: a link to a page or a file
 the change removed will read `broken_url`, and one to an anchor `broken_anchor`,
 so a row fails where the list names that outcome and is listed apart where it does
 not; `check-dir --inverse warn` only ever loosens it. An empty list, `fail = []`,
-is report only: everything is listed and nothing fails, the exit status 2 still
+is report only: what the change introduced is listed and nothing fails, the
+breakage already in the baseline in no section, and the exit status 2 still
 meaning the check could not run. A redirect is no outcome.
 
 | Key | Default | Meaning |
@@ -338,7 +339,9 @@ ones, so `doubled_slash = "attention"` moves the page counting those links down
 the ranking. A part of a count that a reason's key moved off its outcome's level names that reason,
 "● 2 broken links (`doubled_slash`)". A kind at `"none"` is no finding in the digest: it leaves the link
 lists, the counts and the ranking, a page whose only findings are at `"none"` has
-no row, and the legend names what it leaves out; a list the map empties says so. The run's outcomes, the figures' numbers,
+no row, and the legend names what it leaves out; a list the map empties says so, but
+for "By: Link Target", which says no broken target is named by more than one link, and
+the sections since the compared run, which are left out. The run's outcomes, the figures' numbers,
 the JSON's rows and order, every other report and the gate are untouched. A level on a link
 that is neither broken nor errored (a redirect, a reason on an `ok` link) moves
 its dot where it is listed and counts nothing.
@@ -390,7 +393,7 @@ your deployment instead, so a site operator can tell whose crawler it is.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `user_agent` | `bruce/<version>` | Sent as `User-Agent`. Visible ASCII, starting with a product name of letters, digits, `-`, `_` or `.`. |
+| `user_agent` | `bruce/<version>` | Sent as `User-Agent`. Printable ASCII, a space allowed, starting with a product name of letters, digits, `-`, `_` or `.`. |
 
 A site's `robots.txt` knows the crawler by that first product name, lowercased:
 `docs-example-bot` for the example above, `bruce` by default. A `robots.txt`
@@ -443,7 +446,7 @@ requests in flight and `robots` stay a host's, and the slowest `Crawl-delay`
 among a host's origins sets its pace. A URL a rule forbids is not requested and
 is reported as not checked. If the file is absent (a 4xx answer), everything
 is allowed. If the host answers but the file cannot be read (a 5xx, a 429
-that outlasts the retries, or redirects that lead nowhere: more than five, one
+that outlasts the retries or the `Retry-After` ceiling, or redirects that lead nowhere: more than five, one
 with no web address to follow, or one to another host that does not answer),
 nothing on that origin is requested for the run, and its links are reported as
 not checked. A `robots.txt` that redirects to another origin's reads that

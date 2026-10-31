@@ -1,9 +1,10 @@
 //! The severity of a row, read off a link's outcome and reason through the
 //! run's severity map (D82), and the dot that marks it. HTML only: the JSON's
 //! outcome and reason and its policy decide the level, and it gains no field. A dot marks a finding, a row naming a link or a
-//! target, and never a heading. A dot is filled for broken and attention and a ring
-//! for pedantic, so the three read apart without their colours; each is named
-//! for a screen reader, the colour repeating the row's own text.
+//! target or a part of a page's or repo's count, and never a heading. A dot is filled for broken and attention and a ring
+//! for pedantic, so the three read apart without their colours; each beside a
+//! finding is named for a screen reader, the colour repeating the row's own
+//! text, and the legend's are hidden, its words beside them.
 
 use std::fmt::Write as _;
 

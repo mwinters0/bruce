@@ -156,7 +156,7 @@ fn a_root_whose_keys_changed_between_the_runs_changes_every_pages_scope() {
         )
         .unwrap();
     let out = changed(&store, |_| {});
-    // Pages 2, 4 and 6 had the same hash and 1, 5 and 10 a moved one; none is
+    // Pages 2 and 4 had the same hash and 1, 5 and 10 a moved one; none is
     // `changed` now, the hashes not being comparable.
     assert_eq!(
         rows(&out),
