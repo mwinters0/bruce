@@ -16,5 +16,5 @@ facts filed by destination").
   would extend by a rule rather than Rust: whether a rule can add an edit
   phrase or class beside D36's tiers, a region (D34), or a language menu's
   selector.
-- **Origin.** P7's grilling, 2026-10-25, read off the source at `6327824`.
+- **Origin.** The site policy's grilling, 2026-10-25, read off the source at `6327824`.
   Contingent on D36's tiers and D67 staying as they are.

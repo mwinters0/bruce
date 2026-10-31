@@ -77,7 +77,7 @@ pub(super) fn mark(conn: &Connection, d: &mut Digest) -> Result<(), Error> {
 
 /// Marks `now`'s rows new where `then` has no row of the same `key`.
 // deficiency: KD33 `then` is the compared run's section as the JSON holds it,
-// a kind at `none` included (D82), so a page whose only findings then were at
+// a kind at `none` included (D92), so a page whose only findings then were at
 // `none`, listed in no HTML, is not new once one is above it; `repos` reads
 // `broken_pages` over every finding alike. Reading `then` through its run's
 // severity map, as the HTML lists, is the fix.

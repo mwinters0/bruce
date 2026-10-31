@@ -1,5 +1,5 @@
 //! Housekeeping's list of the settings this run was judged by that are not
-//! `bruce`'s defaults (D82), so a judgement the reader cannot otherwise see is
+//! `bruce`'s defaults (D91), so a judgement the reader cannot otherwise see is
 //! stated, with how the run asked (D85). The JSON holds the whole policy.
 
 use std::fmt::Write as _;

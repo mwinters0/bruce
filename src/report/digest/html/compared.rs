@@ -248,7 +248,7 @@ fn became(r: &Row) -> String {
 }
 
 /// The rows of `table`, a section's links, that the severity map makes a
-/// finding: a kind at none is in no list (D82).
+/// finding: a kind at none is in no list (D92).
 fn found<'a>(d: &Digest, table: &'a Table) -> Vec<Row<'a>> {
     rows(table)
         .filter(|r| listed(&d.severity, r.text("outcome"), r.text("reason")))

@@ -14,10 +14,7 @@ never reused.
 
 | Phase | State | Where it is |
 |---|---|---|
-| P1–P5 | **Struck** at the first keystone, 2026-10-21 | their decisions are [`decisions.md`](decisions.md)'s |
-| P6 — release | **Struck** at the second keystone, 2026-10-22 | its decisions are [`decisions.md`](decisions.md)'s |
-| P8 — run-history reports | **Struck** at the third keystone, 2026-10-25 | its decisions are [`decisions.md`](decisions.md)'s |
-| P7 — site policy in config | **Complete**, 2026-10-31 | [`roadmap-P7-rules.md`](roadmap-P7-rules.md), its notes [`roadmap-P7-rules-notes.md`](roadmap-P7-rules-notes.md) |
+| P1–P8 | **Struck** at the keystones of 2026-10-21 to 2026-10-31 | their decisions are [`decisions.md`](decisions.md)'s |
 | P9 — the deployment guide | Specified; to be grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
 | P10 — declarative extraction rules | Sketched; not grilled | this file, below |
 | P11 — the digest's prose in config | Sketched; not grilled | this file, below |
@@ -78,13 +75,6 @@ A standing rule is added only with the maintainer, and carries its check.
   `scripts/workflows.py`, which fails on a `uses:` (`mise run check` runs its
   tests over the real workflows).
 
-## P7 — Site policy in config
-
-Complete: [`roadmap-P7-rules.md`](roadmap-P7-rules.md) and its notes,
-[`roadmap-P7-rules-notes.md`](roadmap-P7-rules-notes.md). A run's policy
-recorded and judged at read time, a trial policy, the asking settings, and
-Antora out of the core's output.
-
 ## P9 — The deployment guide
 
 Specified: [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md).
@@ -105,5 +95,5 @@ overridden or an entry added, read from the deployment's config, not a
 compiled profile (D32), and perhaps a template filled from the run. The
 maintainer foresees more overrides and basic templating; which texts, and
 whether a template reads the run's recorded policy, is the grilling's.
-Follows P7, whose policy decides what the guide's text may claim, and P9,
-whose guide documents the config.
+Follows the site policy, which decides what the guide's text may claim
+(D91), and P9, whose guide documents the config.

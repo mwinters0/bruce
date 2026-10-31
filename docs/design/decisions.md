@@ -12,7 +12,7 @@ entries quote are named by their day: 2026-10-23's is `runs/p8.1-en-us-20261023-
 `runs/p8.14-en-us-20261024-1322/`, 2026-10-25's `runs/en-us-20261025-1301/`, run 2 of a copy of 2026-10-24's
 database, and 2026-10-28's `runs/en-us-20261028-1452/`.
 
-<!-- decision-watermark: D89 -->
+<!-- decision-watermark: D92 -->
 
 ## Modes, commands and deployment
 [`decisions/modes.md`](decisions/modes.md)
@@ -95,6 +95,7 @@ database, and 2026-10-28's `runs/en-us-20261028-1452/`.
 - **D79** A status is judged by the host that answered, a URL's shape by the host linked, and a scheme by the URL
 - **D81** A comparison judges both runs by the policy of the run it reports on, through a session variable the macro reads
 - **D84** A trial policy is a temporary table of the policy rows every reader asks for, one set per run
+- **D90** A constant becomes a site's setting where a site would rightly choose otherwise and the choice is meaning
 
 ## CI mode
 [`decisions/ci.md`](decisions/ci.md)
@@ -119,8 +120,10 @@ database, and 2026-10-28's `runs/en-us-20261028-1452/`.
 - **D75** A row is new where the compared run's same section lacked it, a broken link where section 3 lists it, and a bar marks it
 - **D76** A link's severity is one of three levels read off its outcome and reason, and only the HTML shows it
 - **D80** The doubled slash's reach is the digest's, and it moves what is blamed on the linking page, not what is counted
-- **D82** A site maps each kind to one of D76's levels in `[severity]`, and the run's recorded policy states itself in the digest
+- **D82** A site maps each kind to one of D76's levels in `[severity]`, and the map ranks as well as dots
 - **D86** The digest groups its pages by the fact `[digest]` `group_by` names, and by nothing unless a site says so
+- **D91** The digest states the policy it was judged by: Housekeeping what differs from the defaults, the JSON all of it, the guide what is judged
+- **D92** A kind at `none` is no finding in the digest, and its JSON and figures keep it
 
 ## Build, layering and release
 [`decisions/build.md`](decisions/build.md)

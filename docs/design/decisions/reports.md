@@ -89,15 +89,15 @@ host, the attribution being the report's.
 Reopens: a gate failing on `through`.
 Code: `report::digest::sections::page_counts`, `config::policy::Reach`. Evidence: `report::digest::tests`.
 
-### D82 A site maps each kind to one of D76's levels in `[severity]`, and the run's recorded policy states itself in the digest
-`[severity]` maps an outcome, `redirected` or a reason to a level or `none`, a reason's beating its outcome's. The HTML
-reads the map off the policy in force (D84), never the file. A kind at `none` is no finding and the legend names it.
-Housekeeping lists the recorded settings off their defaults, the JSON all of them as `policy`. Why: a level changes no
-outcome, so needs no comparison rule; stating the map keeps a digest honest to a reader of the page alone. Rejected:
-levels a site defines, making legend, ranking and print styling data; ranking or dropping `none` rows in the JSON,
-making the data the policy; a redirect at `none` listed undotted, or the legend silent on a kind at `none` (maintainer,
-2026-10-31). Code: `config::policy::severity`, `report::digest::html::standing`. Evidence:
-`report::digest::html::tests`, `config::policy::tests`.
+### D82 A site maps each kind to one of D76's levels in `[severity]`, and the map ranks as well as dots
+`[severity]` maps an outcome, `redirected` or a reason to a level or `none` (D92), a reason's beating its outcome's,
+read off the policy in force (D84). A page's and a repo's counts are of their links by mapped level, ranked red then
+amber, and a part off its outcome's level names its reasons; the figures stay the run's outcome totals. Why: a level
+changes no outcome, so needs no comparison rule; a reason's key that moved only dots, as `doubled_slash = "attention"`
+would, left its page ranked red (maintainer, 2026-10-31). Rejected: levels or colours a site defines, making legend,
+ranking and print styling data; a count by level alone ("5 red"), losing the kinds it holds; parts told apart by colour
+alone (D76). Code: `config::policy::severity`, `report::digest::html::standing`. Evidence:
+`report::digest::html::tests`.
 
 ### D86 The digest groups its pages by the fact `[digest]` `group_by` names, and by nothing unless a site says so
 `group_by` is a full fact key (D37), recorded as one `digest.group_by` row (D78) and read from the policy in force
@@ -108,3 +108,22 @@ checking the key against the profiles' facts at load, which the loader does not 
 `by_component` beside `by_group`, two names for one table. Reopens: a site grouping by two facts, or the HTML wanting
 the section. Code: `config::policy::digest`, `report::digest::sections::by_group`. Evidence: `report::digest::tests`,
 `config::policy::tests`.
+
+### D91 The digest states the policy it was judged by: Housekeeping what differs from the defaults, the JSON all of it, the guide what is judged
+Housekeeping lists the run's settings off their defaults, a trial's file named (D84), and the JSON holds every row as
+`policy`. The guide ("How to read this report") shows an entry only while its reason is judged, and reads the settings
+it states (`doubled_slash_reach`, a pedantic redirect's level) off the same rows. It is site-neutral (`example.com`) and
+names a doubled slash by role (D71), not by where the `//` falls. Why: a judgement the reader cannot see is a broken
+experience of the report itself. Rejected: the JSON alone; the guide's text left to a site's own wording (the digest's
+prose in config), false for a site's digest until then. Code: `report::digest::html::policy`,
+`report::digest::html::guide`. Evidence: `report::digest::html::tests`.
+
+### D92 A kind at `none` is no finding in the digest, and its JSON and figures keep it
+Its links leave the HTML's lists, counts and ranking, and a page whose only findings are at `none` has no row; the
+legend names the kinds at `none`, and a list it empties says so (but KD32). The JSON keeps every row, counted and
+ordered by outcome, its levels derivable from `policy`; the run's outcomes, the other reports and the gate are
+untouched. Why: a level is the report's, never the data's (D76). Rejected: `none` as no dot alone, a finding a site
+silenced still ranking its page; ranking or dropping `none` rows in the JSON, making the data the policy; a redirect at
+`none` listed undotted, or the legend silent on it (maintainer, 2026-10-31). Code:
+`config::policy::severity::Severity::is_finding`, `report::digest::html::standing`. Evidence:
+`report::digest::html::tests::a_kind_at_none_is_in_no_list_the_figures_and_the_json_keep_it`.

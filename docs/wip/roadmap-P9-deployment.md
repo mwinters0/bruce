@@ -24,16 +24,16 @@ evidence being local en-US crawls, and nothing P9 builds serves anyone before
 a deployment exists. When P9 is sliced, the grilling re-reads this spec
 against what they changed (below, "What the run-history reports left").
 
-## P9 follows P7
+## P9 follows the site policy
 
-Settled 2026-10-25 (maintainer, in P7's grilling). **P9 follows P7**, which
-extends the deployment's config (the gate's `fail` list, the severity map,
-the digest's grouping) and changes the schema, a run recording its policy:
-the guide is then written once, and a deployment is not stood up on a schema
-the next release discards (D43). **The guide's config sets `[digest]`
-`group_by = "antora.component"`**, the core grouping by nothing by default
-([`../design/roadmap-P7-rules.md`](../design/roadmap-P7-rules.md), "Antora leaves the core's
-output"). The re-grilling reads what P7 added.
+Settled 2026-10-25 (maintainer). **P9 follows the site policy** (D90), which
+extends the deployment's config (the gate's `fail` list, D83; the severity
+map, D82; the digest's grouping, D86) and changes the schema, a run recording
+its policy (D78): the guide is then written once, and a deployment is not
+stood up on a schema the next release discards (D43). **The guide's config
+sets `[digest]` `group_by = "antora.component"`**, the core grouping by
+nothing by default (D86). When P9 is sliced, the grilling re-reads this spec
+against what the policy added (below, "What the site policy left").
 
 ## The guide's hash scope is the profile's region
 
@@ -324,3 +324,26 @@ Found 2026-10-25, for the re-grilling.
   `fixtures/antora/digest.html`, is rewritten by
   `cd scripts && uv run e2e.py --save-digest`; a change of layout shows only
   in a render (`scripts/shot.py`).
+
+## What the site policy left
+
+Found 2026-10-31, for the re-grilling.
+
+- **`[rate]` is `[default]`**, and the loader refuses `[rate]` by name: the
+  guide's config section is written under the new name.
+- **Without `group_by` the digest's JSON has no groups**, where it listed
+  components before; the guide sets it (above, "P9 follows the site policy").
+- **The guide can set a host's own timeouts and `slash_probe`**:
+  `../manual/config.md`, "Asking", is the reference.
+- **A run recorded before the asking settings has no asking rows**, and its
+  digest states none; a missing row reads as the default, which is what such
+  a run asked with.
+- **No crawl has run under schema 6**, so a digest compared across a policy
+  change, a trial `--config` and a `none` kind's effect on the ranking are
+  tested and never run on a real crawl, and `introduced` and `inverse` have
+  run on `mise run e2e`'s fixture alone. The verdicts' cost was measured on
+  the 2026-10-28 crawl (D77); time a digest by CPU, not wall clock, and
+  alternate the binaries, a loaded machine doubling the first timing. The
+  doubled slash's reach on the 2026-10-24 crawl, 554 pages `full` and 183
+  `immediate`, was not measured again; hand-edited `policy` rows reproduce it
+  on any schema-6 database.

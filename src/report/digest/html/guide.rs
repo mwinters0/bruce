@@ -1,6 +1,6 @@
 //! The guide closing the document, "How to read this report": an entry for
 //! the doubled slash and one for the pedantic redirect, each while the run's
-//! policy judges its reason, and the ⓘ beside the term, linking
+//! policy judges its reason (D91), and the ⓘ beside the term, linking
 //! to its entry. HTML only, prose for a reader (D64). The
 //! section is open, so an ⓘ lands on its entry in every browser, one that
 //! opens no closed `<details>` for a fragment included. The ⓘ is an `i` in a
@@ -141,7 +141,7 @@ fn doubled_slash_entry(reach: Reach) -> String {
 }
 
 /// The pedantic entry, its last words stating how the run's severity map marks
-/// such a redirect and where the digest lists it, or that it lists none (D82).
+/// such a redirect and where the digest lists it, or that it lists none (D91).
 fn pedantic_entry(marking: Option<&str>) -> String {
     let placed = match marking {
         Some(marking) => format!(

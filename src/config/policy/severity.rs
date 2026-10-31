@@ -34,7 +34,7 @@ impl Severity {
         }
     }
 
-    /// Whether a kind at this level is a finding: *none* is not (D82).
+    /// Whether a kind at this level is a finding: *none* is not (D92).
     pub fn is_finding(self) -> bool {
         self != Severity::None
     }

@@ -71,17 +71,17 @@ own toggle, the landing's reason being every URL's that lands there. Reopens: th
 
 ### D77 Links are judged by a table macro reading the recorded policy, and `link_verdicts` is its call with each link's own run's
 `link_verdicts_with(policy_run := NULL)` judges by the policy (D78) of `policy_run`, else D81's `judged_by`, else the
-link's own run; a setting with no row is at its default. `link_verdicts` calls it bare, a view taking no parameter (D6).
-Why: one copy of the judgement serves a run under its own policy and under another's, and the macro is inlined: on the
-2026-10-28 crawl a run's verdicts cost 3 to 8 percent more, the digest 5 to 10. Rejected: a second copy of the SQL for
-comparisons; a view per setting; a scalar parameter per setting, which a host's `doubled_slash` or a status map cannot
-be. Reopens: a setting a stored fact cannot judge, which the crawl must keep (P7's rule), or the digest's cost mattering
-on a larger site. Code: `store::views::link_verdicts_with`. Evidence: `runs/p7.1-verdicts/`, `runs/p7.3-verdicts/`
-(reports byte-identical).
+link's own run; a setting with no row is at its default. `link_verdicts` calls it bare (D6). Why: one copy of the
+judgement serves a run under its own policy and under another's, and the macro is inlined: on the 2026-10-28 crawl a
+run's verdicts cost 3 to 8 percent more, the digest 5 to 10. Rejected: a second copy of the SQL for comparisons; a view
+per setting; a scalar parameter per setting, which a host's `doubled_slash` or a status map cannot be; verdict columns
+on the target, no faster on that crawl. Reopens: a setting a stored fact cannot judge (D90), or the digest's cost
+mattering on a larger site. Code: `store::views::link_verdicts_with`. Evidence: `runs/p7.1-verdicts/`,
+`runs/p7.3-verdicts/` (reports byte-identical).
 
 ### D78 A run records the policy it was judged by, whole, as rows of a `policy` table
 `policy(run_id, host, key, value)`, `host` NULL for the run-wide value; every setting is written, the defaults included,
-and the rows travel with the run (D21, D2). Why: a report reads a run, never the file (P7), the macro joins a host's
+and the rows travel with the run (D21, D2). Why: a report reads a run, never the file (D90), the macro joins a host's
 value to the default, and a run's judging must outlive a later default. Rejected: a `runs` column or a struct fixing the
 keys, each new setting bumping the schema; JSON, a feature `Cargo.toml` does not enable, giving the macro no join; only
 values differing from the default, which a later default would silently change. Reopens: a setting that is not text in a
@@ -102,11 +102,11 @@ landing's disagreeing. Code: `store::views`. Evidence:
 ### D81 A comparison judges both runs by the policy of the run it reports on, through a session variable the macro reads
 `store::JudgedBy` sets the connection's `judged_by` for a whole read: the gate and `report inverse` at the CI run,
 `diff` at `--to`, a digest at its own run whatever `--from` names: the newer run, ordinarily, so a policy change shows
-as no breakage. Why: the views take no parameter (D6). Rejected: `policy_run`
-named in each comparison's SQL; a table of overrides, a write in a read; each run by its own policy, failing a gate on
-a setting nobody broke; the later run number for a digest, misjudging a baseline numbered above older runs (D52).
-Reopens: readers sharing a connection, or a comparison wanting the older run's policy. Code: `store::JudgedBy`.
-Evidence: `report::diff::tests::both_runs_are_judged_by_the_newer_runs_policy`,
+as no breakage. Why: the views take no parameter (D6). Rejected: `policy_run` named in each comparison's SQL; a table of
+overrides, a write in a read; each run by its own policy, failing a gate on a setting nobody broke; a digest by the
+later run, differing from `diff` on a reversed pair and misjudging a baseline numbered above older runs (D52), or
+refusing a later `--from`. Reopens: readers sharing a connection, or a comparison wanting the older run's policy. Code:
+`store::JudgedBy`. Evidence: `report::diff::tests`,
 `report::digest::tests::a_digest_judges_both_runs_by_its_own_runs_policy_whichever_run_from_names`.
 
 ### D84 A trial policy is a temporary table of the policy rows every reader asks for, one set per run
@@ -118,3 +118,13 @@ shadowing `policy` itself, which the import's `main.policy` also finds. Reopens:
 a report holding a second connection. Code: `store::Store::try_policy`. Evidence:
 `store::views::tests::a_trial_policy_judges_every_run_and_writes_nothing_to_the_database`,
 `cli::report::tests::a_report_judged_by_a_trial_config_leaves_the_database_as_it_was`.
+
+### D90 A constant becomes a site's setting where a site would rightly choose otherwise and the choice is meaning
+A setting is config's, its default the core's, a file without it judging as before; a profile sets none (D32). It judges
+at read time what the run stored (D77) or asks at crawl time (D85); a fact a judgement needs, the crawl keeps. A host's
+answer or URL shape is per host (D79), the rest top-level, nothing per root. Constants stay what the web fixes (D12,
+D7's ten hops, a sitemap index three deep), mechanism (D61's workers) and the tool's safety (the `Crawl-delay` ceiling,
+D48's grace). Rejected: a profile's defaults under config's, until a generator decides one; a rules file; verdicts fixed
+at crawl time, a comparison refusing a policy change; `wrong_trailing_slash` switchable, hiding the fix on a link broken
+anyway. Code: `config::policy`. Evidence:
+`config::policy::tests::the_default_policy_is_what_bruce_has_always_judged_by`.
