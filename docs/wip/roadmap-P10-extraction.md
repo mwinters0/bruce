@@ -264,6 +264,15 @@ core path a slice of its own (`../process.md`, "The loop", step 3).
 8. **10.8 The closing evidence**: the "after" crawl into 10.1's database,
    compared by `report changed` and the digest, no fact, locale or verdict
    differing.
+9. **10.9 Antora's implicit ROOT module**, added 2026-11-01 (maintainer):
+   `module_and_path` reads a `pages/` directly under a start path as `ROOT`'s,
+   as Antora 3.2 does where a content source has no `modules/` (#1127), a
+   `modules/<module>/pages/` tail taking precedence and the first `pages`
+   segment taken, the ambiguity a property beside the mechanism; KD34
+   struck; a site invariant for Antora 3.2's implicit ROOT; the
+   docs.antora.org fixture test reading `assembler/latest/` as `ROOT`'s
+   `index.adoc`, an xref to it resolved. docs.fp.o's pages are all under
+   `modules/` (Antora 3.1), so 10.8's evidence stands.
 
 ## Facts the grilling found
 

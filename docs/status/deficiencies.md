@@ -92,7 +92,7 @@ roadmap's phase index.
 
 - **KD34** — A page whose edit path has `pages/` directly under a start path, the
   ROOT module Antora implies, as docs.antora.org's assembler has, records no `module` or
-  `rel_path`, so an xref to it is not resolved by Resolve. **(c) unowned**: a content repo
-  laid out so would promote it. Detail: `src/profile/antora.rs`
+  `rel_path`, so an xref to it is not resolved by Resolve. **(b) owned by P10, struck at
+  10.9**. Detail: `src/profile/antora.rs`
 
 <!-- deficiency-watermark: KD34 -->

@@ -77,6 +77,8 @@ The spec is [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.m
   verdict differs that bruce caused; the three link verdicts that moved follow
   their targets or a page's own edit
   ([notes](../wip/roadmap-P10.8-closing-evidence-notes.md)).
+- [ ] **10.9** Antora's implicit ROOT module: a `pages/` directly under a
+  start path read as `ROOT`'s, and KD34 struck.
 
 ## Not started
 
