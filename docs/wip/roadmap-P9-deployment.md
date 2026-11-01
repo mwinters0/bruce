@@ -35,10 +35,10 @@ sets `[digest]` `group_by = "antora.component"`**, the core grouping by
 nothing by default (D86). When P9 is sliced, the grilling re-reads this spec
 against what the policy added (below, "What the site policy left").
 
-## P9 follows P10 and P11
+## P9 follows the declarative extraction rules and P11
 
 Settled 2026-10-31 (maintainer). **P9 follows the declarative extraction
-rules (P10) and the digest's prose in config (P11)**: the maintainer does not
+rules and the digest's prose in config (P11)**: the maintainer does not
 consider `bruce` ready for a content repo's CI until both have landed. The
 guide then documents their config once, as it does the site policy's. When P9
 is sliced, the grilling re-reads this spec against what they added.
@@ -372,9 +372,18 @@ Found 2026-11-01, for the re-grilling.
   `/pub/fedora/linux/development/` landed on a 404, at five mirrors whose
   records are wrong, and the fcix mirrors' robots.txt leaves most of the rest
   `unchecked` (D69). So the link on `releases/branched/` was `unchecked` in
-  10.1's crawl and `broken_url` in 10.8's, its page unchanged. A baseline that
+  run 1 of `runs/en-us-20261101-0005/en-us.duckdb` (crawled 2026-10-31) and
+  `broken_url` in run 2 (2026-11-01), its page unchanged. A baseline that
   drew the 404 fails a PR adding a link to that URL (D9, D22's `--externals`
   default), and the nightly digest's `new_breakage` comes and goes with the
   draw. The guide sets no `skip` for the host (D50); whether it should is the
   grilling's. Contingent on the mirror records staying wrong; the robots draw
   stays either way.
+- **The guide's config is an extension**, `fedora`, `extends = "antora"`
+  with `locale_links = "a.language[href]"`, no `generator` and no root naming
+  it (D94). `tests/extract.rs`, `scripts/e2e.py` and `examples/sim_config.rs`
+  read it from the guide, the one `file=bruce.toml` block holding
+  `[[profile]]`, so a re-grilled guide keeps that block whole.
+- **A run before the declarative profiles has no `profile.*` rows**, so a
+  digest comparing one with a run under the guide lists the extension's rows
+  as added (D91).

@@ -19,7 +19,7 @@ A fourth, `sites`, saves two other sites' pages, `docs.antora.org` and the
 Sphinx project's own documentation, from the hand-written lists in `SITES`
 (`fixtures/docs-antora-org/`, `fixtures/sphinx-doc-org/`): what compiled
 `antora` must get right with no config, and what a declarative profile is
-checked on end to end (P10's spec, "Other sites check the line").
+checked on end to end (D32).
 
 A fifth, `antora-ui`, vendors the Fedora docs UI bundle that `mise run e2e`
 builds its Antora site with (D24), into `fixtures/antora/`: the playbook's
@@ -79,10 +79,9 @@ WITNESSES = {
 }
 
 
-# The sites beside docs.fp.o whose pages are fixtures (P10's spec, "Other sites
-# check the line"). `dir` is under `fixtures/`; each page carries the reason it
-# is there. Both robots.txt files allow everything with no `Crawl-delay`, and
-# `DELAY` is kept to anyway.
+# The sites beside docs.fp.o whose pages are fixtures (D32). `dir` is under
+# `fixtures/`; each page carries the reason it is there. Both robots.txt files
+# allow everything with no `Crawl-delay`, and `DELAY` is kept to anyway.
 SITES = {
     "docs-antora-org": {
         "host": "https://docs.antora.org",

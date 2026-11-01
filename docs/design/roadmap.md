@@ -14,8 +14,7 @@ never reused.
 
 | Phase | State | Where it is |
 |---|---|---|
-| P1–P8 | **Struck** at the keystones of 2026-10-21 to 2026-10-31 | their decisions are [`decisions.md`](decisions.md)'s |
-| P10 — declarative extraction rules | **Complete**, 2026-11-01 | [`roadmap-P10-extraction.md`](roadmap-P10-extraction.md), its notes [`roadmap-P10-extraction-notes.md`](roadmap-P10-extraction-notes.md) |
+| P1–P8, P10 | **Struck** at the keystones of 2026-10-21 to 2026-11-01 | their decisions are [`decisions.md`](decisions.md)'s |
 | P11 — the digest's prose in config | Sketched; not grilled | this file, below |
 | P14 — redirects as facts | Sketched; not grilled | this file, below |
 | P9 — the deployment guide | Specified; follows P11 and P14, and is grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
@@ -78,11 +77,6 @@ A standing rule is added only with the maintainer, and carries its check.
   `scripts/workflows.py`, which fails on a `uses:` (`mise run check` runs its
   tests over the real workflows).
 
-## P10 — Declarative extraction rules
-
-Complete: [`roadmap-P10-extraction.md`](roadmap-P10-extraction.md), and its notes
-[`roadmap-P10-extraction-notes.md`](roadmap-P10-extraction-notes.md).
-
 ## P11 — The digest's prose in config
 
 A deployment replacing the digest's built-in text with its own, the guide
@@ -120,9 +114,8 @@ Specified: [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md).
 
 Profiles compiled in for generators beyond Antora (Sphinx, Docusaurus, MkDocs
 Material, Docsy), each saved site its evidence, and with them the line between
-compiled and config that P10 drew by best effort against docs.antora.org
-(P10's spec, "P10 draws the line by best effort, and ships no new
-generator"). Detection is its own question: Sphinx and Docsy emit no generator
+compiled and config, drawn by best effort against docs.antora.org (D32).
+Detection is its own question: Sphinx and Docsy emit no generator
 meta (I12), so D35's `auto` cannot pick them. **v1.0 waits on it**
 (maintainer, 2026-10-31): a 1.0 needs high confidence in what a site can
 configure and in the config format's stability, which only several kinds of
@@ -133,7 +126,7 @@ site supported can give.
 What a site's rules and `generic`'s heuristics select by, beyond lol_html's
 streaming CSS (D11): something like XPath or a document-level selector, so a
 site names its edit link, locale menu or region by structure and text rather
-than the core matching link titles and phrases (D36). P10's selectors are CSS
-under keys that leave room for it (P10's spec, "Selectors are CSS, under a key
-that leaves room"). A DOM-level language reopens D11's one streaming pass.
+than the core matching link titles and phrases (D36). A declared profile's
+selectors are CSS under keys that leave room for it (D33). A DOM-level
+language reopens D11's one streaming pass.
 **v1.0 waits on it** (maintainer, 2026-10-31), as it does on P12.

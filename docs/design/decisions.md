@@ -10,7 +10,7 @@ register".
 D25 and D29 are spent: D25 was superseded by D30, and D29 became `roadmap.md`'s phase index. The en-US crawls the
 entries quote are named by their day (2026-10-23, 2026-10-24, 2026-10-25, run 2 of a copy of 2026-10-24's database, and
 2026-10-28). Their databases predate schema 6 and are no longer kept: a figure stands as recorded, and a new crawl
-remeasures it.
+remeasures it. The en-US crawl of 2026-11-01 is kept, beside the one before it, in `runs/en-us-20261101-0005/`.
 
 <!-- decision-watermark: D94 -->
 

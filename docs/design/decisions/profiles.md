@@ -8,19 +8,22 @@ resolution, and the views and sentences the reports read through a profile. `pro
 
 ### D32 Two extension layers: generator profiles in code, the deployment in config
 The core knows the web; a profile knows a site generator (`generic`, `antora`); a deployment (docs.fp.o) is config
-only, owned outside this repo (D41). Forge edit-URL shapes are core, as every generator links to a forge. Rejected: a
-`fedora` profile above `antora`, empty on day one; a report `--component` filter, Antora in the core, where
-`--fact antora.component=…` reads `page_facts` (D37). Reopens: a deployment quirk that config and profile settings
-cannot express.
+only, owned outside this repo (D41), its markup an extension (D94). Forge edit-URL shapes are core, as every
+generator links to a forge. Compiled `antora` holds what Antora, its default UI and official extensions emit: all
+docs.antora.org needs; Fedora's bundle's and build's are config, a line drawn by best effort until other generators
+are compiled. Rejected: a compiled `fedora` profile above `antora`; a report `--component` filter, Antora in the core,
+where `--fact antora.component=…` reads `page_facts` (D37). Reopens: a deployment quirk config cannot express.
+Evidence: `tests/extract.rs` on `fixtures/docs-antora-org`; the en-US crawl of 2026-11-01, unchanged by the guide's
+extension (`runs/en-us-20261101-0005/compare.sql`).
 
 ### D33 Profiles are compiled in, or declared in config as a `[[profile]]` array
 A compiled profile is a module behind a trait, so a new generator is a PR. A declarative one is that trait from config,
-an array of tables named by `name`: a content region, a `generator` pattern, fact rules (a selector, an attribute or the
-text, a regex whose one capture is the value; the first element yielding one, an empty attribute being one and empty
-text not), source rules (D93), an edit-link and a language-menu selector (D67), writing key/value facts (D37). Resolve
-is its base's (D94) or none, and Views none. Rejected: WASM or out-of-process plugins, no second user; a table keyed by
-name, TOML not ordering keys where D35 tries them in file order; rules per root, a profile being what D35 chooses by;
-the first match alone, ignoring `pattern`. Code: `config::profile`, `profile::declarative`. Evidence:
+named by `name`, writing key/value facts (D37): a fact rule's value is the first element yielding one, an empty
+attribute being one and empty text not; source rules are D93, locale links D67. Each selector is lol_html's streaming
+CSS (D11), refused at load, under a key named for it, so a richer language is a key beside it. Resolve is its base's
+(D94) or none, and Views none. Rejected: WASM or out-of-process plugins, no second user; a table keyed by name, TOML not
+ordering keys where D35 tries them in file order; rules per root, a profile being what D35 chooses by; the first match
+alone, ignoring `pattern`. Reopens: a multi-valued fact. Code: `config::profile`, `profile::declarative`. Evidence:
 `profile::declarative::tests`.
 
 ### D35 A root's profile defaults to `auto`, which picks one per page by its generator meta
@@ -49,12 +52,12 @@ formats under one profile, the first match too coarse. Code: `forge::rule`, `con
 `forge::rule::tests`.
 
 ### D94 A declarative profile may extend one compiled profile, adding its rules to all the base does
-`extends = "antora" | "generic"` wraps the base: its Extract with the extension's handlers and finish added after the
-base's and its source rules before, its region where it states one, its detection where it has no `generator`, its
-Resolve and sitemap note, which a report reads off the run's `profile.<name>.extends` row. Facts: the base's keep its
-namespace (`antora.*`), the extension's own are `<name>.*`; `pages.profile` is the extension's name. Why: a deployment
-then states only what is its own, and `group_by` and the base's views are unchanged (D32, D33); its Views are none.
-Rejected: an extension of a declared profile; the base's facts renamed under the extension. Reopens: a second level
+`extends = "antora" | "generic"` wraps the base: its region replaces the base's where it states one, its `generator`
+the base's detection, and a report reads the base off the run's `profile.<name>.extends` row for its sitemap note.
+Facts: the base's keep its namespace (`antora.*`), the extension's own are `<name>.*`; `pages.profile` is the
+extension's name. Why: a deployment then states only what is its own, and `group_by` and the base's views are unchanged
+(D32, D33). Rejected: an extension of a declared profile; the base's facts renamed under the extension; the
+extension's in the base's namespace, read by name (D54, D56) and colliding with compiled facts. Reopens: a second level
 wanted. Code: `profile::declarative`, `cli::registry_for`, `report::digest::sections`. Evidence:
 `profile::declarative::tests`, `report::digest::tests`.
 

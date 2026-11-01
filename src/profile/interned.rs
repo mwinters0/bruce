@@ -4,7 +4,9 @@
 //! time anything asks for it and handed out again after, as [`selectors`](super::selectors)
 //! keeps its parses, so a registry built again (as each test builds one)
 //! adds nothing once its definitions have been seen: the cache is bounded by
-//! the distinct definitions, never by builds or pages.
+//! the distinct definitions, never by builds or pages. Widening the name to a
+//! shared string would put a refcount on the `Copy` name every extracted page
+//! carries to the writer, for no feature.
 
 use std::collections::{HashMap, HashSet};
 use std::sync::{LazyLock, Mutex};

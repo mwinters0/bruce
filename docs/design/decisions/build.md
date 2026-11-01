@@ -26,16 +26,19 @@ reqwest, texting_robots, lol_html and duckdb, a host's pace its own next-allowed
 ours (crawl frontier, link graph, anchor semantics) lychee does not model, and its extractor would need working around
 (D12's rejection). lol_html and html5gum tied on the spike's workload; lol_html matches CSS selectors while streaming,
 which profiles and D33's rules want. Rejected: html5gum, leaving us an open-element stack and a selector matcher to
-write; governor, having no per-key quota (boinkor-net/governor#193), so a limiter per host rebuilt as its rate changes.
-Evidence: `historical/initial.md`, "Existing tools"; the spike's `cargo bench` at b436db8, `runs/tokenizer-spike/`.
+write; governor, with no per-key quota (boinkor-net/governor#193). Reopens: lol_html sharing a rewriter's matching
+program between pages, the cost left once `profile::selectors` parsed each selector once a run, within the `extract`
+bench's noise. Evidence: `historical/initial.md`, "Existing tools"; the spike's
+`cargo bench` at b436db8, `runs/tokenizer-spike/`.
 
 ### D24 Tests run on saved real pages, a mock HTTP server, and an optional Antora build
-Fixture pages from docs.fp.o (I6, I8, I9), hand-written pages for other generators' markup (I12), wiremock for
-redirects, 429 and robots, and a criterion parser bench that `check` runs once in test mode and `mise run bench` times.
-An end-to-end three-component Antora site sits behind `mise run e2e`, being slow. The mock servers speak `http` alone,
-so two origins differ by port, and no test resolves a name to NXDOMAIN through the crawl. Rejected: a timing threshold
-in `check`, flaky at the spike's 8% run-to-run noise (`runs/tokenizer-spike/`) and tied to one machine. Code:
-`benches/extract.rs`, `scripts/e2e.py`. Evidence: `tests/extract.rs`, `fixtures/`.
+Fixture pages from docs.fp.o (I6, I8, I9), docs.antora.org and a Sphinx site (D32), hand-written pages for other
+generators' markup (I12), wiremock for redirects, 429 and robots, and a criterion parser bench that `check` runs once
+in test mode and `mise run bench` times. An end-to-end three-component Antora site sits behind `mise run e2e`, being
+slow. The mock servers speak `http` alone, so two origins differ by port, and no test resolves a name to NXDOMAIN
+through the crawl. Rejected: a timing threshold in `check`, flaky at the spike's 8% run-to-run noise
+(`runs/tokenizer-spike/`) and tied to one machine. Code: `benches/extract.rs`, `scripts/e2e.py`. Evidence:
+`tests/extract.rs`, `fixtures/`.
 
 ### D23 DuckDB is bundled; distribution is a release binary on GitHub
 The `duckdb` crate's `bundled` feature makes one binary a CI job in the Fedora-minimal docs image fetches in one step. A
