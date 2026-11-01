@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Přehled kontroly odkazů DATE – 127.0.0.1:8099/en-US/</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #131416;
+  --surface: #1b1c1f;
+  --raised: #25262a;
+  --text: #e6e6e8;
+  --muted: #a0a1a8;
+  --line: #34353a;
+  --accent: #a58de0;
+  --accent-deep: #3a3358;
+  --bad: #f0868b;
+  --warn: #e5be6b;
+  --good: #7fcf9a;
+  --new: #a58de0;
+}
+@media print {
+  :root {
+    color-scheme: light;
+    --bg: #fff; --surface: #fff; --raised: #f3f3f5; --text: #111; --muted: #555;
+    --line: #ccc; --accent: #5a3fa0; --accent-deep: #fff; --bad: #a11; --warn: #7a5a00; --good: #1a6b36; --new: #5a3fa0;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+main, header > div { max-width: 72rem; margin: 0 auto; padding: 0 16px; }
+header { background: linear-gradient(135deg, var(--accent-deep), var(--surface)); border-bottom: 3px solid var(--accent); padding: 20px 0 14px; }
+h1 { margin: 0 0 4px; font-size: 1.7rem; font-weight: 650; }
+h1 .date { color: var(--accent); font-weight: 500; }
+.subtitle { margin: 0; font-size: 1.1rem; color: var(--muted); }
+h2 { margin: 2.2rem 0 .4rem; padding-bottom: .3rem; border-bottom: 1px solid var(--line); font-size: 1.25rem; }
+h3 { margin: 1.4rem 0 .3rem; font-size: 1rem; }
+h3 small { font-weight: 400; }
+h3 + p + .scroll th:first-child { width: 60%; }
+a { color: var(--accent); text-decoration: none; overflow-wrap: anywhere; }
+a:hover { text-decoration: underline; }
+code { font: .86em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+mark { background: none; color: var(--bad); font-weight: 700; }
+small, .muted { color: var(--muted); }
+p { margin: .5rem 0; }
+dl.meta { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; margin: 10px 0 0; }
+dl.meta dt { color: var(--muted); }
+dl.meta dd { margin: 0; overflow-wrap: anywhere; }
+nav { margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.warn-box { margin: 14px 0 0; padding: 8px 12px; border-left: 4px solid var(--warn); background: var(--raised); }
+.figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 10px; margin: 12px 0; }
+.fig { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+.fig .n { display: block; font-size: 1.7rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.fig .l { color: var(--muted); }
+.fig .d { display: block; color: var(--muted); font-variant-numeric: tabular-nums; }
+.fig .d.worse { color: var(--bad); }
+.fig .d.better { color: var(--good); }
+.fig.bad .n { color: var(--bad); }
+.fig.warn .n { color: var(--warn); }
+.legend { color: var(--muted); }
+.sev { display: inline-block; flex: none; width: .75rem; height: .75rem; border: 2px solid currentColor; border-radius: 50%; vertical-align: -.05em; }
+.sev.broken { color: var(--bad); background: currentColor; }
+.sev.attention { color: var(--warn); background: currentColor; }
+.sev.pedantic { color: var(--muted); background: transparent; }
+th.dot, td.dot { width: 1%; padding-right: 0; }
+tbody td:first-child { border-left: 3px solid transparent; }
+tbody tr.new td:first-child, details.new, .newbar { border-left: 3px solid var(--new); }
+.newbar { display: inline-block; width: 0; height: 1em; vertical-align: -.15em; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.scroll {
+  --cover: var(--bg);
+  --shade: rgba(165, 141, 224, .45);
+  overflow-x: auto; margin: 8px 0;
+  background:
+    linear-gradient(to right, var(--cover) 30%, transparent) 0 0 / 2.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--cover) 30%, transparent) 100% 0 / 2.5rem 100% no-repeat local,
+    linear-gradient(to right, var(--shade), transparent) 0 0 / .8rem 100% no-repeat scroll,
+    linear-gradient(to left, var(--shade), transparent) 100% 0 / .8rem 100% no-repeat scroll;
+}
+details .scroll { --cover: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 5px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 500; white-space: nowrap; background: var(--surface); }
+th.num, td.num { text-align: right; white-space: nowrap; }
+td a, td code { overflow-wrap: break-word; }
+tbody tr:last-child td { border-bottom: 0; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; margin: 6px 0; }
+details > :not(summary) { margin-left: 12px; margin-right: 12px; }
+details > .scroll { margin-bottom: 0; }
+.sect { background: none; border: 0; border-radius: 0; margin: 0; }
+.sect > * { margin-left: 0; margin-right: 0; }
+.sect > .scroll { --cover: var(--bg); margin-bottom: 8px; }
+.sect > summary { margin: 2.2rem 0 .4rem; padding: 0 0 .3rem; border-bottom: 1px solid var(--line); gap: 2px 10px; }
+.sect > summary:hover { background: none; }
+.sect > summary:hover h2 { color: var(--accent); }
+.sect > summary::before { font-size: 1.25rem; }
+.sect > summary h2 { flex: 1 1 10rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+summary { cursor: pointer; padding: 7px 12px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+summary:hover { background: var(--raised); }
+summary::before { content: "\25b8"; flex: none; width: .9em; color: var(--accent); }
+details[open] > summary::before { content: "\25be"; }
+details:target { border-color: var(--accent); }
+summary .rank { min-width: 2.2rem; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+summary .ttl { flex: 1 1 18rem; min-width: 0; font-weight: 550; overflow-wrap: anywhere; }
+summary .cnt { font-variant-numeric: tabular-nums; }
+summary .cnt .cn { white-space: nowrap; }
+summary .cnt .sev { margin-right: .3em; }
+a.info { display: inline-block; width: 1.35em; height: 1.35em; margin-left: .1em; border: 1px solid currentColor; border-radius: 50%; color: var(--muted); font: italic 700 .72em/1.25em Georgia, "DejaVu Serif", serif; text-align: center; vertical-align: .12em; }
+a.info:hover { color: var(--accent); text-decoration: none; }
+footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(--muted); }
+@media (max-width: 40rem) {
+  body { font-size: 14px; }
+  dl.meta { grid-template-columns: 1fr; }
+  dl.meta dt { margin-top: 6px; }
+  summary .rank { text-align: left; }
+}
+@media print {
+  header { background: none; }
+  details { break-inside: avoid-page; }
+  details::details-content { content-visibility: visible; display: block; }
+  summary { list-style: none; break-after: avoid; }
+  summary::before { display: none; }
+  .scroll { overflow: visible; background: none; }
+  td a, td code { overflow-wrap: anywhere; }
+  h2, h3 { break-after: avoid; }
+  .sect > summary + p { break-after: avoid; }
+  .sect { break-inside: auto; }
+  tr { break-inside: avoid; }
+  thead { display: table-header-group; }
+  nav { display: none; }
+}
+</style>
+</head>
+<body>
+<header><div>
+<h1>Přehled kontroly odkazů <span class="date">V</span></h1>
+<p class="subtitle">Není s čím porovnávat, dřívější běh neexistuje</p>
+<dl class="meta">
+<dt>Kořeny</dt><dd><a href="http://127.0.0.1:8099/en-US/">127.0.0.1:8099/en-US/</a></dd>
+<dt>Běh</dt><dd>1, spuštěn <time datetime="T">T</time>, dokončen <time datetime="T">T</time>, po <span class="duration">V</span></dd>
+<dt>Zkontroloval</dt><dd>bruce <span class="version">V</span></dd>
+</dl>
+<nav><a href="#figures">Čísla</a> <a href="#pages">Stránky</a> <a href="#repos">Repozitáře</a> <a href="#fix-once">Cíle</a> <a href="#errors">Neověřeno</a> <a href="#housekeeping">Údržba</a> <a href="#guide">Jak číst</a></nav>
+</div></header>
+<main>
+<section id="figures">
+<h2>Čísla</h2>
+<div class="figures">
+<div class="fig"><span class="n">8</span><span class="l">Stránky</span></div>
+<div class="fig"><span class="n">304</span><span class="l">Odkazy</span></div>
+<div class="fig bad"><span class="n">25</span><span class="l">Odkazy na nefunkční URL</span></div>
+<div class="fig warn"><span class="n">0</span><span class="l">Odkazy na chybějící fragment</span></div>
+<div class="fig bad"><span class="n">0</span><span class="l">Odkazy, které nešlo ověřit</span></div>
+</div>
+<p class="muted">Nefunkčních odkazů je celkem 25, tedy 8,2 % všech odkazů. Nezkontrolováno bylo 82 odkazů (viz Údržba). </p>
+<p class="legend">Tečka označuje závažnost odkazu nebo cíle: <span class="sev broken" aria-hidden="true"></span> <b>Nefunkční</b>, odkaz na nefunkční URL nebo odkaz, který nešlo ověřit; <span class="sev attention" aria-hidden="true"></span> <b>Pozornost</b>, odkaz na chybějící fragment nebo přesměrování k aktualizaci; <span class="sev pedantic" aria-hidden="true"></span> <b>Pedantní</b>, přesměrování lišící se od svého cíle jen koncovým <code>/</code> <a class="info" href="#guide-pedantic" title="Co je „pedantní“ odkaz?" aria-label="Co je „pedantní“ odkaz?">i</a>.</p>
+</section>
+<section id="pages">
+<details class="sect">
+<summary><h2>Podle zdrojové stránky</h2></summary>
+<p><i>Zapsáno jako</i> je odkaz na stránce. <i>Vede na</i> je adresa URL, na které skončil. <i>Druh</i> je typ prvku, který ho obsahuje (<code>anchor</code> je <code>&lt;a href&gt;</code>). <i>Problém</i> a <i>Stav</i> jsou to, čím odpověděl cíl.</p>
+<details id="p1">
+<summary><span class="rank">1</span><span class="ttl">Using the tools :: Bruce fixture site</span><span class="cnt"><span class="cn"><span class="sev broken" role="img" aria-label="Nefunkční"></span> 4 nefunkční odkazy</span></span></summary>
+<p>Stránka <a href="http://127.0.0.1:8099/en-US/tools/usage/">127.0.0.1:8099/en-US/tools/usage/</a> · Zdroj <a href="https://github.com/bruce-fixture/tools/edit/main/modules/ROOT/pages/usage.adoc">modules/ROOT/pages/usage.adoc</a></p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>Zapsáno jako</th><th>Vede na</th><th>Fragment</th><th>Druh</th><th>Problém</th><th class="num">Stav</th></tr></thead>
+<tbody>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>file:///etc/tools.conf</code></td><td>file:///etc/tools.conf</td><td>-</td><td>anchor</td><td>nefunkční URL · bad_scheme</td><td class="num"><span class="muted">-</span></td></tr>
+</tbody></table></div>
+</details>
+<details id="p2">
+<summary><span class="rank">2</span><span class="ttl">Install Guide :: Bruce fixture site</span><span class="cnt"><span class="cn"><span class="sev broken" role="img" aria-label="Nefunkční"></span> 3 nefunkční odkazy</span></span></summary>
+<p>Stránka <a href="http://127.0.0.1:8099/en-US/guide/1.0/">127.0.0.1:8099/en-US/guide/1.0/</a> · Zdroj <a href="https://github.com/bruce-fixture/guide/edit/main/modules/ROOT/pages/index.adoc">modules/ROOT/pages/index.adoc</a></p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>Zapsáno jako</th><th>Vede na</th><th>Fragment</th><th>Druh</th><th>Problém</th><th class="num">Stav</th></tr></thead>
+<tbody>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+</tbody></table></div>
+</details>
+<details id="p3">
+<summary><span class="rank">3</span><span class="ttl">Installing :: Bruce fixture site</span><span class="cnt"><span class="cn"><span class="sev broken" role="img" aria-label="Nefunkční"></span> 3 nefunkční odkazy</span></span></summary>
+<p>Stránka <a href="http://127.0.0.1:8099/en-US/guide/1.0/install/">127.0.0.1:8099/en-US/guide/1.0/install/</a> · Zdroj <a href="https://github.com/bruce-fixture/guide/edit/main/modules/ROOT/pages/install.adoc">modules/ROOT/pages/install.adoc</a></p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>Zapsáno jako</th><th>Vede na</th><th>Fragment</th><th>Druh</th><th>Problém</th><th class="num">Stav</th></tr></thead>
+<tbody>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+</tbody></table></div>
+</details>
+<details id="p4">
+<summary><span class="rank">4</span><span class="ttl">Upgrading :: Bruce fixture site</span><span class="cnt"><span class="cn"><span class="sev broken" role="img" aria-label="Nefunkční"></span> 3 nefunkční odkazy</span></span></summary>
+<p>Stránka <a href="http://127.0.0.1:8099/en-US/guide/1.0/upgrade/">127.0.0.1:8099/en-US/guide/1.0/upgrade/</a> · Zdroj <a href="https://github.com/bruce-fixture/guide/edit/main/modules/ROOT/pages/upgrade.adoc">modules/ROOT/pages/upgrade.adoc</a></p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>Zapsáno jako</th><th>Vede na</th><th>Fragment</th><th>Druh</th><th>Problém</th><th class="num">Stav</th></tr></thead>
+<tbody>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+</tbody></table></div>
+</details>
+<details id="p5">
+<summary><span class="rank">5</span><span class="ttl">Operations :: Bruce fixture site</span><span class="cnt"><span class="cn"><span class="sev broken" role="img" aria-label="Nefunkční"></span> 3 nefunkční odkazy</span></span></summary>
+<p>Stránka <a href="http://127.0.0.1:8099/en-US/ops/">127.0.0.1:8099/en-US/ops/</a> · Zdroj <a href="https://github.com/bruce-fixture/ops/edit/main/modules/ROOT/pages/index.adoc">modules/ROOT/pages/index.adoc</a></p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>Zapsáno jako</th><th>Vede na</th><th>Fragment</th><th>Druh</th><th>Problém</th><th class="num">Stav</th></tr></thead>
+<tbody>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+</tbody></table></div>
+</details>
+<details id="p6">
+<summary><span class="rank">6</span><span class="ttl">Partitions :: Bruce fixture site</span><span class="cnt"><span class="cn"><span class="sev broken" role="img" aria-label="Nefunkční"></span> 3 nefunkční odkazy</span></span></summary>
+<p>Stránka <a href="http://127.0.0.1:8099/en-US/ops/admin/partitions/">127.0.0.1:8099/en-US/ops/admin/partitions/</a> · Zdroj <a href="https://github.com/bruce-fixture/ops/edit/main/modules/admin/pages/partitions.adoc">modules/admin/pages/partitions.adoc</a></p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>Zapsáno jako</th><th>Vede na</th><th>Fragment</th><th>Druh</th><th>Problém</th><th class="num">Stav</th></tr></thead>
+<tbody>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+</tbody></table></div>
+</details>
+<details id="p7">
+<summary><span class="rank">7</span><span class="ttl">Tools :: Bruce fixture site</span><span class="cnt"><span class="cn"><span class="sev broken" role="img" aria-label="Nefunkční"></span> 3 nefunkční odkazy</span></span></summary>
+<p>Stránka <a href="http://127.0.0.1:8099/en-US/tools/">127.0.0.1:8099/en-US/tools/</a> · Zdroj <a href="https://github.com/bruce-fixture/tools/edit/main/modules/ROOT/pages/index.adoc">modules/ROOT/pages/index.adoc</a></p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>Zapsáno jako</th><th>Vede na</th><th>Fragment</th><th>Druh</th><th>Problém</th><th class="num">Stav</th></tr></thead>
+<tbody>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+</tbody></table></div>
+</details>
+<details id="p8">
+<summary><span class="rank">8</span><span class="ttl">Reference :: Bruce fixture site</span><span class="cnt"><span class="cn"><span class="sev broken" role="img" aria-label="Nefunkční"></span> 3 nefunkční odkazy</span></span></summary>
+<p>Stránka <a href="http://127.0.0.1:8099/en-US/tools/reference/">127.0.0.1:8099/en-US/tools/reference/</a> · Zdroj <a href="https://github.com/bruce-fixture/tools/edit/main/modules/ROOT/pages/reference.adoc">modules/ROOT/pages/reference.adoc</a></p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>Zapsáno jako</th><th>Vede na</th><th>Fragment</th><th>Druh</th><th>Problém</th><th class="num">Stav</th></tr></thead>
+<tbody>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/legal/privacy/</code></td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td><code>/en-US/project/code-of-conduct/</code></td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>-</td><td>anchor</td><td>nefunkční URL</td><td class="num">404</td></tr>
+</tbody></table></div>
+</details>
+</details>
+</section>
+<section id="repos">
+<details class="sect">
+<summary><h2>Podle repozitáře zdrojové stránky</h2></summary>
+<details>
+<summary><span class="rank">1</span><span class="ttl"><a href="https://github.com/bruce-fixture/tools">github.com/bruce-fixture/tools</a></span><span class="cnt"><span class="cn"><span class="sev broken" role="img" aria-label="Nefunkční"></span> 10 nefunkčních odkazů</span></span></summary>
+<ul>
+<li><a href="#p1">Using the tools :: Bruce fixture site</a></li>
+<li><a href="#p7">Tools :: Bruce fixture site</a></li>
+<li><a href="#p8">Reference :: Bruce fixture site</a></li>
+</ul>
+</details>
+<details>
+<summary><span class="rank">2</span><span class="ttl"><a href="https://github.com/bruce-fixture/guide">github.com/bruce-fixture/guide</a></span><span class="cnt"><span class="cn"><span class="sev broken" role="img" aria-label="Nefunkční"></span> 9 nefunkčních odkazů</span></span></summary>
+<ul>
+<li><a href="#p2">Install Guide :: Bruce fixture site</a></li>
+<li><a href="#p3">Installing :: Bruce fixture site</a></li>
+<li><a href="#p4">Upgrading :: Bruce fixture site</a></li>
+</ul>
+</details>
+<details>
+<summary><span class="rank">3</span><span class="ttl"><a href="https://github.com/bruce-fixture/ops">github.com/bruce-fixture/ops</a></span><span class="cnt"><span class="cn"><span class="sev broken" role="img" aria-label="Nefunkční"></span> 6 nefunkčních odkazů</span></span></summary>
+<ul>
+<li><a href="#p5">Operations :: Bruce fixture site</a></li>
+<li><a href="#p6">Partitions :: Bruce fixture site</a></li>
+</ul>
+</details>
+</details>
+</section>
+<section id="fix-once">
+<details class="sect">
+<summary><h2>Podle cíle odkazu</h2></summary>
+<p class="muted">Cílů, na které odkazuje víc než jeden odkaz: 3; zahrnují 24 z celkem 25 nefunkčních odkazů.</p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th class="num">Odkazů na něj</th><th class="num">Odkazujících stránek</th><th>Nefunkční cíl</th><th>Problém</th><th class="num">Stav</th><th>Zdroj cíle</th></tr></thead>
+<tbody>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td class="num">8</td><td class="num">8</td><td><a href="http://127.0.0.1:8099/en-US/legal/">127.0.0.1:8099/en-US/legal/</a></td><td>nefunkční URL</td><td class="num">404</td><td><span class="muted">-</span></td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td class="num">8</td><td class="num">8</td><td><a href="http://127.0.0.1:8099/en-US/legal/privacy/">127.0.0.1:8099/en-US/legal/privacy/</a></td><td>nefunkční URL</td><td class="num">404</td><td><span class="muted">-</span></td></tr>
+<tr><td class="dot"><span class="sev broken" role="img" aria-label="Nefunkční"></span></td><td class="num">8</td><td class="num">8</td><td><a href="http://127.0.0.1:8099/en-US/project/code-of-conduct/">127.0.0.1:8099/en-US/project/code-of-conduct/</a></td><td>nefunkční URL</td><td class="num">404</td><td><span class="muted">-</span></td></tr>
+</tbody></table></div>
+<p>Cílů, na které odkazuje vždy jediný odkaz: 1. Každý je v rozbalovací části stránky, na které ten odkaz je, mezi stránkami výše.</p>
+</details>
+</section>
+<section id="errors">
+<details class="sect">
+<summary><h2>Odkazy, které nešlo ověřit</h2></summary>
+<p>Odkazy, jejichž cíl byl dotázán a nedal žádný verdikt: odmítl (401, 403, 429), selhal (5xx, i po opakování) nebo neodpověděl (časový limit, TLS, odmítnuté spojení). Stránka tam dobře může být, proto jsou odděleny od nefunkčních odkazů.</p>
+<p>Každý dotázaný odkaz šlo ověřit.</p>
+</details>
+</section>
+<section id="housekeeping">
+<details class="sect">
+<summary><h2>Údržba</h2><small>Přesměrování k aktualizaci, položky mapy webu, osiřelé stránky, stránky mimo mapu webu, nezkontrolované odkazy, nastavení odlišná od výchozích a při porovnání ta, která se mezi běhy liší</small></summary>
+<details>
+<summary><span class="ttl">Přesměrované odkazy</span><span class="cnt">8 odkazů</span></summary>
+<p>Odkazy, jejichž cíl přesměrovává, podle toho, kam vedou, nejdřív ty s nejvíc odkazy: aktualizujte je na cílovou adresu. Rozbalením se zobrazí přesměrovávající adresy URL, první kroky a stránky, na kterých jsou odkazy zapsány. Cíl označený kroužkem se dosahuje adresou, která se od něj liší jen koncovým <code>/</code>, a je uveden jako poslední. <a class="info" href="#guide-pedantic" title="Co je „pedantní“ odkaz?" aria-label="Co je „pedantní“ odkaz?">i</a></p>
+<details>
+<summary><span class="sev attention" role="img" aria-label="Pozornost"></span><span class="ttl">127.0.0.1:8099/en-US/guide/1.0/</span><span class="cnt">8 odkazů, 1 přesměrovávající URL</span></summary>
+<p>Cíl přesměrování <a href="http://127.0.0.1:8099/en-US/guide/1.0/">127.0.0.1:8099/en-US/guide/1.0/</a></p>
+<p>První kroky <code>301 http://127.0.0.1:8099/en-US &gt; refresh http://127.0.0.1:8099/en-US/</code></p>
+<p>Odkazujících stránek: 8</p>
+<ul>
+<li><a href="http://127.0.0.1:8099/en-US/guide/1.0/">127.0.0.1:8099/en-US/guide/1.0/</a></li>
+<li><a href="http://127.0.0.1:8099/en-US/guide/1.0/install/">127.0.0.1:8099/en-US/guide/1.0/install/</a></li>
+<li><a href="http://127.0.0.1:8099/en-US/guide/1.0/upgrade/">127.0.0.1:8099/en-US/guide/1.0/upgrade/</a></li>
+<li><a href="http://127.0.0.1:8099/en-US/ops/">127.0.0.1:8099/en-US/ops/</a></li>
+<li><a href="http://127.0.0.1:8099/en-US/ops/admin/partitions/">127.0.0.1:8099/en-US/ops/admin/partitions/</a></li>
+<li><a href="http://127.0.0.1:8099/en-US/tools/">127.0.0.1:8099/en-US/tools/</a></li>
+<li><a href="http://127.0.0.1:8099/en-US/tools/reference/">127.0.0.1:8099/en-US/tools/reference/</a></li>
+<li><a href="http://127.0.0.1:8099/en-US/tools/usage/">127.0.0.1:8099/en-US/tools/usage/</a></li>
+</ul>
+</details>
+</details>
+<details>
+<summary><span class="ttl">Položky mapy webu, pro které nebyla stažena žádná stránka</span><span class="cnt">0</span></summary>
+<p>Antora zapisuje mapu webu z toho, co publikuje, takže položka, která neodpověděla, je chyba sestavení nebo nasazení.</p>
+<p class="muted">Žádné.</p>
+</details>
+<details>
+<summary><span class="ttl">Osiřelé stránky</span><span class="cnt">0</span></summary>
+<p>Stránky uvedené v mapě webu, na které žádná stránka neodkazuje.</p>
+<p class="muted">Žádné.</p>
+</details>
+<details>
+<summary><span class="ttl">Stránky mimo mapu webu</span><span class="cnt">0</span></summary>
+<p>Stránky, které chybějí v mapě webu kořene, jenž nějakou přečetl.</p>
+<p class="muted">Žádné.</p>
+</details>
+<details>
+<summary><span class="ttl">Nezkontrolované odkazy</span><span class="cnt">82 odkazů</span></summary>
+<p>Odkazy, které tento běh nezkontroloval, seskupené podle důvodu. Nepočítají se jako nefunkční, protože běh neví, zda fungují; odkaz, o kterém ví, že fungovat nemůže, je místo toho uveden jako nefunkční.</p>
+<h3><code>host_not_allowlisted</code> <small>73 odkazů na 31 cílů</small></h3>
+<p>Odkazy na jiné weby, které tento běh nebyl nastaven kontrolovat. Chcete-li odkazy webu kontrolovat, přidejte ho do <code>allowlist</code>; weby, které se kontrolovaly, jsou vypsány na konci.</p>
+<div class="scroll"><table>
+<thead><tr><th>Kam míří</th><th class="num">Odkazů</th><th class="num">Cílů, které jmenují</th></tr></thead>
+<tbody>
+<tr><td>github.com</td><td class="num">24</td><td class="num">24</td></tr>
+<tr><td>creativecommons.org</td><td class="num">8</td><td class="num">1</td></tr>
+<tr><td>docs.fedoraproject.org</td><td class="num">8</td><td class="num">1</td></tr>
+<tr><td>fedoraproject.org</td><td class="num">8</td><td class="num">1</td></tr>
+<tr><td>getfedora.org</td><td class="num">8</td><td class="num">1</td></tr>
+</tbody></table></div>
+<p class="muted">Dalších: 3, celkem 17 odkazů, největší z nich má 8 odkazů.</p>
+<h3><code>out_of_scope</code> <small>8 odkazů na 8 cílů</small></h3>
+<p>Odkazy na stránky webu v jiných jazycích, na které odkazuje z každé stránky nabídka jazyků. Chcete-li je zkontrolovat, přidejte pro tyto jazyky <code>[[root]]</code>.</p>
+<div class="scroll"><table>
+<thead><tr><th>Kam míří</th><th class="num">Odkazů</th><th class="num">Cílů, které jmenují</th></tr></thead>
+<tbody>
+<tr><td>http://127.0.0.1:8099/fr/</td><td class="num">8</td><td class="num">8</td></tr>
+</tbody></table></div>
+<h3><code>scheme</code> <small>1 odkaz na 1 cíl</small></h3>
+<p>Odkazy, které nevedou na webovou stránku, ale na něco jiného, co prohlížeč umí otevřít, většinou e-mailové adresy (<code>mailto:</code>), takže není co stahovat. Odkaz začínající čímkoli jiným, například <code>file:</code> nebo překlepem <code>hhttps:</code>, čtenáři fungovat nemůže a je místo toho uveden jako nefunkční.</p>
+<div class="scroll"><table>
+<thead><tr><th>Kam míří</th><th class="num">Odkazů</th><th class="num">Cílů, které jmenují</th></tr></thead>
+<tbody>
+<tr><td>mailto:</td><td class="num">1</td><td class="num">1</td></tr>
+</tbody></table></div>
+<h3>Zkontrolovaní externí hostitelé</h3>
+<p>Ostatní weby, jejichž odkazy tento běh zkontroloval: ty z jeho <code>allowlist</code>, na které tyto stránky odkazují.</p>
+<p class="muted">Žádné.</p>
+</details>
+<details>
+<summary><span class="ttl">Nastavení odlišná od výchozích</span><span class="cnt">3</span></summary>
+<p>Nastavení, kterými byl tento běh posouzen a kterými se dotazoval a která se liší od výchozích, tak, jak je zapisuje konfigurační soubor. Přehled posuzuje běh podle pravidel, která si zaznamenal, a porovnání posuzuje oba běhy podle pravidel běhu, o kterém přehled je.</p>
+<ul>
+<li><code>profile.fedora.extends = &quot;antora&quot;</code></li>
+<li><code>profile.fedora.generator = &quot;&quot;</code></li>
+<li><code>profile.fedora.locale_links = &quot;a.language[href]&quot;</code></li>
+</ul>
+</details>
+</details>
+</section>
+<section id="guide">
+<h2>Jak číst tento přehled</h2>
+<h3 id="guide-doubled-slash">Co znamená „nefunkční kvůli němu“ a „zdvojené lomítko“?</h3>
+<p>Někdy je stránka B v pořádku, když se na ni dostanete správnou cestou, ale stránka A na ni odkazuje tak, že přidá lomítko navíc, např. <code>example.com/foo//page_B/</code> nebo <code>example.com/foo/page_B//</code>, nebo odkazuje na adresu, která přesměrovává na takovou.</p>
+<p>Pokud se ze stránky A na B dostanete touto cestou, stránka B bude fungovat, ale všechny její relativní odkazy (<code>../../blah</code>) jsou kvůli lomítku navíc v cestě nefunkční. Nepočítají se proti stránce B, protože na ní není nic špatně: problém je na stránce A. Proto je odkaz stránky A uveden jako nefunkční s důvodem <code>doubled_slash</code> a odkazy na stránce B, které lomítko navíc rozbije, i odkazy na každé další stránce s adresou se zdvojeným lomítkem, kam relativní odkazy ze stránky B vedou dál, se počítají u stránky A jako „nefunkční kvůli němu“.</p>
+<h3 id="guide-pedantic">Co je „pedantní“ odkaz?</h3>
+<p>Lidé obvykle píší adresy jako <code>example.com/foo</code>, ale <em>technicky</em> správný tvar je <code>example.com/foo/</code>: všimněte si koncového lomítka. Pro většinu webových serverů jsou to ve skutečnosti dvě různé stránky, a když navštívíte první, server ochotně sdělí vašemu prohlížeči: „Hej, tady nic není, je to na <code>example.com/foo/</code>.“ Prohlížeč tak musí poslat druhý požadavek.</p>
+<p>Má se „špatná“ adresa počítat jako nefunkční, když čtenář nakonec skončí na správném místě? Dá se o tom diskutovat, ale rozhodně je to méně naléhavé než skutečně nefunkční odkaz (třeba 404). Nepočítají se jako nefunkční: jsou v části Údržba mezi přesměrovanými odkazy, označené jako pedantní kroužkem, za ostatními přesměrováními.</p>
+</section>
+</main>
+<footer>Zapsal bruce <span class="version">V</span>, formát dokumentu 2. JSON přehled téhož dne obsahuje stejná čísla a seznamy i každý řádek s nefunkčním odkazem a chybou, ale ne věty, které je vysvětlují.</footer>
+</body>
+</html>

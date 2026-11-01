@@ -48,7 +48,7 @@ The digest's view: [`../wip/roadmap-P11-view.md`](../wip/roadmap-P11-view.md).
 - [x] **11.2** The engine and the default view: minijinja, the default rendering today's HTML byte for byte, `html` deleted ([notes](../wip/roadmap-P11.2-engine-notes.md))
 - [x] **11.2.1** The palette block: `palette` (`palette.css`, both `:root` rules) inside `style`, the golden file regenerated once ([notes](../wip/roadmap-P11.2.1-palette-notes.md))
 - [x] **11.3** Views from the command line: `--view`, `--json` / `--no-json`, `--write-default-view`, `bruce:`, the version declaration, all or nothing, the filters, CSV escaping ([notes](../wip/roadmap-P11.3-command-line-notes.md))
-- [ ] **11.4** The litmus tests: a Czech view and a CSV view over the e2e fixture site, the derived part in the manual
+- [x] **11.4** The litmus tests: a Czech view and a CSV view over the e2e fixture site, the derived part in the manual ([notes](../wip/roadmap-P11.4-litmus-notes.md))
 
 ## Not started
 
@@ -66,3 +66,9 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
+- **The Czech litmus view adds a sentence the default lacks.** `fixtures/antora/views/cs.html` states the share of
+  broken links in the figures' paragraph (`8,2 %`). Why: the spec's Czech conventions include a decimal comma and the
+  model holds only integers, so the sentence is the one place a real decimal is formatted, by the view's own integer
+  arithmetic. Reconsidering it: dropping the sentence leaves the decimal comma tested only by `view::litmus`'s unit
+  test, and a `decimal` filter would add a function no model value needs. The Czech wording is mine, unverified by a
+  Czech speaker, whom the spec has the maintainer's contacts supply.

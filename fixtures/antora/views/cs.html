@@ -1,0 +1,475 @@
+{# The digest in Czech (P11's first litmus test): a whole-document view, so every sentence is here and the model gives only values. Czech has three plural forms (1; 2 to 4; 0 and 5 up, 22 included), a decimal comma, a space between thousands and a date as `1. 11. 2026`; the view states each as a macro or a filter's argument. The sitemap note is keyed by the profile's key, the profile's English being the fallback. #}
+{% set bruce_model = 2 %}
+{% macro num(n) %}{{ n|thousands(" ") }}{% endmacro %}
+{% macro counted(n, one, few, many) %}{{ num(n) }} {% if n == 1 %}{{ one }}{% elif n >= 2 and n <= 4 %}{{ few }}{% else %}{{ many }}{% endif %}{% endmacro %}
+{% macro links(n) %}{{ counted(n, "odkaz", "odkazy", "odkazů") }}{% endmacro %}
+{% macro a(url, label) %}{% if url is web %}<a href="{{ url }}">{{ label }}</a>{% else %}{{ label }}{% endif %}{% endmacro %}
+{% macro cz_day(s) %}{{ s|time("%d")|int }}. {{ s|time("%m")|int }}. {{ s|time("%Y") }}{% endmacro %}
+{% macro when(s) %}<time datetime="{{ s|time("%Y-%m-%dT%H:%M:%SZ") }}">{{ cz_day(s) }} {{ s|time("%H:%M:%S") }} UTC</time>{% endmacro %}
+{% macro day(s) %}<time datetime="{{ s|time("%Y-%m-%d") }}">{{ cz_day(s) }}</time>{% endmacro %}
+{% macro duration(secs) %}{% set h = secs // 3600 %}{% set m = secs % 3600 // 60 %}{% set s = secs % 60 %}{% if h == 0 and m == 0 %}{{ s }} s{% elif h == 0 %}{{ m }} min {{ s }} s{% else %}{{ h }} h {{ m }} min {{ s }} s{% endif %}{% endmacro %}
+{% macro percent(part, whole) %}{% set tenths = part * 1000 // whole %}{{ tenths // 10 }},{{ tenths % 10 }}{{ " " }}%{% endmacro %}
+{% macro level_name(level) %}{% if level == "broken" %}Nefunkční{% elif level == "attention" %}Pozornost{% else %}Pedantní{% endif %}{% endmacro %}
+{% macro dot(level) %}{% if level != "none" %}<span class="sev {{ level }}" role="img" aria-label="{{ level_name(level) }}"></span>{% endif %}{% endmacro %}
+{% macro dot_before(level) %}{{ dot(level) }}{% if level != "none" %} {% endif %}{% endmacro %}
+{% macro question(entry) %}{% if entry == "doubled-slash" %}Co znamená „nefunkční kvůli němu“ a „zdvojené lomítko“?{% else %}Co je „pedantní“ odkaz?{% endif %}{% endmacro %}
+{% macro info(entry) %} <a class="info" href="#guide-{{ entry }}" title="{{ question(entry) }}" aria-label="{{ question(entry) }}">i</a>{% endmacro %}
+{% macro info_of(reason) %}{% if reason == "doubled_slash" %}{{ info("doubled-slash") }}{% elif reason == "pedantic_trailing_slash" %}{{ info("pedantic") }}{% endif %}{% endmacro %}
+{% macro runs(parts) %}{% for part, marked in parts %}{% if marked %}<mark>{{ part }}</mark>{% else %}{{ part }}{% endif %}{% endfor %}{% endmacro %}
+{% macro outcome_words(outcome) %}{% if outcome == "broken_anchor" %}chybí fragment{% elif outcome == "broken_url" %}nefunkční URL{% elif outcome == "error" %}nelze ověřit{% elif outcome == "unchecked" %}nezkontrolováno{% elif outcome == "ok" %}v pořádku{% else %}{{ outcome|replace("_", " ") }}{% endif %}{% endmacro %}
+{% macro problem(outcome, reason) %}{% if outcome %}{{ outcome_words(outcome) }}{% endif %}{% if outcome and reason %} · {% endif %}{% if reason %}{{ reason }}{{ info_of(reason) }}{% endif %}{% endmacro %}
+{% macro problem_broken(outcome, reason) %}{% if outcome == "broken_anchor" %}chybí fragment{% else %}nefunkční URL{% endif %}{% if reason %} · {{ reason }}{{ info_of(reason) }}{% endif %}{% endmacro %}
+{% macro status(s) %}{% if s and s > 0 %}{{ s }}{% else %}<span class="muted">-</span>{% endif %}{% endmacro %}
+{% macro source(repo, path, url) %}{% if url and path %}{{ a(url, path) }}{% elif url %}{{ a(url, url|short) }}{% elif path and repo %}{{ path }} <small>v {{ a(repo, repo|short) }}</small>{% elif repo %}{{ a(repo, repo|short) }}{% else %}<span class="muted">-</span>{% endif %}{% endmacro %}
+{% macro target_link(target, fragment) %}{% if fragment %}{{ a(target ~ "#" ~ fragment, (target|short) ~ "#" ~ fragment) }}{% else %}{{ a(target, target|short) }}{% endif %}{% endmacro %}
+{% macro target_cell(r, fragment) -%}
+{%- if r.reason == "wrong_trailing_slash" and r.fix -%}
+{{ target_link(r.target, fragment) }}
+{%- if r.landing -%}<br><small>→ vede na {{ a(r.landing, runs((r.landing|short)|final_slash_runs)) }}</small>{%- endif -%}
+<br><small>→ zkuste {{ a(r.fix, r.fix|short) }}</small>
+{%- elif r.reason != "doubled_slash" -%}
+{{ target_link(r.target, fragment) }}
+{%- else -%}
+{{ a((r.target ~ "#" ~ fragment) if fragment else r.target, runs((((r.target|short) ~ "#" ~ fragment) if fragment else (r.target|short))|slash_runs)) }}
+{%- if r.landing -%}<br><small>→ vede na {{ a(r.landing, runs((r.landing|short)|slash_runs)) }}</small>{%- endif -%}
+{%- endif -%}
+{%- endmacro %}
+{% macro written_as(r) %}<code>{% if r.reason == "doubled_slash" %}{{ runs(r.raw_href|slash_runs) }}{% else %}{{ r.raw_href }}{% endif %}</code>{% endmacro %}
+{% macro reasons(list) %}{% if list %} ({% for r in list %}{% if not loop.first %}, {% endif %}<code>{{ r }}</code>{% endfor %}){% endif %}{% endmacro %}
+{% macro tally(parts) -%}
+{%- for p in parts -%}
+{%- if not loop.first %}, {% endif -%}
+<span class="cn">{{ dot_before(p.level) }}
+{%- if p.kind == "broken" %}{{ counted(p.n, "nefunkční odkaz", "nefunkční odkazy", "nefunkčních odkazů") }}{{ reasons(p.reasons) }}
+{%- elif p.kind == "through" %}{{ counted(p.n, "odkaz nefunkční kvůli němu", "odkazy nefunkční kvůli němu", "odkazů nefunkčních kvůli němu") }}{{ info("doubled-slash") }}
+{%- elif p.kind == "unverifiable" %}{{ counted(p.n, "neověřitelný odkaz", "neověřitelné odkazy", "neověřitelných odkazů") }}{{ reasons(p.reasons) }}
+{%- else %}{{ counted(p.n, "chybějící fragment", "chybějící fragmenty", "chybějících fragmentů") }}{{ reasons(p.reasons) }}{% endif -%}
+</span>
+{%- endfor -%}
+{%- endmacro %}
+{% macro summary_count(parts, new_links, is_new) %}{{ tally(parts) }}{% if not is_new and new_links > 0 %}, <span class="cn">{{ counted(new_links, "nový", "nové", "nových") }}</span>{% endif %}{% endmacro %}
+{% macro new_said(new) %}{% if new %}<span class="vh">Nové: </span>{% endif %}{% endmacro %}
+{% macro details_open(new, id) %}<details{% if new %} class="new"{% endif %}{% if id %} id="{{ id }}"{% endif %}>{% endmacro %}
+{% macro then() %}{% if compared.file %}běhu ze souboru základní verze{% else %}běhu č. {{ compared.run.id }}{% endif %}{% endmacro %}
+{% macro kind_words(kind, after) -%}
+{%- if kind == "broken_url" %}odkaz na nefunkční URL
+{%- elif kind == "broken_anchor" %}odkaz na chybějící fragment
+{%- elif kind == "error" %}odkaz, který nešlo ověřit
+{%- elif kind == "redirected" %}přesměrování k aktualizaci
+{%- elif kind == "pedantic_trailing_slash" %}přesměrování lišící se od svého cíle jen koncovým <code>/</code>{% if judged.pedantic_trailing_slash %}{{ info("pedantic") }}{% endif %}
+{%- else %}odkaz s důvodem <code>{{ kind }}</code>
+{%- endif -%}
+{%- endmacro %}
+{% macro listed(kinds) %}{% for kind in kinds %}{% if loop.first %}{% elif loop.last %} nebo {% else %}, {% endif %}{{ kind_words(kind, kinds[:loop.index0]) }}{% endfor %}{% endmacro %}
+{% set cause_words = {
+  "target_removed": ["Cíl odstraněn", "Odkaz byl v porovnávaném běhu v pořádku a jeho cíl nyní odpovídá chybou: stránka, nebo stránka, na kterou přesměrovával, je pryč.", "Zdroj cíle podle porovnávaného běhu, jinak podle tohoto"],
+  "target_moved": ["Cíl přesunut", "Odkaz byl v porovnávaném běhu v pořádku a jeho cíl nyní přesměrovává jinam než dřív, a odkaz proto přestal fungovat.", "Zdroj cíle podle porovnávaného běhu, jinak podle tohoto"],
+  "anchor_removed": ["Kotva odstraněna", "Odkaz byl v porovnávaném běhu v pořádku, cílová stránka tehdy fragment měla a nyní ho nemá.", "Zdroj cíle podle porovnávaného běhu, jinak podle tohoto"],
+  "link_added": ["Odkaz přidán", "Stránka v porovnávaném běhu byla a tento odkaz neobsahovala.", "Zdroj stránky s odkazem"],
+  "new_page": ["Nová stránka", "Porovnávaný běh stránku, na které odkaz je, nekontroloval.", "Zdroj stránky s odkazem"],
+  "unexplained": ["Příčina neuvedena", "Tentýž odkaz byl v porovnávaném běhu a nic, co porovnání mělo, rozdíl nevysvětluje: obvykle pravidlo, které odkaz od té doby posuzuje jinak, například zdvojené lomítko.", "Zdroj stránky s odkazem"],
+  "first_judged": ["Poprvé posouzeno nyní", "Porovnávaný běh odkaz nemohl posoudit (nešlo ho ověřit nebo zůstal nezkontrolován), takže to není zhoršení.", "Zdroj stránky s odkazem"],
+} %}
+{% macro unchecked_meaning(reason) -%}
+{%- if reason == "out_of_scope" -%}Odkazy na stránky webu v jiných jazycích, na které odkazuje z každé stránky nabídka jazyků. Chcete-li je zkontrolovat, přidejte pro tyto jazyky <code>[[root]]</code>.
+{%- elif reason == "host_not_allowlisted" -%}Odkazy na jiné weby, které tento běh nebyl nastaven kontrolovat. Chcete-li odkazy webu kontrolovat, přidejte ho do <code>allowlist</code>; weby, které se kontrolovaly, jsou vypsány na konci.
+{%- elif reason == "skipped" -%}Odkazy, které odpovídají vzoru <code>skip</code> v konfiguraci a byly záměrně vynechány. Bývají to stránky, které kontrola neumí posoudit, například formulář „nový požadavek“ na forgi nebo přihlašovací stránka.
+{%- elif reason == "scheme" -%}Odkazy, které nevedou na webovou stránku, ale na něco jiného, co prohlížeč umí otevřít, většinou e-mailové adresy (<code>mailto:</code>), takže není co stahovat. Odkaz začínající čímkoli jiným, například <code>file:</code> nebo překlepem <code>hhttps:</code>, čtenáři fungovat nemůže a je místo toho uveden jako nefunkční.
+{%- elif reason == "robots" -%}Odkazy na stránky, které web v souboru <code>robots.txt</code> žádá roboty nestahovat, a běh to dodržel. Na webu, který tento běh kontroluje, to může vypnout nastavení <code>robots</code> pro jeho hostitele.
+{%- elif reason == "robots_unavailable" -%}Odkazy na web, jehož <code>robots.txt</code>, který říká, co smějí roboti stahovat, nešlo přečíst: web odpověděl chybou nebo poslal robota jinam, kam nemohl následovat, a běh proto nechal celý web být. Obvykle web v té době selhával.
+{%- elif reason == "externals_skipped" -%}Odkazy na jiné weby, které běh <code>check-dir</code> dostal pokyn nekontrolovat (<code>--externals skip</code>), bez dřívějšího výsledku, který by šel použít.
+{%- elif reason == "too_deep" -%}Mapy webu vnořené do jiných map webu příliš hluboko, a proto nepřečtené.
+{%- elif reason == "no_anchors" -%}Odkazy na místo (za <code>#</code>) v souboru, který běh nečetl jako stránku, například obrázek nebo příliš velký soubor. Soubor byl nalezen; místo se nekontrolovalo.
+{%- elif reason == "text_fragment" -%}Odkazy na některá slova na stránce (<code>#:~:text=</code>), která prohlížeč najde, když stránku otevře. Stránka byla nalezena; zda na ní ta slova jsou, se nekontrolovalo.
+{%- elif reason == "cut" -%}Odkazy, před kterými se běh zastavil.
+{%- else -%}<span class="muted">Tato verze bruce pro tento důvod nemá popis.</span>
+{%- endif -%}
+{%- endmacro %}
+{% macro most(label, column, rows, limit) %}
+{% if not rows %}
+<p class="muted">Žádné.</p>
+{% else %}
+<div class="scroll"><table>
+<thead><tr><th>{{ label }}</th><th class="num">Odkazů</th><th class="num">Cílů, které jmenují</th></tr></thead>
+<tbody>
+{% for r in rows[:limit] %}
+<tr><td>{% if r[column] %}{{ r[column] }}{% else %}<span class="muted">-</span>{% endif %}</td><td class="num">{{ num(r.links) }}</td><td class="num">{{ num(r.targets) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+{% if rows|length > limit %}
+{% set rest = rows[limit:] %}
+<p class="muted">Dalších: {{ num(rest|length) }}, celkem {{ links(rest|sum(attribute="links")) }}{% if rest|length > 1 %}, největší z nich má {{ links(rest[0].links) }}{% endif %}.</p>
+{% endif %}
+{% endmacro %}
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Přehled kontroly odkazů {{ cz_day(run.started) }} – {% if run.roots %}{{ run.roots[0]|short }}{% endif %}{% if run.roots|length > 1 %} a {{ run.roots|length - 1 }} dalších{% endif %}</title>
+<style>
+{% include "bruce:palette.css" %}
+{% include "bruce:style.css" %}
+</style>
+</head>
+<body>
+<header><div>
+<h1>Přehled kontroly odkazů <span class="date">{{ cz_day(run.started) }}</span></h1>
+<p class="subtitle">{% if not compared %}Není s čím porovnávat, dřívější běh neexistuje{% else %}Porovnáno s {% if compared.shares_day %}{{ when(compared.run.started) }}{% else %}{{ day(compared.run.started) }}{% endif %} ({% if compared.file %}soubor základní verze{% else %}běh č. {{ compared.run.id }}{% endif %}{% if compared.run.finished is none %}, nikdy nedokončen{% endif %}){% endif %}</p>
+<dl class="meta">
+<dt>Kořeny</dt><dd>{% for root in run.roots %}{% if not loop.first %}, {% endif %}{{ a(root, root|short) }}{% endfor %}</dd>
+<dt>Běh</dt><dd>{{ run.id }}, spuštěn {{ when(run.started) }}, {% if run.finished is none %}nikdy nedokončen{% else %}dokončen {{ when(run.finished) }}, po <span class="duration">{{ duration(run.finished - run.started) }}</span>{% endif %}</dd>
+<dt>Zkontroloval</dt><dd>bruce <span class="version">{{ run.tool_version }}</span></dd>
+</dl>
+{% if unfinished %}
+<p class="warn-box">Tento běh nebyl nikdy dokončen, takže přehled je neúplný.</p>
+{% endif %}
+{% if trial %}
+<p class="warn-box">Zkouška: posouzeno podle nastavení posuzování ze souboru <code>{{ trial }}</code>, ne podle pravidel, která si běhy zaznamenaly.</p>
+{% endif %}
+<nav><a href="#figures">Čísla</a> {% if broken_since %}<a href="#broken-since">Nově nefunkční</a> {% endif %}{% if fixed_since %}<a href="#fixed-since">Opraveno</a> {% endif %}<a href="#pages">Stránky</a> <a href="#repos">Repozitáře</a> <a href="#fix-once">Cíle</a> <a href="#errors">Neověřeno</a> <a href="#housekeeping">Údržba</a> <a href="#guide">Jak číst</a></nav>
+</div></header>
+{% block intro %}{% endblock %}
+<main>
+{% block figures %}
+<section id="figures">
+<h2>Čísla</h2>
+<div class="figures">
+{% for f in figures %}
+<div class="fig{% if f.level == "broken" %} bad{% elif f.level == "attention" %} warn{% endif %}"><span class="n">{{ num(f.n) }}</span><span class="l">{% if f.key == "pages" %}Stránky{% elif f.key == "links" %}Odkazy{% elif f.key == "broken_url" %}Odkazy na nefunkční URL{% elif f.key == "broken_anchor" %}Odkazy na chybějící fragment{% else %}Odkazy, které nešlo ověřit{% endif %}</span>{% if f.change and f.change > 0 %}<span class="d{% if f.broken %} worse{% endif %}">+{{ num(f.change) }}</span>{% elif f.change %}<span class="d{% if f.broken %} better{% endif %}">−{{ num(-f.change) }}</span>{% endif %}</div>
+{% endfor %}
+</div>
+<p class="muted">Nefunkčních odkazů je celkem {{ num(totals.broken_url + totals.broken_anchor) }}{% if totals.links > 0 %}, tedy {{ percent(totals.broken_url + totals.broken_anchor, totals.links) }} všech odkazů{% endif %}. Nezkontrolováno bylo {{ links(totals.unchecked) }} (viz Údržba). {% if compared %}{% if compared.file %} Změna každého čísla je od běhu ze souboru základní verze.{% else %} Změna každého čísla je od běhu č. {{ compared.run.id }}.{% endif %}{% endif %}</p>
+{% if legend.levels %}
+<p class="legend">Tečka označuje závažnost odkazu nebo cíle: {% for l in legend.levels %}{% if not loop.first %}; {% endif %}<span class="sev {{ l.level }}" aria-hidden="true"></span> <b>{{ level_name(l.level) }}</b>, {{ listed(l.kinds) }}{% endfor %}.</p>
+{% endif %}
+{% if legend.quiet %}
+<p class="legend">Nevypsáno a nezapočítáno u stránky ani repozitáře, protože tento přehled je nastaven tak, že to nepovažuje za nález: {{ listed(legend.quiet) }}.</p>
+{% endif %}
+{% if compared %}
+<p class="legend"><span class="newbar" aria-hidden="true"></span> Pruh u levého okraje označuje řádek nebo rozbalovací část, která je nová od {{ then() }}. Rozbalovací část, která není nová, počítá nové odkazy uvnitř.</p>
+{% endif %}
+</section>
+{% endblock %}
+{% block broken_since %}
+{% if broken_since and compared %}
+<section id="broken-since">
+<details class="sect">
+<summary><h2>Nově nefunkční od předchozího běhu</h2><small>Každé nové selhání podle příčiny</small></summary>
+{% if not broken_since.rows %}
+<p>Žádný odkaz nefunkční od {{ then() }} není nález podle mapy závažnosti tohoto přehledu.</p>
+{% else %}
+{% set n = broken_since.rows|length %}
+<p>Odkazů na nefunkční URL nebo chybějící fragment, které přibyly od {{ then() }}: {{ num(n) }}. Nové selhání se přičítá tomu, co obsahoval porovnávaný běh, nikdy tomu, že se stránka změnila.</p>
+{% for c in broken_since.causes %}
+{% set words = cause_words[c.cause] %}
+<details>
+<summary><span class="ttl">{{ words[0] }}</span><span class="cnt">{{ links(c.rows|length) }}</span></summary>
+<p>{{ words[1] }}</p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>Na stránce</th><th>Zapsáno jako</th><th>Vede na</th><th>Problém</th><th class="num">Stav</th><th>{{ words[2] }}</th></tr></thead>
+<tbody>
+{% for r in c.rows %}
+<tr><td class="dot">{{ dot(r.level) }}</td><td>{{ a(r.page, r.page|short) }}</td><td><code>{{ r.raw_href }}</code></td><td>{{ target_link(r.target, r.fragment) }}</td><td>{{ problem_broken(r.outcome, r.reason) }}</td><td class="num">{{ status(r.status) }}</td><td>{{ source(r.source_repo, r.source_path, r.source_url) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+</details>
+{% endfor %}
+{% endif %}
+</details>
+</section>
+{% endif %}
+{% endblock %}
+{% block fixed_since %}
+{% if fixed_since and compared %}
+<section id="fixed-since">
+<details class="sect">
+<summary><h2>Opraveno od předchozího běhu</h2></summary>
+{% if not fixed_since.rows %}
+<p>Žádný odkaz nefunkční v {{ then() }}, který už nefunguje, není nález podle mapy závažnosti tohoto přehledu.</p>
+{% else %}
+{% set n = fixed_since.rows|length %}
+<p>Odkazů nefunkčních v {{ then() }}, které už nefunkční nejsou: {{ num(n) }}. Buď byly opraveny, nebo zmizely spolu se stránkou. Problém je to, čím každý tehdy byl. Uvedený zdroj je zdroj stránky s odkazem.</p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>Na stránce</th><th>Zapsáno jako</th><th>Vede na</th><th>Problém</th><th class="num">Stav</th><th>Nyní</th><th>Zdroj stránky s odkazem</th></tr></thead>
+<tbody>
+{% for r in fixed_since.rows %}
+<tr><td class="dot">{{ dot(r.level) }}</td><td>{{ a(r.page, r.page|short) }}</td><td><code>{{ r.raw_href }}</code></td><td>{{ target_link(r.target, r.fragment) }}</td><td>{{ problem_broken(r.outcome, r.reason) }}</td><td class="num">{{ status(r.status) }}</td><td>{% if r.became == "ok" %}Funguje{% elif r.became == "error" %}Nelze ověřit{% elif r.became == "unchecked" %}Nezkontrolováno{% elif r.became == "link_removed" %}Odkaz odstraněn{% elif r.became == "page_removed" %}Stránka nezkontrolována{% else %}Nezapočítáno{% endif %}</td><td>{{ source(r.source_repo, r.source_path, r.source_url) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+</details>
+</section>
+{% endif %}
+{% endblock %}
+{% block pages %}
+<section id="pages">
+<details class="sect">
+<summary><h2>Podle zdrojové stránky</h2></summary>
+<p><i>Zapsáno jako</i> je odkaz na stránce. <i>Vede na</i> je adresa URL, na které skončil. <i>Druh</i> je typ prvku, který ho obsahuje (<code>anchor</code> je <code>&lt;a href&gt;</code>). <i>Problém</i> a <i>Stav</i> jsou to, čím odpověděl cíl.</p>
+{% if not pages %}
+{% if pages_any %}
+<p>Žádná stránka neobsahuje nález podle mapy závažnosti tohoto přehledu.</p>
+{% else %}
+<p>Žádná stránka neobsahuje nefunkční odkaz.</p>
+{% endif %}
+{% endif %}
+{% for p in pages %}
+{{ details_open(p.row.is_new, p.id) }}
+<summary>{{ new_said(p.row.is_new) }}<span class="rank">{{ p.rank }}</span><span class="ttl">{% if p.row.title %}{{ p.row.title }}{% else %}{{ p.row.page|short }}{% endif %}</span><span class="cnt">{{ summary_count(p.counts, p.new_links, p.row.is_new) }}</span></summary>
+<p>Stránka {{ a(p.row.page, p.row.page|short) }} · Zdroj {{ source(p.row.source_repo, p.row.source_path, p.row.source_url) }}</p>
+{% if not p.findings %}
+<p class="muted">Žádné.</p>
+{% else %}
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>Zapsáno jako</th><th>Vede na</th><th>Fragment</th><th>Druh</th><th>Problém</th>{% if p.hinted %}<th>Nápověda</th>{% endif %}<th class="num">Stav</th></tr></thead>
+<tbody>
+{% for f in p.findings %}
+{% set r = f.row %}
+<tr{% if f.is_new %} class="new"{% endif %}><td class="dot">{{ new_said(f.is_new) }}{{ dot(f.level) }}</td><td>{% if f.error %}<code>{{ r.raw_href }}</code>{% else %}{{ written_as(r) }}{% endif %}</td><td>{% if f.error %}{{ target_link(r.target, none) }}{% else %}{{ target_cell(r, none) }}{% endif %}</td><td>{% if r.fragment %}<code>{{ r.fragment }}</code>{% else %}-{% endif %}</td><td>{{ r.kind }}</td><td>{% if f.error %}{{ problem("error", r.reason) }}{% else %}{{ problem(r.outcome, r.reason) }}{% endif %}</td>{% if p.hinted %}<td>{% if not f.error and r.hint %}<code>{{ r.hint }}</code>{% else %}-{% endif %}</td>{% endif %}<td class="num">{{ status(r.status) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+</details>
+{% endfor %}
+</details>
+</section>
+{% endblock %}
+{% block repos %}
+<section id="repos">
+<details class="sect">
+<summary><h2>Podle repozitáře zdrojové stránky</h2></summary>
+{% for repo in repos.listed %}
+{{ details_open(repo.row.is_new, none) }}
+<summary>{{ new_said(repo.row.is_new) }}<span class="rank">{{ repo.rank }}</span><span class="ttl">{% if repo.row.repo %}{{ a(repo.row.repo, repo.row.repo|short) }}{% else %}<span class="muted">Žádný zdroj nezaznamenán</span>{% endif %}</span><span class="cnt">{{ summary_count(repo.counts, repo.new_links, repo.row.is_new) }}</span></summary>
+<ul>
+{% for page in repo.pages %}
+{% if page.id %}
+<li><a href="#{{ page.id }}">{{ page.title }}</a></li>
+{% else %}
+<li>{{ page.title }}</li>
+{% endif %}
+{% endfor %}
+</ul>
+</details>
+{% endfor %}
+{% if repos.all_clean %}
+{% if pages_any %}
+<p>Stránky žádného repozitáře neobsahují nález podle mapy závažnosti tohoto přehledu.</p>
+{% else %}
+<p>Stránky žádného repozitáře neobsahují nefunkční odkaz.</p>
+{% endif %}
+{% elif repos.clean > 0 %}
+<p class="muted">Stránky dalších repozitářů ({{ num(repos.clean) }}) neobsahují nefunkční odkaz.</p>
+{% endif %}
+</details>
+</section>
+{% endblock %}
+{% block targets %}
+<section id="fix-once">
+<details class="sect">
+<summary><h2>Podle cíle odkazu</h2></summary>
+{% if not targets.many %}
+{% if targets.hidden_many %}
+<p>Žádný nefunkční cíl, na který odkazuje víc než jeden odkaz, není nález podle mapy závažnosti tohoto přehledu.</p>
+{% else %}
+<p>Na žádný nefunkční cíl neodkazuje víc než jeden odkaz.</p>
+{% endif %}
+{% else %}
+<p class="muted">Cílů, na které odkazuje víc než jeden odkaz: {{ num(targets.many|length) }}; zahrnují {{ num(targets.held) }} z celkem {{ num(targets.all) }} nefunkčních odkazů.</p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th class="num">Odkazů na něj</th><th class="num">Odkazujících stránek</th><th>Nefunkční cíl</th><th>Problém</th><th class="num">Stav</th><th>Zdroj cíle</th></tr></thead>
+<tbody>
+{% for r in targets.many %}
+<tr{% if r.is_new %} class="new"{% endif %}><td class="dot">{{ new_said(r.is_new) }}{{ dot(r.level) }}</td><td class="num">{{ num(r.links) }}</td><td class="num">{{ num(r.pages) }}</td><td>{{ target_cell(r, r.fragment) }}</td><td>{{ problem(r.outcome, r.reason) }}</td><td class="num">{{ status(r.status) }}</td><td>{{ source(r.source_repo, r.source_path, r.source_url) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+{% if targets.single > 0 %}
+<p>Cílů, na které odkazuje vždy jediný odkaz: {{ num(targets.single) }}. Každý je v rozbalovací části stránky, na které ten odkaz je, mezi stránkami výše.</p>
+{% endif %}
+</details>
+</section>
+{% endblock %}
+{% block errors %}
+<section id="errors">
+<details class="sect">
+<summary><h2>Odkazy, které nešlo ověřit</h2></summary>
+<p>Odkazy, jejichž cíl byl dotázán a nedal žádný verdikt: odmítl (401, 403, 429), selhal (5xx, i po opakování) nebo neodpověděl (časový limit, TLS, odmítnuté spojení). Stránka tam dobře může být, proto jsou odděleny od nefunkčních odkazů.</p>
+{% if not errors.any %}
+<p>Každý dotázaný odkaz šlo ověřit.</p>
+{% elif not errors.rows %}
+<p>Žádný odkaz, který nešlo ověřit, není nález podle mapy závažnosti tohoto přehledu.</p>
+{% else %}
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>Na stránce</th><th>Zdroj stránky</th><th>Zapsáno jako</th><th>Vede na</th><th>Druh</th><th>Důvod</th><th class="num">Stav</th></tr></thead>
+<tbody>
+{% for r in errors.rows %}
+<tr{% if r.is_new %} class="new"{% endif %}><td class="dot">{{ new_said(r.is_new) }}{{ dot(r.level) }}</td><td>{{ a(r.page, r.page|short) }}</td><td>{% if r.source_url %}{{ a(r.source_url, "zdroj") }}{% else %}-{% endif %}</td><td><code>{{ r.raw_href }}</code></td><td>{{ target_link(r.target, r.fragment) }}</td><td>{{ r.kind }}</td><td>{{ problem(none, r.reason) }}</td><td class="num">{{ status(r.status) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+</details>
+</section>
+{% endblock %}
+{% block housekeeping %}
+<section id="housekeeping">
+<details class="sect">
+<summary><h2>Údržba</h2><small>Přesměrování k aktualizaci, položky mapy webu, osiřelé stránky, stránky mimo mapu webu, nezkontrolované odkazy, nastavení odlišná od výchozích a při porovnání ta, která se mezi běhy liší</small></summary>
+<details>
+<summary><span class="ttl">Přesměrované odkazy</span><span class="cnt">{{ links(redirects.rows|sum(attribute="links")) }}</span></summary>
+<p>Odkazy, jejichž cíl přesměrovává, podle toho, kam vedou, nejdřív ty s nejvíc odkazy: aktualizujte je na cílovou adresu. Rozbalením se zobrazí přesměrovávající adresy URL, první kroky a stránky, na kterých jsou odkazy zapsány.{% if pedantic != "none" %} Cíl označený kroužkem se dosahuje adresou, která se od něj liší jen koncovým <code>/</code>, a je uveden jako poslední.{% if judged.pedantic_trailing_slash %}{{ info("pedantic") }}{% endif %}{% endif %}</p>
+{% if not redirects.any %}
+<p class="muted">Žádné.</p>
+{% elif not redirects.rows %}
+<p class="muted">Žádné přesměrování není nález podle mapy závažnosti tohoto přehledu.</p>
+{% endif %}
+{% for r in redirects.rows %}
+{{ details_open(r.is_new, none) }}
+<summary>{{ new_said(r.is_new) }}{{ dot(r.level) }}<span class="ttl">{{ r.landing|short }}</span><span class="cnt">{{ links(r.links) }}, {{ counted(r.urls, "přesměrovávající URL", "přesměrovávající URL", "přesměrovávajících URL") }}</span></summary>
+<p>Cíl přesměrování {{ a(r.landing, r.landing|short) }}{% if r.reason %} · Důvod <code>{{ r.reason }}</code>{{ info_of(r.reason) }}{% endif %}</p>
+<p>První kroky <code>{{ r.chain }}</code></p>
+<p>Odkazujících stránek: {{ num(r.pages|length) }}</p>
+<ul>
+{% for page in r.pages %}
+<li>{{ a(page, page|short) }}</li>
+{% endfor %}
+</ul>
+</details>
+{% endfor %}
+</details>
+<details>
+<summary><span class="ttl">Položky mapy webu, pro které nebyla stažena žádná stránka</span><span class="cnt">{{ num(sitemap.entries|length) }}</span></summary>
+{% for note in sitemap.notes %}
+<p>{% if note.key == "antora.sitemap_from_build" %}Antora zapisuje mapu webu z toho, co publikuje, takže položka, která neodpověděla, je chyba sestavení nebo nasazení.{% else %}{{ note.text }}{% endif %}</p>
+{% endfor %}
+{% if not sitemap.entries %}
+<p class="muted">Žádné.</p>
+{% else %}
+<div class="scroll"><table>
+<thead><tr><th>Položka</th><th>Odpověď</th><th class="num">Stav</th></tr></thead>
+<tbody>
+{% for r in sitemap.entries %}
+<tr{% if r.is_new %} class="new"{% endif %}><td>{{ new_said(r.is_new) }}{{ a(r.page, r.page|short) }}</td><td>{{ problem(r.outcome, r.reason) }}</td><td class="num">{{ status(r.status) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+</details>
+<details>
+<summary><span class="ttl">Osiřelé stránky</span><span class="cnt">{{ num(orphans|length) }}</span></summary>
+<p>Stránky uvedené v mapě webu, na které žádná stránka neodkazuje.</p>
+{% if not orphans %}
+<p class="muted">Žádné.</p>
+{% else %}
+<div class="scroll"><table>
+<thead><tr><th>Název</th><th>Stránka</th><th>Zdroj</th></tr></thead>
+<tbody>
+{% for r in orphans %}
+<tr{% if r.is_new %} class="new"{% endif %}><td>{{ new_said(r.is_new) }}{{ a(r.page, r.title if r.title else r.page|short) }}</td><td>{{ a(r.page, r.page|short) }}</td><td>{{ source(r.source_repo, r.source_path, none) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+</details>
+<details>
+<summary><span class="ttl">Stránky mimo mapu webu</span><span class="cnt">{{ num(unlisted|length) }}</span></summary>
+<p>Stránky, které chybějí v mapě webu kořene, jenž nějakou přečetl.</p>
+{% if roots_without_sitemap %}
+<p>Nepřečetly žádnou mapu webu, takže žádná jejich stránka nemůže být mimo ni: {% for root in roots_without_sitemap %}{% if not loop.first %}, {% endif %}{{ a(root, root|short) }}{% endfor %}.</p>
+{% endif %}
+{% if not unlisted %}
+<p class="muted">Žádné.</p>
+{% else %}
+<div class="scroll"><table>
+<thead><tr><th>Název</th><th>Stránka</th><th>Zdroj</th></tr></thead>
+<tbody>
+{% for r in unlisted %}
+<tr{% if r.is_new %} class="new"{% endif %}><td>{{ new_said(r.is_new) }}{{ a(r.page, r.title if r.title else r.page|short) }}</td><td>{{ a(r.page, r.page|short) }}</td><td>{{ source(r.source_repo, r.source_path, none) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+</details>
+<details>
+<summary><span class="ttl">Nezkontrolované odkazy</span><span class="cnt">{{ links(unchecked|sum(attribute="links")) }}</span></summary>
+<p>Odkazy, které tento běh nezkontroloval, seskupené podle důvodu. Nepočítají se jako nefunkční, protože běh neví, zda fungují; odkaz, o kterém ví, že fungovat nemůže, je místo toho uveden jako nefunkční.</p>
+{% if not unchecked %}
+<p class="muted">Žádné.</p>
+{% endif %}
+{% for r in unchecked %}
+<h3><code>{{ r.reason }}</code> <small>{{ links(r.links) }} na {{ counted(r.targets, "cíl", "cíle", "cílů") }}</small></h3>
+<p>{{ unchecked_meaning(r.reason) }}</p>
+{{ most("Kam míří", "group", r.groups, 5) -}}
+{% endfor %}
+<h3>Zkontrolovaní externí hostitelé</h3>
+<p>Ostatní weby, jejichž odkazy tento běh zkontroloval: ty z jeho <code>allowlist</code>, na které tyto stránky odkazují.</p>
+{{ most("Hostitel", "host", checked_hosts, 10) -}}
+</details>
+<details>
+<summary><span class="ttl">Nastavení odlišná od výchozích</span><span class="cnt">{{ num(settings|length) }}</span></summary>
+{% if trial %}
+<p><strong>Zkouška.</strong> Tento přehled byl posouzen podle nastavení posuzování ze souboru <code>{{ trial }}</code> místo těch, která si běhy zaznamenaly; nic se nekontrolovalo znovu, takže nastavení dotazování je nastavení samotných běhů. Nastavení, kterými byl posouzen a kterými se dotazoval a která se liší od výchozích, tak, jak je zapisuje konfigurační soubor:</p>
+{% else %}
+<p>Nastavení, kterými byl tento běh posouzen a kterými se dotazoval a která se liší od výchozích, tak, jak je zapisuje konfigurační soubor. Přehled posuzuje běh podle pravidel, která si zaznamenal, a porovnání posuzuje oba běhy podle pravidel běhu, o kterém přehled je.</p>
+{% endif %}
+{% if not settings %}
+<p class="muted">Žádná: každé nastavení má výchozí hodnotu.</p>
+{% else %}
+<ul>
+{% for s in settings %}
+<li><code>{{ s }}</code></li>
+{% endfor %}
+</ul>
+{% endif %}
+</details>
+{% if setting_changes %}
+<details>
+<summary><span class="ttl">Nastavení, která se mezi běhy liší</span><span class="cnt">{{ num(setting_changes.count) }}</span></summary>
+<p>Řádky pravidel, které si oba běhy zaznamenaly a které se liší, tak, jak je zapisuje konfigurační soubor: <strong>−</strong> řádek, který zaznamenal jen porovnávaný běh, <strong>+</strong> řádek, který zaznamenal jen tento běh, a šipka tam, kde se řádek změnil. Řádky deklarovaného profilu se porovnávají, když ho použil k extrakci stránka některého z běhů, a pravidlo zdroje se jmenuje místem v seznamu každého běhu.</p>
+{% if setting_changes.count == 0 %}
+<p class="muted">Žádná: běhy si zaznamenaly stejná pravidla.</p>
+{% else %}
+{% if setting_changes.rest %}
+<ul>
+{% for c in setting_changes.rest %}
+<li>{% if c.from and c.to %}<code>{{ c.from }}</code> → <code>{{ c.to }}</code>{% elif c.from %}− <code>{{ c.from }}</code>{% else %}+ <code>{{ c.to }}</code>{% endif %}</li>
+{% endfor %}
+</ul>
+{% endif %}
+{% if setting_changes.judging %}
+<p>Tato nastavení posuzování se také liší, ale oba běhy byly posouzeny {% if trial %}nastavením posuzování ze souboru <code>{{ trial }}</code>{% else %}nastavením tohoto běhu{% endif %}, takže tady žádný verdikt nezměnila:</p>
+<ul>
+{% for c in setting_changes.judging %}
+<li>{% if c.from and c.to %}<code>{{ c.from }}</code> → <code>{{ c.to }}</code>{% elif c.from %}− <code>{{ c.from }}</code>{% else %}+ <code>{{ c.to }}</code>{% endif %}</li>
+{% endfor %}
+</ul>
+{% endif %}
+{% endif %}
+</details>
+{% endif %}
+</details>
+</section>
+{% endblock %}
+{% block guide %}
+<section id="guide">
+<h2>Jak číst tento přehled</h2>
+{% block guide_doubled_slash %}
+{% if judged.doubled_slash %}
+<h3 id="guide-doubled-slash">{{ question("doubled-slash") }}</h3>
+<p>Někdy je stránka B v pořádku, když se na ni dostanete správnou cestou, ale stránka A na ni odkazuje tak, že přidá lomítko navíc, např. <code>example.com/foo//page_B/</code> nebo <code>example.com/foo/page_B//</code>, nebo odkazuje na adresu, která přesměrovává na takovou.</p>
+<p>Pokud se ze stránky A na B dostanete touto cestou, stránka B bude fungovat, ale všechny její relativní odkazy (<code>../../blah</code>) jsou kvůli lomítku navíc v cestě nefunkční. Nepočítají se proti stránce B, protože na ní není nic špatně: problém je na stránce A. Proto je odkaz stránky A uveden jako nefunkční s důvodem <code>doubled_slash</code> a {% if judged.reach == "full" %}odkazy na stránce B, které lomítko navíc rozbije, i odkazy na každé další stránce s adresou se zdvojeným lomítkem, kam relativní odkazy ze stránky B vedou dál, se počítají u stránky A jako „nefunkční kvůli němu“{% elif judged.reach == "immediate" %}odkazy na stránce B, které lomítko navíc rozbije, se počítají u stránky A jako „nefunkční kvůli němu“, ne však odkazy stránek, kam relativní odkazy ze stránky B vedou dál{% else %}odkazy na stránce B, které lomítko navíc rozbije, se nepočítají nikde, protože tento přehled je nastaven tak, že vinu nese jen odkaz stránky A{% endif %}.</p>
+{% endif %}
+{% endblock %}
+{% block guide_pedantic %}
+{% if judged.pedantic_trailing_slash %}
+<h3 id="guide-pedantic">{{ question("pedantic") }}</h3>
+<p>Lidé obvykle píší adresy jako <code>example.com/foo</code>, ale <em>technicky</em> správný tvar je <code>example.com/foo/</code>: všimněte si koncového lomítka. Pro většinu webových serverů jsou to ve skutečnosti dvě různé stránky, a když navštívíte první, server ochotně sdělí vašemu prohlížeči: „Hej, tady nic není, je to na <code>example.com/foo/</code>.“ Prohlížeč tak musí poslat druhý požadavek.</p>
+<p>Má se „špatná“ adresa počítat jako nefunkční, když čtenář nakonec skončí na správném místě? Dá se o tom diskutovat, ale rozhodně je to méně naléhavé než skutečně nefunkční odkaz (třeba 404). Nepočítají se jako nefunkční: {% if pedantic == "pedantic" %}jsou v části Údržba mezi přesměrovanými odkazy, označené jako pedantní kroužkem, za ostatními přesměrováními{% elif pedantic == "attention" %}jsou v části Údržba mezi přesměrovanými odkazy, označené jako pozornost oranžovou tečkou, za ostatními přesměrováními{% elif pedantic == "broken" %}jsou v části Údržba mezi přesměrovanými odkazy, označené jako nefunkční červenou tečkou, za ostatními přesměrováními{% else %}tento přehled je nastaven tak, že je nepovažuje za nález, takže je nevypisuje{% endif %}.</p>
+{% endif %}
+{% endblock %}
+</section>
+{% endblock %}
+</main>
+<footer>Zapsal bruce <span class="version">{{ bruce.version }}</span>, formát dokumentu {{ bruce.model_version }}. JSON přehled téhož dne obsahuje stejná čísla a seznamy i každý řádek s nefunkčním odkazem a chybou, ale ne věty, které je vysvětlují.</footer>
+</body>
+</html>

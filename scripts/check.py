@@ -382,12 +382,14 @@ NO_WORKSPACE = (
     "cargo: no Cargo.toml at the root, so fmt, clippy, nextest, doctest and e2e are skipped"
 )
 #: The paths, beside the binary itself, that `e2e.py` reads: the hand-written
-#: components, the UI bundle it builds them with and the digest's golden file.
+#: components, the UI bundle it builds them with, the digest's golden file and the
+#: views it is also written through.
 #: Its own source is in no crate and read by no test, so it runs every check.
 E2E_READS = (
     "fixtures/antora/content/",
     "fixtures/antora/ui-bundle.",
     "fixtures/antora/digest.html",
+    "fixtures/antora/views/",
 )
 
 

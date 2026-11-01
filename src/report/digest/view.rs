@@ -9,6 +9,8 @@
 
 mod declared;
 mod filters;
+#[cfg(test)]
+mod litmus;
 mod loader;
 #[cfg(test)]
 mod macros;

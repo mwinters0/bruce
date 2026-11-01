@@ -44,6 +44,13 @@ what varies from run to run (`normalise_digest`), is held to `fixtures/antora/
 digest.html`, the golden file of the rendering over this site; `--save-digest`
 writes it anew, to be read in a diff before it is committed.
 
+The digest is written through two more views, the litmus tests of P11
+(`fixtures/antora/views/`): `cs.html`, the whole digest in Czech, and
+`links.csv`, one record to each finding. Each is held to a golden file beside
+them (`views/golden/`), the Czech page less what varies like the English one,
+and the CSV is parsed and counted against the JSON, which `--save-digest`
+writes anew too.
+
 `--save-pages` also copies a few of the builds' pages into
 `fixtures/antora/pages/`, recorded in a manifest, so tests read what a build
 writes rather than what one is remembered to write. The run is slow beside the
@@ -60,9 +67,12 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import collections
+import csv
 import functools
 import hashlib
 import http.server
+import io
 import json
 import os
 import re
@@ -117,6 +127,17 @@ LANGUAGES = """<div class="page-languages">
 PAGES = FIXTURES / "pages"
 #: The digest's HTML over the whole site's crawl, as `normalise_digest` leaves it.
 GOLDEN = FIXTURES / "digest.html"
+#: The litmus views (P11), each named for the file it writes, and the golden
+#: files of what they write over the whole site's crawl.
+VIEWS = FIXTURES / "views"
+CS_VIEW, CSV_VIEW = VIEWS / "cs.html", VIEWS / "links.csv"
+GOLDEN_CS, GOLDEN_CSV = VIEWS / "golden" / "cs.html", VIEWS / "golden" / "links.csv"
+#: The columns of `links.csv`, one record to each finding in the JSON's `broken`
+#: and `errors` that the severity map lists.
+CSV_COLUMNS = [
+    "page", "title", "source_url", "written_as", "resolves_to", "fragment", "kind", "level", "outcome", "reason",
+    "status", "hint", "new",
+]
 #: A hosted-git remote Antora derives an edit link from, the whole build's pages
 #: carrying one as production's do and a content repo's CI build not.
 ORIGIN = "https://github.com/bruce-fixture/{}.git"
@@ -350,6 +371,7 @@ VOLATILE = (
     (re.compile(r'<time datetime="[^"]*">[^<]*</time>'), '<time datetime="T">T</time>'),
     (re.compile(r'(<span class="(?:duration|version|date)">)[^<]*'), r"\1V"),
     (re.compile(r"(<title>Link check digest )\d{4}-\d{2}-\d{2}"), r"\1DATE"),
+    (re.compile(r"(<title>Přehled kontroly odkazů )\d+\. \d+\. \d{4}"), r"\1DATE"),
 )
 
 
@@ -361,17 +383,22 @@ def normalise_digest(html: str) -> str:
     return html
 
 
-def digest(bin: Path, db: Path, out: Path) -> tuple[str, str]:
-    """`bruce report digest` of the crawl in `db`: the JSON and the HTML it wrote."""
+def digest(bin: Path, db: Path, out: Path) -> dict[str, str]:
+    """`bruce report digest` of the crawl in `db` through the built-in view and the
+    litmus views: what it wrote, by the part of the file's name after the date
+    (`json`, `html`, `cs.html`, `links.csv`)."""
     if out.exists():
         shutil.rmtree(out)
-    code, stdout, err = bruce(bin, "report", "digest", "--db", db, "--out", out, "--name", "e2e")
+    code, stdout, err = bruce(
+        bin, "report", "digest", "--db", db, "--out", out, "--name", "e2e",
+        "--view", "default", "--view", CS_VIEW, "--view", CSV_VIEW,
+    )
     if code:
         raise E2eError(f"bruce report digest exited {code}:\n{stdout}{err}")
-    files = sorted(out.iterdir())
-    if [f.suffix for f in files] != [".html", ".json"]:
-        raise E2eError(f"bruce report digest wrote {[f.name for f in files]}, not an .html and a .json")
-    return files[1].read_text(), files[0].read_text()
+    written = {re.sub(r"^e2e-\d{4}-\d{2}-\d{2}[-.]", "", f.name): f.read_text() for f in out.iterdir()}
+    if sorted(written) != ["cs.html", "html", "json", "links.csv"]:
+        raise E2eError(f"bruce report digest wrote {sorted(f.name for f in out.iterdir())}, not the four files asked")
+    return written
 
 
 def check_digest(js: str, html: str, port: int, golden: Path = GOLDEN, save: bool = False) -> list[str]:
@@ -396,6 +423,54 @@ def check_digest(js: str, html: str, port: int, golden: Path = GOLDEN, save: boo
         problems.append(f"no golden file {golden}: run with --save-digest")
     elif seen != golden.read_text():
         problems.append(f"the digest's HTML is not {golden}: read the diff, then run with --save-digest")
+    return problems
+
+
+def records(text: str) -> list[list[str]]:
+    """`text` read as CSV, each record a list of its fields."""
+    return list(csv.reader(io.StringIO(text, newline="")))
+
+
+def check_views(
+    js: str, cs: str, links: str, golden_cs: Path = GOLDEN_CS, golden_csv: Path = GOLDEN_CSV, save: bool = False,
+    port: int = PORT,
+) -> list[str]:
+    """Every way the Czech and the CSV view's output differs from what the site
+    promises, empty when there is none. Their golden files are written anew with `save`."""
+    problems: list[str] = []
+    doc = json.loads(js)
+    seen = normalise_digest(cs)
+    if '<html lang="cs">' not in cs:
+        problems.append("the Czech view is not a Czech document")
+    for english in ("Figures", "Housekeeping", "How to read", "Written as", "Redirected links", "Unchecked links"):
+        if english in cs:
+            problems.append(f"the Czech view holds the English {english!r}")
+    totals = doc["totals"]
+    tenths = (totals["broken_url"] + totals["broken_anchor"]) * 1000 // totals["links"]
+    share = f"{tenths // 10},{tenths % 10}\u00a0%"
+    for czech in ("Přehled kontroly odkazů", "Údržba", "Jak číst tento přehled", share):
+        if czech not in cs:
+            problems.append(f"the Czech view lacks {czech!r}")
+    rows = records(links)
+    if rows[:1] != [CSV_COLUMNS]:
+        problems.append(f"the CSV view's header is {rows[:1]}, not {CSV_COLUMNS}")
+    wide = [r for r in rows if len(r) != len(CSV_COLUMNS)]
+    if wide:
+        problems.append(f"{len(wide)} CSV records are not {len(CSV_COLUMNS)} fields wide: {wide[0]}")
+    listed = collections.Counter((r["page"], r["raw_href"]) for r in doc["broken"] + doc["errors"])
+    got = collections.Counter((r[0], r[3]) for r in rows[1:])
+    if got != listed:
+        problems.append(f"the CSV view's links are not the JSON's: {list((got - listed) + (listed - got))[:3]}")
+    for text, golden in ((seen, golden_cs), (links, golden_csv)):
+        if save:
+            golden.parent.mkdir(parents=True, exist_ok=True)
+            golden.write_text(text)
+        elif port != PORT:
+            print(f"views: {golden.name} not compared, it is the port {PORT} crawl's")
+        elif not golden.exists():
+            problems.append(f"no golden file {golden}: run with --save-digest")
+        elif text != golden.read_text():
+            problems.append(f"the view's output is not {golden}: read the diff, then run with --save-digest")
     return problems
 
 
@@ -564,11 +639,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             if code:
                 raise E2eError(f"bruce {step[0]} exited {code}:\n{out}{err}")
             print(out + err, end="")
-        js, html = digest(bin, crawl_db, OUT / "digest")
+        written = digest(bin, crawl_db, OUT / "digest")
+        js, html = written["json"], written["html"]
         problems = check_digest(js, html, args.port, save=args.save_digest)
+        problems += check_views(js, written["cs.html"], written["links.csv"], save=args.save_digest, port=args.port)
         if problems:
             raise E2eError("the digest is not what the site promises:\n  " + "\n  ".join(problems))
         print(f"digest: {len(html)} bytes of HTML, {len(js)} of JSON, as the golden file has it")
+        print(f"views: {len(written['cs.html'])} bytes of Czech, {len(written['links.csv'])} of CSV, as their golden files have them")
         ci = (args.port, config, baseline, ci_db)
         unchanged = check_dir(bin, partial, *ci)
         (repos[PARTIAL] / "modules" / "ROOT" / "images" / "diagram.svg").unlink()

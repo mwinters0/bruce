@@ -1,0 +1,9 @@
+{# The second litmus test: every link the digest lists as a finding, one record to a link, in the order of the pages. Every value a `.csv` view prints is quoted as one field, so a title's comma or a quote in an address shifts no column; the view writes the commas and the line ends. A finding of `error` is a row of the errors list, which holds no outcome and no hint. #}
+{% set bruce_model = 2 %}
+page,title,source_url,written_as,resolves_to,fragment,kind,level,outcome,reason,status,hint,new
+{% for p in pages %}
+{% for f in p.findings %}
+{% set r = f.row %}
+{{ r.page }},{{ p.row.title }},{{ p.row.source_url }},{{ r.raw_href }},{{ r.target }},{{ r.fragment }},{{ r.kind }},{{ f.level }},{{ "error" if f.error else r.outcome }},{{ r.reason }},{{ r.status }},{{ none if f.error else r.hint }},{{ "true" if f.is_new else "false" }}
+{% endfor %}
+{% endfor %}

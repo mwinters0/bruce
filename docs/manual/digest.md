@@ -81,7 +81,7 @@ colours: `--write-default-view DIR` writes `digest.html`, `style.css` and `palet
 writes the digest through the edited copy. A view is any text format: the file's extension picks how a value it
 prints is escaped, HTML's for `.html`, `.htm` and `.xml`, **one quoted CSV field for `.csv`** (the view writes the
 commas and line ends, and a value's quotes are doubled), and none for any other. A `none` prints as nothing, and
-`{{ x|safe }}` prints `x` as it is. A name the model lacks is an error naming the file, the line and the
+`{{ x|safe }}` prints `x` as it is; a boolean prints `True` or `False`, as in Jinja. A name the model lacks is an error naming the file, the line and the
 expression, never an empty string.
 
 A view changes the default or replaces it:
@@ -92,7 +92,9 @@ A view changes the default or replaces it:
   `broken_since`, `fixed_since`, `pages`, `repos`, `targets`, `errors`, `housekeeping` and `guide`, which holds
   `guide_doubled_slash` and `guide_pedantic`. A `palette` that restates only the screen's `:root` leaves the printed
   digest the screen's colours.
-- **Replacing**: the exported `digest.html`, edited, with `style.css` and `palette.css` beside it.
+- **Replacing**: the exported `digest.html`, edited, with `style.css` and `palette.css` beside it. A view in another
+  language can keep the built-in sheet without a copy of it, as `{% include "bruce:palette.css" %}` and
+  `{% include "bruce:style.css" %}`.
 
 A view's other templates (`{% include %}`, `{% extends %}`, `{% import %}`) are files of **its own directory**, named
 from it (`deep/c.css`), and nothing outside it: a `..`, an absolute name or a link out of the directory is an error.
@@ -330,6 +332,46 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `policy_changes` | The rows of the policy that differ between the run and the one it was compared with, each recorded by the two runs as they recorded it: `from` the compared run's row and `to` this run's, both with `host`, `key` and `value`, and `null` where only the other run recorded one. A row whose value changed has both, as has a declared profile's [source rule](config.md#profiles) a later run edited, named by its place in each run's list (`profile.site.source.2.pattern` in one, `profile.site.source.3.pattern` in the other); a rule inserted or removed is named alone, and the rules after it are not. A declared profile's rows are compared only when a page of either run was extracted by it. `judges` is `true` for a judging row, one neither a setting for asking nor a declared profile's: both runs were judged by one policy, this run's or a trial's, so it changed no verdict, and the HTML lists such rows apart under a sentence saying so. Empty where `compared_with` is `null`; a [trial](#a-trial-policy) changes neither run's recorded rows. |
 | `trial` | The path of the configuration file the digest was judged by in place of the run's recorded policy ([a trial](#a-trial-policy)), as `--config` gave it, else `null`; `policy` is then that file's judging rows and the run's asking ones. |
 | `housekeeping.checked_hosts` | The hosts no root starts on whose links' targets were asked about, the most `links` first: the [`allowlist`](config.md#allowlist) as far as the pages link to it. The run records no allowlist, so a host the allowlist names that no page links to is in no row. |
+
+## The model a view reads
+
+A view is given one tree of values, **the JSON's data and a derived part**: what the severity map and the policy make of
+it, computed once in `bruce` so that a view lays it out and judges nothing. It holds numbers, booleans, UTC
+timestamps (seconds since the epoch, for `time`) and strings; a sentence is never in it, so a view in any language words
+them. A list is already ranked, a missing value is `none`, and a text that is empty is `none` too. A name the tree lacks
+is an error ([above](#views)). It changes only with the [model's version](#the-models-version).
+
+A **level** is `broken`, `attention`, `pedantic` or `none`, as the [severity map](config.md#judging) puts a finding at
+it; a **row** is a map from the column names of the JSON list it comes from (`broken` for a link, `errors`, `redirects`,
+`housekeeping.orphans`, ...) to its cells, with `is_new` beside them where the JSON has `new` (true where the row is new
+and listed) and `level` where the row is a finding. **Rows and sections that the map puts at `none` are not in it**: the
+JSON holds them, the model does not.
+
+| Name | Holds |
+|---|---|
+| `bruce` | `version` of the tool and `model_version`, the JSON's `format_version`. |
+| `date` | The day the run started, `YYYY-MM-DD`, as the files' names have it. |
+| `run`, `compared` | The run: `id`, `tool_version`, `started`, `finished` (`none` if it never finished) and `roots`. `compared` is `none` where there is no earlier run, else `run` and `totals` of the run compared with and `file` (a baseline file's run) and `shares_day` (both started on one day, so a view shows the time). |
+| `unfinished`, `trial` | Whether the run never finished, and the trial file's path or `none`. |
+| `totals` | The JSON's `totals`. |
+| `figures` | The five figures in order (`pages`, `links`, `broken_url`, `broken_anchor`, `error`): `key`, `n`, `change` since the compared run (`none` without one), the `level` of the outcome it counts and `broken`, true where a rise is for the worse. |
+| `legend` | `levels`, the kinds at each level that has some, worst first (`level` and `kinds`), and `quiet`, the kinds at `none`. A kind is `broken_url`, `broken_anchor`, `error`, `redirected`, `pedantic_trailing_slash` or a reason's name. |
+| `judged`, `pedantic` | What the policy judges: `doubled_slash` and `pedantic_trailing_slash`, which decide whether the guide's entries are true of this run, and `reach` (`full`, `immediate` or `off`); and the level the severity map gives a redirect differing only by a final `/`. |
+| `broken_since`, `fixed_since` | `none` where the JSON has no such rows, else `rows` (the findings) and, for the broken, `causes`, those with some rows, in the order the HTML reads them (`cause`, `rows`). |
+| `pages`, `pages_any` | The pages holding a finding, ranked: `row`, `id` (the drill-down's anchor), `rank`, `counts`, `new_links`, `hinted` (some finding has a hint) and `findings`, each `row`, `level`, `is_new` and `error`, true for a row of the JSON's `errors`, which has no `outcome` or `hint`. `pages_any` is whether the run has any page with a link broken or errored, findings or not. |
+| `repos` | `listed`, the repos holding a finding, ranked (`row`, `rank`, `counts`, `new_links`, `pages` as `id` and `title`), `clean`, the number of repos holding none, and `all_clean`. |
+| `targets` | The broken targets: `many`, those named by more than one link, `single`, the number of the rest, `hidden_many`, whether the map hid some of `many`, and `held` and `all`, the broken links in `many` and in the run. |
+| `errors`, `redirects` | `any`, whether the run has some, and `rows`, those that are findings. |
+| `sitemap` | `entries`, and `notes`: what the crawled pages' generators say of their sitemaps, each a `key` (as `antora.sitemap_from_build`) and its English `text`. A view words a note it knows by its key and prints `text` for any other. |
+| `orphans`, `unlisted`, `roots_without_sitemap`, `checked_hosts` | The JSON's `housekeeping` lists. |
+| `unchecked` | The JSON's `housekeeping.unchecked`, each row with its `groups` from `unchecked_groups`. |
+| `settings`, `setting_changes` | The policy's rows that differ from the defaults, as the configuration file writes them; and `none` without a comparison, else `count` and the differing rows, `rest` and `judging`, each `from` and `to` as written (`none` where only the other run has one). |
+
+A **count** (`counts` of a page or a repo) is a list of parts, red first: `level`, `kind` (`broken`, `fragment`,
+`unverifiable` or `through`, the links broken through a doubled slash), `n` and `reasons`, the reasons that put the links
+off their outcome's level. The HTML's sentences, the guide's and the legend's included, are the default view's
+`digest.html`; a [Czech view](../../fixtures/antora/views/cs.html) and a [CSV one](../../fixtures/antora/views/links.csv)
+over the same tree are the fixtures `mise run e2e` renders and holds to golden files.
 
 ## Why a link is newly broken
 

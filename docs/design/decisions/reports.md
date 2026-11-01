@@ -136,7 +136,7 @@ nothing, the rest by the view's extension (D96). Why: one file (D23); the engine
 numeric references, not D64's bytes. Rejected: tera, whose semantics changed in minor releases; handlebars and upon,
 which cannot extend; `serde`, which `Digest` does not derive; `Object`s over the `Digest`, rendering lazily, the copy
 costing nothing measured. Reopens: a view in a format the formatter cannot escape. Code: `report::digest::view`,
-`report::digest::model::context`. Evidence: `report::digest::view::tests`, `scripts/e2e.py`'s golden file,
+`report::digest::model::context`. Evidence: `report::digest::view::tests`, `report::digest::view::litmus`, `scripts/e2e.py`,
 `runs/p11-view-cost-20261101/`.
 
 ### D96 A view sees the built-in files and its own directory, declares its model version as text, and quotes CSV whole

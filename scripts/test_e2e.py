@@ -267,6 +267,65 @@ class Digest(unittest.TestCase):
             self.assertEqual(len(problems), 2, problems)
 
 
+class Views(unittest.TestCase):
+    """The litmus views' output against the JSON they are written beside."""
+
+    CS = (
+        '<html lang="cs"><title>Přehled kontroly odkazů 23. 10. 2026 \u2013 x</title>'
+        "Údržba Jak číst tento přehled Přehled kontroly odkazů 12,5\u00a0%"
+    )
+    JSON = json.dumps({
+        "totals": {"links": 8, "broken_url": 1, "broken_anchor": 0},
+        "broken": [{"page": "http://p/", "raw_href": "../a/"}],
+        "errors": [{"page": "http://p/", "raw_href": "https://slow.example/"}],
+    })
+    CSV = (
+        ",".join(e2e.CSV_COLUMNS) + "\n"
+        + ",".join(['"http://p/"', '"Page, ""one"""', '""', '"../a/"'] + ['""'] * 9) + "\n"
+        + ",".join(['"http://p/"', '""', '""', '"https://slow.example/"'] + ['""'] * 9) + "\n"
+    )
+
+    def check(self, cs: str | None = None, links: str | None = None, **kw) -> list[str]:
+        with tempfile.TemporaryDirectory() as d:
+            golden = (Path(d) / "cs.html", Path(d) / "links.csv")
+            args = (self.JSON, cs or self.CS, links or self.CSV, *golden)
+            e2e.check_views(*args, save=True)
+            return e2e.check_views(*args, **kw)
+
+    def test_a_czech_title_is_normalised_like_the_english_one(self) -> None:
+        self.assertIn("<title>Přehled kontroly odkazů DATE", e2e.normalise_digest(self.CS))
+
+    def test_views_that_match_the_json_and_their_golden_files_are_accepted(self) -> None:
+        self.assertEqual(self.check(), [])
+
+    def test_a_csv_field_holding_a_comma_or_quotes_is_one_field(self) -> None:
+        self.assertEqual(e2e.records(self.CSV)[1][1], 'Page, "one"')
+
+    def test_english_in_the_czech_view_and_a_missing_share_are_named(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            golden = (Path(d) / "cs.html", Path(d) / "links.csv")
+            problems = e2e.check_views(self.JSON, self.CS.replace("12,5", "12.5") + " Housekeeping", self.CSV, *golden, save=True)
+            self.assertTrue(any("English 'Housekeeping'" in p for p in problems), problems)
+            self.assertTrue(any("lacks" in p and "12,5" in p for p in problems), problems)
+
+    def test_a_csv_that_drops_a_link_or_a_column_is_named(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            golden = (Path(d) / "cs.html", Path(d) / "links.csv")
+            short = self.CSV.rsplit("\n", 2)[0] + "\n"
+            problems = e2e.check_views(self.JSON, self.CS, short, *golden, save=True)
+            self.assertTrue(any("not the JSON's" in p for p in problems), problems)
+            narrow = self.CSV.replace(",new\n", "\n", 1)
+            problems = e2e.check_views(self.JSON, self.CS, narrow, *golden, save=True)
+            self.assertTrue(any("header" in p for p in problems), problems)
+
+    def test_a_changed_output_is_named_against_its_golden_file(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            golden = (Path(d) / "cs.html", Path(d) / "links.csv")
+            e2e.check_views(self.JSON, self.CS, self.CSV, *golden, save=True)
+            problems = e2e.check_views(self.JSON, self.CS + " ", self.CSV, *golden)
+            self.assertTrue(any("--save-digest" in p for p in problems), problems)
+
+
 class Committed(unittest.TestCase):
     def test_every_saved_page_hashes_to_the_manifest(self) -> None:
         manifest = e2e.PAGES / "manifest.json"
@@ -289,6 +348,16 @@ class Committed(unittest.TestCase):
         golden = e2e.GOLDEN.read_text()
         self.assertEqual(e2e.normalise_digest(golden), golden)
         self.assertNotIn("<script", golden)
+
+    def test_the_golden_views_hold_nothing_that_varies(self) -> None:
+        if not e2e.GOLDEN_CS.exists():
+            self.skipTest("no golden views yet")
+        golden = e2e.GOLDEN_CS.read_text()
+        self.assertEqual(e2e.normalise_digest(golden), golden)
+        self.assertIn('<html lang="cs">', golden)
+        rows = e2e.records(e2e.GOLDEN_CSV.read_text())
+        self.assertEqual(rows[0], e2e.CSV_COLUMNS)
+        self.assertTrue(all(len(r) == len(e2e.CSV_COLUMNS) for r in rows))
 
     def test_the_pages_were_built_with_the_vendored_bundle(self) -> None:
         manifest = e2e.PAGES / "manifest.json"
