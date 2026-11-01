@@ -4,7 +4,8 @@
 bruce report REPORT [--db FILE] [--config FILE] [--run N | --from N --to N] [--repo REPO]
                     [--fact KEY=VALUE] [--kind KIND] [--top N] [--format text|json]
 bruce report digest --out DIR [--name STEM] [--db FILE] [--config FILE] [--run N]
-                    [--from N | --since FILE|URL] [--format json|html|both]
+                    [--from N | --since FILE|URL] [--view FILE]... [--json | --no-json]
+bruce report digest --write-default-view DIR
 ```
 
 Prints one report over one **run** of a database that `bruce crawl` wrote

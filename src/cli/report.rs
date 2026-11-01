@@ -2,8 +2,10 @@
 //! [--fact k=v] [--kind k] [--top n] [--format f]`: one report over one run,
 //! or `diff`, `changed` or `anchors-removed` over two (D6, D27): by default the
 //! latest finished run, and for those the two latest. `bruce report digest --out dir [--name s] [--db f]
-//! [--run n] [--from n | --since file|url] [--format json|html|both]` writes a
-//! crawl run's dated digest instead (D64), compared with another run (D73).
+//! [--run n] [--from n | --since file|url] [--view f]... [--json | --no-json]` writes a
+//! crawl run's dated digest instead (D64), compared with another run (D73), through
+//! the views named (D95); `bruce report digest --write-default-view dir` writes the
+//! built-in view's files and reads no database.
 //!
 //! `--config FILE` judges the run, and any run compared with it, by the judging
 //! settings of that file in place of those each run recorded, the trial
@@ -27,7 +29,9 @@ use super::file::BaselineFile;
 use crate::config::Config;
 use crate::extract::Kind;
 use crate::profile::Registry;
-use crate::report::{self, Against, Digest, Format, Report, Request};
+use crate::report::{
+    self, Against, Digest, Format, Report, Request, ViewSource, Views, default_files,
+};
 use crate::store::{RunId, Store};
 
 /// The value of `REPORT` that writes the digest, which is no `Report`: it
@@ -55,34 +59,24 @@ pub struct Args {
 pub enum Job {
     Report(Args),
     Digest(DigestArgs),
+    /// `report digest --write-default-view DIR`.
+    DefaultView(PathBuf),
 }
 
 impl From<&ArgMatches> for Job {
     fn from(m: &ArgMatches) -> Job {
         match m.get_one::<String>("report").map(String::as_str) {
-            Some(DIGEST) => Job::Digest(DigestArgs::from(m)),
+            Some(DIGEST) => match m.get_one::<String>("write-default-view") {
+                Some(dir) => Job::DefaultView(PathBuf::from(dir)),
+                None => Job::Digest(DigestArgs::from(m)),
+            },
             _ => Job::Report(Args::from(m)),
         }
     }
 }
 
-/// Which of the digest's files `report digest` writes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DigestFormat {
-    Json,
-    Html,
-    Both,
-}
-
-impl DigestFormat {
-    fn json(self) -> bool {
-        self != DigestFormat::Html
-    }
-
-    fn html(self) -> bool {
-        self != DigestFormat::Json
-    }
-}
+/// The value of `--view` that names the built-in view; any other is a file.
+const DEFAULT_VIEW: &str = "default";
 
 /// What the command line asked of `report digest`.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -96,7 +90,10 @@ pub struct DigestArgs {
     pub against: Compare,
     pub out: PathBuf,
     pub name: String,
-    pub format: DigestFormat,
+    /// The views to write, the built-in one where `--view` names none.
+    pub views: Vec<ViewSource>,
+    /// Whether the JSON is written beside them.
+    pub json: bool,
 }
 
 /// What `report digest` compares its run with.
@@ -127,11 +124,16 @@ impl From<&ArgMatches> for DigestArgs {
                 .get_one::<String>("name")
                 .cloned()
                 .unwrap_or_else(|| STEM.to_owned()),
-            format: match m.get_one::<String>("format").map(String::as_str) {
-                Some("json") => DigestFormat::Json,
-                Some("html") => DigestFormat::Html,
-                _ => DigestFormat::Both,
+            views: match m.get_many::<String>("view") {
+                None => vec![ViewSource::Default],
+                Some(named) => named
+                    .map(|v| match v.as_str() {
+                        DEFAULT_VIEW => ViewSource::Default,
+                        file => ViewSource::File(PathBuf::from(file)),
+                    })
+                    .collect(),
             },
+            json: !m.get_flag("no-json"),
         }
     }
 }
@@ -254,6 +256,39 @@ pub fn command() -> Command {
                 .help("`digest` only: the file name's first part [default: bruce]"),
         )
         .arg(
+            Arg::new("view")
+                .long("view")
+                .value_name("FILE")
+                .action(ArgAction::Append)
+                .help(
+                    "`digest` only: write the digest through this view, a template file, as \
+                     DIR/STEM-DATE-FILE; repeat for several, `default` for the built-in view, \
+                     which is written when none is named and otherwise only when named",
+                ),
+        )
+        .arg(
+            Arg::new("json")
+                .long("json")
+                .action(ArgAction::SetTrue)
+                .conflicts_with("no-json")
+                .help("`digest` only: write the JSON beside the views [default]"),
+        )
+        .arg(
+            Arg::new("no-json")
+                .long("no-json")
+                .action(ArgAction::SetTrue)
+                .help("`digest` only: write the views and not the JSON"),
+        )
+        .arg(
+            Arg::new("write-default-view")
+                .long("write-default-view")
+                .value_name("DIR")
+                .help(
+                    "`digest` only: write the built-in view's files to DIR, to edit and name \
+                     with --view, and read no database",
+                ),
+        )
+        .arg(
             Arg::new("from")
                 .long("from")
                 .value_name("N")
@@ -300,11 +335,8 @@ pub fn command() -> Command {
             Arg::new("format")
                 .long("format")
                 .value_name("FORMAT")
-                .value_parser(PossibleValuesParser::new(["text", "json", "html", "both"]))
-                .help(
-                    "A text table, or one JSON array of objects [default: text]; \
-                     `digest` writes `json`, `html` or `both` [default: both]",
-                ),
+                .value_parser(PossibleValuesParser::new(["text", "json"]))
+                .help("A text table, or one JSON array of objects [default: text]"),
         )
 }
 
@@ -313,7 +345,7 @@ pub fn command() -> Command {
 /// differently: the first read `--from` and `--to`, the rest `--run`.
 pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
     let name = m.get_one::<String>("report").map(String::as_str);
-    let given = |name| m.contains_id(name);
+    let given = |name| m.value_source(name) == Some(clap::parser::ValueSource::CommandLine);
     let refuse = |arg: &str, why: &str| {
         Err(command().error(
             clap::error::ErrorKind::ArgumentConflict,
@@ -322,7 +354,7 @@ pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
     };
     if name == Some(DIGEST) {
         let whole = "the digest is of a whole run; it takes --run, --from, --since, --db, --config, \
-                     --out, --name and --format";
+                     --out, --name, --view and --json or --no-json";
         for (id, flag) in [
             ("to", "--to"),
             ("repo", "--repo"),
@@ -334,15 +366,40 @@ pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
                 return refuse(flag, whole);
             }
         }
-        if m.get_one::<String>("format").map(String::as_str) == Some("text") {
-            return refuse("--format", "the digest is written as json, html or both");
+        if given("format") {
+            return refuse(
+                "--format",
+                "the digest is written through --view, and as JSON unless --no-json",
+            );
+        }
+        if given("write-default-view") {
+            for (id, flag) in [
+                ("out", "--out"),
+                ("name", "--name"),
+                ("db", "--db"),
+                ("config", "--config"),
+                ("run", "--run"),
+                ("from", "--from"),
+                ("since", "--since"),
+                ("view", "--view"),
+                ("json", "--json"),
+                ("no-json", "--no-json"),
+            ] {
+                if given(id) {
+                    return refuse(
+                        flag,
+                        "--write-default-view writes the built-in view and reads no run",
+                    );
+                }
+            }
+            return Ok(());
         }
         return if given("out") {
             Ok(())
         } else {
             Err(command().error(
                 clap::error::ErrorKind::MissingRequiredArgument,
-                "digest needs --out DIR, where its files are written",
+                "digest needs --out DIR, where its files are written, or --write-default-view DIR",
             ))
         };
     }
@@ -354,11 +411,15 @@ pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
     if given("since") {
         return refuse("--since", "only digest compares with a baseline file");
     }
-    if let Some(format @ ("html" | "both")) = m.get_one::<String>("format").map(String::as_str) {
-        return refuse(
-            "--format",
-            &format!("`{format}` is the digest's; a report is text or json"),
-        );
+    for (id, flag) in [
+        ("view", "--view"),
+        ("json", "--json"),
+        ("no-json", "--no-json"),
+        ("write-default-view", "--write-default-view"),
+    ] {
+        if given(id) {
+            return refuse(flag, "only digest has views and a JSON document");
+        }
     }
     if let Some(report) = Report::ALL
         .into_iter()
@@ -408,6 +469,7 @@ pub fn run(job: &Job, registry: Registry) -> ExitCode {
     let done = match job {
         Job::Report(args) => report(args, &registry),
         Job::Digest(args) => digest(args, &registry),
+        Job::DefaultView(dir) => write_default_view(dir),
     };
     match done {
         Ok(()) => ExitCode::SUCCESS,
@@ -492,9 +554,13 @@ fn report(args: &Args, registry: &Registry) -> Result<(), String> {
     say(&text)
 }
 
-/// Writes the digest of the run named, as `DIR/STEM-YYYY-MM-DD.json`, `.html`
-/// or both as `--format` says, and prints the path of each (D64).
+/// Writes the digest of the run named: `DIR/STEM-YYYY-MM-DD.json` unless
+/// `--no-json`, `DIR/STEM-YYYY-MM-DD.html` for the built-in view and
+/// `DIR/STEM-YYYY-MM-DD-FILE` for the view in `FILE`, and prints the path of each
+/// (D64, D95). Every view is rendered before any file is written, so a view that
+/// fails leaves the directory as it was (D96).
 fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
+    let views = Views::load(&args.views)?;
     let (store, db) = open(args.db.as_deref(), args.config.as_deref(), registry)?;
     // The file outlives the digest, which reads the run imported from it.
     let file = match &args.against {
@@ -527,20 +593,44 @@ fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
             .into_iter()
             .chain(compared),
     );
-    let io_error = |path: &Path, e: io::Error| format!("{}: {e}", path.display());
-    fs::create_dir_all(&args.out).map_err(|e| io_error(&args.out, e))?;
-    let file = |extension| {
-        args.out
-            .join(format!("{}-{}.{extension}", args.name, digest.date()))
-    };
+    let stem = format!("{}-{}", args.name, digest.date());
     let mut files = Vec::new();
-    if args.format.json() {
-        files.push((file("json"), digest.json()));
+    if args.json {
+        files.push((format!("{stem}.json"), digest.json()));
     }
-    if args.format.html() {
-        files.push((file("html"), digest.html()));
+    for view in views.render(&digest)? {
+        let name = match view.name {
+            Some(name) => format!("{stem}-{name}"),
+            None => format!("{stem}.html"),
+        };
+        files.push((name, view.text));
     }
-    for (path, text) in files {
+    write_all(&args.out, files)
+}
+
+/// `--write-default-view`: the built-in view's files in `dir`, none of them
+/// replacing a file already there, which may be an edit.
+fn write_default_view(dir: &Path) -> Result<(), String> {
+    let files = default_files();
+    if let Some((name, _)) = files.iter().find(|(name, _)| dir.join(name).exists()) {
+        return Err(format!(
+            "{}: already exists; --write-default-view replaces no file",
+            dir.join(name).display()
+        ));
+    }
+    write_all(
+        dir,
+        files.into_iter().map(|(n, t)| (n.to_owned(), t)).collect(),
+    )
+}
+
+/// Writes `files`, each a name and its text, into `dir`, made where missing, and
+/// prints each path.
+fn write_all(dir: &Path, files: Vec<(String, String)>) -> Result<(), String> {
+    let io_error = |path: &Path, e: io::Error| format!("{}: {e}", path.display());
+    fs::create_dir_all(dir).map_err(|e| io_error(dir, e))?;
+    for (name, text) in files {
+        let path = dir.join(name);
         fs::write(&path, text).map_err(|e| io_error(&path, e))?;
         say(&path.display().to_string())?;
     }

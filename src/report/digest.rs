@@ -36,6 +36,7 @@ use crate::store::{JudgedBy, RunId, Store};
 
 pub use document::{Compared, Digest};
 pub use json::FORMAT_VERSION;
+pub use view::{Rendered, ViewSource, Views, default_files};
 
 /// What a digest is compared with (D73).
 #[derive(Debug, Clone, Copy)]

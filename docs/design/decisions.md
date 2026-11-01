@@ -12,7 +12,7 @@ entries quote are named by their day (2026-10-23, 2026-10-24, 2026-10-25, run 2 
 2026-10-28). Their databases predate schema 6 and are no longer kept: a figure stands as recorded, and a new crawl
 remeasures it. The en-US crawl of 2026-11-01 is kept, beside the one before it, in `runs/en-us-20261101-0005/`.
 
-<!-- decision-watermark: D95 -->
+<!-- decision-watermark: D96 -->
 
 ## Modes, commands and deployment
 [`decisions/modes.md`](decisions/modes.md)
@@ -127,6 +127,7 @@ remeasures it. The en-US crawl of 2026-11-01 is kept, beside the one before it, 
 - **D91** The digest states the policy it was judged by: Housekeeping what differs from the defaults and, compared, between the runs; the JSON all of it
 - **D92** A kind at `none` is no finding in the digest, and its JSON and figures keep it
 - **D95** The digest's HTML is a minijinja template over the model, its default view embedded in the binary
+- **D96** A view sees the built-in files and its own directory, declares its model version as text, and quotes CSV whole
 
 ## Build, layering and release
 [`decisions/build.md`](decisions/build.md)

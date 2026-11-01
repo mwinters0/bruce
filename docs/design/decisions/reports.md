@@ -132,9 +132,18 @@ silenced still ranking its page; ranking or dropping `none` rows in the JSON, ma
 ### D95 The digest's HTML is a minijinja template over the model, its default view embedded in the binary
 The default view (`view/default/`) holds every sentence and the model none, reaching the engine as maps and lists, which
 the builtin filters walk. Escaping is bruce's formatter: HTML's five characters as D64 has them, a `none` printing
-nothing, a view not named `.html` escaping nothing. Why: one file (D23); the engine's escape writes `'` and `/` as
+nothing, the rest by the view's extension (D96). Why: one file (D23); the engine's escape writes `'` and `/` as
 numeric references, not D64's bytes. Rejected: tera, whose semantics changed in minor releases; handlebars and upon,
 which cannot extend; `serde`, which `Digest` does not derive; `Object`s over the `Digest`, rendering lazily, the copy
 costing nothing measured. Reopens: a view in a format the formatter cannot escape. Code: `report::digest::view`,
 `report::digest::model::context`. Evidence: `report::digest::view::tests`, `scripts/e2e.py`'s golden file,
 `runs/p11-view-cost-20261101/`.
+
+### D96 A view sees the built-in files and its own directory, declares its model version as text, and quotes CSV whole
+A view's templates are `bruce:` names and files of its own directory, a `..`, an absolute name or a link out refused,
+the built-in's own includes staying inside it. A `.csv` view quotes every value it prints as one RFC 4180 field. A
+view's `{% set bruce_model = N %}` is read off its text before rendering and refused unless N is the JSON's
+`format_version` (D64). Why: a view the model outgrew is told its version, not the first name it lost; a title's comma
+must not shift a column. Rejected: a `csv` filter on each value; the declaration read from the render's state, which a
+failing render never reaches; the files that rendered written before a failure. Reopens: a view needing a file outside
+its directory. Code: `report::digest::view`. Evidence: `report::digest::view::views`.

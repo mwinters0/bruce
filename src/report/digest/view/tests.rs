@@ -1,7 +1,7 @@
 use minijinja::value::Value;
 
 use super::super::tests::{compared, of, ranked, store, with_doubled_slashes, with_unchecked};
-use super::{default_view, filters, model};
+use super::{ENTRY, default_view, filters, model};
 use crate::config::{Reason, Severity, SeverityMap};
 use crate::report::table::Cell;
 use crate::report::tests::{registry, xrefs};
@@ -23,7 +23,7 @@ fn html() -> String {
 /// What the default view's macro `name` prints for `args`.
 pub(super) fn call(name: &str, args: &[Value]) -> String {
     let env = default_view();
-    let template = env.get_template("digest.html").unwrap();
+    let template = env.get_template(ENTRY).unwrap();
     let mut rendered = template
         .render_captured(model::context(&of(&store())))
         .unwrap();
@@ -1363,6 +1363,13 @@ fn the_filters_take_the_conventions_a_view_states() {
         said("{{ run.started | time('%d. %m. %Y, %H:%M:%S %%') }}"),
         "23. 10. 2026, 20:04:11 %"
     );
+    // A date without padding is the view's arithmetic on the padded one.
+    assert_eq!(
+        said(
+            "{{ run.started|time('%d')|int }}. {{ run.started|time('%m')|int }}. {{ run.started|time('%Y') }}"
+        ),
+        "23. 10. 2026"
+    );
     assert!(render("v.txt", "{{ 0 | time('%Q') }}", model_of_the_store()).is_err());
     assert_eq!(said("{{ 'https://e.test/a' | short }}"), "e.test/a");
     assert_eq!(said("{{ 'ftp://e.test/a' is web }}"), "False");
@@ -1384,7 +1391,7 @@ fn a_view_replacing_the_palette_keeps_the_sheet_and_loses_both_default_roots() {
     let mut env = default_view();
     env.add_template(
         "own.html",
-        "{% extends \"digest.html\" %}{% block palette %}:root { --bg: red; }\n{% endblock %}",
+        "{% extends \"bruce:digest.html\" %}{% block palette %}:root { --bg: red; }\n{% endblock %}",
     )
     .unwrap();
     let html = env

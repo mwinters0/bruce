@@ -204,22 +204,69 @@ fn the_digest_takes_a_directory_a_name_and_a_run() {
             against: Compare::Previous,
             out: "o".into(),
             name: "bruce".into(),
-            format: DigestFormat::Both,
+            views: vec![ViewSource::Default],
+            json: true,
         }
     );
-    let Job::Digest(d) = job(&[
-        "digest", "--out", "o", "--name", "en-us", "--format", "json",
-    ])
-    .unwrap() else {
+    let Job::Digest(d) = job(&["digest", "--out", "o", "--name", "en-us", "--no-json"]).unwrap()
+    else {
         panic!("a digest")
     };
-    assert_eq!((d.name.as_str(), d.run), ("en-us", None));
-    assert_eq!(d.format, DigestFormat::Json);
-    let Job::Digest(d) = job(&["digest", "--out", "o", "--format", "html"]).unwrap() else {
-        panic!("a digest")
-    };
-    assert_eq!(d.format, DigestFormat::Html);
+    assert_eq!((d.name.as_str(), d.run, d.json), ("en-us", None, false));
     assert!(matches!(job(&["broken"]).unwrap(), Job::Report(_)));
+}
+
+#[test]
+fn views_are_named_in_order_and_none_named_is_the_built_in_one() {
+    let views = |extra: &[&str]| {
+        let mut args = vec!["digest", "--out", "o"];
+        args.extend(extra);
+        let Job::Digest(d) = job(&args).unwrap() else {
+            panic!("a digest")
+        };
+        (d.views, d.json)
+    };
+    assert_eq!(views(&[]), (vec![ViewSource::Default], true));
+    assert_eq!(
+        views(&["--view", "links.csv", "--view", "default", "--json"]),
+        (
+            vec![ViewSource::File("links.csv".into()), ViewSource::Default],
+            true
+        )
+    );
+    assert_eq!(
+        views(&["--view", "cs/digest.html", "--no-json"]),
+        (vec![ViewSource::File("cs/digest.html".into())], false)
+    );
+    assert!(job(&["digest", "--out", "o", "--json", "--no-json"]).is_err());
+}
+
+#[test]
+fn the_default_view_is_written_alone_and_by_no_other_report() {
+    let Job::DefaultView(dir) = job(&["digest", "--write-default-view", "d"]).unwrap() else {
+        panic!("the default view")
+    };
+    assert_eq!(dir, PathBuf::from("d"));
+    for bad in [
+        ["--out", "o"],
+        ["--name", "n"],
+        ["--db", "d"],
+        ["--config", "c"],
+        ["--run", "1"],
+        ["--from", "1"],
+        ["--since", "b"],
+        ["--view", "v"],
+        ["--no-json", ""],
+    ] {
+        let mut args = vec!["digest", "--write-default-view", "d", bad[0]];
+        if !bad[1].is_empty() {
+            args.push(bad[1]);
+        }
+        assert!(job(&args).is_err(), "{bad:?}");
+    }
+    for flag in ["--view=v", "--json", "--no-json", "--write-default-view=d"] {
+        assert!(job(&["broken", flag]).is_err(), "{flag}");
+    }
 }
 
 #[test]
@@ -232,6 +279,7 @@ fn the_digest_refuses_what_is_not_its_own() {
         ["--kind", "image"],
         ["--top", "3"],
         ["--format", "text"],
+        ["--format", "json"],
         ["--name", ""],
         ["--name", "a/b"],
     ] {
@@ -304,7 +352,8 @@ fn a_digest_since_a_baseline_file_compares_with_its_run_and_leaves_the_database_
         against: Compare::Since(baseline.display().to_string()),
         out: dir.path().join("out"),
         name: "d".into(),
-        format: DigestFormat::Json,
+        views: vec![],
+        json: true,
     };
     assert_eq!(
         run(&Job::Digest(args), crate::cli::registry()),
@@ -351,7 +400,8 @@ fn a_digest_is_written_under_the_day_the_run_started() {
         against: Compare::Previous,
         out: out.clone(),
         name: "en-us".into(),
-        format: DigestFormat::Both,
+        views: vec![ViewSource::Default],
+        json: true,
     };
     assert_eq!(
         run(&Job::Digest(args.clone()), crate::cli::registry()),
@@ -379,7 +429,7 @@ fn a_digest_is_written_under_the_day_the_run_started() {
     // One format writes one file.
     let only = DigestArgs {
         out: dir.path().join("html"),
-        format: DigestFormat::Html,
+        json: false,
         ..args
     };
     assert_eq!(
@@ -400,7 +450,8 @@ fn a_digest_of_a_database_that_is_not_there_is_refused() {
         against: Compare::Previous,
         out: dir.path().join("out"),
         name: "bruce".into(),
-        format: DigestFormat::Both,
+        views: vec![ViewSource::Default],
+        json: true,
     };
     assert_eq!(
         run(&Job::Digest(args), crate::cli::registry()),
@@ -510,7 +561,8 @@ fn a_digest_judged_by_a_trial_config_names_the_file() {
         against: Compare::Previous,
         out: dir.path().join("out"),
         name: "t".into(),
-        format: DigestFormat::Both,
+        views: vec![ViewSource::Default],
+        json: true,
     };
     assert_eq!(
         run(&Job::Digest(args.clone()), crate::cli::registry()),
@@ -558,4 +610,127 @@ fn a_trial_config_that_cannot_be_read_or_is_invalid_refuses_the_report() {
         };
         assert!(e.starts_with("--config "), "{e}");
     }
+}
+
+/// A database holding one finished run, and a digest of it as `args` asks.
+fn digest_of_a_run(dir: &TempDir, views: Vec<ViewSource>, json: bool) -> (DigestArgs, ExitCode) {
+    let db = dir.path().join("v.duckdb");
+    if !db.exists() {
+        let registry = crate::cli::registry();
+        let store = crate::cli::db::open(&db, &registry).unwrap();
+        let id = store
+            .begin_run(
+                crate::store::Mode::Crawl,
+                "h",
+                None,
+                &[],
+                &crate::config::Policy::default(),
+            )
+            .unwrap();
+        store.finish_run(id).unwrap();
+    }
+    let args = DigestArgs {
+        db: Some(db),
+        config: None,
+        run: None,
+        against: Compare::Previous,
+        out: dir.path().join("out"),
+        name: "v".into(),
+        views,
+        json,
+    };
+    let code = run(&Job::Digest(args.clone()), crate::cli::registry());
+    (args, code)
+}
+
+fn written(dir: &Path) -> Vec<String> {
+    let mut names: Vec<String> = std::fs::read_dir(dir)
+        .map(|d| {
+            d.map(|e| e.unwrap().file_name().into_string().unwrap())
+                .collect()
+        })
+        .unwrap_or_default();
+    names.sort();
+    names
+}
+
+#[test]
+fn a_view_is_written_as_the_digests_name_and_its_own_beside_the_built_in_one() {
+    let dir = TempDir::new().unwrap();
+    std::fs::write(
+        dir.path().join("links.csv"),
+        "{% set bruce_model = 2 %}\"day\",\"links\"\n{{ date }},{{ totals.links }}\n",
+    )
+    .unwrap();
+    let csv = ViewSource::File(dir.path().join("links.csv"));
+    let (args, code) = digest_of_a_run(&dir, vec![csv.clone(), ViewSource::Default], true);
+    assert_eq!(code, ExitCode::SUCCESS);
+    let names = written(&args.out);
+    assert_eq!(names.len(), 3, "{names:?}");
+    let stem = names[0].trim_end_matches("-links.csv").to_owned();
+    assert_eq!(
+        names,
+        [
+            format!("{stem}-links.csv"),
+            format!("{stem}.html"),
+            format!("{stem}.json")
+        ]
+    );
+    let text = std::fs::read_to_string(args.out.join(&names[0])).unwrap();
+    assert!(text.starts_with("\"day\",\"links\"\n\"20"), "{text}");
+    assert!(text.ends_with(",\"0\"\n"), "{text}");
+    // Naming a view drops the built-in one, and --no-json the JSON.
+    let apart = TempDir::new().unwrap();
+    let (only, _) = digest_of_a_run(&apart, vec![csv], false);
+    assert_eq!(written(&only.out), [format!("{stem}-links.csv")]);
+}
+
+#[test]
+fn a_view_that_fails_leaves_the_directory_unwritten() {
+    let dir = TempDir::new().unwrap();
+    for (name, source) in [
+        ("undefined.csv", "{{ nothing_here }}"),
+        ("stale.csv", "{% set bruce_model = 1 %}{{ date }}"),
+        ("syntax.csv", "{% if %}"),
+        ("escapes.html", "{% include \"../x.html\" %}"),
+    ] {
+        std::fs::write(dir.path().join(name), source).unwrap();
+        let sources = vec![ViewSource::Default, ViewSource::File(dir.path().join(name))];
+        let (args, code) = digest_of_a_run(&dir, sources, true);
+        assert_eq!(code, ExitCode::FAILURE, "{name}");
+        assert!(!args.out.exists(), "{name}");
+    }
+    let twice = vec![ViewSource::Default, ViewSource::Default];
+    let (args, code) = digest_of_a_run(&dir, twice, true);
+    assert_eq!(code, ExitCode::FAILURE);
+    assert!(!args.out.exists());
+    let (args, code) = digest_of_a_run(
+        &dir,
+        vec![ViewSource::File(dir.path().join("no.csv"))],
+        true,
+    );
+    assert_eq!(code, ExitCode::FAILURE);
+    assert!(!args.out.exists());
+}
+
+#[test]
+fn the_default_view_is_written_to_a_directory_and_replaces_nothing() {
+    let dir = TempDir::new().unwrap();
+    let out = dir.path().join("view");
+    assert_eq!(
+        run(&Job::DefaultView(out.clone()), crate::cli::registry()),
+        ExitCode::SUCCESS
+    );
+    assert_eq!(written(&out), ["digest.html", "palette.css", "style.css"]);
+    let entry = std::fs::read_to_string(out.join("digest.html")).unwrap();
+    assert!(entry.starts_with("{% set bruce_model = 2 %}\n{# The default view"));
+    std::fs::write(out.join("palette.css"), "mine").unwrap();
+    assert_eq!(
+        run(&Job::DefaultView(out.clone()), crate::cli::registry()),
+        ExitCode::FAILURE
+    );
+    assert_eq!(
+        std::fs::read_to_string(out.join("palette.css")).unwrap(),
+        "mine"
+    );
 }

@@ -1,7 +1,9 @@
 # `bruce report digest`
 
 ```sh
-bruce report digest --out DIR [--name STEM] [--db FILE] [--config FILE] [--run N] [--from N | --since FILE|URL] [--format json|html|both]
+bruce report digest --out DIR [--name STEM] [--db FILE] [--config FILE] [--run N] [--from N | --since FILE|URL]
+                    [--view FILE]... [--json | --no-json]
+bruce report digest --write-default-view DIR
 ```
 
 Writes one **digest** of a crawl run: the run's figures, the broken links
@@ -31,7 +33,9 @@ fetched for.
 | `--run N` | the latest finished run | The run to digest, as [`bruce report`](report.md#which-run) chooses it. A run that never finished is digested with a warning on stderr. A run that [`bruce check-dir`](check-dir.md) made has no digest. |
 | `--from N` | the finished crawl run before `--run` | The run to [compare with](#the-comparison): a crawl run of the database, finished or not. |
 | `--since FILE\|URL` | none | Compare with the run of a baseline file, as [`bruce check-dir`](check-dir.md)'s `--baseline` takes one: a path or an `http(s)` URL, gzipped or not. It holds one finished run, which [`bruce export-baseline`](export-baseline.md) writes. Not with `--from`. |
-| `--format` | `both` | `json`, `html` or `both`: the files to write. |
+| `--view FILE` | the built-in view | Write the digest through this [view](#views), a template file. Repeat it for several; `default` names the built-in view. With none named the built-in view is written, and with any named only those are, so `--view default --view links.csv` writes both. |
+| `--json`, `--no-json` | `--json` | Write the [JSON](#the-json) beside the views, or only the views. |
+| `--write-default-view DIR` | none | Write the built-in view's files to `DIR`, made where missing, to edit and name with `--view`, and exit; no database is read, and no other option is taken. It replaces no file: one already there is an error. |
 
 ## The comparison
 
@@ -61,11 +65,52 @@ Housekeeping's settings list is the file's judging settings and the run's own
 
 ## The files
 
-`DIR/STEM-YYYY-MM-DD.json` and `DIR/STEM-YYYY-MM-DD.html`, the date being **the day the run started, in UTC**,
-so a digest made again later is named for the same day. A second run on the
+`DIR/STEM-YYYY-MM-DD.json`, `DIR/STEM-YYYY-MM-DD.html` for the built-in view and `DIR/STEM-YYYY-MM-DD-FILE` for
+the view in `FILE` (`--view links.csv` writes `STEM-YYYY-MM-DD-links.csv`), the date being **the day the run
+started, in UTC**, so a digest made again later is named for the same day. A second run on the
 same day overwrites the first's files: the files are the day's report, and the
 `run` inside them says which run that was. `bruce` prints the path of each file
-it wrote.
+it wrote. **Every view is rendered before any file is written**, so a view that fails leaves
+`DIR` as it was, and two views with one file name are refused.
+
+## Views
+
+The HTML is the output of a **view**, a [minijinja](https://docs.rs/minijinja/) template (Jinja's syntax) over the digest's
+data, and the view the binary holds is the default. A deployment writes its own for its words, its guide and its
+colours: `--write-default-view DIR` writes `digest.html`, `style.css` and `palette.css`, and `--view DIR/digest.html`
+writes the digest through the edited copy. A view is any text format: the file's extension picks how a value it
+prints is escaped, HTML's for `.html`, `.htm` and `.xml`, **one quoted CSV field for `.csv`** (the view writes the
+commas and line ends, and a value's quotes are doubled), and none for any other. A `none` prints as nothing, and
+`{{ x|safe }}` prints `x` as it is. A name the model lacks is an error naming the file, the line and the
+expression, never an empty string.
+
+A view changes the default or replaces it:
+
+- **Extending**: `{% extends "bruce:digest.html" %}` and the blocks to change, which inherit everything a later
+  release adds. The default's blocks are `style` (the whole sheet), `palette` (both `:root` rules, the screen's and
+  `@media print`'s, and nothing else; `{{ super() }}` keeps them), `intro` (empty, under the header), `figures`,
+  `broken_since`, `fixed_since`, `pages`, `repos`, `targets`, `errors`, `housekeeping` and `guide`, which holds
+  `guide_doubled_slash` and `guide_pedantic`. A `palette` that restates only the screen's `:root` leaves the printed
+  digest the screen's colours.
+- **Replacing**: the exported `digest.html`, edited, with `style.css` and `palette.css` beside it.
+
+A view's other templates (`{% include %}`, `{% extends %}`, `{% import %}`) are files of **its own directory**, named
+from it (`deep/c.css`), and nothing outside it: a `..`, an absolute name or a link out of the directory is an error.
+`bruce:` names the built-in view's three files, whose own includes stay inside it.
+
+Layout: a block tag on a line of its own prints nothing, one followed by a line end eats it (`+%}` keeps it), and a
+macro is defined before the text that calls it. Beyond minijinja's own filters a view has `thousands(sep)`,
+`time(pattern)` over a UTC timestamp (`%Y %m %d %H %M %S %%`), and `plural(one, other)`, which gives `one` where the
+number is 1; a language with more plural forms, month names or another date order writes its rule in the view. The
+model gives raw numbers and UTC timestamps and holds no sentence.
+
+### The model's version
+
+A view declares the version of the model it was written for, in its own file: `{% set bruce_model = 2 %}`. `bruce`
+refuses a view declaring another, naming this section, **before it renders**, so a view the model has outgrown is
+told apart from one with a typo. The exported `digest.html` declares it. A view declaring none is rendered, and
+fails on the first name it uses that the model lacks. The version is the JSON's `format_version` ([below](#the-json)):
+it changes only when a name a view reads is renamed, removed or given another meaning, never when one is added.
 
 ## The HTML
 
@@ -328,5 +373,5 @@ An `unchecked` link is not broken: the run did not learn whether it is. Its
 | Status | Meaning |
 |---|---|
 | 0 | The files were written. Finding broken links does not change this. |
-| 1 | The database could not be read or has no such run or no finished one, the run or the run compared with is a `check-dir` run, `--since` names no baseline (a file or URL that cannot be read, is not one, or is of another schema version), the `--config` file cannot be read or is not a valid configuration, the run a bare digest would read is the baseline of a later unfinished `check-dir` run, or a file could not be written; the message says which. |
+| 1 | The database could not be read or has no such run or no finished one, the run or the run compared with is a `check-dir` run, `--since` names no baseline (a file or URL that cannot be read, is not one, or is of another schema version), the `--config` file cannot be read or is not a valid configuration, the run a bare digest would read is the baseline of a later unfinished `check-dir` run, a `--view` cannot be read, declares another model version, fails to render or would write the file of another, or a file could not be written (`--write-default-view`: one is already there); the message says which. |
 | 2 | The command line was not understood. |

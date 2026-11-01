@@ -11,17 +11,28 @@ use minijinja::{AutoEscape, Environment, Error, ErrorKind, Output, State};
 use crate::report::digest::document::utc;
 
 /// Prints `value` in the format of the template that prints it: HTML's escape
-/// for `.html`, as it is for any other, and nothing for a `none`, which is a
-/// cell the run holds no value for. A value a template marked safe prints as
-/// it is.
+/// for HTML, one quoted RFC 4180 field for CSV, nothing done for any other, and
+/// nothing printed for a `none`, which is a cell the run holds no value for. A
+/// value a template marked safe prints as it is.
 pub(super) fn format(out: &mut Output, state: &mut State, value: &Value) -> Result<(), Error> {
     if value.is_none() {
         return Ok(());
     }
     let text = value.to_string();
-    if value.is_safe() || *state.auto_escape() == AutoEscape::None {
+    let escape = state.auto_escape().clone();
+    if value.is_safe() || escape == AutoEscape::None {
         out.write_str(&text)?;
         return Ok(());
+    }
+    if escape != AutoEscape::Html {
+        out.write_char('"')?;
+        for c in text.chars() {
+            if c == '"' {
+                out.write_char('"')?;
+            }
+            out.write_char(c)?;
+        }
+        return Ok(out.write_char('"')?);
     }
     for c in text.chars() {
         match c {
@@ -39,6 +50,7 @@ pub(super) fn format(out: &mut Output, state: &mut State, value: &Value) -> Resu
 pub(super) fn add(env: &mut Environment<'_>) {
     env.add_filter("thousands", thousands);
     env.add_filter("time", time);
+    env.add_filter("plural", plural);
     env.add_filter("short", short);
     env.add_filter("slash_runs", slash_runs);
     env.add_filter("final_slash_runs", final_slash_runs);
@@ -59,6 +71,12 @@ fn thousands(n: i64, sep: &str) -> String {
         out.insert(0, '-');
     }
     out
+}
+
+/// `one` where `n` is 1, else `other`: a two-form plural, a language with more
+/// forms writing its own rule in the view.
+fn plural(n: i64, one: Value, other: Value) -> Value {
+    if n == 1 { one } else { other }
 }
 
 /// `seconds` since the epoch in UTC as `pattern` has it: `%Y`, `%m`, `%d`, `%H`,

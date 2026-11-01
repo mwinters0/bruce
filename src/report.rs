@@ -34,7 +34,9 @@ mod views;
 
 use crate::store::Store;
 
-pub use digest::{Against, Compared, Digest, FORMAT_VERSION, digest};
+pub use digest::{
+    Against, Compared, Digest, FORMAT_VERSION, Rendered, ViewSource, Views, default_files, digest,
+};
 pub use error::Error;
 pub use gate::Gate;
 pub use request::{InverseMode, Output, Report, Request};
