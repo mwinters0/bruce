@@ -73,8 +73,10 @@ The spec is [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.m
   ([notes](../wip/roadmap-P10.6-locale-links-notes.md)).
 - [x] **10.7** Neutral help examples and palette
   ([notes](../wip/roadmap-P10.7-neutral-text-notes.md)).
-- [ ] **10.8** The "after" crawl compared with 10.1's: no fact, locale or
-  verdict differs.
+- [x] **10.8** The "after" crawl compared with 10.1's: no fact, locale or
+  verdict differs that bruce caused; the three link verdicts that moved follow
+  their targets or a page's own edit
+  ([notes](../wip/roadmap-P10.8-closing-evidence-notes.md)).
 
 ## Not started
 
