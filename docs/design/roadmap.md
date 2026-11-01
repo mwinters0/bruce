@@ -17,7 +17,8 @@ never reused.
 | P1–P8 | **Struck** at the keystones of 2026-10-21 to 2026-10-31 | their decisions are [`decisions.md`](decisions.md)'s |
 | P10 — declarative extraction rules | **Complete**, 2026-11-01 | [`roadmap-P10-extraction.md`](roadmap-P10-extraction.md), its notes [`roadmap-P10-extraction-notes.md`](roadmap-P10-extraction-notes.md) |
 | P11 — the digest's prose in config | Sketched; not grilled | this file, below |
-| P9 — the deployment guide | Specified; follows P11, and is grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
+| P14 — redirects as facts | Sketched; not grilled | this file, below |
+| P9 — the deployment guide | Specified; follows P11 and P14, and is grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
 | P12 — compiled profiles for other generators | Sketched; not grilled | this file, below |
 | P13 — a selection language beyond CSS | Sketched; not grilled | this file, below |
 
@@ -92,6 +93,24 @@ maintainer foresees more overrides and basic templating; which texts, and
 whether a template reads the run's recorded policy, is the grilling's.
 Follows the site policy, which decides what the guide's text may claim
 (D91), and precedes P9, whose guide documents the config.
+
+## P14 — Redirects as facts
+
+A page's discovery and a link's redirect read from the facts the store
+holds, who names a URL (`links`, a sitemap's entries by kind `sitemap`) and
+where it leads (`targets.final_url` and `redirect_chain`, D7, D46), not from
+`pages.in_sitemap` and `via_links`, which record whichever target claimed the
+page first (KD38). A page is then listed, and linked, directly or through a
+redirect, each reported, which settles what a sitemap entry that redirects
+makes of its landing page. And **the length past which a redirect chain is
+broken is the site's to configure** (maintainer, 2026-11-01), a limit of none
+making any redirect one, since some owners hold every redirect a problem to
+solve. It reopens D7's "`redirected` never fails" and D14, and dropping the
+columns changes the schema (D43). Whether a chain over the limit is an
+outcome or a reason with a level (D76, D82), what the limit counts, whether a
+host sets its own, its default and how it meets the gate's `fail` list (D83)
+are the grilling's. Precedes P9 (maintainer, 2026-11-01), whose guide sets
+the limit and whose gate fails by it.
 
 ## P9 — The deployment guide
 

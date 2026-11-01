@@ -104,4 +104,10 @@ roadmap's phase index.
   default, and it displaces a finite delay another origin of the name states
   (D18, D69). **(b) owned by M41**. Detail: `src/fetch/http/host.rs`
 
-<!-- deficiency-watermark: KD37 -->
+- **KD38** — A page a redirect lands on takes `in_sitemap` and `via_links`
+  from the target that claimed it, so a page a sitemap entry redirects to is
+  listed or unlisted by whether that redirect or a link claimed it first, and
+  two runs of one site can disagree (D14). **(b) owned by P14**. Detail:
+  `src/crawl.rs`
+
+<!-- deficiency-watermark: KD38 -->

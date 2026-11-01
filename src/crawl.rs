@@ -965,6 +965,12 @@ where
     /// facts and links of the page `form` names. An allowlisted page is one hop
     /// deep: its links were never followed, and recording them would have
     /// orphan and inbound reports count a site nobody crawls.
+    // deficiency: KD38 `in_sitemap` and `via_links` are `item`'s, the target
+    // that claimed the page: for a page a redirect lands on, the redirecting
+    // URL's. A page a sitemap entry redirects to is listed where that
+    // redirect's hops end before a link to the page is claimed, and unlisted
+    // where they end after, so two runs of one site can disagree. Deriving the
+    // flags from `links` and `targets.final_url` would close it.
     fn write_page(
         &self,
         item: &Item,

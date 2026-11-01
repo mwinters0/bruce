@@ -43,6 +43,13 @@ consider `bruce` ready for a content repo's CI until both have landed. The
 guide then documents their config once, as it does the site policy's. When P9
 is sliced, the grilling re-reads this spec against what they added.
 
+## P9 follows the redirect facts
+
+Settled 2026-11-01 (maintainer). **P9 follows P14**, redirects read as facts
+and a chain past a site's configured length broken: the guide sets the
+limit for docs.fp.o, and the gate's `fail` list decides whether it fails a
+content repo's CI.
+
 ## The guide's hash scope is the profile's region
 
 Settled 2026-10-21. **The guide's roots set neither `hash_root` nor
