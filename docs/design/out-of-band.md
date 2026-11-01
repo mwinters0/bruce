@@ -32,9 +32,10 @@ grilling, spec amendment and a numbered slice.
 **Ledger lines stay one line each.** The detail lives in the dated history
 entry each line points at.
 
-Allocated so far: M1–M41. <!-- out-of-band-watermark: M41 -->
+Allocated so far: M1–M42. <!-- out-of-band-watermark: M42 -->
 
 ## The ledger
 
 | Item | Date | What changed | Blocks | Why |
 |---|---|---|---|---|
+| M42 | | The Czech view's `percent` rounds half up, a unit case rounding; `e2e.py` computes the share independently; the manual says a decimal is the view's arithmetic | P11 | [2026-11-01](../status/history/2026-11-01.md), "The Czech view's share stays, rounded" |

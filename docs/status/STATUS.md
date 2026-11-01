@@ -66,9 +66,3 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-- **The Czech litmus view adds a sentence the default lacks.** `fixtures/antora/views/cs.html` states the share of
-  broken links in the figures' paragraph (`8,2 %`). Why: the spec's Czech conventions include a decimal comma and the
-  model holds only integers, so the sentence is the one place a real decimal is formatted, by the view's own integer
-  arithmetic. Reconsidering it: dropping the sentence leaves the decimal comma tested only by `view::litmus`'s unit
-  test, and a `decimal` filter would add a function no model value needs. The Czech wording is mine, unverified by a
-  Czech speaker, whom the spec has the maintainer's contacts supply.
