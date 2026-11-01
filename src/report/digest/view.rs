@@ -23,6 +23,7 @@ use super::model;
 // closes it, and moves the golden file.
 const DIGEST: &str = include_str!("view/default/digest.html");
 const STYLE: &str = include_str!("view/default/style.css");
+const PALETTE: &str = include_str!("view/default/palette.css");
 
 /// The engine every view runs in. Undefined names are errors, so a view naming
 /// a field the model lacks fails with its place; a block tag on a line of its
@@ -49,13 +50,15 @@ fn environment() -> Environment<'static> {
     env
 }
 
-/// The default view's two files, loaded.
+/// The default view's three files, loaded.
 fn default_view() -> Environment<'static> {
     let mut env = environment();
     env.add_template("digest.html", DIGEST)
         .expect("the default view parses");
     env.add_template("style.css", STYLE)
         .expect("the default view's stylesheet parses");
+    env.add_template("palette.css", PALETTE)
+        .expect("the default view's palette parses");
     env
 }
 

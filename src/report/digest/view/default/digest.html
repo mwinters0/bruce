@@ -105,7 +105,10 @@
 <meta name="color-scheme" content="dark light">
 <title>Link check digest {{ date }} – {% if run.roots %}{{ run.roots[0]|short }}{% endif %}{% if run.roots|length > 1 %} and {{ run.roots|length - 1 }} more{% endif %}</title>
 <style>
-{% block style %}{% include "style.css" %}{% endblock %}</style>
+{% block style %}
+{% block palette %}{% include "palette.css" %}{% endblock %}
+{% include "style.css" %}
+{% endblock %}</style>
 </head>
 <body>
 <header><div>

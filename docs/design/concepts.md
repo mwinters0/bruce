@@ -65,7 +65,7 @@ decisions each carries are cited in its module's doc.
   (what the change removed that pages outside the build link to, D56) each in their own child,
   the crawl run's digest (D64) in `digest`, its document in the `document` child, its sections' queries in `sections`,
   the run it is compared with, and the anchors removed since (in the JSON alone), in `compare` (D73), the breakage new and fixed since, each new link with its cause, in `cause` (D74), what is new since in each section that marks it in `novelty` (D75), its JSON in `json`, its HTML as the default view (D95) in `view`: the template engine, its formatter and its filters in the parent
-  file and `filters`, the view's template and stylesheet, embedded from the directory it holds; the model a rendering reads, holding no words, in `model`:
+  file and `filters`, the view's template, stylesheet and palette, embedded from the directory it holds; the model a rendering reads, holding no words, in `model`:
   the findings its counts, lists and ranking keep under the severity map, a kind at none being none (D92), in its `standing` child, the broken targets a section lists in `targets`, the settings off their defaults and the changes that judge in `policy` (D91), the rows of a table found by column name in `row`, and the whole of it as the one tree of values a template reads in `context`; the policy rows that differ between the two runs compared in the `changes` child (D91),
   the views they read in `views`, the table's
   text and JSON in `table` and the failures in `error`.

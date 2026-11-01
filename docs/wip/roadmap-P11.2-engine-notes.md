@@ -5,7 +5,7 @@ What 11.3 inherits. The spec's slice list is [`roadmap-P11-view.md`](roadmap-P11
 ## What landed
 
 - **`report::digest::view`** holds the minijinja environment and renders the default view, whose files are
-  `view/default/digest.html` and `style.css`, embedded and registered under those plain names. `Digest::html()` is the
+  `view/default/digest.html`, `style.css` and `palette.css`, embedded and registered under those plain names. `Digest::html()` is the
   default view over the model and panics on a failure, the default being tested; 11.3 makes it a `Result`.
 - **`report::digest::model::context`** presents the `Digest` and the derived part as one tree of values: maps and
   lists built eagerly, no `Object`, no serde. A table's row is a map from its column names to its cells (`is_new`
@@ -21,9 +21,8 @@ What 11.3 inherits. The spec's slice list is [`roadmap-P11-view.md`](roadmap-P11
 
 ## What 11.3 inherits
 
-- **The environment is built per call** (`default_view`) and its two templates are added under `digest.html` and
-  `style.css`. The `bruce:` prefix, the override's directory and the loader that resolves them are 11.3's; so is
-  `--write-default-view`, which writes these two files.
+- **The environment is built per call** (`default_view`) and its three templates are added under their plain names. The `bruce:` prefix, the override's directory and the loader that resolves them are 11.3's; so is
+  `--write-default-view`, which writes these three files.
 - **The syntax is the environment's, so a deployment's view has it too**: `trim_blocks`, `lstrip_blocks` and
   `keep_trailing_newline`. A block tag on a line of its own prints nothing, an inline one followed by a line end eats
   it (`+%}` keeps it). The manual 11.3 writes says so.
@@ -32,11 +31,10 @@ What 11.3 inherits. The spec's slice list is [`roadmap-P11-view.md`](roadmap-P11
 - **Macros and top-level `set`s are visible in a child's blocks and in the render context** (an experiment over
   minijinja 3.0.5, which the tests do not hold): a view extending `digest.html` may call `num`, `a`, `dot` and the rest.
   A macro must be defined before the template text calling it.
-- **Blocks**: `style` (the whole stylesheet, `style.css` included), `intro` (empty, under the header), `figures`,
+- **Blocks**: `style` (the whole stylesheet, `palette` and `style.css` included), `palette` (see
+  [11.2.1](roadmap-P11.2.1-palette-notes.md)), `intro` (empty, under the header), `figures`,
   `broken_since`, `fixed_since`, `pages`, `repos`, `targets`, `errors`, `housekeeping` and `guide`, the last holding
-  `guide_doubled_slash` and `guide_pedantic`. The spec's `palette` is `style`: the stylesheet is one file whose palette
-  is two pieces (`:root` and `@media print`), and a block cannot be inside an included file. A deployment replaces
-  `style` or writes `{{ super() }}` and its own `:root`.
+  `guide_doubled_slash` and `guide_pedantic`.
 - **Plurals are English**: the `counted` macro adds an `s` unless `n == 1`, and `is`/`are` is an `if`. A translated
   view brings its own, and the two-form plural filter the spec names is 11.3's.
 - **The cause words and the unchecked reasons' meanings are in the template** (a dictionary at its top, an `if` chain),

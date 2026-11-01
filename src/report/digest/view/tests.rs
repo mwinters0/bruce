@@ -1367,3 +1367,32 @@ fn the_filters_take_the_conventions_a_view_states() {
     assert_eq!(said("{{ 'https://e.test/a' | short }}"), "e.test/a");
     assert_eq!(said("{{ 'ftp://e.test/a' is web }}"), "False");
 }
+
+#[test]
+fn the_palette_is_both_root_rules_ahead_of_the_rest_of_the_sheet() {
+    let html = html();
+    let print = html
+        .find("@media print {\n  :root {")
+        .expect("the print :root");
+    let sheet = html.find("* { box-sizing").expect("the sheet");
+    assert_eq!(html.matches(":root {").count(), 2);
+    assert!(html.find(":root {").unwrap() < print && print < sheet);
+}
+
+#[test]
+fn a_view_replacing_the_palette_keeps_the_sheet_and_loses_both_default_roots() {
+    let mut env = default_view();
+    env.add_template(
+        "own.html",
+        "{% extends \"digest.html\" %}{% block palette %}:root { --bg: red; }\n{% endblock %}",
+    )
+    .unwrap();
+    let html = env
+        .get_template("own.html")
+        .unwrap()
+        .render(model::context(&of(&store())))
+        .unwrap();
+    assert!(html.contains(":root { --bg: red; }\n* { box-sizing"));
+    assert_eq!(html.matches(":root").count(), 1);
+    assert!(!html.contains("color-scheme: dark"));
+}

@@ -46,7 +46,7 @@ The digest's view: [`../wip/roadmap-P11-view.md`](../wip/roadmap-P11-view.md).
 
 - [x] **11.1** The model: the derived part out of `html` into `report::digest::model`, the sitemap note a key and a text; output unchanged ([notes](../wip/roadmap-P11.1-model-notes.md))
 - [x] **11.2** The engine and the default view: minijinja, the default rendering today's HTML byte for byte, `html` deleted ([notes](../wip/roadmap-P11.2-engine-notes.md))
-- [ ] **11.2.1** The palette block: `palette` (`palette.css`, both `:root` rules) inside `style`, the golden file regenerated once
+- [x] **11.2.1** The palette block: `palette` (`palette.css`, both `:root` rules) inside `style`, the golden file regenerated once ([notes](../wip/roadmap-P11.2.1-palette-notes.md))
 - [ ] **11.3** Views from the command line: `--view`, `--json` / `--no-json`, `--write-default-view`, `bruce:`, the version declaration, all or nothing, the filters, CSV escaping
 - [ ] **11.4** The litmus tests: a Czech view and a CSV view over the e2e fixture site, the derived part in the manual
 
