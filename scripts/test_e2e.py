@@ -298,6 +298,13 @@ class Views(unittest.TestCase):
     def test_views_that_match_the_json_and_their_golden_files_are_accepted(self) -> None:
         self.assertEqual(self.check(), [])
 
+    def test_the_share_rounds_half_up_and_is_not_truncated(self) -> None:
+        self.assertEqual(e2e.czech_share(1, 8), "12,5\u00a0%")
+        self.assertEqual(e2e.czech_share(2, 3), "66,7\u00a0%")
+        self.assertEqual(e2e.czech_share(1, 16), "6,3\u00a0%")
+        self.assertEqual(e2e.czech_share(0, 7), "0,0\u00a0%")
+        self.assertEqual(e2e.czech_share(25, 304), "8,2\u00a0%")
+
     def test_a_csv_field_holding_a_comma_or_quotes_is_one_field(self) -> None:
         self.assertEqual(e2e.records(self.CSV)[1][1], 'Page, "one"')
 

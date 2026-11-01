@@ -81,8 +81,9 @@ colours: `--write-default-view DIR` writes `digest.html`, `style.css` and `palet
 writes the digest through the edited copy. A view is any text format: the file's extension picks how a value it
 prints is escaped, HTML's for `.html`, `.htm` and `.xml`, **one quoted CSV field for `.csv`** (the view writes the
 commas and line ends, and a value's quotes are doubled), and none for any other. A `none` prints as nothing, and
-`{{ x|safe }}` prints `x` as it is; a boolean prints `True` or `False`, as in Jinja. A name the model lacks is an error naming the file, the line and the
-expression, never an empty string.
+`{{ x|safe }}` prints `x` as it is; a boolean prints `True` or `False`, as in Jinja. Every number the model holds is an
+integer, and a ratio is the view's own arithmetic (`//` and `%`, or `/` and `round`, both the engine's builtins). A name
+the model lacks is an error naming the file, the line and the expression, never an empty string.
 
 A view changes the default or replaces it:
 

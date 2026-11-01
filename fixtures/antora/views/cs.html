@@ -1,4 +1,4 @@
-{# The digest in Czech (P11's first litmus test): a whole-document view, so every sentence is here and the model gives only values. Czech has three plural forms (1; 2 to 4; 0 and 5 up, 22 included), a decimal comma, a space between thousands and a date as `1. 11. 2026`; the view states each as a macro or a filter's argument. The sitemap note is keyed by the profile's key, the profile's English being the fallback. The figures' paragraph adds the share of broken links, which the default lacks: the one real value showing the decimal comma end to end, `view::litmus` testing `percent` on literals only. #}
+{# The digest in Czech (P11's first litmus test): a whole-document view, so every sentence is here and the model gives only values. Czech has three plural forms (1; 2 to 4; 0 and 5 up, 22 included), a decimal comma, a space between thousands and a date as `1. 11. 2026`; the view states each as a macro or a filter's argument. The sitemap note is keyed by the profile's key, the profile's English being the fallback. The figures' paragraph adds the share of broken links, which the default lacks: the one real value showing the decimal comma end to end, `view::litmus` testing `percent` on literals only. `percent` rounds half up, in integer arithmetic. #}
 {% set bruce_model = 2 %}
 {% macro num(n) %}{{ n|thousands(" ") }}{% endmacro %}
 {% macro counted(n, one, few, many) %}{{ num(n) }} {% if n == 1 %}{{ one }}{% elif n >= 2 and n <= 4 %}{{ few }}{% else %}{{ many }}{% endif %}{% endmacro %}
@@ -8,7 +8,7 @@
 {% macro when(s) %}<time datetime="{{ s|time("%Y-%m-%dT%H:%M:%SZ") }}">{{ cz_day(s) }} {{ s|time("%H:%M:%S") }} UTC</time>{% endmacro %}
 {% macro day(s) %}<time datetime="{{ s|time("%Y-%m-%d") }}">{{ cz_day(s) }}</time>{% endmacro %}
 {% macro duration(secs) %}{% set h = secs // 3600 %}{% set m = secs % 3600 // 60 %}{% set s = secs % 60 %}{% if h == 0 and m == 0 %}{{ s }} s{% elif h == 0 %}{{ m }} min {{ s }} s{% else %}{{ h }} h {{ m }} min {{ s }} s{% endif %}{% endmacro %}
-{% macro percent(part, whole) %}{% set tenths = part * 1000 // whole %}{{ tenths // 10 }},{{ tenths % 10 }}{{ " " }}%{% endmacro %}
+{% macro percent(part, whole) %}{% set tenths = (part * 2000 // whole + 1) // 2 %}{{ tenths // 10 }},{{ tenths % 10 }}{{ " " }}%{% endmacro %}
 {% macro level_name(level) %}{% if level == "broken" %}Nefunkční{% elif level == "attention" %}Pozornost{% else %}Pedantní{% endif %}{% endmacro %}
 {% macro dot(level) %}{% if level != "none" %}<span class="sev {{ level }}" role="img" aria-label="{{ level_name(level) }}"></span>{% endif %}{% endmacro %}
 {% macro dot_before(level) %}{{ dot(level) }}{% if level != "none" %} {% endif %}{% endmacro %}

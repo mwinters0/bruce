@@ -69,6 +69,7 @@ from __future__ import annotations
 import argparse
 import collections
 import csv
+import decimal
 import functools
 import hashlib
 import http.server
@@ -431,6 +432,15 @@ def records(text: str) -> list[list[str]]:
     return list(csv.reader(io.StringIO(text, newline="")))
 
 
+def czech_share(part: int, whole: int) -> str:
+    """The share the Czech view prints, from the JSON's totals: to the nearest tenth of a
+    percent, a half up, with a decimal comma and a no-break space before the sign. Decimal
+    arithmetic, so it does not copy the view's integer formula."""
+    tenth = decimal.Decimal("0.1")
+    pct = (decimal.Decimal(part) * 100 / decimal.Decimal(whole)).quantize(tenth, rounding=decimal.ROUND_HALF_UP)
+    return f"{pct}".replace(".", ",") + "\u00a0%"
+
+
 def check_views(
     js: str, cs: str, links: str, golden_cs: Path = GOLDEN_CS, golden_csv: Path = GOLDEN_CSV, save: bool = False,
     port: int = PORT,
@@ -446,8 +456,7 @@ def check_views(
         if english in cs:
             problems.append(f"the Czech view holds the English {english!r}")
     totals = doc["totals"]
-    tenths = (totals["broken_url"] + totals["broken_anchor"]) * 1000 // totals["links"]
-    share = f"{tenths // 10},{tenths % 10}\u00a0%"
+    share = czech_share(totals["broken_url"] + totals["broken_anchor"], totals["links"])
     for czech in ("Přehled kontroly odkazů", "Údržba", "Jak číst tento přehled", share):
         if czech not in cs:
             problems.append(f"the Czech view lacks {czech!r}")

@@ -127,6 +127,9 @@ fn czech_dates_and_decimals_are_the_views_own() {
     assert_eq!(percent(1, 8), "12,5\u{a0}%");
     assert_eq!(percent(1, 3), "33,3\u{a0}%");
     assert_eq!(percent(0, 7), "0,0\u{a0}%");
+    // A share rounds to the nearest tenth, a half up: 2/3 is 66,7 and 1/16 is 6,3, neither truncated.
+    assert_eq!(percent(2, 3), "66,7\u{a0}%");
+    assert_eq!(percent(1, 16), "6,3\u{a0}%");
 }
 
 #[test]

@@ -38,4 +38,4 @@ Allocated so far: M1–M42. <!-- out-of-band-watermark: M42 -->
 
 | Item | Date | What changed | Blocks | Why |
 |---|---|---|---|---|
-| M42 | | The Czech view's `percent` rounds half up, a unit case rounding; `e2e.py` computes the share independently; the manual says a decimal is the view's arithmetic | P11 | [2026-11-01](../status/history/2026-11-01.md), "The Czech view's share stays, rounded" |
+| M42 | 2026-11-01 | The Czech view's `percent` rounds half up, a unit case rounding; `e2e.py` computes the share independently; the manual says a decimal is the view's arithmetic |  | [2026-11-01](../status/history/2026-11-01.md), "The Czech view's share stays, rounded" |
