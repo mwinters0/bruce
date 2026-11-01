@@ -37,7 +37,7 @@ fetched for.
 
 The digest compares its run with another, to say what changed: the header names
 that run, each figure shows its change since it, and the breakage new and the
-breakage fixed since are sections, each left out where it would list nothing. **By default** the other run is the finished crawl run before the
+breakage fixed since are sections, each left out where nothing broke or was fixed. **By default** the other run is the finished crawl run before the
 digest's in the database; a `check-dir` run is never one. **`--from`** names
 another run of the database. **`--since`** names a baseline file, for a
 deployment that keeps no history: the digest imports its run, reads it, and
@@ -92,8 +92,8 @@ field for it. A page's and a repo's counts are of their links by level, and
 they rank by their red links, then their amber ones. A part of a count that a reason's key moved
 off its outcome's level names that reason, "● 2 broken links (`doubled_slash`)". The lists that are not links (orphans, unlisted pages, sitemap
 entries, the unchecked counts) have no dot. **A bar at the left edge** marks a
-row or a drill-down that is new since the compared run, as the JSON's `new`
-says ([below](#the-json)), and a drill-down that is not new counts its new
+row or a drill-down that is new since the compared run, as the JSON's
+`new_listed` says where a list has it, else its `new` ([below](#the-json)), and a drill-down that is not new counts its new
 links in its summary, "● 4 broken links, 1 new"; the figures' legend says
 so. A digest with no compared run marks nothing, and the unchecked counts
 and the hosts checked are never marked, nor the two sections that are all
@@ -117,11 +117,11 @@ new or all fixed. In this order:
    closed drill-down of the links, with the page each is on, what it is written as
    and names, and the source of the page answering for it (the target's, as the compared
    run recorded it where it did, else as this run does, for a target removed, moved or
-   without the anchor, else the linking page's). Left out, with its link in the header, where no link broke since,
-   every one that did is at `"none"`, or there was no compared run.
+   without the anchor, else the linking page's). Left out, with its link in the header, where no link broke since
+   or there was no compared run; where every one that did is at `"none"`, it says so.
 4. **Fixed since the previous run**: the links the compared run had broken that are
    not broken in this one, each with what it is now and the linking page's source.
-   Left out, as section 3 is, where none was fixed or every one is at `"none"`.
+   Left out, or saying the map empties it, as section 3 is.
 5. **Pages, by the broken links on them**: each page that holds one, or a
    link that could not be verified, as a drill-down of those links, with its live page and
    its source. Its summary reads, for a page of 181 links to a broken URL, 3
@@ -152,8 +152,8 @@ new or all fixed. In this order:
    Its *Written
    as* is the link as the page has it, *Resolves to* the URL it names, *Kind*
    the element holding it (`anchor` is an `<a href>`, as [`bruce report`](report.md)'s `--kind` names it),
-   and *Problem* and *Status* what the target answered: `URL broken` or
-   `fragment missing`. A page with an unresolved `xref:` that looks like a
+   and *Problem* and *Status* what the target answered: `URL broken`,
+   `fragment missing` or `error`, with the reason where there is one. A page with an unresolved `xref:` that looks like a
    typo has a Hint column, the nearest page ID.
 6. **Repos, by the broken links on their pages**: the repos whose pages hold
    broken links, ranked and counted as the pages are, each with links to its pages in section 5,
@@ -245,8 +245,10 @@ this one was compared with, or `null` where there was none.
 **What is new since it**: each row of `broken_targets`, `pages`, `broken`,
 `by_repo`, `errors` and the housekeeping's `redirects`, `orphans`, `unlisted`
 and `sitemap_entries` has `new`, true where `compared_with`'s same list had
-no such row: the same page, target and fragment, or for a broken link, one
-`new_breakage` lists. A repo is new where its pages hold a broken link or an
+no row of its key: the page, for `pages`, `orphans`, `unlisted` and
+`sitemap_entries`; the target and fragment for `broken_targets`; the landing
+for `redirects`; the page, target and fragment for `errors`. A broken link is
+new where `new_breakage` lists it. A repo is new where its pages hold a broken link or an
 error and held none then. `pages` and `by_repo` also have `new_links`, the
 new rows of `broken` and `errors` on the page or the repo's pages. `pages`,
 `by_repo`, `errors`, `broken_targets` and `redirects` also have `new_listed`,

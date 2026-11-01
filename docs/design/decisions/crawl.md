@@ -40,13 +40,13 @@ repeat mattering at docs.fp.o's pace.
 Code: `crawl::Shared::write`. Evidence: `crawl::tests::a_redirect_is_a_chain_and_its_landing_page_is_recorded_once`.
 
 ### D61 Live slots are shared among the hosts with work, and a build's reads have a budget of their own
-A host's targets, filed by their first URL's host, hold at most the live slots divided by the hosts with a target
-waiting or running, taken in turn, so the forge's waiters for its one-a-second pace leave docs.fp.o its share; a host
-alone has every slot. A build's reads run in a budget of their own, so no waiter for production's pace (the prefix's
-host) holds a slot a read wants. Rejected: a fixed cap per host; turn-taking alone; asking the fetcher whether a pace is
-free, a trait method; the build as a third lane of the live slots; `available_parallelism`, differing by machine.
-Reopens: a host whose concurrency (D8) exceeds its share. Code: `crawl::schedule`. Evidence:
-`crawl::schedule::tests::the_builds_reads_run_whatever_waits_on_the_prefix_host`.
+A host starts a target, filed by its first URL's host, only while it runs fewer than the live slots divided by the hosts
+with a target waiting or running, taken in turn, what it runs already finishing, so the forge's waiters for its
+one-a-second pace leave docs.fp.o its share; a host alone has every slot. A build's reads run in a budget of their own,
+so no waiter for production's pace (the prefix's host) holds a slot a read wants. Rejected: a fixed cap per host;
+turn-taking alone; asking the fetcher whether a pace is free, a trait method; the build as a third lane of the live
+slots; `available_parallelism`, differing by machine. Reopens: a host whose concurrency (D8) exceeds its share. Code:
+`crawl::schedule`. Evidence: `crawl::schedule::tests::the_builds_reads_run_whatever_waits_on_the_prefix_host`.
 
 ### D48 A stop drops each target's hops 30 s after it; "cut" is every target found and not written
 Every started target's hops end at one instant, the stop plus `STOP_GRACE`, and one whose hops ended still writes whole,

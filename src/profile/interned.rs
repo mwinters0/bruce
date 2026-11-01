@@ -2,9 +2,9 @@
 //! [`Profile::name`](super::Profile::name) and the region are `'static`, and a
 //! config's are known only at run time. Each distinct text is leaked the first
 //! time anything asks for it and handed out again after, as [`selectors`](super::selectors)
-//! keeps its parses, so a registry built per report (as a run's recorded
-//! profiles rebuild one) adds nothing once its definitions have been seen:
-//! the cache is bounded by the distinct definitions, never by builds or pages.
+//! keeps its parses, so a registry built again (as each test builds one)
+//! adds nothing once its definitions have been seen: the cache is bounded by
+//! the distinct definitions, never by builds or pages.
 
 use std::collections::{HashMap, HashSet};
 use std::sync::{LazyLock, Mutex};
@@ -25,7 +25,8 @@ pub fn text(text: &str) -> &'static str {
 }
 
 /// `texts` as a `'static` slice of `'static` strs, the same one for every ask of
-/// the same list.
+/// the same list. Two threads asking at once each leak a slice, and the first
+/// stored is the one handed out.
 pub fn list(texts: &[String]) -> &'static [&'static str] {
     if let Some(found) = LISTS.lock().unwrap_or_else(|e| e.into_inner()).get(texts) {
         return found;

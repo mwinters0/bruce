@@ -46,7 +46,7 @@
 //! `relative` says the link's `raw_href` keeps its page's path: it is resolved
 //! against it (`../`, `committee/`) or is a `?query` on it. `counted` says the
 //! link counts in the reports (D88): not a link on a page whose URL doubles a
-//! slash and whose twin, the URL with its slashes collapsed, is a page of the
+//! slash, where the policy makes that a fault on its host, and whose twin, the URL with its slashes collapsed, is a page of the
 //! run, and not a broken or errored `relative` one on such a page without a twin, which
 //! the doubled slash breaks and the linking page answers for. `doubled_slash`
 //! lists the targets whose URL doubles a slash, or whose landing does, with

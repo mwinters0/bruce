@@ -4,8 +4,8 @@
 //! A run reads the roots' sitemaps first, so a page a sitemap lists is
 //! claimed as listed before any link can name it (D47), and then seeds the
 //! roots' URLs and the pages the sitemaps listed. It writes each target
-//! once, at most [`WORKERS`] requests at a time and each host's targets, filed by
-//! their first URL's host, at most its share of them, and a build's reads in a budget of their own (`schedule`, D61), a host's own pace held by the fetcher (D8). One task follows one target's hops itself, so each passes
+//! once, at most [`WORKERS`] live targets at a time, each host starting one, filed by
+//! its first URL's host, only while below its share of them, and a build's reads in a budget of their own (`schedule`, D61), a host's own pace held by the fetcher (D8). One task follows one target's hops itself, so each passes
 //! robots.txt and its host's rate (D7), reads the answer, and then, on the
 //! blocking pool, extracts the page and sends its rows to the writer from
 //! there, so the writer's bounded channel pushes back on the pool and not on
@@ -29,7 +29,7 @@
 //! robots.txt names, or else the first of `sitemap.xml` under the root and at
 //! the host that answers with one (D40), and the root links to each of them
 //! that is an `http` or `https` URL, kind
-//! `sitemap_file`, once though two roots share the file; a file probed and not
+//! `sitemap_file`, once, a file two roots share being read once; a file probed and not
 //! found writes nothing, since nothing named it (D47). A root with no sitemap
 //! goes on by links alone, and has no `sitemap_file` link to show for it.
 //!
@@ -87,9 +87,11 @@ use sitemap::Sitemap;
 pub use crate::fetch::Stopper;
 pub use frontier::{Baseline, Externals};
 
-/// Requests in flight at once, across hosts, each host holding at most its
-/// share (D61). A host's own cap and pace are the fetcher's (D8); this only
-/// bounds the tasks a run holds.
+/// Live targets in flight at once, across hosts, each host starting one only
+/// while below its share (D61). A target is in the budget of its first URL,
+/// so a read of the build that redirects live stays in [`BUILD_WORKERS`]. A
+/// host's own cap and pace are the fetcher's (D8); this only bounds the tasks
+/// a run holds.
 const WORKERS: usize = 64;
 
 /// Reads of a local build in flight at once, a budget of its own that no
@@ -464,8 +466,8 @@ where
     }
 
     /// Asks about `start` and every target it leads to, at most [`WORKERS`]
-    /// requests at a time and the targets filed under each host, by the host
-    /// of their first URL, at most its share of them, and at most
+    /// live targets at a time, a host starting one filed under it, by the host
+    /// of its first URL, only while below its share of them, and at most
     /// [`BUILD_WORKERS`] reads of the build besides (D61). With `hold`,
     /// only sitemaps are asked about and every other target found goes there
     /// instead. Once stopped it starts nothing, and returns when the targets

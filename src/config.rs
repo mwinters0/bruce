@@ -75,8 +75,9 @@ pub struct Config {
 }
 
 /// The `allowlist`: hosts named outright, and domains written `*.<domain>`
-/// whose every host below them, at any depth, is named (D68). Each entry is
-/// normalised as [`Host`] prints a host.
+/// whose every host below them, at any depth, is named but a root's
+/// ([`Config::is_allowlisted`], D68). Each entry is normalised as [`Host`]
+/// prints a host.
 #[derive(Debug, Clone, Default)]
 pub struct Allowlist {
     entries: Vec<String>,
@@ -324,7 +325,8 @@ impl Config {
     /// Whether `host`, as [`Host`] prints it, is on the allowlist: named
     /// outright, or below a `*.` domain and no host a root starts on (D68).
     /// It runs for every link off the roots' scopes, so it costs a hash
-    /// lookup a label of `host`, whatever the allowlist's length.
+    /// lookup a label of `host`, whatever the allowlist's length, and a pass
+    /// over the roots for a host below a domain.
     pub fn is_allowlisted(&self, host: &str) -> bool {
         self.allowlist.hosts.contains(host)
             || (self.allowlist.is_below_domain(host) && !self.is_root_host(host))

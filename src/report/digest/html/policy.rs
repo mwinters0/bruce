@@ -11,7 +11,7 @@ use super::markup::{esc, w};
 use crate::config::{Entry, Policy};
 
 /// The recorded rows that are not among the defaults' rows, in the order
-/// recorded.
+/// the digest holds them (`Entry::listed_order`).
 pub(super) fn differing(d: &Digest) -> Vec<&Entry> {
     let defaults = Policy::default().entries();
     d.policy.iter().filter(|e| !defaults.contains(e)).collect()

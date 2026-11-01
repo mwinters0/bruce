@@ -25,15 +25,17 @@ use xxhash_rust::xxh3::Xxh3;
 use crate::config::HashScope;
 use crate::profile::{ElementHandlers, compiled};
 
-/// Which scope a page's hash covered (D15): what `hash_root` or the
-/// profile's region matched, or the whole page where nothing did. A reader
+/// Which scope a page's hash covered (D15): what `hash_root` matched, or
+/// the profile's region where neither it nor `hash_exclude` is set, or the
+/// whole page where nothing did. A reader
 /// comparing two hashes needs it, since the same page hashes differently
 /// under each.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Covered {
     /// An element `hash_root` names matched.
     Root,
-    /// The profile's region matched, `hash_root` being unset.
+    /// The profile's region matched, `hash_root` and `hash_exclude` being
+    /// unset.
     Region,
     /// No root element matched, or none was set: the page less its
     /// exclusions.
@@ -88,7 +90,7 @@ fn selector(text: &str) -> Cow<'static, Selector> {
     )
 }
 
-/// A field, length first, so no two sequences of fields hash alike.
+/// A field, length first, so a run of fields reads back one way.
 fn field(h: &mut Xxh3, bytes: &[u8]) {
     h.update(&(bytes.len() as u64).to_le_bytes());
     h.update(bytes);

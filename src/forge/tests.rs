@@ -69,7 +69,7 @@ fn github_and_pagure_shapes() {
 
 #[test]
 fn a_ref_with_a_slash_splits_at_its_first_segment() {
-    // The parse cannot know where the ref ends (the module's second limit).
+    // The parse cannot know where the ref ends (the module's first limit).
     assert_eq!(
         parsed("https://github.com/o/r/edit/feature/x/docs/a.md"),
         shape("https://github.com/o/r", "feature", "x/docs/a.md")

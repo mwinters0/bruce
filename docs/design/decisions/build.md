@@ -7,18 +7,19 @@ module layering, the stack it is built on, the tests, the licence and notices, a
 builds and publishes a release.
 
 ### D31 One crate, `bruce`; its concepts are separated by top-level module, not by crate
-The binary is the only consumer, so a crate boundary buys nothing a module boundary does not. Segregation is enforced
-all the same: each concept in one place (`concepts.md`), module edges one-way (`module_graph.py`), files under
-`file_limits.py`'s caps; the layering is D39. Rejected: a workspace of core, I/O and CLI crates. Reopens: a second
-consumer of the core, or the evidence the `seams` skill's §4 names.
+The binary is the only consumer beside the crate's own tests, benches and `examples/sim_config.rs`, so a crate boundary
+buys nothing a module boundary does not. Segregation is enforced all the same: each concept in one place
+(`concepts.md`), module edges one-way (`module_graph.py`), files under `file_limits.py`'s caps; the layering is D39.
+Rejected: a workspace of core, I/O and CLI crates. Reopens: a second consumer of the core, or the evidence the `seams`
+skill's §4 names.
 
-### D39 The layering: `cli` › `crawl`, `ci`, `report` › `fetch`, `extract`, `store` › `profile` › `forge`, `config` › `url`
-Edges point down only. `config` reads `url`, its scope matching the canonical form (D44). `store` implements
-`profile`'s `Lookup` and asks each profile for its views, so a profile never reaches the DB. Only `cli` names a concrete
-profile, to build the registry (`module_graph.py`'s `CONFINED`). Rejected: `profile` above `extract`, driving the pass,
-which makes the core a library of the profile, the inverse of D32; scope moved to `crawl` to keep `config` lowest,
-splitting it and losing D44's refusal at load; a tier check in `module_graph.py`, its cycle check catching nearly every
-upward edge. Reopens: a skip-tier edge passing review.
+### D39 The layering: `cli` › `crawl`, `ci`, `report` › `fetch`, `extract`, `store` › `profile` › `config` › `forge`, `url`
+Edges point down only. `config` reads `url`, its scope matching the canonical form (D44), and `forge`, building a source
+rule to refuse it at load (D93). `store` implements `profile`'s `Lookup` and asks each profile for its views, so a
+profile never reaches the DB. Only `cli` names a concrete profile, to build the registry (`module_graph.py`'s
+`CONFINED`). Rejected: `profile` above `extract`, driving the pass, which makes the core a library of the profile, the
+inverse of D32; scope moved to `crawl` to keep `config` lowest, splitting it and losing D44's refusal at load; a tier
+check in `module_graph.py`, its cycle check catching nearly every upward edge. Reopens: a skip-tier edge passing review.
 
 ### D11 Our own stack, not lychee-lib; lol_html is the tokenizer
 reqwest, texting_robots, lol_html and duckdb, a host's pace its own next-allowed instant (`fetch::http::host`). What is

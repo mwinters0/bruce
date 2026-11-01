@@ -145,7 +145,8 @@ fn a_redirect_is_introduced_where_the_baseline_did_not_have_it() {
 #[test]
 fn a_pedantic_redirect_shows_its_reason_and_comes_last_and_fails_nothing() {
     let store = store();
-    // 19 redirects to itself with a final slash: its link sorts before 20's.
+    // 19 redirects to itself with a final slash: by its href its link would
+    // sort before 20's.
     target(&store, 2, 19, 200, "ok", None);
     store
         .connection()

@@ -66,7 +66,7 @@ pub struct Extracted {
 /// Why a page could not be extracted.
 #[derive(Debug)]
 pub enum Error {
-    /// The root names a profile that is not compiled in.
+    /// The root names a profile the registry does not hold.
     Profile(UnknownProfile),
     /// `lol_html` gave up on the page.
     Rewrite(RewritingError),

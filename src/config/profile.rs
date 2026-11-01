@@ -29,13 +29,13 @@ pub struct Definition {
     /// The compiled profile this one extends (D94): it does all its base does,
     /// its own rules added, its facts in `<name>.*` and the base's in the
     /// base's namespace. `cli` names the compiled profiles, so only the name's
-    /// shape is checked here (D39).
+    /// shape, and that it is not this profile's, is checked here (D39).
     pub extends: Option<String>,
     /// A regex matched against a page's generator meta under `auto`, which
     /// then picks this profile (D35); none leaves it to a root naming it.
     pub generator: Option<String>,
-    /// The content region (D34), each entry one compound selector; empty
-    /// takes `generic`'s.
+    /// The content region (D34), each entry one compound selector or a list
+    /// of them; empty takes the base's, or `generic`'s with none.
     pub region: Vec<String>,
     /// A selector for the link that is the page's edit link, where the core's
     /// ranking earns none (D36).
@@ -57,7 +57,8 @@ pub struct Definition {
 pub struct SourceRule {
     /// What the regex is matched against: `url` or `edit_link`.
     pub from: String,
-    /// The regex, with the named captures `repo`, `ref` and `path`.
+    /// The regex, whose named captures `repo`, `ref` and `path` give what no
+    /// template states.
     pub pattern: String,
     /// A template for the repo, `${name}` expanding a capture; none takes
     /// the capture `repo`.

@@ -45,7 +45,7 @@ and a file naming roots refuses one ([`crawl.md`](crawl.md)).
 | `include` | `[]` | URL globs a page must match to be crawled. Empty means everything under the root's path prefix (below). |
 | `exclude` | `[]` | URL globs that keep a page out, even when `include` matches it. |
 | `strip_query` | `false` | Whether a URL's `?query` is dropped, in this root's scope, when `bruce` decides which URLs are the same page (below). |
-| `sitemap` | discovered | The sitemap to start from. By default, the `Sitemap:` lines of the host's `robots.txt`, then `sitemap.xml` under the root, then `sitemap.xml` at the host. |
+| `sitemap` | discovered | The sitemap to start from. By default, the `Sitemap:` lines of the host's `robots.txt` where `robots` is on, then `sitemap.xml` under the root, then `sitemap.xml` at the host. |
 | `profile` | `"auto"` | How the root's pages are read: `"auto"`, `"generic"`, `"antora"` or the name of a [profile](#profiles) the file defines. |
 | `hash_root` | `[]` | CSS selectors for the part of each page whose change counts as the page changing (below). |
 | `hash_exclude` | `[]` | CSS selectors for parts of each page whose change never counts (below). |
@@ -146,16 +146,16 @@ A **profile** the file defines reads a site generator that `generic` and
 with `name`, and a root's `profile = "<name>"` (or a generator pattern, below)
 picks it. The name is a letter, then letters, digits, `-` and `_`; `auto`,
 `generic` and `antora` are taken, and a name given twice is refused. It starts
-every fact the profile records: `<name>.<key>`. Under `"auto"`, the profiles are
+every fact the profile's own rules record: `<name>.<key>`. Under `"auto"`, the profiles are
 tried in the order the file writes them, before `antora`.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `profile.name` | required | What a root's `profile` names, and the start of each fact's key. |
+| `profile.name` | required | What a root's `profile` names, and the start of the key of each fact its rules read. |
 | `profile.extends` | none | `"antora"` or `"generic"`: the profile does everything that one does, with its own rules added. See below. |
 | `profile.generator` | none | A regular expression. Under `"auto"`, a page whose `<meta name="generator">` it matches is read by this profile. Without one, only a root naming the profile picks it, or, where it extends one, whatever that one claims. |
-| `profile.region` | `generic`'s: `main`, `[role=main]`, or its base's | Selectors for the elements holding a page's content. Anchors there count as content, and the [content hash](#roots) covers them by default. Each entry is one selector with no space or combinator, as `div.document`. |
-| `profile.edit_link` | none | A selector for the link that is the page's edit link, for a site whose link `bruce` does not recognise. The first match with an `href` is taken. |
+| `profile.region` | `generic`'s: `main`, `[role=main]`, or its base's | Selectors for the elements holding a page's content. Anchors there count as content, and the [content hash](#roots) covers them by default. Each entry is a selector with no space or combinator outside brackets and quotes, as `div.document`, or a list of them split at commas. |
+| `profile.edit_link` | none | A selector for the link that is the page's edit link, for a site whose link `bruce` does not recognise. The first match with an `href` is taken where it resolves to an `http` or `https` URL; otherwise `bruce` picks as it would without one. |
 | `profile.locale_links` | none | A selector for the links of a language menu, each the same page under another locale, such as `a.language[href]`. The segment where a link's path departs from the page's own is that locale's prefix, and a link to a page under it is not checked ([Roots](#roots)). Without one the profile learns no locale, `antora` among them. |
 
 Each `[[profile.fact]]` table, written under the `[[profile]]` it belongs to, reads one fact from a page:
@@ -164,7 +164,7 @@ Each `[[profile.fact]]` table, written under the `[[profile]]` it belongs to, re
 |---|---|---|
 | `profile.fact.key` | required | The fact's name: letters, digits, `-` and `_`. One fact to a key. |
 | `profile.fact.selector` | required | The elements to read. |
-| `profile.fact.attr` | none | The attribute to read, as written, an empty one included. Without it the value is the element's text, trimmed. |
+| `profile.fact.attr` | none | The attribute to read, its value as written, an empty one included. Without it the value is the element's text, trimmed. |
 | `profile.fact.pattern` | none | A regular expression with exactly one capture group, which is the value. An element it does not match gives nothing. |
 
 The first element that gives a value gives the fact; a page with none records
@@ -174,7 +174,7 @@ tells `bruce` where a page's source file is:
 | Key | Default | Meaning |
 |---|---|---|
 | `profile.source.from` | required | What `pattern` is matched against: `url`, the page's own URL, for a site with no edit link; or `edit_link`, the page's edit link, for a forge or a ref `bruce` does not read right. |
-| `profile.source.pattern` | required | A regular expression with the named captures `repo`, `ref` and `path`. |
+| `profile.source.pattern` | required | A regular expression whose named captures `repo`, `ref` and `path` give what no template states. |
 | `profile.source.repo` | the capture `repo` | A template for the repo's URL, `https://host/org/repo`. |
 | `profile.source.ref` | the capture `ref`, or none | A template for the branch or tag. |
 | `profile.source.path` | the capture `path` | A template for the file's path in the repo. |

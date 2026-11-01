@@ -18,7 +18,7 @@ A compiled profile is a module behind a trait, so a new generator is a PR. A dec
 an array of tables named by `name`: a content region, a `generator` pattern, fact rules (a selector, an attribute or the
 text, a regex whose one capture is the value; the first element yielding one, an empty attribute being one and empty
 text not), source rules (D93), an edit-link and a language-menu selector (D67), writing key/value facts (D37). Resolve
-and Views stay empty: resolution is code. Rejected: WASM or out-of-process plugins, no second user; a table keyed by
+is its base's (D94) or none, and Views none. Rejected: WASM or out-of-process plugins, no second user; a table keyed by
 name, TOML not ordering keys where D35 tries them in file order; rules per root, a profile being what D35 chooses by;
 the first match alone, ignoring `pattern`. Code: `config::profile`, `profile::declarative`. Evidence:
 `profile::declarative::tests`.
@@ -49,14 +49,14 @@ formats under one profile, the first match too coarse. Code: `forge::rule`, `con
 `forge::rule::tests`.
 
 ### D94 A declarative profile may extend one compiled profile, adding its rules to all the base does
-`extends = "antora" | "generic"` wraps the base: its Extract with the extension's handlers, finish and source rules
-added (the extension's first), its region where it states one, its detection where it has no `generator`, its Resolve
-and sitemap note, which a report reads off the run's `profile.<name>.extends` row. Facts: the base's keep its namespace
-(`antora.*`), the extension's own are `<name>.*`; `pages.profile` is the extension's name. Why: a deployment then states
-only what is its own, and `group_by` and the base's views are unchanged (D32, D33); its Views are none. Rejected: an
-extension of a declared profile; the base's facts renamed under the extension. Reopens: a second level wanted. Code:
-`profile::declarative`, `cli::registry_for`, `report::digest::sections`. Evidence: `profile::declarative::tests`,
-`report::digest::tests`.
+`extends = "antora" | "generic"` wraps the base: its Extract with the extension's handlers and finish added after the
+base's and its source rules before, its region where it states one, its detection where it has no `generator`, its
+Resolve and sitemap note, which a report reads off the run's `profile.<name>.extends` row. Facts: the base's keep its
+namespace (`antora.*`), the extension's own are `<name>.*`; `pages.profile` is the extension's name. Why: a deployment
+then states only what is its own, and `group_by` and the base's views are unchanged (D32, D33); its Views are none.
+Rejected: an extension of a declared profile; the base's facts renamed under the extension. Reopens: a second level
+wanted. Code: `profile::declarative`, `cli::registry_for`, `report::digest::sections`. Evidence:
+`profile::declarative::tests`, `report::digest::tests`.
 
 ### D17 Each page stores its source file and repo, read from its edit link
 This routes a breakage to the repo and file that own it, and groups more precisely than component (some repos supply
@@ -69,22 +69,22 @@ resolves through `Lookup` over the table. D33's rules can then write only a key 
 per profile, a migration story each; a JSON column, no typed joins and no simpler.
 
 ### D38 A profile has four hooks: detect, extract, resolve, views
-Detect claims a generator string (D35). Extract adds a content region (D34), handlers and a finish step to the core's
-one lol_html pass (D11), writing only to a `Sink`. Resolve maps a tagged reference to a URL through the store's `Lookup`
-(D19, D20, D22). Views is SQL (D37), one of which may be the profile's hints (D87). Beside them, `sitemap_note` gives
-the digest a sentence (D87). `generic` leaves Resolve and Views empty, having no reference that is not a URL and no
-facts. Rejected: region handlers in each profile, each re-deciding `unknown` (D34), which only a page's end settles; a
-profile driving the pass (D39). Reopens: a hook empty in `generic` for any other reason, the trait bending around
-Antora. Code: `profile::Profile`, `profile::Sink`.
+Detect claims a generator string (D35). Extract adds a content region (D34), handlers, source rules (D93) and a finish
+step to the core's one lol_html pass (D11), writing only to a `Sink`. Resolve maps a tagged reference to a URL through
+the store's `Lookup` (D19, D20, D22). Views is SQL (D37), one of which may be the profile's hints (D87). Beside them,
+`sitemap_note` gives the digest a sentence (D87). `generic` leaves Resolve and Views empty, having no reference that is
+not a URL and no facts. Rejected: region handlers in each profile, each re-deciding `unknown` (D34), which only a page's
+end settles; a profile driving the pass (D39). Reopens: a hook empty in `generic` for any other reason, the trait
+bending around Antora. Code: `profile::Profile`, `profile::Sink`.
 
 ### D19 Pages carry Antora resource IDs, and unresolved refspecs resolve through them
-Antora records `(component, version, module, rel_path)` as facts (D37): module and `rel_path` from the edit URL (I8, I26);
-component and version verbatim from the nav container, or on a page with none the component from the URL under the site
-root (I13) and no version. A refspec with no version takes the only or latest version among the pages holding its module
-and path, else the component's latest (KD18). Rejected: the module from the URL, ambiguous with subdirectories; no
-component without a nav container, leaving xrefs into it unresolvable; a version from the URL, no versioned component
-lacking one; the fallback keyed on a nav container lacking `data-component`, inert where that happens (I12). Code:
-`profile::antora`, `profile::antora::resolve`.
+Antora records `(component, version, module, rel_path)` as facts (D37): module and `rel_path` from the source path (I8,
+I26, D93); component and version verbatim from the nav container, or on a page with none the component from the URL
+under the site root (I13) and no version. A refspec with no version takes the only or latest version among the pages
+holding its module and path, else the component's latest (KD18). Rejected: the module from the URL, ambiguous with
+subdirectories; no component without a nav container, leaving xrefs into it unresolvable; a version from the URL, no
+versioned component lacking one; the fallback keyed on a nav container lacking `data-component`, inert where that
+happens (I12). Code: `profile::antora`, `profile::antora::resolve`.
 
 ### D65 An unresolved xref's hint is the nearest page ID by edit distance, within three tenths of the longer, read in the page's own context
 The refspec is completed as Antora read it on its page, so a component-less one finds its page, then compared with the

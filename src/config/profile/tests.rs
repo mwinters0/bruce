@@ -176,7 +176,7 @@ fn a_profile_with_nothing_but_a_name_is_still_a_row() {
 }
 
 #[test]
-fn a_profile_row_is_not_judged_and_is_written_as_the_file_writes_it() {
+fn a_profile_row_is_not_judged_and_is_written_as_its_recorded_key() {
     let policy = Config::parse(SPHINX).unwrap().policy;
     let rows = policy.entries();
     assert!(

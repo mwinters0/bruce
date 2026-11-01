@@ -69,8 +69,8 @@ struct Reading {
     value: Option<String>,
     /// The text of the element being read, undecoded, until its end tag.
     text: String,
-    /// Whether an element is being read, so that none inside it or after it
-    /// starts again.
+    /// Whether an element is being read, so that none inside it starts
+    /// another reading.
     reading: bool,
 }
 

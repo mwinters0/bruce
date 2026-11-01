@@ -1070,7 +1070,8 @@ fn digest_of_with(store: &Store, of: u64, from: u64) -> Digest {
 
 #[test]
 fn a_digest_judges_both_runs_by_its_own_runs_policy_whichever_run_from_names() {
-    // Run 4 is the later: it maps a 404 to `ok`, and run 1 records no policy.
+    // Run 4 is the later by id, the earlier by start; once the row below is in
+    // it maps a 404 to `ok`, and run 1 records no policy.
     let store = compared();
     let broken = |d: &Digest| {
         (
@@ -1089,10 +1090,10 @@ fn a_digest_judges_both_runs_by_its_own_runs_policy_whichever_run_from_names() {
             [],
         )
         .unwrap();
-    // `--from` names the later run: the digest's own run, 1, still judges both.
+    // `--from` names run 4: the digest's own run, 1, still judges both.
     let (own, then) = broken(&digest_of_with(&store, 1, 4));
     assert!(own > 0 && then > 0);
-    // `--from` names the earlier one: the digest's run judges both.
+    // `--from` names run 1: the digest's run, 4, judges both.
     assert_eq!(broken(&digest_of_with(&store, 4, 1)), (0, 0));
     // The run's own verdicts are its own again once the digest is built.
     let own: i64 = store

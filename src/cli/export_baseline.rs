@@ -125,6 +125,9 @@ fn export(args: &Args, registry: &Registry) -> Result<String, String> {
 }
 
 /// Where `out` is written before it replaces anything.
+// deficiency: KD36 The guard compares `--out` with the database, never this
+// path: `--db X.partial --out X`, `X` absent, removes the open database and
+// its `.wal` here. Refusing a `--db` that is `partial(out)` would close it.
 fn partial(out: &Path) -> PathBuf {
     let mut name = out.as_os_str().to_owned();
     name.push(".partial");

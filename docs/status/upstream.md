@@ -29,7 +29,7 @@ back. Numbers up to the watermark are allocated, and none is reused.
 - **Workaround.** A target with a redirect chain is inserted by a cached
   statement, one per chain length, with the chain as a list literal of struct
   literals whose fields are bound scalars (`store/writer.rs`); every other
-  target goes through the appender with a NULL chain. `runs.roots` and
+  target the writer is sent goes through the appender with a NULL chain. `runs.roots` and
   `runs.hash_scopes` are lists too, bound the same way inside list literals
   (`Store::begin_run`). Rejected: `append_record_batch`
   (the `appender-arrow` feature), an Arrow dependency for one column; a `hops`

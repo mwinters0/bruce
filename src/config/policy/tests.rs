@@ -167,7 +167,7 @@ fn a_file_moves_a_kind_to_another_level_and_a_reason_beats_its_outcome() {
 }
 
 #[test]
-fn every_reason_a_link_can_be_broken_or_errored_by_takes_a_level() {
+fn every_reason_but_an_unchecked_links_takes_a_level() {
     // Every reason a level may be set for is accepted, and none of the
     // `unchecked` ones is.
     for reason in Reason::ALL {

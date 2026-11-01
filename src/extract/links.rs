@@ -42,7 +42,8 @@ pub enum Kind {
     Embed,
     /// SVG's `use`, by `href` or `xlink:href`.
     Use,
-    /// The `url=` of `meta[http-equiv=refresh]`.
+    /// The URL in `meta[http-equiv=refresh]`'s `content`, `url=` before it
+    /// or not.
     Refresh,
     /// An entry of a sitemap naming a page, its source the sitemap file. The
     /// extraction pass never yields it: the crawler gives a sitemap's entries
@@ -125,6 +126,11 @@ pub(super) struct Links {
 }
 
 /// The elements read for a URL.
+// deficiency: KD35 `<frame src>`, `<form action>`, `link[imagesrcset]`,
+// SVG's `<script href>` and its `<a>` by `xlink:href` (only `a[href]` is read),
+// and a CSS `url()` in a `style` attribute or `<style>` yield no link, though
+// a browser loads or follows each (D13). Reading them here, each with its
+// kind, would close it; `url()` needs a CSS tokenizer.
 const READ: &str = "a[href], area[href], img, source, link, script[src], iframe[src], \
                     video, audio, track, meta, embed[src], object[data], input, image, use";
 

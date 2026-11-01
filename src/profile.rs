@@ -1,5 +1,5 @@
-//! Profiles: the trait a site generator's extension implements, and the
-//! profiles compiled in (D32–D35, D38). Only `cli` names a concrete one (D39),
+//! Profiles: the trait a site generator's extension implements, the
+//! profiles compiled in, and those a config declares (D32–D35, D38). Only `cli` names a concrete one (D39),
 //! to build the [`Registry`] everyone else reads through.
 //!
 //! A profile never reaches the database: `store` asks it for its [`View`]s and
@@ -24,7 +24,7 @@ use crate::forge::{Rule, Source};
 pub use selectors::{compiled, element, text};
 
 /// The content region of any site (D34): `generic`'s, which a declarative
-/// profile naming none takes as its own.
+/// profile naming none and extending none takes as its own.
 const GENERIC_REGION: &[&str] = &["main", "[role=main]"];
 
 /// An error a profile or the store behind its [`Lookup`] hands back.
@@ -100,7 +100,8 @@ pub struct View {
 }
 
 /// The facts one profile records about one page (D37), each key kept under
-/// the profile's name as `<profile>.<key>`.
+/// a namespace as `<namespace>.<key>`: the profile's, and an extension's own
+/// beside its base's (D94).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Facts {
     namespace: &'static str,
@@ -318,7 +319,8 @@ pub trait Lookup {
     }
 }
 
-/// The profiles compiled in, built by `cli` (D39). One is the fallback.
+/// The profiles compiled in and declared, built by `cli` (D39). One is the
+/// fallback.
 pub struct Registry {
     profiles: Vec<Box<dyn Profile>>,
 }

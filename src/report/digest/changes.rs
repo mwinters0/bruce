@@ -141,9 +141,9 @@ fn differences(from: &[Entry], to: &[Entry], used: &BTreeSet<String>) -> Vec<Cha
 }
 
 /// The rows other than source rules: those of a (host, key) held by one side
-/// alone are removed or added, a key whose one value changed is a change, and
-/// a key holding several values (`schemes`, `region`) lists the values it lost
-/// and gained apart.
+/// alone are removed or added, a key that lost one value and gained one is a
+/// change, and a key losing or gaining several (`schemes`, `region`) lists the
+/// values it lost and gained apart.
 fn plain_changes(from: &[&Entry], to: &[&Entry]) -> Vec<Change> {
     let keys: BTreeSet<(&Option<String>, &String)> =
         from.iter().chain(to).map(|e| (&e.host, &e.key)).collect();

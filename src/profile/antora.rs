@@ -3,7 +3,9 @@
 //!
 //! Extract records a page's coordinates as facts (D19, I8): `component` and
 //! `version` from the nav container, verbatim; `module` and `rel_path` from
-//! the edit URL's `modules/<module>/pages/<rel_path>` tail. A page with no
+//! the source path's `modules/<module>/pages/<rel_path>` tail, or a bare
+//! `pages/<rel_path>` as `ROOT`'s (I26), the source a rule's or the edit
+//! URL's (D93). A page with no
 //! nav container (a `without_menu` layout) takes its `component` from the first
 //! directory under the site root the search script names (I13), and records
 //! no `version`. A nav container carrying both attributes, as docs.fp.o's
@@ -55,7 +57,7 @@ struct Page {
 impl Page {
     /// Records what only the settled page can give: the component of a page
     /// with no nav container, from its URL, the module and `rel_path`
-    /// from the edit link.
+    /// from the source.
     fn finish(&self, settled: &Settled, sink: &mut Sink) {
         if !self.nav_container {
             let root = self.site_root_path.as_deref();

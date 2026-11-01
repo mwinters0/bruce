@@ -125,10 +125,10 @@ impl Reason {
         stored == Some(self.as_str())
     }
 
-    /// Whether `[severity]` may set a level for this reason: those of a link
-    /// that is broken, errored or a redirect to correct. The reasons of an
-    /// `unchecked` link take none (D76), and `no_anchors` and `text_fragment`
-    /// are theirs.
+    /// Whether `[severity]` may set a level for this reason: every reason but
+    /// an `unchecked` link's, which take none (D76), `no_anchors` and
+    /// `text_fragment` among them. An `ok` link's `too_large` and
+    /// `pedantic_trailing_slash` take one.
     pub fn takes_level(self) -> bool {
         match self {
             Reason::Nxdomain

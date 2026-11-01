@@ -37,8 +37,10 @@ impl Entry {
         self.host.is_none() && self.key.starts_with("profile.")
     }
 
-    /// The setting as a file writes it, for a person to read: its dotted
-    /// path, then `=` and the value, `+=` for an element of `judge.schemes`.
+    /// The setting for a person to read: its dotted path, then `=` and the
+    /// value, `+=` for an element of `judge.schemes` or of a profile's
+    /// `region`. A profile's row keeps its recorded key, which a file writes
+    /// as a `[[profile]]` entry, not as that path.
     pub fn written_as(&self) -> String {
         if self.host.is_none() && self.key == "gate.fail" {
             let list: Vec<String> = self

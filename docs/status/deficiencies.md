@@ -90,4 +90,19 @@ roadmap's phase index.
   unowned**: a CI run whose redirects reach another locale would promote it.
   Detail: `src/crawl/frontier.rs`
 
-<!-- deficiency-watermark: KD34 -->
+- **KD35** — `<frame src>`, `<form action>`, `link[imagesrcset]`, SVG's
+  `<script href>` and `<a xlink:href>`, and CSS `url()` yield no link, so a
+  broken one is never found (D13). **(c) unowned**: a site whose pages
+  reference one would promote it. Detail: `src/extract/links.rs`
+
+- **KD36** — `bruce export-baseline --db X.partial --out X`, with `X` absent,
+  deletes the database it was asked to export. **(c) unowned**: anyone naming
+  a database `*.partial` would promote it. Detail: `src/cli/export_baseline.rs`
+
+- **KD37** — A `Crawl-delay` too large for an `f32` is ignored where a smaller
+  absurd one is capped at an hour, so the host is paced at its rate or the
+  default, and it displaces a finite delay another origin of the name states
+  (D18, D69). **(c) unowned**: a robots.txt stating one would promote it.
+  Detail: `src/fetch/http/host.rs`
+
+<!-- deficiency-watermark: KD37 -->

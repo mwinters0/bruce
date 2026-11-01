@@ -16,7 +16,9 @@
 //! (`out_of_scope`) where a locale the roots' pages name covers it, and is
 //! else asked as an allowlisted URL is (D10). The locales are learned as the
 //! pages are read ([`Frontier::learn`]), so one that no locale covers yet
-//! waits until every page is read ([`Plan::Outside`], D67).
+//! waits until every page is read ([`Plan::Outside`], D67); a page a redirect
+//! from one of those lands on is read in a round after, judging only what
+//! waits by then (`settle_outside`).
 
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex, RwLock};

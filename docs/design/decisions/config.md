@@ -7,12 +7,12 @@ holds the file and the scope matching; `crawl::frontier` plans each URL against 
 
 ### D5 Configuration is optional TOML, and no flag overrides a key; roots are separate from the allowlist
 `[[root]]`s are crawled fully, each with its own globs, sitemap and profile (D35); the `allowlist` names hosts asked one
-hop deep (D3, D68); `[default]` and `[host."<h>"]` hold pace, concurrency and robots (D8). Roots are configurable so the
-tool is not tied to Fedora, and every key but a root's `url` has a default (D40). `bruce crawl`'s URL stands in for a
-file's absent roots and nothing else, refused beside a file naming roots; per-key flags wait for someone to ask. Keys
-are snake_case and `[[root]]` singular, as Cargo's `[[bin]]`. Rejected: kebab-case, which lychee and mise do not use;
-`allowlist` inside `[host]`, a root's own host belonging there and in no allowlist (D68).
-Code: `config::Config::parse`, `cli::crawl`.
+hop deep (D3, D68); `[default]` holds pace and concurrency, `[host."<h>"]` those and robots (D8). Roots are configurable
+so the tool is not tied to Fedora, and every key but a root's `url` and a `[[profile]]`'s rule fields has a default
+(D40). `bruce crawl`'s URL stands in for a file's absent roots and nothing else, refused beside a file naming roots;
+per-key flags wait for someone to ask. Keys are snake_case and `[[root]]` singular, as Cargo's `[[bin]]`. Rejected:
+kebab-case, which lychee and mise do not use; `allowlist` inside `[host]`, a root's own host belonging there and in no
+allowlist (D68). Code: `config::Config::parse`, `cli::crawl`.
 
 ### D3 Allowlisted external hosts are checked one hop deep and never crawled
 An allowlisted target is asked once and its links never followed: a GET storing its anchors when an anchor link names it

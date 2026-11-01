@@ -11,7 +11,7 @@ fn every_reason_names_itself_once_and_parses_back() {
 }
 
 #[test]
-fn the_reasons_a_severity_takes_are_the_ones_a_broken_or_errored_link_carries() {
+fn the_reasons_a_severity_takes_are_all_but_an_unchecked_links() {
     let levelled: Vec<&str> = Reason::levelled().map(Reason::as_str).collect();
     assert_eq!(
         levelled,

@@ -23,8 +23,8 @@ use url::Url;
 use crate::config::{Config, HostAsking, HostSettings, Rate};
 use crate::fetch::{Access, Failure};
 
-/// The longest wait between two requests to a host. A `Crawl-delay` past it
-/// is read as this, so an absurd one cannot stall the run for good.
+/// The longest wait between two requests to a host. A finite `Crawl-delay`
+/// past it is read as this, so an absurd one cannot stall the run for good.
 const MAX_INTERVAL: Duration = Duration::from_secs(3600);
 
 /// What fetching an origin's robots.txt came to.
@@ -36,7 +36,8 @@ pub enum Listing {
     Absent,
     /// The host answered, but with no file to read: a 5xx or a 429 that
     /// outlasts the retries or the `Retry-After` ceiling, or redirects that led
-    /// nowhere, onto another host that gave no response among them; or a stop. The origin is disallowed
+    /// nowhere; or a stop. A silence on another name a redirect reached is
+    /// `Failed` under that name, which the host reads as this. The origin is disallowed
     /// for the run (RFC 9309), its targets `unchecked`, `robots_unavailable`.
     Unreachable,
     /// A request on `name`, the first or one a redirect kept there, produced
@@ -333,6 +334,12 @@ impl Host {
 /// the default rate never overrides it; with none of either, the default
 /// rate. Where `per_second` is written, it beats a `Crawl-delay` on a host a
 /// root starts on and loses to a slower one anywhere else.
+// deficiency: KD37 `texting_robots` reads a `Crawl-delay` too large for an
+// `f32` as infinite, which the filter here ignores where `MAX_INTERVAL` caps a
+// smaller absurd one, so the host is paced at its rate or the default; and
+// `access` keeps the largest delay among a name's origins, so an infinite one
+// replaces a finite one another origin states. Capping a delay before it is
+// kept, infinite included, would close it.
 fn interval(
     settings: &HostSettings,
     default_per_second: f64,

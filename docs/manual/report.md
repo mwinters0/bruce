@@ -206,7 +206,7 @@ default) and that the run's baseline does not have at one, the failures of `chec
 exit status: `broken`'s columns but `hint`, with one more, `baseline`, after `status`. It
 is `new` where the baseline has no such link (the same page, target and
 fragment), else the outcome the baseline had (`ok`, `unchecked`, `error` or an outcome the
-list leaves out).
+list leaves out). Several links sharing a page, target and fragment are one row.
 Below the text table are the baseline run and its day, the introduced links in
 an outcome the list leaves out, the inverse breakage (`inverse`'s rows, those
 whose outcome the list names, and the rest apart), the redirected links the baseline did not have redirected, the links whose outcome is `error` and

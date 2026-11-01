@@ -118,7 +118,8 @@ breakage not failing**, with a count of its own, and fails nothing.
 
 Text lists, in order:
 
-1. **Introduced breakage**: a row for each link, with the columns
+1. **Introduced breakage**: a row for each link, links sharing a page, target
+   and fragment being one, with the columns
    [`report.md`](report.md)'s `broken` has but `hint`, and one more, `baseline`, naming
    what the baseline had for it: `new` where it had no such link, else the
    outcome it had (`ok`, `unchecked`, `error`, or a `broken_url` or

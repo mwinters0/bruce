@@ -998,7 +998,7 @@ fn a_comparison_with_nothing_new_leaves_out_the_broken_since() {
     assert!(html.contains("<nav><a href=\"#figures\">Figures</a> <a href=\"#pages\">"));
 }
 
-/// `digest` judged by the policy `rows` of (`host`, `key`, `value`) record.
+/// `digest` judged by the policy `rows`, (`key`, `value`) with no host.
 fn with_policy(digest: &mut crate::report::Digest, rows: &[(&str, &str)]) {
     digest.policy = rows
         .iter()

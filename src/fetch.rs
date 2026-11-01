@@ -4,8 +4,8 @@
 //! redirect starts, because the crawler follows hops itself so each one
 //! passes its host's rate limit and robots.txt (D7). It reads a body only
 //! where the caller can use it: a page's 2xx `text/html` (over HTTP,
-//! `application/xhtml+xml` too) response, decoded to a `String` (`charset`), or a
-//! sitemap's 2xx body as bytes. Every other response is classified by its
+//! `application/xhtml+xml` too) response, decoded to a `String` (`charset`), a
+//! sitemap's 2xx body as bytes, or a robots.txt's for its host's access. Every other response is classified by its
 //! status alone, so a link to a PDF costs one request and no download (D16). Classifying a status into an
 //! outcome is the crawler's; what a fetcher owes it is a [`Response`], or a
 //! [`Failure`] saying why there was none.
@@ -53,7 +53,8 @@ pub enum Mode {
 pub struct Response {
     pub status: u16,
     /// The `Location` header as written, relative or not, and `None` where it
-    /// holds a byte no header value may; resolving it against the URL asked
+    /// holds a byte outside visible ASCII (`HeaderValue::to_str`), obs-text
+    /// included; resolving it against the URL asked
     /// is the crawler's.
     pub location: Option<String>,
     /// The `Content-Type` header as written, and `None` as for `location`.
@@ -108,8 +109,9 @@ pub enum FailureKind {
     Reset,
     /// Anything else.
     Other,
-    /// The crawl was stopped before the request was sent. The crawler
-    /// writes nothing for it.
+    /// The crawl was stopped before the hop's next request was sent: its
+    /// first, a retry, or the GET after a HEAD, an answer already had being
+    /// dropped. The crawler writes nothing for it.
     Stopped,
 }
 

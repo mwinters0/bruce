@@ -15,7 +15,7 @@ pub(in crate::config) struct RawDigest {
 }
 
 /// The fact key a file writes: a profile's namespace, a dot and the key
-/// (D37), as `antora.component`. Whether any page carries it is not checked,
+/// (D37), as `antora.component`, each part letters, digits, `-` and `_`. Whether any page carries it is not checked,
 /// the profiles that would record it not being known to the loader; a key no
 /// page carries groups nothing.
 pub(super) fn from_raw(written: Option<&str>) -> Result<Option<String>, String> {

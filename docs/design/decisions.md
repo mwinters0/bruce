@@ -130,7 +130,7 @@ remeasures it.
 ## Build, layering and release
 [`decisions/build.md`](decisions/build.md)
 - **D31** One crate, `bruce`; its concepts are separated by top-level module, not by crate
-- **D39** The layering: `cli` › `crawl`, `ci`, `report` › `fetch`, `extract`, `store` › `profile` › `forge`, `config` › `url`
+- **D39** The layering: `cli` › `crawl`, `ci`, `report` › `fetch`, `extract`, `store` › `profile` › `config` › `forge`, `url`
 - **D11** Our own stack, not lychee-lib; lol_html is the tokenizer
 - **D24** Tests run on saved real pages, a mock HTTP server, and an optional Antora build
 - **D23** DuckDB is bundled; distribution is a release binary on GitHub

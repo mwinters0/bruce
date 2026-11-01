@@ -6,11 +6,12 @@ reference kind, the anchors a browser would scroll to, the placement of each, an
 pass; a profile hands it its region and handlers.
 
 ### D13 Every reference kind is extracted, each target fetched once per run
-Every element that names a URL a browser loads or follows yields a link with its `kind`, so a broken image or
-canonical is found, not only a broken `<a>`; an asset is asked HEAD with a GET fallback. Reports default to `kind =
-anchor`, the gate (D9) to every kind. A scheme other than `http(s)` is never requested (D66); the first `<base href>`
-resolves every href after it. Rejected: `<a href>` only, missing broken images and canonicals; ignoring `<base>`, which
-resolves a site wrongly. Code: `extract::links::Kind`.
+Every element that names a URL a browser loads or follows yields a link with its `kind` (KD35's aside), so a broken
+image or canonical is found, not only a broken `<a>`; an asset is asked HEAD with a GET fallback. Reports default to
+`kind = anchor`, the gate (D9) to every kind. A scheme other than `http(s)` is never requested (D66); the first `<base
+href>` resolves every href after it, but a `/` one in a local build, which takes its site root (D53). Rejected: `<a
+href>` only, missing broken images and canonicals; ignoring `<base>`, which resolves a site wrongly. Code:
+`extract::links::Kind`.
 
 ### D12 A fragment is valid where a browser would scroll to it
 Valid: any non-empty `id`, `name` on `<a>` only, and always `#` and `#top` in any case; matched exactly, as written or

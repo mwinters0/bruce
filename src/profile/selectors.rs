@@ -1,10 +1,9 @@
 //! Selectors compiled once per run (D11, D38). lol_html parses a selector's
 //! text into a [`Selector`] and builds a rewriter's matching program from the
 //! parsed ones; the parse is what this module keeps. A text is parsed the first time anything asks for it
-//! and the result lives to the process's end, so a page's handlers borrow
-//! what the first page parsed. The cache holds one entry per distinct text, which is bounded by
-//! the compiled code's selectors and the config's, so it is leaked rather
-//! than reference-counted.
+//! (by each of the threads asking at once, one parse kept) and the result lives to the process's end, so a
+//! page's handlers borrow what an earlier page parsed. The cache holds one entry per distinct text, which is
+//! bounded by the compiled code's selectors and the config's, so it is leaked rather than reference-counted.
 
 use std::borrow::Cow;
 use std::collections::HashMap;

@@ -13,7 +13,7 @@
 //!
 //! The leftmost marker past the first segment that leaves a ref and a file
 //! path decides. Pagure's is tried before GitHub's, whose `/blob\|edit/<ref>/f/…`
-//! it shadows. Query and fragment are dropped, and the path is kept as the
+//! it shadows, a file `f` at the repo's root included. Query and fragment are dropped, and the path is kept as the
 //! URL spells it, percent-encoding included.
 //!
 //! Two limits of that reading are properties, a source rule being their

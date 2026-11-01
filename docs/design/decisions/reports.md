@@ -59,11 +59,11 @@ Code: `report::digest::cause`. Evidence: `report::digest::cause::tests`.
 
 ### D75 A row is new where the compared run's same section lacked it, a broken link where section 3 lists it, and a bar marks it
 `new` is true where the compared run's same section lacks the row's key: a broken link where `new_breakage` lists it, a
-repo where its pages hold a finding and held none; `pages` and `by_repo` count `new_links`; all are `null` with no
-comparison. `pages`, `by_repo`, `errors`, `broken_targets` and `redirects`, which the HTML lists through the severity
-map, also get `new_listed`: a finding whose key the compared run's section, read through that map, lacked; the HTML
-marks from it. Maintainer, 2026-10-31: `new` stays the data's (D92). Why: a page whose only findings then were at
-`none` was in no HTML. Rejected: a "NEW" pill; HTML-only marks (D64); `new` read through the map; `false` with no
+repo where its pages hold a broken link or an error and held none; `pages` and `by_repo` count `new_links`; all are
+`null` with no comparison. `pages`, `by_repo`, `errors`, `broken_targets` and `redirects`, which the HTML lists through
+the severity map, also get `new_listed`: a finding whose key the compared run's section, read through that map, lacked;
+the HTML marks from it. Maintainer, 2026-10-31: `new` stays the data's (D92). Why: a page whose only findings then were
+at `none` was in no HTML. Rejected: a "NEW" pill; HTML-only marks (D64); `new` read through the map; `false` with no
 comparison. Reopens: a section whose key a change moves wholesale. Code: `report::digest::novelty`. Evidence:
 `report::digest::novelty::tests`.
 
