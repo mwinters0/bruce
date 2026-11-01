@@ -4,9 +4,9 @@
 //! (D6).
 //!
 //! The database must exist. `--out` must not, unless `--force` replaces it;
-//! it is never the database itself. The line printed gives the file's size
-//! and its gzipped size, which a deployer weighs before publishing it
-//! compressed.
+//! it is never the database itself, nor is the `.partial` file written beside
+//! it. The line printed gives the file's size and its gzipped size, which a
+//! deployer weighs before publishing it compressed.
 
 use std::fs::{self, File};
 use std::io::{self, Write};
@@ -96,6 +96,13 @@ fn export(args: &Args, registry: &Registry) -> Result<String, String> {
         return Err(format!("{}: no such database", db.display()));
     }
     let out = args.out.as_path();
+    let partial = partial(out);
+    if same_file(db, &partial) {
+        return Err(format!(
+            "{}: --out's .partial file is the database itself",
+            partial.display()
+        ));
+    }
     if out.exists() {
         if same_file(db, out) {
             return Err(format!("{}: --out is the database itself", out.display()));
@@ -108,7 +115,6 @@ fn export(args: &Args, registry: &Registry) -> Result<String, String> {
     let in_out = |e: &dyn std::fmt::Display| format!("{}: {e}", out.display());
     // Written beside `--out` and renamed onto it, so a refused run leaves the
     // file `--force` would have replaced.
-    let partial = partial(out);
     remove(&partial).map_err(|e| in_out(&e))?;
     let exported = store
         .export_baseline(args.run, &partial, registry)
@@ -125,9 +131,6 @@ fn export(args: &Args, registry: &Registry) -> Result<String, String> {
 }
 
 /// Where `out` is written before it replaces anything.
-// deficiency: KD36 The guard compares `--out` with the database, never this
-// path: `--db X.partial --out X`, `X` absent, removes the open database and
-// its `.wal` here. Refusing a `--db` that is `partial(out)` would close it.
 fn partial(out: &Path) -> PathBuf {
     let mut name = out.as_os_str().to_owned();
     name.push(".partial");

@@ -32,7 +32,7 @@ The run keeps its number.
   request in every CI job reading the file. Name a finished run, or crawl
   again.
 - A database with no finished run, when `--run` names none.
-- A `--out` that is the database itself.
+- A `--out` that is the database itself, or whose `.partial` sibling, where the file is written before it replaces `--out`, is.
 
 ## What it prints
 

@@ -46,5 +46,5 @@ Allocated so far: M1–M39. <!-- out-of-band-watermark: M39 -->
 | M37 | 2026-10-31 | A declared profile's name and region interned through a process-wide cache, as `profile::selectors` caches selectors, not leaked per registry built | | [2026-10-31](../status/history/2026-10-31.md) |
 | M38 | 2026-10-31 | The digest's Housekeeping lists a declared profile's source-rule rows in file order, `source.<i>` sorted as a number | | [2026-10-31](../status/history/2026-10-31.md) |
 | M39 | 2026-10-31 | A comparison's policy fold lists the judging rows that differ apart, as changing no verdict (D81), and each `policy_changes` row says whether it `judges`; amends D91 | | [2026-10-31](../status/history/2026-10-31.md) |
-| M40 | | `bruce export-baseline` refuses a `--db` that is `--out`'s `.partial` path, never deleting the database (KD36) | | [2026-11-01](../status/history/2026-11-01.md) |
+| M40 | 2026-11-01 | `bruce export-baseline` refuses a `--db` that is `--out`'s `.partial` path, never deleting the database (KD36) | | [2026-11-01](../status/history/2026-11-01.md) |
 | M41 | | A `Crawl-delay` too large for an `f32` capped at an hour as an absurd finite one is, and kept so among a name's origins (KD37) | | [2026-11-01](../status/history/2026-11-01.md) |

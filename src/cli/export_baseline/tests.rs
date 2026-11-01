@@ -140,6 +140,20 @@ fn the_database_itself_and_a_missing_database_are_refused() {
 }
 
 #[test]
+fn the_partial_file_beside_out_is_never_the_database() {
+    let (dir, db) = dir_with_runs();
+    let out = dir.path().join("baseline.duckdb");
+    let part = dir.path().join("baseline.duckdb.partial");
+    std::fs::rename(&db, &part).unwrap();
+    assert_eq!(
+        go(&part, &["--out", out.to_str().unwrap()]),
+        ExitCode::FAILURE
+    );
+    assert!(Store::open(&part, &registry()).is_ok());
+    assert!(!out.exists());
+}
+
+#[test]
 fn a_gzip_is_measured_and_the_summary_names_both_sizes() {
     let dir = tempfile::tempdir().unwrap();
     let f = dir.path().join("zeros");
