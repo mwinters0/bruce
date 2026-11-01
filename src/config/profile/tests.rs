@@ -18,6 +18,7 @@ name = "sphinx"
 generator = "^Sphinx"
 region = ["div.document", "main"]
 edit_link = "a.edit"
+locale_links = "a.language[href]"
 
 [[profile.fact]]
 key = "version"
@@ -39,6 +40,7 @@ fn a_profile_is_read_with_its_rules_in_order() {
     assert_eq!(d.generator.as_deref(), Some("^Sphinx"));
     assert_eq!(d.region, ["div.document", "main"]);
     assert_eq!(d.edit_link.as_deref(), Some("a.edit"));
+    assert_eq!(d.locale_links.as_deref(), Some("a.language[href]"));
     let keys: Vec<_> = d.facts.iter().map(|f| f.key.as_str()).collect();
     assert_eq!(keys, ["version", "heading"]);
     assert_eq!(d.facts[0].attr.as_deref(), Some("content"));
@@ -80,6 +82,7 @@ fn a_definition_is_recorded_as_rows_under_its_name() {
             row("profile.sphinx.region", "div.document"),
             row("profile.sphinx.region", "main"),
             row("profile.sphinx.edit_link", "a.edit"),
+            row("profile.sphinx.locale_links", "a.language[href]"),
             row(
                 "profile.sphinx.fact.version.selector",
                 "meta[name=readthedocs-version-slug]"
@@ -233,6 +236,14 @@ fn what_the_loader_refuses_it_says_where() {
         (
             "[[profile]]\nname = \"x\"\nedit_link = \"\"\n",
             "profile.x: edit_link: empty",
+        ),
+        (
+            "[[profile]]\nname = \"x\"\nlocale_links = \"p:has(a)\"\n",
+            "profile.x: locale_links:",
+        ),
+        (
+            "[[profile]]\nname = \"x\"\nlocale_links = \" \"\n",
+            "profile.x: locale_links: empty",
         ),
         (
             "[[profile]]\nname = \"x\"\n[[profile.fact]]\nkey = \"a b\"\nselector = \"p\"\n",

@@ -18,9 +18,9 @@ The `bruce` crate is D39's top-level modules, a binary whose subcommands
 are `bruce crawl`, `bruce check-dir`, `bruce report`, `bruce prune` and `bruce export-baseline`, and Rust 1.99.1 pinned in `mise.toml`. Eleven modules hold
 code: `cli`, the command line, the five subcommands and the profile registry; `config`, the loader, the policy a run is judged by and asks with, and the declarative profiles a file defines; `store`, the DuckDB schema, its version check, the
 `link_verdicts` view, the guard naming the run a comparison judges by, `link_hints`, the policy a run records and a trial one in its place, the deleting of old runs, the baseline export and import, the index of a baseline's targets and its pages' facts, the copy of a target's rows between runs, which the writer also runs on request, and the single writer for `pages`, `page_facts`, `targets`, `anchors` and `links`; `profile`, the trait, the registry, the
-`generic` and `antora` profiles' Detect, Views, Extract and Resolve and the declarative profile a config's `[[profile]]` builds (region, generator pattern, fact rules, source rules, edit link, and the compiled profile it extends); `extract`, the pass over one page, which yields its
+`generic` and `antora` profiles' Detect, Views, Extract and Resolve and the declarative profile a config's `[[profile]]` builds (region, generator pattern, fact rules, source rules, edit link, the links of a language menu, and the compiled profile it extends); `extract`, the pass over one page, which yields its
 profile, title, anchors with placement, links with kind and tag, the edit link,
-the profile's facts, the other locales its language menu names and the content hash with the scope it covered;
+the profile's facts, the other locales its profile's language-menu links name and the content hash with the scope it covered;
 `forge`, the edit-URL shape parse and the source rules a profile states, tried before it (D93);
 `url`, the canonical form, `url_id` and a final `/` toggled;
 `fetch`, the fetcher trait, the HTTP fetcher for one hop, each host's pace, in-flight cap and robots.txt, the body decoding, the local fetcher over a map of URLs to files and the router that sends a URL the build holds to it and any other to HTTP;
@@ -68,8 +68,9 @@ The spec is [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.m
   through the run's recorded `extends`, and a comparison digest listing the
   `policy` rows that differ between its runs, the profile rules aligned
   ([notes](../wip/roadmap-P10.5.1-report-notes.md)).
-- [ ] **10.6** Locale learning in the core, `locale_links`, and the guide's
-  `fedora` extension extracting what today's code does.
+- [x] **10.6** Locale learning in the core, `locale_links`, and the guide's
+  `fedora` extension extracting what today's code does
+  ([notes](../wip/roadmap-P10.6-locale-links-notes.md)).
 - [ ] **10.7** Neutral help examples and palette.
 - [ ] **10.8** The "after" crawl compared with 10.1's: no fact, locale or
   verdict differs.

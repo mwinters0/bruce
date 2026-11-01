@@ -1,6 +1,7 @@
 //! A declarative profile (D33): a profile a config defines, with a content
-//! region, fact rules, source rules, an edit link and a generator pattern, and no
-//! resolution or views of its own (D38), as `generic` has none.
+//! region, fact rules, source rules, an edit link, the links of a language menu
+//! and a generator pattern, and no resolution or views of its own (D38), as
+//! `generic` has none.
 //!
 //! One that extends a compiled profile (D94) wraps it: its Extract is the base's with
 //! the extension's handlers, finish step and source rules added (its sources
@@ -9,6 +10,10 @@
 //! its pattern, else by the base's; it resolves and gives the sitemap's
 //! sentence as the base does. Its Views are none, the base being in every
 //! registry that holds the extension and installing its own once.
+//!
+//! The links `locale_links` selects each name a page under another locale, and
+//! the finish step records the prefix where each departs from the page's own
+//! URL (D67, [`locale_prefix`]); a profile without the key learns none.
 //!
 //! The name and region outlive the registry that holds them, because
 //! [`Profile::name`] and the region are `'static` and a config's are known
@@ -32,7 +37,7 @@ use url::Url;
 
 use super::{
     BoxError, Extract, GENERIC_REGION, Lookup, Profile, Sink, View, compiled, element, interned,
-    text,
+    locale_prefix, text,
 };
 use crate::config::{Definition, Fact};
 use crate::forge;
@@ -44,6 +49,7 @@ pub struct Declarative {
     generator: Option<Regex>,
     region: Option<&'static [&'static str]>,
     edit_link: Option<String>,
+    locale_links: Option<String>,
     facts: Arc<[Rule]>,
     sources: Arc<[forge::Rule]>,
 }
@@ -91,6 +97,9 @@ impl Declarative {
         if let Some(selector) = &definition.edit_link {
             compiled(selector).map_err(|e| format!("edit_link: {selector:?}: {e}"))?;
         }
+        if let Some(selector) = &definition.locale_links {
+            compiled(selector).map_err(|e| format!("locale_links: {selector:?}: {e}"))?;
+        }
         let facts: Vec<Rule> = definition
             .facts
             .iter()
@@ -108,6 +117,7 @@ impl Declarative {
             generator,
             region,
             edit_link: definition.edit_link.clone(),
+            locale_links: definition.locale_links.clone(),
             facts: facts.into(),
             sources: sources.into(),
         })
@@ -247,12 +257,28 @@ impl Profile for Declarative {
                 Ok(())
             }));
         }
-        if !self.facts.is_empty() {
+        let languages: Rc<RefCell<Vec<String>>> = Rc::default();
+        if let Some(selector) = &self.locale_links {
+            let seen = Rc::clone(&languages);
+            extract.handlers.push(element(selector, move |el| {
+                if let Some(href) = el.get_attribute("href") {
+                    seen.borrow_mut().push(href);
+                }
+                Ok(())
+            }));
+        }
+        if !self.facts.is_empty() || self.locale_links.is_some() {
             let rules = Arc::clone(&self.facts);
             let base = extract.finish.take();
             extract.finish = Some(Box::new(move |settled, sink| {
                 if let Some(base) = base {
                     base(settled, sink);
+                }
+                for href in languages.borrow().iter() {
+                    let link = (settled.resolve)(href);
+                    if let Some(prefix) = link.and_then(|link| locale_prefix(settled.url, &link)) {
+                        sink.other_locale(prefix);
+                    }
                 }
                 let mut readings = readings.borrow_mut();
                 for (rule, reading) in rules.iter().zip(readings.iter_mut()) {

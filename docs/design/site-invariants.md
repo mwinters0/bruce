@@ -341,5 +341,6 @@ not as an error.
 - **Scope limit.** docs.fp.o's production build; a content repo's CI build uses the UI's partial, naming no other
   locale. Another site's UI may name its locales otherwise, or not at all.
 - **Verified against.** docs-fp-o `prod` and the fixtures (fetched 2026-10-17), 2026-10-24.
-- **Relied on by.** D67.
+- **Relied on by.** D67, and the deployment guide's `fedora` profile (`docs/manual/deploy.md`), whose `locale_links`
+  selects these links.
 - **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/a11y/ | grep -o '<a[^>]*class="language"[^>]*>' | head -3; curl -s 'https://gitlab.com/api/v4/projects/fedora%2Fdocs%2Fdocs-website%2Fdocs-fp-o/repository/files/build-scripts%2Frebuild-site.py/raw?ref=prod' | grep -n 'class="language"\|lang_switch_ui('`

@@ -491,6 +491,48 @@ fn an_extension_of_generic_reads_as_generic_does_where_it_states_no_rule() {
     assert_eq!(extension.0, "x");
 }
 
+/// D67: a profile's `locale_links` names the links of a language menu, each
+/// the page under another locale; a profile without the key, `antora` itself
+/// included, learns none from the same menu.
+#[test]
+fn locale_links_name_the_menu_whose_locales_a_page_gives() {
+    let menu = r#"<div class="menu"><a class="language" href="../../en/a/">en</a>
+        <a class="language" href="../../fr/a/">fr</a>
+        <a class="language" href="../../pt_BR/a/?q#f">pt</a>
+        <a class="language" href="https://other.org/de/a/">de</a>
+        <a class="language">none</a></div>
+        <a class="other" href="../../es/a/">es</a>"#;
+    let html = format!(
+        r#"<html><head><meta name="generator" content="Antora 3.1.15"></head>
+        <body><article class="doc">{menu}</article></body></html>"#
+    );
+    let url = Url::parse("https://example.org/en/a/").unwrap();
+    let locales = |toml: &str| -> Vec<String> {
+        extract(
+            &html,
+            &url,
+            &ProfileChoice::Auto,
+            &HashScope::default(),
+            &extended(toml),
+        )
+        .unwrap()
+        .other_locales
+        .iter()
+        .map(|u| u.to_string())
+        .collect()
+    };
+    let with =
+        "[[profile]]\nname = \"x\"\nextends = \"antora\"\nlocale_links = \"a.language[href]\"\n";
+    assert_eq!(
+        locales(with),
+        ["https://example.org/fr/", "https://example.org/pt_BR/"]
+    );
+    assert!(locales(EXTENDS).is_empty(), "an extension without the key");
+    assert!(locales("").is_empty(), "`antora` reads no menu");
+    let alone = "[[profile]]\nname = \"x\"\ngenerator = \"^Antora\"\nlocale_links = \"a.other\"\n";
+    assert_eq!(locales(alone), ["https://example.org/es/"]);
+}
+
 fn count_content(x: &Extracted) -> usize {
     x.anchors
         .iter()

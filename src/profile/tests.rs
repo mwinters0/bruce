@@ -114,3 +114,31 @@ fn the_sink_hands_the_core_what_a_profile_wrote() {
         [("antora.module".to_string(), "ROOT".to_string())]
     );
 }
+
+fn locale(page: &str, href: &str) -> Option<String> {
+    let page = Url::parse(page).unwrap();
+    locale_prefix(&page, &page.join(href).unwrap()).map(String::from)
+}
+
+/// docs.fp.o's menu names the page under each locale, its own first, and
+/// the 404's names each locale's home (I25).
+#[test]
+fn a_locale_is_where_a_menu_link_departs_from_the_page() {
+    let a11y = "https://docs.fedoraproject.org/en-US/a11y/";
+    let ar = Some("https://docs.fedoraproject.org/ar/".to_owned());
+    assert_eq!(locale(a11y, "../../ar/a11y/"), ar);
+    assert_eq!(locale(a11y, "../../en-US/a11y/"), None, "its own locale");
+    let deep = "https://docs.fedoraproject.org/en-US/fedora/f39/";
+    assert_eq!(locale(deep, "../../../ar/fedora/f39/"), ar);
+    let missing = "https://docs.fedoraproject.org/en-US/no-such/";
+    assert_eq!(locale(missing, "/en-US/../ar"), ar, "the 404's");
+    assert_eq!(locale(missing, "/en-US/../en-US"), None);
+    assert_eq!(
+        locale("https://e.org/docs/en/a/?q#f", "/docs/pt_BR/a/?q#f").as_deref(),
+        Some("https://e.org/docs/pt_BR/"),
+        "below the host's root, with no query or fragment"
+    );
+    assert_eq!(locale("https://e.org/en/a", "/en/a/"), None);
+    assert_eq!(locale(a11y, "https://other.org/ar/a11y/"), None);
+    assert_eq!(locale(a11y, "http://docs.fedoraproject.org/ar/a11y/"), None);
+}

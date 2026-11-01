@@ -32,7 +32,7 @@ decisions each carries are cited in its module's doc.
 - **bruce** — `crawl/`: the run, its tasks, the rows a target and its page
   write, and the landing of a redirect in the parent file; the frontier (a
   URL's class, its canonical form, the claim that dedups, and the other
-  locales the pages' profiles found with the URLs waiting on them, D67) in the `frontier`
+  locales the pages' profiles name, with the URLs waiting on them, D67) in the `frontier`
   child; a target's redirect chain, its limit and where a hop leads in the
   `hops` child; D16's classification in the `outcome` child; which target starts next, a build's reads in a budget of their own and each live host holding its share of
   the run's other slots, in the `schedule` child (D61); reading one
@@ -105,8 +105,8 @@ decisions each carries are cited in its module's doc.
 
 ## Profiles
 
-- **bruce** — `profile/`: the trait, the registry and the fact and lookup
-  types in the parent file, and a child module for each profile compiled in
+- **bruce** — `profile/`: the trait, the registry, the fact and lookup
+  types and the prefix a language-menu link makes of a locale (D67) in the parent file, and a child module for each profile compiled in
   (D33), `generic` and `antora`, and `declarative`, a profile built from a config's `[[profile]]` (D33), wrapping the compiled profile it extends where it names one (D94), whose Resolve is its `resolve` child (D55) and whose hint for an unresolved xref is its `hints` child (D65), and the `selectors` child, which parses a selector's text once per run for every handler, the core's and the profiles' (D11), and the `interned` child, which hands a declared profile's name and region out as the same `'static` text for every registry built from one definition. `cli` alone builds the registry, the file's profiles ahead of the compiled ones (D39, D35).
 
 **Not in one place.** I16's URL layout, a component-version's prefix in a

@@ -73,8 +73,9 @@ not on the allowlist) stays `unchecked`:
   asks, and `skip` never asks: the baseline's answer where it has one, else
   `unchecked`. `--externals` does not reach a URL in a root's scope. Another
   locale's page stays `unchecked` ([Roots](config.md#roots)); the locales are
-  those the built pages' language menus name, and a build whose UI has none,
-  as a content repo's usually has not, answers its links to them this way.
+  those a profile's `locale_links` reads from the built pages' language menus,
+  and a build whose UI has none, as a content repo's usually has not, answers
+  its links to them this way.
 
 ## What fails
 

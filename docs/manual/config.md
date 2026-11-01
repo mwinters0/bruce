@@ -61,8 +61,9 @@ rules out its starting page is an error.
 **A link outside every root's scope** to a host a root starts on is checked
 as a link to an [allowlisted](#allowlist) host is: fetched once, and never
 crawled. One to another locale's page is recorded and not checked (reason
-`out_of_scope`): another locale is learned from the language menu of a root's
-`antora` pages, so a site without one has every such link checked.
+`out_of_scope`): another locale is learned from the language menu a [profile's](#profiles)
+`locale_links` names, on the pages of a root that profile reads, so a site
+without one has every such link checked.
 
 **The path prefix** is the root's URL in the form under "Writing globs",
 without its query, up to the last `/`.
@@ -155,6 +156,7 @@ tried in the order the file writes them, before `antora`.
 | `profile.generator` | none | A regular expression. Under `"auto"`, a page whose `<meta name="generator">` it matches is read by this profile. Without one, only a root naming the profile picks it, or, where it extends one, whatever that one claims. |
 | `profile.region` | `generic`'s: `main`, `[role=main]`, or its base's | Selectors for the elements holding a page's content. Anchors there count as content, and the [content hash](#roots) covers them by default. Each entry is one selector with no space or combinator, as `div.document`. |
 | `profile.edit_link` | none | A selector for the link that is the page's edit link, for a site whose link `bruce` does not recognise. The first match with an `href` is taken. |
+| `profile.locale_links` | none | A selector for the links of a language menu, each the same page under another locale, such as `a.language[href]`. The segment where a link's path departs from the page's own is that locale's prefix, and a link to a page under it is not checked ([Roots](#roots)). Without one the profile learns no locale, `antora` among them. |
 
 Each `[[profile.fact]]` table, written under the `[[profile]]` it belongs to, reads one fact from a page:
 

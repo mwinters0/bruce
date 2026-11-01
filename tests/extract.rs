@@ -426,16 +426,47 @@ fn unresolved_xrefs_are_tagged_with_their_refspec() {
     )));
 }
 
-/// I25: every docs.fp.o page's language menu names the page under each of
-/// the 67 other locales, so each is a locale's prefix on the host (D10). The
-/// 404 has no generator meta, and its menu is not read.
+/// The registry the deployment guide's `[[profile]]` makes: the block of
+/// `docs/manual/deploy.md` that `mise run sim` extracts into the config.
+fn fedora_registry() -> bruce::profile::Registry {
+    let guide = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("docs/manual/deploy.md"),
+    )
+    .unwrap();
+    let block = guide
+        .split("```toml file=bruce.toml\n")
+        .skip(1)
+        .map(|rest| rest.split("```").next().unwrap())
+        .find(|block| block.contains("[[profile]]"))
+        .expect("the guide has a profile block");
+    let defined = bruce::config::Config::parse(block).unwrap().policy.profiles;
+    assert_eq!(defined.len(), 1);
+    bruce::cli::registry_for(&defined).unwrap()
+}
+
+fn run_fedora(f: &Fixture) -> Extracted {
+    extract(
+        &f.html,
+        &f.url,
+        &ProfileChoice::Auto,
+        &HashScope::default(),
+        &fedora_registry(),
+    )
+    .unwrap()
+}
+
+/// I25, D67: every docs.fp.o page's language menu names the page under each
+/// of the 67 other locales, so each is a locale's prefix on the host (D10),
+/// to the guide's `fedora` profile and to it alone: compiled `antora` reads
+/// no menu. The 404 has no generator meta, and its menu is not read.
 #[test]
 fn a_docs_fp_o_language_menu_names_every_other_locale() {
     for f in fixtures()
         .iter()
         .filter(|f| f.path.starts_with("docs-fp-o/") && !f.path.ends_with("404.html"))
     {
-        let x = run(f);
+        let x = run_fedora(f);
+        assert_eq!(x.profile, "fedora", "{}", f.path);
         let locales: Vec<_> = x.other_locales.iter().map(|u| u.as_str()).collect();
         assert_eq!(locales.len(), 67, "{}", f.path);
         assert_eq!(
@@ -445,12 +476,142 @@ fn a_docs_fp_o_language_menu_names_every_other_locale() {
         );
         assert!(locales.contains(&"https://docs.fedoraproject.org/zh_TW/"));
         assert!(!locales.iter().any(|l| l.contains("en-US")), "{}", f.path);
+        assert!(run(f).other_locales.is_empty(), "{}: compiled", f.path);
     }
     let generic = fixtures()
         .into_iter()
         .filter(|f| !f.path.starts_with("docs-fp-o/en-US/") || f.path.ends_with("404.html"));
     for f in generic {
-        assert!(run(&f).other_locales.is_empty(), "{}", f.path);
+        assert!(run_fedora(&f).other_locales.is_empty(), "{}", f.path);
+    }
+}
+
+/// D33: through the guide's profile every fixture is extracted as compiled
+/// `antora` extracts it, the profile's name and locales aside.
+#[test]
+fn the_guides_profile_extracts_what_antora_does() {
+    for f in fixtures() {
+        let (plain, fedora) = (run(&f), run_fedora(&f));
+        let name = if plain.profile == "antora" {
+            "fedora"
+        } else {
+            plain.profile
+        };
+        assert_eq!(fedora.profile, name, "{}", f.path);
+        assert_eq!(
+            summary(&fedora).replacen(&format!("profile: {name}"), "profile: ", 1),
+            summary(&plain).replacen(&format!("profile: {}", plain.profile), "profile: ", 1),
+            "{}",
+            f.path
+        );
+    }
+}
+
+/// docs.antora.org, on Antora's default UI, is right under compiled `antora`
+/// with no config (the spec's "The line"): component and version from the
+/// nav container, the edit link and its forge shape, and a region.
+#[test]
+fn docs_antora_org_is_read_right_by_compiled_antora_alone() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures/docs-antora-org");
+    let manifest: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(root.join("manifest.json")).unwrap())
+            .unwrap();
+    // url: component, version, repo, ref.
+    let expected = BTreeMap::from([
+        ("antora/latest/", ("antora", "3.2", "antora/antora", "main")),
+        ("antora/3.1/", ("antora", "3.1", "antora/antora", "v3.1.x")),
+        (
+            "antora/latest/install/install-antora/",
+            ("antora", "3.2", "antora/antora", "main"),
+        ),
+        (
+            "antora/latest/page/xref/",
+            ("antora", "3.2", "antora/antora", "main"),
+        ),
+        (
+            "antora/latest/extend/extensions/",
+            ("antora", "3.2", "antora/antora", "main"),
+        ),
+        (
+            "antora/latest/playbook/",
+            ("antora", "3.2", "antora/antora", "main"),
+        ),
+        (
+            "antora-ui-default/",
+            (
+                "antora-ui-default",
+                "",
+                "antora/antora-ui-default",
+                "master",
+            ),
+        ),
+        (
+            "antora-ui-default/add-fonts/",
+            (
+                "antora-ui-default",
+                "",
+                "antora/antora-ui-default",
+                "master",
+            ),
+        ),
+        (
+            "assembler/latest/",
+            ("assembler", "1.0", "antora/antora-assembler", "main"),
+        ),
+        (
+            "collector-extension/latest/concepts/",
+            (
+                "collector-extension",
+                "1.0",
+                "antora/antora-collector",
+                "main",
+            ),
+        ),
+        (
+            "gradle-plugin/latest/",
+            (
+                "gradle-plugin",
+                "1.0",
+                "antora/gradle-antora-plugin",
+                "main",
+            ),
+        ),
+        (
+            "maven-plugin/latest/antora-goal/",
+            ("maven-plugin", "1.0", "antora/antora-maven-plugin", "main"),
+        ),
+    ]);
+    let pages = manifest["pages"].as_array().unwrap();
+    assert_eq!(pages.len(), expected.len() + 1, "and the 404");
+    for page in pages {
+        let (url, path) = (
+            page["url"].as_str().unwrap(),
+            page["path"].as_str().unwrap(),
+        );
+        let html = std::fs::read_to_string(root.join(path)).unwrap();
+        let x = extract(
+            &html,
+            &Url::parse(url).unwrap(),
+            &ProfileChoice::Auto,
+            &HashScope::default(),
+            &registry(),
+        )
+        .unwrap();
+        assert_eq!(x.profile, "antora", "{url}: the generator meta alone");
+        assert!(x.other_locales.is_empty(), "{url}");
+        let key = url.strip_prefix("https://docs.antora.org/").unwrap();
+        let Some((component, version, repo, git_ref)) = expected.get(key) else {
+            assert_eq!(page["status"], 404, "{url}");
+            assert!(x.facts.pairs().is_empty() && x.edit_link.is_none(), "{url}");
+            continue;
+        };
+        assert_eq!(fact(&x, "antora.component"), Some(*component), "{url}");
+        assert_eq!(fact(&x, "antora.version"), Some(*version), "{url}");
+        let source = x.source.as_ref().expect(url);
+        assert_eq!(source.repo, format!("https://gitlab.com/{repo}"), "{url}");
+        assert_eq!(source.git_ref.as_deref(), Some(*git_ref), "{url}");
+        assert!(count(&x, Placement::Content) > 0, "{url}: the region");
+        assert_eq!(count(&x, Placement::Unknown), 0, "{url}");
     }
 }
 

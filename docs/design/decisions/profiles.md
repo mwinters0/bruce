@@ -14,14 +14,14 @@ only, owned outside this repo (D41). Forge edit-URL shapes are core, as every ge
 cannot express.
 
 ### D33 Profiles are compiled in, or declared in config as a `[[profile]]` array
-A compiled profile is a module behind a trait, so a new generator is a PR. A declarative one is that trait built from
-config, an array of tables named by `name`: a content region, a `generator` pattern, fact rules (a selector, an
-attribute or the text, a regex whose one capture is the value; the first element yielding one, an empty attribute
-being one and empty text not), source rules (D93) and an edit-link selector, writing key/value facts (D37). Resolve and
-Views stay empty, resolution staying code. Rejected: WASM or out-of-process plugins, no second user; a
-table keyed by name, TOML not ordering keys where D35 tries profiles in file order; rules per root, a profile being
-what D35 chooses by; the first match alone, leaving `pattern` no way to choose. Code: `config::profile`,
-`profile::declarative`. Evidence: `profile::declarative::tests`.
+A compiled profile is a module behind a trait, so a new generator is a PR. A declarative one is that trait from config,
+an array of tables named by `name`: a content region, a `generator` pattern, fact rules (a selector, an attribute or the
+text, a regex whose one capture is the value; the first element yielding one, an empty attribute being one and empty
+text not), source rules (D93), an edit-link and a language-menu selector (D67), writing key/value facts (D37). Resolve
+and Views stay empty: resolution is code. Rejected: WASM or out-of-process plugins, no second user; a table keyed by
+name, TOML not ordering keys where D35 tries them in file order; rules per root, a profile being what D35 chooses by;
+the first match alone, ignoring `pattern`. Code: `config::profile`, `profile::declarative`. Evidence:
+`profile::declarative::tests`.
 
 ### D35 A root's profile defaults to `auto`, which picks one per page by its generator meta
 `profile = "auto" | "generic" | "antora" | <a declared name>` per root. Under `auto` the page's

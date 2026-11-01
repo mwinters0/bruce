@@ -10,9 +10,8 @@
 //! does (I8), makes a component with no version fact a URL-derived one; one
 //! lacking `data-component` (I12) gives no component at all. An unresolved xref is tagged with its raw refspec (I6, D20).
 //!
-//! The language menu's links (`a.language`, I25) say where the site's other
-//! locales are: each is the page under another locale, so the segment where its
-//! path departs from the page's own is that locale's prefix (D67).
+//! It reads no language menu: the default UI renders none, and a site's own
+//! is a declarative profile's `locale_links` (D67).
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -51,21 +50,13 @@ struct Page {
     nav_container: bool,
     /// `data-site-root-path` on the search script (I13).
     site_root_path: Option<String>,
-    /// The language menu's hrefs, as written (I25).
-    languages: Vec<String>,
 }
 
 impl Page {
     /// Records what only the settled page can give: the component of a page
     /// with no nav container, from its URL, the module and `rel_path`
-    /// from the edit link, and the other locales its language menu names.
+    /// from the edit link.
     fn finish(&self, settled: &Settled, sink: &mut Sink) {
-        for href in &self.languages {
-            let link = (settled.resolve)(href);
-            if let Some(prefix) = link.and_then(|link| other_locale(settled.url, &link)) {
-                sink.other_locale(prefix);
-            }
-        }
         if !self.nav_container {
             let root = self.site_root_path.as_deref();
             if let Some(component) = root.and_then(|root| component_under(settled.url, root)) {
@@ -94,37 +85,15 @@ fn component_under(page: &Url, root_path: &str) -> Option<String> {
     (!component.is_empty()).then(|| decode(component))
 }
 
-/// The prefix of the locale a language menu's `link` on `page` names: the
-/// link's path up to the first segment where it departs from the page's, as a
-/// directory (I25). `None` for a link on another origin, or one departing at
-/// an empty segment: the page itself, a path the page's begins with, or the
-/// page's path with a final `/`.
-fn other_locale(page: &Url, link: &Url) -> Option<Url> {
-    if link.origin() != page.origin() {
-        return None;
-    }
-    let mut mine = page.path().split('/');
-    let mut prefix = String::new();
-    for segment in link.path().split('/') {
-        prefix.push_str(segment);
-        prefix.push('/');
-        if mine.next() != Some(segment) {
-            if segment.is_empty() {
-                return None;
-            }
-            let mut locale = link.clone();
-            locale.set_path(&prefix);
-            locale.set_query(None);
-            locale.set_fragment(None);
-            return Some(locale);
-        }
-    }
-    None
-}
-
 /// `(module, rel_path)` from an edit path holding `modules/<module>/pages/<rel_path>`
 /// somewhere below a start path, as Antora lays a repo out.
 fn module_and_path(path: &str) -> Option<(String, String)> {
+    // deficiency: KD34 Antora also takes the ROOT module's `pages/` directly
+    // under a start path, as docs.antora.org's assembler does
+    // (`docs/assembler/pages/index.adoc`, `fixtures/docs-antora-org`); this
+    // finds no `modules/` there, so the page records no `module` or `rel_path`
+    // and Resolve, which matches both, cannot find it. Reading `pages/` below
+    // a start path as `ROOT`'s, `modules/` taking precedence, is the fix.
     let segments: Vec<&str> = path.split('/').collect();
     let at = segments
         .windows(3)
@@ -182,14 +151,6 @@ impl Profile for Antora {
                 Ok(())
             },
         ));
-        let seen = Rc::clone(&page);
-        extract
-            .handlers
-            .push(element("a.language[href]", move |el| {
-                let href = el.get_attribute("href").unwrap_or_default();
-                seen.borrow_mut().languages.push(href);
-                Ok(())
-            }));
         extract
             .handlers
             .push(element("a.xref.unresolved[href]", move |el| {
@@ -264,34 +225,6 @@ mod tests {
         assert_eq!(component(arm, "/elsewhere"), None, "not under the root");
         assert_eq!(component(arm, "/en-U"), None, "a prefix is no directory");
         assert_eq!(component(arm, "https://other.org/en-US"), None);
-    }
-
-    fn locale(page: &str, href: &str) -> Option<String> {
-        let page = Url::parse(page).unwrap();
-        other_locale(&page, &page.join(href).unwrap()).map(String::from)
-    }
-
-    /// docs.fp.o's menu names the page under each locale, its own first, and
-    /// the 404's names each locale's home (I25).
-    #[test]
-    fn a_locale_is_where_a_menu_link_departs_from_the_page() {
-        let a11y = "https://docs.fedoraproject.org/en-US/a11y/";
-        let ar = Some("https://docs.fedoraproject.org/ar/".to_owned());
-        assert_eq!(locale(a11y, "../../ar/a11y/"), ar);
-        assert_eq!(locale(a11y, "../../en-US/a11y/"), None, "its own locale");
-        let deep = "https://docs.fedoraproject.org/en-US/fedora/f39/";
-        assert_eq!(locale(deep, "../../../ar/fedora/f39/"), ar);
-        let missing = "https://docs.fedoraproject.org/en-US/no-such/";
-        assert_eq!(locale(missing, "/en-US/../ar"), ar, "the 404's");
-        assert_eq!(locale(missing, "/en-US/../en-US"), None);
-        assert_eq!(
-            locale("https://e.org/docs/en/a/?q#f", "/docs/pt_BR/a/?q#f").as_deref(),
-            Some("https://e.org/docs/pt_BR/"),
-            "below the host's root, with no query or fragment"
-        );
-        assert_eq!(locale("https://e.org/en/a", "/en/a/"), None);
-        assert_eq!(locale(a11y, "https://other.org/ar/a11y/"), None);
-        assert_eq!(locale(a11y, "http://docs.fedoraproject.org/ar/a11y/"), None);
     }
 
     #[test]

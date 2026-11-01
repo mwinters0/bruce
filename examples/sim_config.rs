@@ -21,9 +21,16 @@ fn main() -> ExitCode {
     };
     match configure(&args) {
         Ok((config, _, _)) => {
+            // The registry a crawl builds, so a profile extending what is
+            // not compiled in is refused here as there.
+            if let Err(e) = bruce::cli::registry_for(&config.policy.profiles) {
+                eprintln!("sim_config: {e}");
+                return ExitCode::FAILURE;
+            }
             println!(
-                "{} root(s), {} allowlisted host(s) or domain(s), {} skip glob(s)",
+                "{} root(s), {} profile(s), {} allowlisted host(s) or domain(s), {} skip glob(s)",
                 config.roots.len(),
+                config.policy.profiles.len(),
                 config.allowlist.entries().len(),
                 config.skip.globs().len()
             );

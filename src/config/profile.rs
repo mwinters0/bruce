@@ -40,6 +40,10 @@ pub struct Definition {
     /// A selector for the link that is the page's edit link, where the core's
     /// ranking earns none (D36).
     pub edit_link: Option<String>,
+    /// A selector for the links naming the page under each locale, a site's
+    /// language menu: each departs from the page's own URL at a locale's prefix
+    /// (D67). None reads no menu.
+    pub locale_links: Option<String>,
     /// The facts the profile reads, in file order.
     pub facts: Vec<Fact>,
     /// The source rules, tried in file order before an edit link is parsed
@@ -88,6 +92,7 @@ pub(in crate::config) struct RawProfile {
     #[serde(default)]
     region: Vec<String>,
     edit_link: Option<String>,
+    locale_links: Option<String>,
     #[serde(default)]
     fact: Vec<RawFact>,
     #[serde(default)]
@@ -174,6 +179,9 @@ impl Definition {
         if let Some(selector) = &raw.edit_link {
             streamed(selector).map_err(|e| format!("edit_link: {e}"))?;
         }
+        if let Some(selector) = &raw.locale_links {
+            streamed(selector).map_err(|e| format!("locale_links: {e}"))?;
+        }
         let mut seen = BTreeSet::new();
         let mut facts = Vec::with_capacity(raw.fact.len());
         for (i, fact) in raw.fact.into_iter().enumerate() {
@@ -232,6 +240,7 @@ impl Definition {
             generator: raw.generator,
             region,
             edit_link: raw.edit_link,
+            locale_links: raw.locale_links,
             facts,
             sources,
         })
@@ -240,7 +249,7 @@ impl Definition {
     /// The definition as the rows a run records (D78), keys under
     /// `profile.<name>.`: `generator` always, empty for none, `extends` where
     /// there is a base, `region` a row
-    /// to an entry, `edit_link`, each fact's `selector`, `attr` and
+    /// to an entry, `edit_link`, `locale_links`, each fact's `selector`, `attr` and
     /// `pattern` under `fact.<key>.`, and each source rule's `from`,
     /// `pattern` and the templates it states under `source.<i>.`, `i` its
     /// place in the file from 0.
@@ -257,6 +266,9 @@ impl Definition {
         rows.extend(self.region.iter().map(|r| row("region".to_owned(), r)));
         if let Some(selector) = &self.edit_link {
             rows.push(row("edit_link".to_owned(), selector));
+        }
+        if let Some(selector) = &self.locale_links {
+            rows.push(row("locale_links".to_owned(), selector));
         }
         for fact in &self.facts {
             let key = &fact.key;

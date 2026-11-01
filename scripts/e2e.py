@@ -74,6 +74,8 @@ from pathlib import Path
 from typing import Any, Sequence
 from urllib.parse import urlsplit
 
+from sim import GUIDE, tagged_blocks
+
 REPO = Path(__file__).resolve().parent.parent
 FIXTURES = REPO / "fixtures" / "antora"
 OUT = REPO / "runs" / "e2e"
@@ -276,14 +278,24 @@ def serve(site: Path, port: int) -> http.server.ThreadingHTTPServer:
     return server
 
 
+def guide_profile() -> str:
+    """The `[[profile]]` the deployment guide writes: the build's language menu
+    names a second locale, so the deployment's profile is what learns it."""
+    blocks = tagged_blocks((REPO / GUIDE).read_text(), str(GUIDE)).get("bruce.toml", [])
+    profiles = [block for block in blocks if "[[profile]]" in block]
+    if len(profiles) != 1:
+        raise E2eError(f"{GUIDE} holds {len(profiles)} blocks of bruce.toml with a profile, not one")
+    return profiles[0]
+
+
 def bruce_config(port: int) -> str:
     """The deployment's configuration for both the crawl and `check-dir`: the
     fixture host is fetched fast, and no external host is on the allowlist, so
-    nothing leaves the machine."""
+    nothing leaves the machine. The guide's profile is the deployment's own."""
     return (
         "[default]\nper_second = 500\nconcurrency = 8\n\n"
         '[host."127.0.0.1"]\nper_second = 500\n\n'
-        f'[[root]]\nurl = "http://127.0.0.1:{port}{SITE_PATH}/"\n'
+        f'[[root]]\nurl = "http://127.0.0.1:{port}{SITE_PATH}/"\n\n' + guide_profile()
     )
 
 

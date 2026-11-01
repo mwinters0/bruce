@@ -90,4 +90,9 @@ roadmap's phase index.
   unowned**: a CI run whose redirects reach another locale would promote it.
   Detail: `src/crawl/frontier.rs`
 
-<!-- deficiency-watermark: KD33 -->
+- **KD34** — A page whose edit path has `pages/` directly under a start path, the
+  ROOT module Antora implies, as docs.antora.org's assembler has, records no `module` or
+  `rel_path`, so an xref to it is not resolved by Resolve. **(c) unowned**: a content repo
+  laid out so would promote it. Detail: `src/profile/antora.rs`
+
+<!-- deficiency-watermark: KD34 -->

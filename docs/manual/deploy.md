@@ -167,6 +167,28 @@ unaided, at `sitemap.xml` under the root; writing it down saves the probe and
 shows the next deployer where it is. It is also how `bruce` knows which pages
 the site means to publish, as opposed to those it only found by following links.
 
+### How the pages are read
+
+```toml file=bruce.toml
+[[profile]]
+name = "fedora"
+extends = "antora"
+locale_links = "a.language[href]"
+```
+
+docs.fedoraproject.org is built by Antora, which `bruce` reads without any
+configuration: the component and version of each page, the content region, the
+edit link. What is the site's own is the language menu its build writes on every
+page, linking the page under each locale. `locale_links` names those links, and
+`bruce` learns from them where the other locales are, so a link to one of their
+pages is recorded and left unchecked, as the section above says, and no more than
+that. A site with no such menu needs no profile.
+
+The profile `extends = "antora"`, so it does all `antora` does, claims the pages
+`antora` claims and records the same facts, `antora.component` among them; the
+pages are recorded as read by `fedora`. It is tried before `antora`, and no root
+names it ([`config.md`](config.md#profiles)).
+
 ## Trying it
 
 With the file saved as `bruce.toml`, a crawl is one command:

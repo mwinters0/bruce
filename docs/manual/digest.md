@@ -309,7 +309,7 @@ An `unchecked` link is not broken: the run did not learn whether it is. Its
 
 | `reason` | The link |
 |---|---|
-| `out_of_scope` | Names another locale's page: a URL on a host a root starts on, outside every root's scope ([Roots](config.md#roots)), under the path where a link in the language menu of a root's `antora` page leaves that page's own URL, as `/ar/` for the menu's `/ar/a11y/` on `/en-US/a11y/`. It is not requested. Any other URL on such a host outside every scope is asked once, as an allowlisted one is, and judged as any link. |
+| `out_of_scope` | Names another locale's page: a URL on a host a root starts on, outside every root's scope ([Roots](config.md#roots)), under the path where a link a profile's [`locale_links`](config.md#profiles) selects on a root's page leaves that page's own URL, as `/ar/` for the menu's `/ar/a11y/` on `/en-US/a11y/`. It is not requested. Any other URL on such a host outside every scope is asked once, as an allowlisted one is, and judged as any link. |
 | `host_not_allowlisted` | Names a URL on a host no root starts on and the [`allowlist`](config.md#allowlist) does not name. It is not requested. |
 | `skipped` | Names a URL a [`skip`](config.md#skip) glob matches, or one whose redirect leads to such a URL. |
 | `scheme` | Names a URL whose scheme is not `http` or `https` but one a public web page uses: `mailto`, `tel`, `irc`, `ircs`, `xmpp`, `appstream`, `ftp`, `news`, `magnet` or `sms`, or `data` or `javascript`, which work in the page itself, as an embedded image or a script's link. A link with any other scheme, as `file:` or a mistyped `hhttps:`, cannot work for a reader and is `broken_url`, reason `bad_scheme`; [`judge.schemes`](config.md#judging) adds to the list. |

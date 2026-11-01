@@ -5,14 +5,17 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use crate::fetch::http::host::Hosts;
 use crate::fetch::http::{HttpFetcher, Settings};
-use crate::profile::antora::Antora;
-use crate::profile::generic::Generic;
 use crate::store::{Mode, RunRoot, Store, Writer};
 
 use super::*;
 
+/// `generic` and `antora`, and the extension that reads docs.fp.o's language
+/// menu (D67).
 fn registry() -> Registry {
-    Registry::new(Box::new(Generic)).with(Box::new(Antora))
+    let toml = "[[profile]]\nname = \"fedora\"\nextends = \"antora\"\n\
+                locale_links = \"a.language[href]\"\n";
+    let defined = crate::config::Config::parse(toml).unwrap().policy.profiles;
+    crate::cli::registry_for(&defined).unwrap()
 }
 
 /// Settings that fail fast: retries a few milliseconds apart, a short
@@ -1396,7 +1399,7 @@ async fn a_saved_antora_page_yields_its_profile_facts_source_and_links() {
             |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
         )
         .unwrap();
-    assert_eq!(profile, "antora");
+    assert_eq!(profile, "fedora", "the extension claims what `antora` does");
     assert_eq!(
         repo,
         "https://forge.fedoraproject.org/dei/fedora-accessibility"

@@ -30,7 +30,7 @@ remeasures it.
 - **D10** Default scope: en-US, every fedora version; locales are a root that is off by default
 - **D44** A root's scope is its path prefix until `include` names globs, which match the whole canonical URL
 - **D50** A config `skip` list makes a matching page link or seed `unchecked`, reason `skipped`, before scope and the allowlist
-- **D67** Another locale is a prefix the roots' pages' language menus name, and a URL no locale covers yet waits for the last page
+- **D67** Another locale is a prefix a profile's language-menu links name, and a URL no locale covers yet waits for the last page
 - **D68** An `allowlist` entry `*.<domain>` names every host below the domain, and none names a root's own host
 
 ## The crawl

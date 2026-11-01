@@ -252,7 +252,7 @@ impl Sink {
 
     /// Records `prefix` as another locale's: a URL whose path ends in `/`,
     /// every URL on its host under that path being a page of that locale
-    /// (D67). One recorded already is not recorded again.
+    /// ([`locale_prefix`], D67). One recorded already is not recorded again.
     pub fn other_locale(&mut self, prefix: Url) {
         if !self.other_locales.contains(&prefix) {
             self.other_locales.push(prefix);
@@ -269,6 +269,34 @@ impl Sink {
     pub fn into_facts(self) -> Facts {
         self.facts
     }
+}
+
+/// The prefix of the locale a language menu's `link` on `page` names: the
+/// link's path up to the first segment where it departs from the page's, as a
+/// directory (D67). `None` for a link on another origin, or one departing at
+/// an empty segment: the page itself, a path the page's begins with, or the
+/// page's path with a final `/`.
+pub fn locale_prefix(page: &Url, link: &Url) -> Option<Url> {
+    if link.origin() != page.origin() {
+        return None;
+    }
+    let mut mine = page.path().split('/');
+    let mut prefix = String::new();
+    for segment in link.path().split('/') {
+        prefix.push_str(segment);
+        prefix.push('/');
+        if mine.next() != Some(segment) {
+            if segment.is_empty() {
+                return None;
+            }
+            let mut locale = link.clone();
+            locale.set_path(&prefix);
+            locale.set_query(None);
+            locale.set_fragment(None);
+            return Some(locale);
+        }
+    }
+    None
 }
 
 /// What the store lets a profile ask of the run it resolves in (D39).

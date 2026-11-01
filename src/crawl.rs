@@ -17,10 +17,10 @@
 //! The run writes every target's HTTP-level outcome and no verdict on a
 //! link, which is SQL's after the crawl (D28).
 //!
-//! A page of a root teaches the frontier the other locales its language menu
-//! names before its links are planned, and a URL on a root's host outside
-//! every scope that no locale covered when it was met is judged once the
-//! pages are read, until none waits (`settle_outside`, D67).
+//! A page of a root teaches the frontier the other locales its profile
+//! reads from a language menu before its links are planned, and a URL on a
+//! root's host outside every scope that no locale covered when it was met is
+//! judged once the pages are read, until none waits (`settle_outside`, D67).
 //!
 //! A sitemap is a target, and each of its entries a link from it, of kind
 //! `sitemap` for a page and `sitemap_file` for an index's sitemap (D13), but

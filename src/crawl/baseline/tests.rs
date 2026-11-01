@@ -11,8 +11,6 @@ use crate::fetch::http::{HttpFetcher, Settings};
 use crate::fetch::local::LocalFetcher;
 use crate::fetch::routed::Routed;
 use crate::profile::Registry;
-use crate::profile::antora::Antora;
-use crate::profile::generic::Generic;
 use crate::store::{BaselineIndex, Mode, RunId, RunRoot, Store, Writer};
 
 fn url(s: &str) -> Url {
@@ -104,8 +102,13 @@ fn a_version_is_held_at_the_segment_its_pages_sit_at_and_named_by_its_own_name()
     );
 }
 
+/// `generic` and `antora`, and the extension that reads docs.fp.o's language
+/// menu (D67).
 fn registry() -> Registry {
-    Registry::new(Box::new(Generic)).with(Box::new(Antora))
+    let toml = "[[profile]]\nname = \"fedora\"\nextends = \"antora\"\n\
+                locale_links = \"a.language[href]\"\n";
+    let defined = crate::config::Config::parse(toml).unwrap().policy.profiles;
+    crate::cli::registry_for(&defined).unwrap()
 }
 
 /// An Antora page of `component` at `version`, holding `body`.

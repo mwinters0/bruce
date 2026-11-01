@@ -376,9 +376,13 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 <p class="muted">None.</p>
 </details>
 <details>
-<summary><span class="ttl">Settings off their defaults</span><span class="cnt">0</span></summary>
+<summary><span class="ttl">Settings off their defaults</span><span class="cnt">3</span></summary>
 <p>The settings this run was judged by and asked with that differ from the defaults, as the configuration file writes them. A report judges the run by the policy it recorded, and a comparison judges both runs by the policy of the run it reports on.</p>
-<p class="muted">None: every setting is at its default.</p>
+<ul>
+<li><code>profile.fedora.extends = &quot;antora&quot;</code></li>
+<li><code>profile.fedora.generator = &quot;&quot;</code></li>
+<li><code>profile.fedora.locale_links = &quot;a.language[href]&quot;</code></li>
+</ul>
 </details>
 </details>
 </section>

@@ -154,6 +154,7 @@ class Server(unittest.TestCase):
         cfg = e2e.bruce_config(8099)
         self.assertIn('url = "http://127.0.0.1:8099/en-US/"', cfg)
         self.assertNotIn("allowlist", cfg)
+        self.assertIn('locale_links = "a.language[href]"', cfg, "the guide's profile")
 
 
 class Verify(unittest.TestCase):
