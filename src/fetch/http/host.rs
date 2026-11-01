@@ -327,19 +327,14 @@ impl Host {
 }
 
 /// The time between two requests to a host (D18). `crawl_delay` is the
-/// host's, once its robots.txt has been read; a negative or non-finite one
-/// is ignored.
+/// host's, once its robots.txt has been read; a negative or NaN one is
+/// ignored, and one past what an `f32` holds, which the parser reads as
+/// infinite, is capped at [`MAX_INTERVAL`] as any absurd one is.
 ///
 /// With no `per_second` written for the host, a `Crawl-delay` governs and
 /// the default rate never overrides it; with none of either, the default
 /// rate. Where `per_second` is written, it beats a `Crawl-delay` on a host a
 /// root starts on and loses to a slower one anywhere else.
-// deficiency: KD37 `texting_robots` reads a `Crawl-delay` too large for an
-// `f32` as infinite, which the filter here ignores where `MAX_INTERVAL` caps a
-// smaller absurd one, so the host is paced at its rate or the default; and
-// `access` keeps the largest delay among a name's origins, so an infinite one
-// replaces a finite one another origin states. Capping a delay before it is
-// kept, infinite included, would close it.
 fn interval(
     settings: &HostSettings,
     default_per_second: f64,
@@ -347,9 +342,7 @@ fn interval(
     crawl_delay: Option<f32>,
 ) -> Duration {
     let written = settings.per_second.map(|n| 1.0 / n);
-    let delay = crawl_delay
-        .filter(|d| d.is_finite() && *d >= 0.0)
-        .map(f64::from);
+    let delay = crawl_delay.filter(|d| *d >= 0.0).map(f64::from);
     let seconds = match (written, delay) {
         (Some(w), Some(_)) if is_root_host => w,
         (Some(w), Some(d)) => w.max(d),

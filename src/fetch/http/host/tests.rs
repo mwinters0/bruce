@@ -47,13 +47,20 @@ fn a_written_rate_beats_the_crawl_delay_on_a_root_host_only() {
 
 #[test]
 fn a_crawl_delay_that_is_not_a_delay_is_ignored_and_a_huge_one_is_capped() {
-    for bad in [f32::NAN, f32::INFINITY, -1.0] {
+    for bad in [f32::NAN, f32::NEG_INFINITY, -1.0] {
         assert_eq!(interval(&settings(None), 2.0, false, Some(bad)), secs(0.5));
     }
-    assert_eq!(
-        interval(&settings(None), 2.0, false, Some(f32::MAX)),
-        MAX_INTERVAL
-    );
+    // Infinite is what the parser reads past `f32::MAX` as.
+    for huge in [f32::MAX, f32::INFINITY] {
+        assert_eq!(
+            interval(&settings(None), 2.0, false, Some(huge)),
+            MAX_INTERVAL
+        );
+        assert_eq!(
+            interval(&settings(Some(0.25)), 2.0, false, Some(huge)),
+            MAX_INTERVAL
+        );
+    }
 }
 
 fn config(server: &MockServer, extra: &str) -> Config {
@@ -491,5 +498,22 @@ async fn the_slowest_crawl_delay_among_a_names_origins_paces_it() {
         let pace = hosts.host(&url(80));
         let got = pace.pace.lock().unwrap().interval;
         assert_eq!(got, secs(3.0), "{order:?}");
+    }
+}
+
+/// A `Crawl-delay` past what an `f32` holds is read as an hour, and does not
+/// displace another origin's smaller one in either order (D18, D69).
+#[tokio::test]
+async fn an_infinite_crawl_delay_paces_a_name_at_the_cap_whichever_origin_was_read_first() {
+    for order in [["1e999", "3"], ["3", "1e999"]] {
+        let hosts = Hosts::unlimited();
+        let url = |port: u16| Url::parse(&format!("http://delayed.invalid:{port}/a")).unwrap();
+        for (i, delay) in order.into_iter().enumerate() {
+            let at = url(80 + i as u16);
+            let text = format!("User-agent: *\nCrawl-delay: {delay}\n");
+            hosts.host(&at).access(&at, async { listed(&text) }).await;
+        }
+        let got = hosts.host(&url(80)).pace.lock().unwrap().interval;
+        assert_eq!(got, MAX_INTERVAL, "{order:?}");
     }
 }

@@ -95,11 +95,6 @@ roadmap's phase index.
   broken one is never found (D13). **(c) unowned**: a site whose pages
   reference one would promote it. Detail: `src/extract/links.rs`
 
-- **KD37** — A `Crawl-delay` too large for an `f32` is ignored where a smaller
-  absurd one is capped at an hour, so the host is paced at its rate or the
-  default, and it displaces a finite delay another origin of the name states
-  (D18, D69). **(b) owned by M41**. Detail: `src/fetch/http/host.rs`
-
 - **KD38** — A page a redirect lands on takes `in_sitemap` and `via_links`
   from the target that claimed it, so a page a sitemap entry redirects to is
   listed or unlisted by whether that redirect or a link claimed it first, and
