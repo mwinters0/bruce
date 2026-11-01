@@ -71,7 +71,8 @@ The spec is [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.m
 - [x] **10.6** Locale learning in the core, `locale_links`, and the guide's
   `fedora` extension extracting what today's code does
   ([notes](../wip/roadmap-P10.6-locale-links-notes.md)).
-- [ ] **10.7** Neutral help examples and palette.
+- [x] **10.7** Neutral help examples and palette
+  ([notes](../wip/roadmap-P10.7-neutral-text-notes.md)).
 - [ ] **10.8** The "after" crawl compared with 10.1's: no fact, locale or
   verdict differs.
 

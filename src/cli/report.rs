@@ -388,7 +388,7 @@ pub fn check(m: &ArgMatches) -> Result<(), clap::Error> {
 /// `--name`'s value: a file name's first part, which holds no separator.
 fn stem(s: &str) -> Result<String, String> {
     if s.is_empty() || s.contains(['/', '\\']) {
-        Err("expected a file name without a `/`, as in en-us".to_owned())
+        Err("expected a file name without a `/`, as in fr".to_owned())
     } else {
         Ok(s.to_owned())
     }
@@ -398,7 +398,7 @@ fn stem(s: &str) -> Result<String, String> {
 fn fact(s: &str) -> Result<String, String> {
     match s.split_once('=') {
         Some((key, _)) if !key.is_empty() => Ok(s.to_owned()),
-        _ => Err("expected KEY=VALUE, as in antora.component=fedora-docs".to_owned()),
+        _ => Err("expected KEY=VALUE, as in antora.component=docs".to_owned()),
     }
 }
 

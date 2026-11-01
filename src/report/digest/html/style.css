@@ -1,17 +1,17 @@
 :root {
   color-scheme: dark;
-  --bg: #12151c;
-  --surface: #1a1e28;
-  --raised: #222735;
-  --text: #e4e7ee;
-  --muted: #9aa3b5;
-  --line: #2d3445;
-  --accent: #51a2da;
-  --accent-deep: #294172;
+  --bg: #131416;
+  --surface: #1b1c1f;
+  --raised: #25262a;
+  --text: #e6e6e8;
+  --muted: #a0a1a8;
+  --line: #34353a;
+  --accent: #a58de0;
+  --accent-deep: #3a3358;
   --bad: #f0868b;
   --warn: #e5be6b;
   --good: #7fcf9a;
-  --new: #51a2da;
+  --new: #a58de0;
 }
 * { box-sizing: border-box; }
 body {
@@ -61,7 +61,7 @@ tbody tr.new td:first-child, details.new, .newbar { border-left: 3px solid var(-
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .scroll {
   --cover: var(--bg);
-  --shade: rgba(81, 162, 218, .45);
+  --shade: rgba(165, 141, 224, .45);
   overflow-x: auto; margin: 8px 0;
   background:
     linear-gradient(to right, var(--cover) 30%, transparent) 0 0 / 2.5rem 100% no-repeat local,
@@ -109,8 +109,8 @@ footer { max-width: 72rem; margin: 3rem auto 2rem; padding: 0 16px; color: var(-
 @media print {
   :root {
     color-scheme: light;
-    --bg: #fff; --surface: #fff; --raised: #f2f4f8; --text: #111; --muted: #555;
-    --line: #ccd; --accent: #1f5f93; --accent-deep: #fff; --bad: #a11; --warn: #7a5a00; --good: #1a6b36; --new: #1f5f93;
+    --bg: #fff; --surface: #fff; --raised: #f3f3f5; --text: #111; --muted: #555;
+    --line: #ccc; --accent: #5a3fa0; --accent-deep: #fff; --bad: #a11; --warn: #7a5a00; --good: #1a6b36; --new: #5a3fa0;
   }
   header { background: none; }
   details { break-inside: avoid-page; }
