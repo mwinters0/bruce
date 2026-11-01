@@ -36,8 +36,8 @@ use regex::Regex;
 use url::Url;
 
 use super::{
-    BoxError, Extract, GENERIC_REGION, Lookup, Profile, Sink, View, compiled, element, interned,
-    locale_prefix, text,
+    BoxError, Extract, GENERIC_REGION, Lookup, Profile, Sink, SitemapNote, View, compiled, element,
+    interned, locale_prefix, text,
 };
 use crate::config::{Definition, Fact};
 use crate::forge;
@@ -310,7 +310,7 @@ impl Profile for Declarative {
         &[]
     }
 
-    fn sitemap_note(&self) -> Option<&'static str> {
+    fn sitemap_note(&self) -> Option<SitemapNote> {
         self.base.as_ref().and_then(|base| base.sitemap_note())
     }
 }

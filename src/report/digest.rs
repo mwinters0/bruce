@@ -19,6 +19,7 @@ mod compare;
 mod document;
 mod html;
 mod json;
+mod model;
 mod novelty;
 mod sections;
 

@@ -4,6 +4,7 @@ use serde_json::Value;
 use super::super::tests::{ROOT, column, fact, link, page, registry, target, url};
 use super::document::utc;
 use super::*;
+use crate::config::Entry;
 use crate::report::{Cell, VIEWS};
 
 const OTHER: &str = "https://other.test/";
@@ -165,6 +166,19 @@ pub(super) fn compared_with_a_fix() -> Store {
     target(&store, 4, 17, 404, "broken_url", None);
     link(&store, 4, 1, 17, None, "anchor");
     store
+}
+
+/// `digest` judged by the severity `rows` of (`key`, `level`).
+pub(super) fn mapped(digest: &mut Digest, rows: &[(&str, &str)]) {
+    digest.policy = rows
+        .iter()
+        .map(|(key, level)| Entry {
+            host: None,
+            key: format!("severity.{key}"),
+            value: (*level).to_owned(),
+        })
+        .collect();
+    digest.severity = SeverityMap::from_entries(&digest.policy);
 }
 
 pub(super) fn of(store: &Store) -> Digest {
@@ -1254,8 +1268,12 @@ fn the_sitemap_note_is_what_the_profiles_of_the_crawled_pages_say() {
         .unwrap();
     let d = of(&store);
     assert_eq!(d.sitemap_notes.len(), 1);
-    assert!(d.sitemap_notes[0].starts_with(note));
-    assert!(d.html().contains(&format!("<p>{}", d.sitemap_notes[0])));
+    assert!(d.sitemap_notes[0].text.starts_with(note));
+    assert_eq!(d.sitemap_notes[0].key, "antora.sitemap_from_build");
+    assert!(
+        d.html()
+            .contains(&format!("<p>{}", d.sitemap_notes[0].text))
+    );
     // A page that is not crawled (an allowlisted one) is no page of the site.
     store
         .connection()
@@ -1289,7 +1307,11 @@ fn the_pages_of_an_extension_get_their_bases_sitemap_note_from_the_runs_extends_
     .unwrap();
     let d = of(&store);
     assert_eq!(d.sitemap_notes.len(), 1);
-    assert!(d.sitemap_notes[0].starts_with("Antora writes a sitemap"));
+    assert!(
+        d.sitemap_notes[0]
+            .text
+            .starts_with("Antora writes a sitemap")
+    );
     // Pages of the base beside the extension's still bring the note once.
     conn.execute("UPDATE pages SET profile = 'antora' WHERE url_id = 4", [])
         .unwrap();

@@ -21,7 +21,7 @@ use std::rc::Rc;
 use percent_encoding::percent_decode_str;
 use url::Url;
 
-use super::{BoxError, Extract, Lookup, Profile, Settled, Sink, View, element};
+use super::{BoxError, Extract, Lookup, Profile, Settled, Sink, SitemapNote, View, element};
 
 mod hints;
 mod resolve;
@@ -189,10 +189,11 @@ impl Profile for Antora {
         &[PAGES, hints::HINTS]
     }
 
-    fn sitemap_note(&self) -> Option<&'static str> {
-        Some(
-            "Antora writes a sitemap from what it publishes, so an entry that did not answer is a build or deploy fault.",
-        )
+    fn sitemap_note(&self) -> Option<SitemapNote> {
+        Some(SitemapNote {
+            key: "antora.sitemap_from_build",
+            text: "Antora writes a sitemap from what it publishes, so an entry that did not answer is a build or deploy fault.",
+        })
     }
 }
 

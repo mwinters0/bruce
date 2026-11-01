@@ -80,12 +80,21 @@ pub trait Profile: Send + Sync {
     fn views(&self) -> &'static [View];
 
     /// What the generator's sitemap guarantees, for the digest to say above the
-    /// sitemap entries no page was fetched for: a sentence, where this
-    /// profile's generator writes one the entries can be read by. `generic`
-    /// knows no generator and has none (D87).
-    fn sitemap_note(&self) -> Option<&'static str> {
+    /// sitemap entries no page was fetched for: a key and its English
+    /// sentence, where this profile's generator writes a sitemap the entries
+    /// can be read by. `generic` knows no generator and has none (D87).
+    fn sitemap_note(&self) -> Option<SitemapNote> {
         None
     }
+}
+
+/// A profile's sentence about its generator's sitemap: a stable `key` a
+/// translated view words itself, and the English `text` the default view
+/// prints and a translation falls back to (D87).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SitemapNote {
+    pub key: &'static str,
+    pub text: &'static str,
 }
 
 /// One SQL view a profile ships. `name` begins with the profile's name and an

@@ -5,13 +5,11 @@
 use std::fmt::Write as _;
 
 use super::super::cause::CAUSES;
-use super::super::document::{Compared, Digest, Totals};
+use super::super::document::{Compared, Digest};
+use super::super::model::{Row, figure_changes, listed, rows};
 use super::guide::info_of;
-use super::markup::{
-    Row, a, close_section, day, esc, num, open_section, rows, short, source, table, w, when,
-};
+use super::markup::{a, close_section, day, esc, num, open_section, short, source, table, w, when};
 use super::severity::mark;
-use super::standing::listed;
 use crate::config::SeverityMap;
 use crate::report::table::Table;
 
@@ -44,8 +42,8 @@ pub(super) fn subtitle(d: &Digest) -> String {
 /// a class saying whether it is for the better: a rise in what is broken is
 /// not. The class repeats what the text says, never carrying it alone. No
 /// change is nothing.
-fn change(now: i64, then: i64, broken: bool) -> String {
-    let (text, class) = match now - then {
+fn change(delta: i64, broken: bool) -> String {
+    let (text, class) = match delta {
         0 => return String::new(),
         n if n > 0 => (format!("+{}", num(n)), if broken { " worse" } else { "" }),
         n => (
@@ -56,17 +54,16 @@ fn change(now: i64, then: i64, broken: bool) -> String {
     format!("<span class=\"d{class}\">{text}</span>")
 }
 
-/// The change of each figure, in the order [`super::figures`] lists them, or
+/// The change of each figure, in the order `figures` lists them, or
 /// none where there was no comparison.
 pub(super) fn changes(d: &Digest) -> Option<[String; 5]> {
-    let Compared { totals: then, .. } = d.compared.as_ref()?;
-    let now: &Totals = &d.totals;
+    let [pages, links, broken_url, broken_anchor, error] = figure_changes(d)?;
     Some([
-        change(now.pages, then.pages, false),
-        change(now.links, then.links, false),
-        change(now.broken_url, then.broken_url, true),
-        change(now.broken_anchor, then.broken_anchor, true),
-        change(now.error, then.error, true),
+        change(pages, false),
+        change(links, false),
+        change(broken_url, true),
+        change(broken_anchor, true),
+        change(error, true),
     ])
 }
 

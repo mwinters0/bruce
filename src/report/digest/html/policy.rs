@@ -7,15 +7,9 @@ use std::fmt::Write as _;
 
 use super::super::changes::Change;
 use super::super::document::Digest;
+use super::super::model::{Changes, differing};
 use super::markup::{esc, w};
-use crate::config::{Entry, Policy};
-
-/// The recorded rows that are not among the defaults' rows, in the order
-/// the digest holds them (`Entry::listed_order`).
-pub(super) fn differing(d: &Digest) -> Vec<&Entry> {
-    let defaults = Policy::default().entries();
-    d.policy.iter().filter(|e| !defaults.contains(e)).collect()
-}
+use crate::config::Entry;
 
 /// The list: each setting as a file writes it, or that there is none.
 pub(super) fn list(out: &mut String, d: &Digest) {
@@ -63,8 +57,7 @@ pub(super) fn changes(out: &mut String, d: &Digest) {
         out.push_str("<p class=\"muted\">None: the runs recorded the same policy.</p>\n");
         return;
     }
-    let (judging, rest): (Vec<&Change>, Vec<&Change>) =
-        d.policy_changes.iter().partition(|c| c.judges());
+    let Changes { judging, rest } = Changes::of(d);
     changed(out, &rest);
     if judging.is_empty() {
         return;

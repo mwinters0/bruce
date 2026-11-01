@@ -101,10 +101,10 @@ over the refspec grammar (I21). Code: `profile::antora::hints`. Evidence:
 
 ### D87 The reports read a profile's generator knowledge through the profile: `link_hints` for a hint, `sitemap_note` for the sitemap's sentence
 `link_hints` unions each profile's `<profile>_hints` view, empty where none ships one, for `report_broken` to join;
-`Profile::sitemap_note` is the digest's sentence above the sitemap entries no page was fetched for. Why: a core view
-naming `antora_hints` failed to create without Antora, and the digest said Antora of every site; neither is core's to
-know (D32). Rejected: a fifth hook for hints, Views' naming sufficing; the note as a fact or a view; the caller setting
-it, a digest silently without it. Reopens: a second profile's hints by another measure, `link_hints` keeping the least
-text. Code: `store::views::link_hints`, `report::digest::sections::sitemap_notes`. Evidence:
+`Profile::sitemap_note` is a stable key and its English text, the digest's note above the sitemap entries no page was
+fetched for: a view in another language words its own sentence by the key. Why: a core view naming `antora_hints`
+failed to create without Antora, and the digest said Antora of every site; neither is core's to know (D32). Rejected:
+a fifth hook for hints; the note as a fact or a view; the default view holding each profile's sentence. Code:
+`store::views::link_hints`, `report::digest::sections::sitemap_notes`. Evidence:
 `report::tests::a_registry_whose_profiles_ship_no_hints_still_has_the_broken_view`,
 `report::digest::tests::the_sitemap_note_is_what_the_profiles_of_the_crawled_pages_say`.

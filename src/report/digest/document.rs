@@ -3,6 +3,7 @@
 
 use super::changes::Change;
 use crate::config::{Entry, Reach, SeverityMap};
+use crate::profile::SitemapNote;
 use crate::report::table::Table;
 use crate::store::RunId;
 
@@ -126,7 +127,7 @@ pub struct Digest {
     /// What the generators of the crawled pages say of the sitemap they write
     /// (`Profile::sitemap_note`), one for each profile that has something to
     /// say, in the registry's order.
-    pub sitemap_notes: Vec<&'static str>,
+    pub sitemap_notes: Vec<SitemapNote>,
     /// The pages that lost an anchor links still name since the compared run:
     /// `page`, `anchor`, `links`, `pages`, `linking_pages`, `source_repo` and
     /// `source_path`. Empty where `compared` is `None`.

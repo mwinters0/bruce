@@ -16,13 +16,14 @@ use std::fmt::Write as _;
 
 use self::guide::{Entry, guide, info_of};
 use self::markup::{
-    Row, a, a_html, close_section, counted, details, duration, esc, marked, num, open_section,
-    rows, short, source, table, w, when,
+    a, a_html, close_section, counted, details, duration, esc, marked, num, open_section, short,
+    source, table, w, when,
 };
 use self::severity::{figure_class, legend, mark};
-use self::standing::{Counts, Page, listed, tally};
+use self::tally::tally;
 use super::document::Digest;
-use crate::config::{Reason, Severity, SeverityMap};
+use super::model::{self, Counts, Finding, Page, Row, differing, listed, rows};
+use crate::config::{Reason, SeverityMap};
 use crate::report::table::Table;
 
 mod compared;
@@ -30,7 +31,7 @@ mod guide;
 mod markup;
 mod policy;
 mod severity;
-mod standing;
+mod tally;
 
 const STYLE: &str = include_str!("html/style.css");
 
@@ -43,7 +44,7 @@ impl Digest {
         figures(&mut out, self);
         compared::broken_since(&mut out, self);
         compared::fixed_since(&mut out, self);
-        let ranked = standing::pages(self);
+        let ranked = model::pages(self);
         let ids = pages(&mut out, self, &ranked);
         repos(&mut out, self, &ranked, &ids);
         fix_once(&mut out, self);
@@ -324,28 +325,24 @@ fn figures(out: &mut String, d: &Digest) {
 
 fn fix_once(out: &mut String, d: &Digest) {
     open_section(out, "fix-once", "By: Link Target", None);
-    let (shown, hidden): (Vec<Row>, Vec<Row>) = rows(&d.broken_targets)
-        .partition(|r| listed(&d.severity, r.text("outcome"), r.text("reason")));
-    let (many, single): (Vec<Row>, Vec<Row>) = shown.into_iter().partition(|r| r.int("links") > 1);
-    if many.is_empty() {
-        out.push_str(if hidden.iter().any(|r| r.int("links") > 1) {
+    let targets = model::targets(d);
+    if targets.many.is_empty() {
+        out.push_str(if targets.hidden_many {
             "<p>No broken target named by more than one link is a finding under this report's \
              severity map.</p>\n"
         } else {
             "<p>No broken target is named by more than one link.</p>\n"
         });
     } else {
-        let held: i64 = many.iter().map(|r| r.int("links")).sum();
-        let all = d.totals.broken_url + d.totals.broken_anchor
-            - hidden.iter().map(|r| r.int("links")).sum::<i64>();
         w!(
             out,
             "<p class=\"muted\">Targets named by more than one link: {}, holding {} of the {} broken links.</p>\n",
-            num(many.len() as i64),
-            num(held),
-            num(all)
+            num(targets.many.len() as i64),
+            num(targets.held),
+            num(targets.all)
         );
-        let body: Vec<(bool, Vec<String>)> = many
+        let body: Vec<(bool, Vec<String>)> = targets
+            .many
             .iter()
             .map(|r| {
                 let cells = vec![
@@ -378,15 +375,55 @@ fn fix_once(out: &mut String, d: &Digest) {
             &body,
         );
     }
-    if !single.is_empty() {
+    if targets.single > 0 {
         w!(
             out,
             "<p>Targets named by one link each: {}. Each is in the drill-down of the page its \
              link is on, among the pages above.</p>\n",
-            num(single.len() as i64)
+            num(targets.single as i64)
         );
     }
     close_section(out);
+}
+
+/// The cells of a page's drill-down row for `finding`; `hinted` adds the hint
+/// column.
+fn finding_cells(finding: &Finding, hinted: bool) -> Vec<String> {
+    let r = &finding.row;
+    let fragment = r
+        .text("fragment")
+        .map_or_else(|| "-".to_owned(), |f| format!("<code>{}</code>", esc(f)));
+    let mut cells = if finding.error {
+        vec![
+            mark(finding.level),
+            format!("<code>{}</code>", esc(r.text("raw_href").unwrap_or(""))),
+            target_link(r.text("target").unwrap_or(""), None),
+            fragment,
+            esc(r.text("kind").unwrap_or("")),
+            problem(Some("error"), r.text("reason")),
+        ]
+    } else {
+        vec![
+            mark(finding.level),
+            written_as(r),
+            target_cell(r, None),
+            fragment,
+            esc(r.text("kind").unwrap_or("")),
+            problem(r.text("outcome"), r.text("reason")),
+        ]
+    };
+    if hinted {
+        cells.push(if finding.error {
+            "-".to_owned()
+        } else {
+            r.text("hint").map_or_else(
+                || "-".to_owned(),
+                |hint| format!("<code>{}</code>", esc(hint)),
+            )
+        });
+    }
+    cells.push(status_cell(r.int("status")));
+    cells
 }
 
 /// The id of each page's drill-down, by the page's URL.
@@ -399,20 +436,6 @@ fn pages(out: &mut String, d: &Digest, ranked: &[Page]) -> Ids {
          <i>Kind</i> is the type of element holding it (<code>anchor</code> is an <code>&lt;a \
          href&gt;</code>). <i>Problem</i> and <i>Status</i> are what the target answered.</p>\n",
     );
-    let mut links: HashMap<&str, Vec<Row>> = HashMap::new();
-    for row in rows(&d.broken) {
-        links
-            .entry(row.text("page").unwrap_or(""))
-            .or_default()
-            .push(row);
-    }
-    let mut errored: HashMap<&str, Vec<Row>> = HashMap::new();
-    for row in rows(&d.errors) {
-        errored
-            .entry(row.text("page").unwrap_or(""))
-            .or_default()
-            .push(row);
-    }
     let mut ids = Ids::new();
     if ranked.is_empty() {
         out.push_str(if d.pages.rows.is_empty() {
@@ -445,61 +468,11 @@ fn pages(out: &mut String, d: &Digest, ranked: &[Page]) -> Ids {
                 p.text("source_url")
             )
         );
-        let page_links = links.get(url).map_or(&[][..], Vec::as_slice);
-        let page_errors = errored.get(url).map_or(&[][..], Vec::as_slice);
-        let hinted = page_links.iter().any(|r| r.text("hint").is_some());
-        // The red links together, an unverified link after the broken URLs,
-        // then the amber ones.
-        let mut found: Vec<(Severity, bool, Vec<String>)> = page_links
+        let hinted = standing.hinted;
+        let body: Vec<(bool, Vec<String>)> = standing
+            .findings
             .iter()
-            .filter(|r| listed(&d.severity, r.text("outcome"), r.text("reason")))
-            .map(|r| {
-                let level = d.severity.of_link(r.text("outcome"), r.text("reason"));
-                let mut cells = vec![
-                    mark(level),
-                    written_as(r),
-                    target_cell(r, None),
-                    r.text("fragment")
-                        .map_or_else(|| "-".to_owned(), |f| format!("<code>{}</code>", esc(f))),
-                    esc(r.text("kind").unwrap_or("")),
-                    problem(r.text("outcome"), r.text("reason")),
-                ];
-                if hinted {
-                    cells.push(r.text("hint").map_or_else(
-                        || "-".to_owned(),
-                        |hint| format!("<code>{}</code>", esc(hint)),
-                    ));
-                }
-                cells.push(status_cell(r.int("status")));
-                (level, r.is_new(), cells)
-            })
-            .collect();
-        found.extend(
-            page_errors
-                .iter()
-                .filter(|r| listed(&d.severity, Some("error"), r.text("reason")))
-                .map(|r| {
-                    let level = d.severity.of_link(Some("error"), r.text("reason"));
-                    let mut cells = vec![
-                        mark(level),
-                        format!("<code>{}</code>", esc(r.text("raw_href").unwrap_or(""))),
-                        target_link(r.text("target").unwrap_or(""), None),
-                        r.text("fragment")
-                            .map_or_else(|| "-".to_owned(), |f| format!("<code>{}</code>", esc(f))),
-                        esc(r.text("kind").unwrap_or("")),
-                        problem(Some("error"), r.text("reason")),
-                    ];
-                    if hinted {
-                        cells.push("-".to_owned());
-                    }
-                    cells.push(status_cell(r.int("status")));
-                    (level, r.is_new(), cells)
-                }),
-        );
-        found.sort_by_key(|(level, _, _)| std::cmp::Reverse(*level));
-        let body: Vec<(bool, Vec<String>)> = found
-            .into_iter()
-            .map(|(_, new, cells)| (new, cells))
+            .map(|f| (f.is_new, finding_cells(f, hinted)))
             .collect();
         let mut columns = vec![
             ("", false),
@@ -531,7 +504,7 @@ fn repos(out: &mut String, d: &Digest, ranked: &[Page], ids: &Ids) {
             .push((url, p.text("title").unwrap_or_else(|| short(url))));
     }
     let mut clean = 0;
-    let by_repo = standing::repos(d, ranked);
+    let by_repo = model::repos(d, ranked);
     for (i, standing) in by_repo.iter().enumerate() {
         let (r, repo) = (&standing.row, standing.row.text("repo"));
         if standing.pages == 0 {
@@ -724,7 +697,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
         &entries(&d.sitemap_entries),
         |out| {
             for note in &d.sitemap_notes {
-                w!(out, "<p>{}</p>\n", esc(note));
+                w!(out, "<p>{}</p>\n", esc(note.text));
             }
             let body: Vec<(bool, Vec<String>)> = rows(&d.sitemap_entries)
                 .map(|r| {
@@ -770,7 +743,7 @@ fn housekeeping(out: &mut String, d: &Digest) {
     fold(
         out,
         "Settings off their defaults",
-        &num(policy::differing(d).len() as i64),
+        &num(differing(d).len() as i64),
         |out| policy::list(out, d),
     );
     if d.compared.is_some() {

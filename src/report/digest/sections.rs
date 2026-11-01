@@ -10,7 +10,7 @@ use super::document::{Judged, Run, Totals};
 use crate::config::{ASKING_KEYS, Entry, Reach, group_by_from_row};
 use crate::config::{Reason, expand_reasons};
 use crate::extract::Kind;
-use crate::profile::Registry;
+use crate::profile::{Registry, SitemapNote};
 use crate::report::error::Error;
 use crate::report::reach;
 use crate::report::redirects;
@@ -521,7 +521,7 @@ pub(super) fn sitemap_notes(
     conn: &Connection,
     run: RunId,
     profiles: &Registry,
-) -> Result<Vec<&'static str>, Error> {
+) -> Result<Vec<SitemapNote>, Error> {
     let mut stmt = conn.prepare(
         "SELECT DISTINCT coalesce((SELECT max(value) FROM policy WHERE run_id = pg.run_id \
          AND host IS NULL AND key = 'profile.' || pg.profile || '.extends'), pg.profile) \

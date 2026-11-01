@@ -1,12 +1,11 @@
-//! The document's markup helpers: escaping, numbers, links, the table, a
-//! section's opening and a table's row found by column name. They depend on no
+//! The document's markup helpers: escaping, numbers, links, the table and a
+//! section's opening. They depend on no
 //! part of the HTML but the time's format, so `compared`, which uses them,
 //! stands beside `html` and not under a cycle with it.
 
 use std::fmt::Write as _;
 
 use super::super::document::utc;
-use crate::report::table::{Cell, Table};
 
 /// Appends formatted text to a `String`, which cannot fail.
 macro_rules! w {
@@ -14,59 +13,6 @@ macro_rules! w {
 }
 pub(super) use w;
 
-/// One row of a table, its cells found by column name.
-pub(super) struct Row<'a> {
-    pub(super) columns: &'a [String],
-    pub(super) cells: &'a [Cell],
-}
-
-impl<'a> Row<'a> {
-    pub(super) fn cell(&self, name: &str) -> &'a Cell {
-        let at = self
-            .columns
-            .iter()
-            .position(|c| c == name)
-            .unwrap_or_else(|| panic!("the digest's table has no column `{name}`"));
-        &self.cells[at]
-    }
-
-    pub(super) fn text(&self, name: &str) -> Option<&'a str> {
-        self.cell(name).text().filter(|s| !s.is_empty())
-    }
-
-    pub(super) fn int(&self, name: &str) -> i64 {
-        match self.cell(name) {
-            Cell::Int(n) => *n,
-            _ => 0,
-        }
-    }
-
-    /// The row is new since the compared run (D75): as a finding under the
-    /// severity map where the section has `new_listed`, the section's `new`
-    /// where not.
-    pub(super) fn is_new(&self) -> bool {
-        let column = if self.columns.iter().any(|c| c == "new_listed") {
-            "new_listed"
-        } else {
-            "new"
-        };
-        matches!(self.cell(column), Cell::Bool(true))
-    }
-
-    pub(super) fn list(&self, name: &str) -> &'a [String] {
-        match self.cell(name) {
-            Cell::List(items) => items,
-            _ => &[],
-        }
-    }
-}
-
-pub(super) fn rows(table: &Table) -> impl Iterator<Item = Row<'_>> {
-    table.rows.iter().map(|cells| Row {
-        columns: &table.columns,
-        cells,
-    })
-}
 /// `s` safe in text and in a quoted attribute.
 pub(super) fn esc(s: &str) -> String {
     let mut out = String::with_capacity(s.len());

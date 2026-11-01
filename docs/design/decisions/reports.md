@@ -96,7 +96,7 @@ amber, and a part off its outcome's level names its reasons; the figures stay th
 changes no outcome, so needs no comparison rule; a reason's key that moved only dots, as `doubled_slash = "attention"`
 would, left its page ranked red (maintainer, 2026-10-31). Rejected: levels or colours a site defines, making legend,
 ranking and print styling data; a count by level alone ("5 red"), losing the kinds it holds; parts told apart by colour
-alone (D76). Code: `config::policy::severity`, `report::digest::html::standing`. Evidence:
+alone (D76). Code: `config::policy::severity`, `report::digest::model::standing`. Evidence:
 `report::digest::html::tests`.
 
 ### D86 The digest groups its pages by the fact `[digest]` `group_by` names, and by nothing unless a site says so
@@ -126,5 +126,5 @@ ordered by outcome, its levels derivable from `policy`; the run's outcomes, the 
 untouched. Why: a level is the report's, never the data's (D76). Rejected: `none` as no dot alone, a finding a site
 silenced still ranking its page; ranking or dropping `none` rows in the JSON, making the data the policy; a redirect at
 `none` listed undotted, or the legend silent on it (maintainer, 2026-10-31). Code:
-`config::policy::severity::Severity::is_finding`, `report::digest::html::standing`. Evidence:
+`config::policy::severity::Severity::is_finding`, `report::digest::model::standing`. Evidence:
 `report::digest::html::tests::a_kind_at_none_is_in_no_list_the_figures_and_the_json_keep_it`.
