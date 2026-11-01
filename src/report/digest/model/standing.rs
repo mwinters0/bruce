@@ -27,6 +27,18 @@ pub(in crate::report::digest) enum Kind {
     Fragment,
 }
 
+impl Kind {
+    /// The kind as a view names it.
+    pub(in crate::report::digest) fn name(self) -> &'static str {
+        match self {
+            Kind::Broken => "broken",
+            Kind::Through => "through",
+            Kind::Unverifiable => "unverifiable",
+            Kind::Fragment => "fragment",
+        }
+    }
+}
+
 pub(in crate::report::digest) const KINDS: [Kind; 4] = [
     Kind::Broken,
     Kind::Through,

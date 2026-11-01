@@ -1,6 +1,6 @@
 //! The digest: one crawl run's report, a document built once and written as
 //! dated JSON (`json`), for a database to load and graph over a retention the
-//! crawl's own never has, and as HTML (`html`) for a person to read (D64).
+//! crawl's own never has, and as HTML (`view`, D95) for a person to read (D64).
 //!
 //! It composes what the reports hold into the sections D64 names: the
 //! figures, the broken targets ranked by the links naming them, the pages
@@ -17,11 +17,11 @@ mod cause;
 mod changes;
 mod compare;
 mod document;
-mod html;
 mod json;
 mod model;
 mod novelty;
 mod sections;
+mod view;
 
 use std::path::Path;
 

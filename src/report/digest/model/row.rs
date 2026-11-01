@@ -41,13 +41,6 @@ impl<'a> Row<'a> {
         };
         matches!(self.cell(column), Cell::Bool(true))
     }
-
-    pub(in crate::report::digest) fn list(&self, name: &str) -> &'a [String] {
-        match self.cell(name) {
-            Cell::List(items) => items,
-            _ => &[],
-        }
-    }
 }
 
 pub(in crate::report::digest) fn rows(table: &Table) -> impl Iterator<Item = Row<'_>> {

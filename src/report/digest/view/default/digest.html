@@ -1,0 +1,468 @@
+{# The default view of the digest (D95): the one HTML document, no script and no outside file, dark on a screen and light in print. Every sentence is here and no value is: the model gives levels, counts, reasons and times, and this file words them. A block tag on a line of its own prints nothing. #}
+{% macro num(n) %}{{ n|thousands(",") }}{% endmacro %}
+{% macro counted(n, noun) %}{{ num(n) }} {{ noun }}{% if n != 1 %}s{% endif %}{% endmacro %}
+{% macro a(url, label) %}{% if url is web %}<a href="{{ url }}">{{ label }}</a>{% else %}{{ label }}{% endif %}{% endmacro %}
+{% macro when(s) %}<time datetime="{{ s|time("%Y-%m-%dT%H:%M:%SZ") }}">{{ s|time("%Y-%m-%d %H:%M:%S") }} UTC</time>{% endmacro %}
+{% macro day(s) %}<time datetime="{{ s|time("%Y-%m-%d") }}">{{ s|time("%Y-%m-%d") }}</time>{% endmacro %}
+{% macro duration(secs) %}{% set h = secs // 3600 %}{% set m = secs % 3600 // 60 %}{% set s = secs % 60 %}{% if h == 0 and m == 0 %}{{ s }} s{% elif h == 0 %}{{ m }} min {{ s }} s{% else %}{{ h }} h {{ m }} min {{ s }} s{% endif %}{% endmacro %}
+{% macro dot(level) %}{% if level != "none" %}<span class="sev {{ level }}" role="img" aria-label="{{ level|capitalize }}"></span>{% endif %}{% endmacro %}
+{% macro dot_before(level) %}{{ dot(level) }}{% if level != "none" %} {% endif %}{% endmacro %}
+{% macro question(entry) %}{% if entry == "doubled-slash" %}What do &quot;broken through it&quot; and &quot;doubled slash&quot; mean?{% else %}What is a &quot;pedantic&quot; link?{% endif %}{% endmacro %}
+{% macro info(entry) %} <a class="info" href="#guide-{{ entry }}" title="{{ question(entry) }}" aria-label="{{ question(entry) }}">i</a>{% endmacro %}
+{% macro info_of(reason) %}{% if reason == "doubled_slash" %}{{ info("doubled-slash") }}{% elif reason == "pedantic_trailing_slash" %}{{ info("pedantic") }}{% endif %}{% endmacro %}
+{% macro runs(parts) %}{% for part, marked in parts %}{% if marked %}<mark>{{ part }}</mark>{% else %}{{ part }}{% endif %}{% endfor %}{% endmacro %}
+{% macro problem(outcome, reason) %}{% if outcome == "broken_anchor" %}fragment missing{% elif outcome == "broken_url" %}URL broken{% elif outcome %}{{ outcome|replace("_", " ") }}{% endif %}{% if outcome and reason %} · {% endif %}{% if reason %}{{ reason }}{{ info_of(reason) }}{% endif %}{% endmacro %}
+{% macro problem_broken(outcome, reason) %}{% if outcome == "broken_anchor" %}fragment missing{% else %}URL broken{% endif %}{% if reason %} · {{ reason }}{{ info_of(reason) }}{% endif %}{% endmacro %}
+{% macro status(s) %}{% if s and s > 0 %}{{ s }}{% else %}<span class="muted">-</span>{% endif %}{% endmacro %}
+{% macro source(repo, path, url) %}{% if url and path %}{{ a(url, path) }}{% elif url %}{{ a(url, url|short) }}{% elif path and repo %}{{ path }} <small>in {{ a(repo, repo|short) }}</small>{% elif repo %}{{ a(repo, repo|short) }}{% else %}<span class="muted">-</span>{% endif %}{% endmacro %}
+{% macro target_link(target, fragment) %}{% if fragment %}{{ a(target ~ "#" ~ fragment, (target|short) ~ "#" ~ fragment) }}{% else %}{{ a(target, target|short) }}{% endif %}{% endmacro %}
+{% macro target_cell(r, fragment) -%}
+{%- if r.reason == "wrong_trailing_slash" and r.fix -%}
+{{ target_link(r.target, fragment) }}
+{%- if r.landing -%}<br><small>→ lands on {{ a(r.landing, runs((r.landing|short)|final_slash_runs)) }}</small>{%- endif -%}
+<br><small>→ try {{ a(r.fix, r.fix|short) }}</small>
+{%- elif r.reason != "doubled_slash" -%}
+{{ target_link(r.target, fragment) }}
+{%- else -%}
+{{ a((r.target ~ "#" ~ fragment) if fragment else r.target, runs((((r.target|short) ~ "#" ~ fragment) if fragment else (r.target|short))|slash_runs)) }}
+{%- if r.landing -%}<br><small>→ lands on {{ a(r.landing, runs((r.landing|short)|slash_runs)) }}</small>{%- endif -%}
+{%- endif -%}
+{%- endmacro %}
+{% macro written_as(r) %}<code>{% if r.reason == "doubled_slash" %}{{ runs(r.raw_href|slash_runs) }}{% else %}{{ r.raw_href }}{% endif %}</code>{% endmacro %}
+{% macro reasons(list) %}{% if list %} ({% for r in list %}{% if not loop.first %}, {% endif %}<code>{{ r }}</code>{% endfor %}){% endif %}{% endmacro %}
+{% macro tally(parts) -%}
+{%- for p in parts -%}
+{%- if not loop.first %}, {% endif -%}
+<span class="cn">{{ dot_before(p.level) }}
+{%- if p.kind == "broken" %}{{ counted(p.n, "broken link") }}{{ reasons(p.reasons) }}
+{%- elif p.kind == "through" %}{{ num(p.n) }} broken through it{{ info("doubled-slash") }}
+{%- elif p.kind == "unverifiable" %}{{ num(p.n) }} unverifiable{{ reasons(p.reasons) }}
+{%- else %}{{ counted(p.n, "missing fragment") }}{{ reasons(p.reasons) }}{% endif -%}
+</span>
+{%- endfor -%}
+{%- endmacro %}
+{% macro summary_count(parts, new_links, is_new) %}{{ tally(parts) }}{% if not is_new and new_links > 0 %}, <span class="cn">{{ num(new_links) }} new</span>{% endif %}{% endmacro %}
+{% macro new_said(new) %}{% if new %}<span class="vh">New: </span>{% endif %}{% endmacro %}
+{% macro details_open(new, id) %}<details{% if new %} class="new"{% endif %}{% if id %} id="{{ id }}"{% endif %}>{% endmacro %}
+{% macro then() %}{% if compared.file %}the baseline file's run{% else %}run {{ compared.run.id }}{% endif %}{% endmacro %}
+{% macro kind_words(kind, after) -%}
+{%- if kind == "broken_url" %}a link to a broken URL
+{%- elif kind == "broken_anchor" %}a link to a missing fragment
+{%- elif kind == "error" and ("broken_url" in after or "broken_anchor" in after) %}one that could not be verified
+{%- elif kind == "error" %}a link that could not be verified
+{%- elif kind == "redirected" %}a redirect to update
+{%- elif kind == "pedantic_trailing_slash" %}a redirect differing from its landing only by a final <code>/</code>{% if judged.pedantic_trailing_slash %}{{ info("pedantic") }}{% endif %}
+{%- else %}a link with the reason <code>{{ kind }}</code>
+{%- endif -%}
+{%- endmacro %}
+{% macro listed(kinds) %}{% for kind in kinds %}{% if loop.first %}{% elif loop.last %}, or {% else %}, {% endif %}{{ kind_words(kind, kinds[:loop.index0]) }}{% endfor %}{% endmacro %}
+{% set cause_words = {
+  "target_removed": ["Target removed", "The link was fine in the compared run and its target answers with an error now: the page, or the page it redirects to, is gone.", "Target's source, as the compared run recorded it, else as this run does"],
+  "target_moved": ["Target moved", "The link was fine in the compared run and its target now redirects somewhere it did not, where the link breaks.", "Target's source, as the compared run recorded it, else as this run does"],
+  "anchor_removed": ["Anchor removed", "The link was fine in the compared run, its target page had the fragment then, and does not now.", "Target's source, as the compared run recorded it, else as this run does"],
+  "link_added": ["Link added", "The page was in the compared run and did not hold this link.", "Linking page's source"],
+  "new_page": ["New page", "The compared run did not check the page the link is on.", "Linking page's source"],
+  "unexplained": ["No cause shown", "The same link was in the compared run, and nothing the comparison held explains the difference: usually a rule that judges the link differently since, such as a doubled slash.", "Linking page's source"],
+  "first_judged": ["First judged now", "The compared run could not judge the link (it could not be verified, or was left unchecked), so this is no regression.", "Linking page's source"],
+} %}
+{% macro unchecked_meaning(reason) -%}
+{%- if reason == "out_of_scope" -%}Links to the site's pages in other languages, which the language menu links every page to. To check them, add a <code>[[root]]</code> for those languages.
+{%- elif reason == "host_not_allowlisted" -%}Links to other websites, which this run was not set up to check. To check a site's links, add it to the <code>allowlist</code>; the sites that were checked are listed at the end.
+{%- elif reason == "skipped" -%}Links that match a <code>skip</code> pattern in the configuration, left alone on purpose. These are usually pages a check cannot judge, such as a forge's "new issue" form or a login page.
+{%- elif reason == "scheme" -%}Links that do not lead to a web page but to something else a browser can open, mostly email addresses (<code>mailto:</code>), so there is nothing to fetch. A link starting with anything else, such as <code>file:</code> or a mistyped <code>hhttps:</code>, cannot work for a reader and is listed as broken instead.
+{%- elif reason == "robots" -%}Links to pages the site asks robots not to fetch, in its <code>robots.txt</code>, and the run respected that. On a site this run checks, the <code>robots</code> setting for its host can turn this off.
+{%- elif reason == "robots_unavailable" -%}Links to a site whose <code>robots.txt</code>, which says what robots may fetch, could not be read: the site answered with an error, or sent the robot somewhere it could not follow, so the run left the whole site alone. Usually the site was failing at the time.
+{%- elif reason == "externals_skipped" -%}Links to other websites that a <code>check-dir</code> run was told not to check (<code>--externals skip</code>), with no earlier result to reuse.
+{%- elif reason == "too_deep" -%}Sitemaps nested too many levels inside other sitemaps, so not read.
+{%- elif reason == "no_anchors" -%}Links to a spot (after <code>#</code>) in a file the run did not read as a page, such as an image or a file too large to read. The file was found; the spot was not checked.
+{%- elif reason == "text_fragment" -%}Links to some words on a page (<code>#:~:text=</code>), which the browser finds when it opens it. The page was found; whether the words are on it was not checked.
+{%- elif reason == "cut" -%}Links the run stopped before getting to.
+{%- else -%}<span class="muted">This version of bruce has no description for this reason.</span>
+{%- endif -%}
+{%- endmacro %}
+{% macro most(label, column, rows, limit) %}
+{% if not rows %}
+<p class="muted">None.</p>
+{% else %}
+<div class="scroll"><table>
+<thead><tr><th>{{ label }}</th><th class="num">Links</th><th class="num">Targets they name</th></tr></thead>
+<tbody>
+{% for r in rows[:limit] %}
+<tr><td>{% if r[column] %}{{ r[column] }}{% else %}<span class="muted">-</span>{% endif %}</td><td class="num">{{ num(r.links) }}</td><td class="num">{{ num(r.targets) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+{% if rows|length > limit %}
+{% set rest = rows[limit:] %}
+<p class="muted">And {{ num(rest|length) }} more, holding {{ counted(rest|sum(attribute="links"), "link") }}{% if rest|length > 1 %}, none more than {{ num(rest[0].links) }}{% endif %}.</p>
+{% endif %}
+{% endmacro %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Link check digest {{ date }} – {% if run.roots %}{{ run.roots[0]|short }}{% endif %}{% if run.roots|length > 1 %} and {{ run.roots|length - 1 }} more{% endif %}</title>
+<style>
+{% block style %}{% include "style.css" %}{% endblock %}</style>
+</head>
+<body>
+<header><div>
+<h1>Link check digest <span class="date">{{ date }}</span></h1>
+<p class="subtitle">{% if not compared %}No earlier run to compare with{% else %}Compared with {% if compared.shares_day %}{{ when(compared.run.started) }}{% else %}{{ day(compared.run.started) }}{% endif %} ({% if compared.file %}baseline file{% else %}run #{{ compared.run.id }}{% endif %}{% if compared.run.finished is none %}, never finished{% endif %}){% endif %}</p>
+<dl class="meta">
+<dt>Roots</dt><dd>{% for root in run.roots %}{% if not loop.first %}, {% endif %}{{ a(root, root|short) }}{% endfor %}</dd>
+<dt>Run</dt><dd>{{ run.id }}, started {{ when(run.started) }}, {% if run.finished is none %}never finished{% else %}finished {{ when(run.finished) }}, after <span class="duration">{{ duration(run.finished - run.started) }}</span>{% endif %}</dd>
+<dt>Crawled by</dt><dd>bruce <span class="version">{{ run.tool_version }}</span></dd>
+</dl>
+{% if unfinished %}
+<p class="warn-box">This run never finished, so the digest is incomplete.</p>
+{% endif %}
+{% if trial %}
+<p class="warn-box">A trial: judged by the judging settings of <code>{{ trial }}</code>, not the policy the runs recorded.</p>
+{% endif %}
+<nav><a href="#figures">Figures</a> {% if broken_since %}<a href="#broken-since">Broken since</a> {% endif %}{% if fixed_since %}<a href="#fixed-since">Fixed since</a> {% endif %}<a href="#pages">Pages</a> <a href="#repos">Repos</a> <a href="#fix-once">Targets</a> <a href="#errors">Unverified</a> <a href="#housekeeping">Housekeeping</a> <a href="#guide">How to read</a></nav>
+</div></header>
+{% block intro %}{% endblock %}
+<main>
+{% block figures %}
+<section id="figures">
+<h2>Figures</h2>
+<div class="figures">
+{% for f in figures %}
+<div class="fig{% if f.level == "broken" %} bad{% elif f.level == "attention" %} warn{% endif %}"><span class="n">{{ num(f.n) }}</span><span class="l">{% if f.key == "pages" %}Pages{% elif f.key == "links" %}Links{% elif f.key == "broken_url" %}Links to a broken URL{% elif f.key == "broken_anchor" %}Links to a missing fragment{% else %}Links that could not be verified{% endif %}</span>{% if f.change and f.change > 0 %}<span class="d{% if f.broken %} worse{% endif %}">+{{ num(f.change) }}</span>{% elif f.change %}<span class="d{% if f.broken %} better{% endif %}">−{{ num(-f.change) }}</span>{% endif %}</div>
+{% endfor %}
+</div>
+<p class="muted">{{ num(totals.broken_url + totals.broken_anchor) }} total broken links. {{ num(totals.unchecked) }} links were not checked (see: Housekeeping). {% if compared %}{% if compared.file %} Each figure's change is since the run of the baseline file.{% else %} Each figure's change is since run {{ compared.run.id }}.{% endif %}{% endif %}</p>
+{% if legend.levels %}
+<p class="legend">A dot marks the severity of a link or a target: {% for l in legend.levels %}{% if not loop.first %}; {% endif %}<span class="sev {{ l.level }}" aria-hidden="true"></span> <b>{{ l.level|capitalize }}</b>, {{ listed(l.kinds) }}{% endfor %}.</p>
+{% endif %}
+{% if legend.quiet %}
+<p class="legend">Not listed, nor counted on a page or a repo, this report being set to treat them as no finding: {{ listed(legend.quiet) }}.</p>
+{% endif %}
+{% if compared %}
+<p class="legend"><span class="newbar" aria-hidden="true"></span> A bar at the left edge marks a row or a drill-down that is new since {{ then() }}. A drill-down that is not new counts the new links inside it.</p>
+{% endif %}
+</section>
+{% endblock %}
+{% block broken_since %}
+{% if broken_since and compared %}
+<section id="broken-since">
+<details class="sect">
+<summary><h2>Broken since the previous run</h2><small>Each new break under its cause</small></summary>
+{% if not broken_since.rows %}
+<p>No link broken since {{ then() }} is a finding under this report's severity map.</p>
+{% else %}
+{% set n = broken_since.rows|length %}
+<p>{{ num(n) }} to a broken URL or a missing fragment {% if n == 1 %}is{% else %}are{% endif %} broken since {{ then() }}. A new break is laid at the door of what the compared run held, never of a page having changed.</p>
+{% for c in broken_since.causes %}
+{% set words = cause_words[c.cause] %}
+<details>
+<summary><span class="ttl">{{ words[0]|safe }}</span><span class="cnt">{{ counted(c.rows|length, "link") }}</span></summary>
+<p>{{ words[1]|safe }}</p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>On page</th><th>Written as</th><th>Resolves to</th><th>Problem</th><th class="num">Status</th><th>{{ words[2]|safe }}</th></tr></thead>
+<tbody>
+{% for r in c.rows %}
+<tr><td class="dot">{{ dot(r.level) }}</td><td>{{ a(r.page, r.page|short) }}</td><td><code>{{ r.raw_href }}</code></td><td>{{ target_link(r.target, r.fragment) }}</td><td>{{ problem_broken(r.outcome, r.reason) }}</td><td class="num">{{ status(r.status) }}</td><td>{{ source(r.source_repo, r.source_path, r.source_url) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+</details>
+{% endfor %}
+{% endif %}
+</details>
+</section>
+{% endif %}
+{% endblock %}
+{% block fixed_since %}
+{% if fixed_since and compared %}
+<section id="fixed-since">
+<details class="sect">
+<summary><h2>Fixed since the previous run</h2></summary>
+{% if not fixed_since.rows %}
+<p>No link broken in {{ then() }} and not broken in this run is a finding under this report's severity map.</p>
+{% else %}
+{% set n = fixed_since.rows|length %}
+<p>{{ num(n) }} broken in {{ then() }} {% if n == 1 %}is{% else %}are{% endif %} not broken in this one: mended, or gone with the page. The problem is what each was then. The source shown is the linking page's.</p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>On page</th><th>Written as</th><th>Resolves to</th><th>Problem</th><th class="num">Status</th><th>Now</th><th>Linking page's source</th></tr></thead>
+<tbody>
+{% for r in fixed_since.rows %}
+<tr><td class="dot">{{ dot(r.level) }}</td><td>{{ a(r.page, r.page|short) }}</td><td><code>{{ r.raw_href }}</code></td><td>{{ target_link(r.target, r.fragment) }}</td><td>{{ problem_broken(r.outcome, r.reason) }}</td><td class="num">{{ status(r.status) }}</td><td>{% if r.became == "ok" %}Works{% elif r.became == "error" %}Errors{% elif r.became == "unchecked" %}Unchecked{% elif r.became == "link_removed" %}Link removed{% elif r.became == "page_removed" %}Page not checked{% else %}Not counted{% endif %}</td><td>{{ source(r.source_repo, r.source_path, r.source_url) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+</details>
+</section>
+{% endif %}
+{% endblock %}
+{% block pages %}
+<section id="pages">
+<details class="sect">
+<summary><h2>By: Source Page</h2></summary>
+<i>Written as</i> is the link in the page. <i>Resolves to</i> is the URL it landed at. <i>Kind</i> is the type of element holding it (<code>anchor</code> is an <code>&lt;a href&gt;</code>). <i>Problem</i> and <i>Status</i> are what the target answered.</p>
+{% if not pages %}
+{% if pages_any %}
+<p>No page holds a finding under this report's severity map.</p>
+{% else %}
+<p>No page holds a broken link.</p>
+{% endif %}
+{% endif %}
+{% for p in pages %}
+{{ details_open(p.row.is_new, p.id) }}
+<summary>{{ new_said(p.row.is_new) }}<span class="rank">{{ p.rank }}</span><span class="ttl">{% if p.row.title %}{{ p.row.title }}{% else %}{{ p.row.page|short }}{% endif %}</span><span class="cnt">{{ summary_count(p.counts, p.new_links, p.row.is_new) }}</span></summary>
+<p>Page {{ a(p.row.page, p.row.page|short) }} · Source {{ source(p.row.source_repo, p.row.source_path, p.row.source_url) }}</p>
+{% if not p.findings %}
+<p class="muted">None.</p>
+{% else %}
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>Written as</th><th>Resolves to</th><th>Fragment</th><th>Kind</th><th>Problem</th>{% if p.hinted %}<th>Hint</th>{% endif %}<th class="num">Status</th></tr></thead>
+<tbody>
+{% for f in p.findings %}
+{% set r = f.row %}
+<tr{% if f.is_new %} class="new"{% endif %}><td class="dot">{{ new_said(f.is_new) }}{{ dot(f.level) }}</td><td>{% if f.error %}<code>{{ r.raw_href }}</code>{% else %}{{ written_as(r) }}{% endif %}</td><td>{% if f.error %}{{ target_link(r.target, none) }}{% else %}{{ target_cell(r, none) }}{% endif %}</td><td>{% if r.fragment %}<code>{{ r.fragment }}</code>{% else %}-{% endif %}</td><td>{{ r.kind }}</td><td>{% if f.error %}{{ problem("error", r.reason) }}{% else %}{{ problem(r.outcome, r.reason) }}{% endif %}</td>{% if p.hinted %}<td>{% if not f.error and r.hint %}<code>{{ r.hint }}</code>{% else %}-{% endif %}</td>{% endif %}<td class="num">{{ status(r.status) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+</details>
+{% endfor %}
+</details>
+</section>
+{% endblock %}
+{% block repos %}
+<section id="repos">
+<details class="sect">
+<summary><h2>By: Source Page Repo</h2></summary>
+{% for repo in repos.listed %}
+{{ details_open(repo.row.is_new, none) }}
+<summary>{{ new_said(repo.row.is_new) }}<span class="rank">{{ repo.rank }}</span><span class="ttl">{% if repo.row.repo %}{{ a(repo.row.repo, repo.row.repo|short) }}{% else %}<span class="muted">No source recorded</span>{% endif %}</span><span class="cnt">{{ summary_count(repo.counts, repo.new_links, repo.row.is_new) }}</span></summary>
+<ul>
+{% for page in repo.pages %}
+{% if page.id %}
+<li><a href="#{{ page.id }}">{{ page.title }}</a></li>
+{% else %}
+<li>{{ page.title }}</li>
+{% endif %}
+{% endfor %}
+</ul>
+</details>
+{% endfor %}
+{% if repos.all_clean %}
+{% if pages_any %}
+<p>No repo's pages hold a finding under this report's severity map.</p>
+{% else %}
+<p>No repo's pages hold a broken link.</p>
+{% endif %}
+{% elif repos.clean > 0 %}
+<p class="muted">{{ num(repos.clean) }} more repos' pages hold no broken link.</p>
+{% endif %}
+</details>
+</section>
+{% endblock %}
+{% block targets %}
+<section id="fix-once">
+<details class="sect">
+<summary><h2>By: Link Target</h2></summary>
+{% if not targets.many %}
+{% if targets.hidden_many %}
+<p>No broken target named by more than one link is a finding under this report's severity map.</p>
+{% else %}
+<p>No broken target is named by more than one link.</p>
+{% endif %}
+{% else %}
+<p class="muted">Targets named by more than one link: {{ num(targets.many|length) }}, holding {{ num(targets.held) }} of the {{ num(targets.all) }} broken links.</p>
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th class="num">Links to it</th><th class="num">Linking pages</th><th>Broken target</th><th>Problem</th><th class="num">Status</th><th>Target's source</th></tr></thead>
+<tbody>
+{% for r in targets.many %}
+<tr{% if r.is_new %} class="new"{% endif %}><td class="dot">{{ new_said(r.is_new) }}{{ dot(r.level) }}</td><td class="num">{{ num(r.links) }}</td><td class="num">{{ num(r.pages) }}</td><td>{{ target_cell(r, r.fragment) }}</td><td>{{ problem(r.outcome, r.reason) }}</td><td class="num">{{ status(r.status) }}</td><td>{{ source(r.source_repo, r.source_path, r.source_url) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+{% if targets.single > 0 %}
+<p>Targets named by one link each: {{ num(targets.single) }}. Each is in the drill-down of the page its link is on, among the pages above.</p>
+{% endif %}
+</details>
+</section>
+{% endblock %}
+{% block errors %}
+<section id="errors">
+<details class="sect">
+<summary><h2>Links that could not be verified</h2></summary>
+<p>Links whose target was asked and gave no verdict: it refused (401, 403, 429), failed (5xx, after retries) or did not answer (a timeout, TLS, connection refused). The page may well be there, so they are separate from the broken links.</p>
+{% if not errors.any %}
+<p>Every link asked could be verified.</p>
+{% elif not errors.rows %}
+<p>No link that could not be verified is a finding under this report's severity map.</p>
+{% else %}
+<div class="scroll"><table>
+<thead><tr><th class="dot"></th><th>On page</th><th>Page's source</th><th>Written as</th><th>Resolves to</th><th>Kind</th><th>Reason</th><th class="num">Status</th></tr></thead>
+<tbody>
+{% for r in errors.rows %}
+<tr{% if r.is_new %} class="new"{% endif %}><td class="dot">{{ new_said(r.is_new) }}{{ dot(r.level) }}</td><td>{{ a(r.page, r.page|short) }}</td><td>{% if r.source_url %}{{ a(r.source_url, "source") }}{% else %}-{% endif %}</td><td><code>{{ r.raw_href }}</code></td><td>{{ target_link(r.target, r.fragment) }}</td><td>{{ r.kind }}</td><td>{{ problem(none, r.reason) }}</td><td class="num">{{ status(r.status) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+</details>
+</section>
+{% endblock %}
+{% block housekeeping %}
+<section id="housekeeping">
+<details class="sect">
+<summary><h2>Housekeeping</h2><small>Redirects to update, sitemap entries, orphans, unlisted pages, unchecked links, settings off their defaults and, in a comparison, those that differ</small></summary>
+<details>
+<summary><span class="ttl">Redirected links</span><span class="cnt">{{ num(redirects.rows|sum(attribute="links")) }} links</span></summary>
+<p>The links whose target redirects, by where it lands, the most links first: update them to the landing. Open one for the redirecting URLs, the hops the first took and the pages the links are written on.{% if pedantic != "none" %} A landing marked as a ring is reached by a URL differing from it only by a final <code>/</code>, and comes last.{% if judged.pedantic_trailing_slash %}{{ info("pedantic") }}{% endif %}{% endif %}</p>
+{% if not redirects.any %}
+<p class="muted">None.</p>
+{% elif not redirects.rows %}
+<p class="muted">No redirect is a finding under this report's severity map.</p>
+{% endif %}
+{% for r in redirects.rows %}
+{{ details_open(r.is_new, none) }}
+<summary>{{ new_said(r.is_new) }}{{ dot(r.level) }}<span class="ttl">{{ r.landing|short }}</span><span class="cnt">{{ counted(r.links, "link") }}, {{ counted(r.urls, "redirecting URL") }}</span></summary>
+<p>Landing {{ a(r.landing, r.landing|short) }}{% if r.reason %} · Reason <code>{{ r.reason }}</code>{{ info_of(r.reason) }}{% endif %}</p>
+<p>First hops <code>{{ r.chain }}</code></p>
+<p>Linking pages: {{ num(r.pages|length) }}</p>
+<ul>
+{% for page in r.pages %}
+<li>{{ a(page, page|short) }}</li>
+{% endfor %}
+</ul>
+</details>
+{% endfor %}
+</details>
+<details>
+<summary><span class="ttl">Sitemap entries no page was fetched for</span><span class="cnt">{{ num(sitemap.entries|length) }}</span></summary>
+{% for note in sitemap.notes %}
+<p>{{ note.text }}</p>
+{% endfor %}
+{% if not sitemap.entries %}
+<p class="muted">None.</p>
+{% else %}
+<div class="scroll"><table>
+<thead><tr><th>Entry</th><th>Answer</th><th class="num">Status</th></tr></thead>
+<tbody>
+{% for r in sitemap.entries %}
+<tr{% if r.is_new %} class="new"{% endif %}><td>{{ new_said(r.is_new) }}{{ a(r.page, r.page|short) }}</td><td>{{ problem(r.outcome, r.reason) }}</td><td class="num">{{ status(r.status) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+</details>
+<details>
+<summary><span class="ttl">Orphans</span><span class="cnt">{{ num(orphans|length) }}</span></summary>
+<p>Pages the sitemap lists that no page links to.</p>
+{% if not orphans %}
+<p class="muted">None.</p>
+{% else %}
+<div class="scroll"><table>
+<thead><tr><th>Title</th><th>Page</th><th>Source</th></tr></thead>
+<tbody>
+{% for r in orphans %}
+<tr{% if r.is_new %} class="new"{% endif %}><td>{{ new_said(r.is_new) }}{{ a(r.page, r.title if r.title else r.page|short) }}</td><td>{{ a(r.page, r.page|short) }}</td><td>{{ source(r.source_repo, r.source_path, none) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+</details>
+<details>
+<summary><span class="ttl">Unlisted pages</span><span class="cnt">{{ num(unlisted|length) }}</span></summary>
+<p>Pages missing from the sitemap of a root that read one.</p>
+{% if roots_without_sitemap %}
+<p>Read no sitemap, so no page of them can be unlisted: {% for root in roots_without_sitemap %}{% if not loop.first %}, {% endif %}{{ a(root, root|short) }}{% endfor %}.</p>
+{% endif %}
+{% if not unlisted %}
+<p class="muted">None.</p>
+{% else %}
+<div class="scroll"><table>
+<thead><tr><th>Title</th><th>Page</th><th>Source</th></tr></thead>
+<tbody>
+{% for r in unlisted %}
+<tr{% if r.is_new %} class="new"{% endif %}><td>{{ new_said(r.is_new) }}{{ a(r.page, r.title if r.title else r.page|short) }}</td><td>{{ a(r.page, r.page|short) }}</td><td>{{ source(r.source_repo, r.source_path, none) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+</details>
+<details>
+<summary><span class="ttl">Unchecked links</span><span class="cnt">{{ num(unchecked|sum(attribute="links")) }} links</span></summary>
+<p>Links this run did not check, grouped by why. They are not counted as broken, as the run does not know whether they work; a link it knows cannot work is listed as broken instead.
+{% if not unchecked %}
+<p class="muted">None.</p>
+{% endif %}
+{% for r in unchecked %}
+<h3><code>{{ r.reason }}</code> <small>{{ counted(r.links, "link") }}, to {{ counted(r.targets, "target") }}</small></h3>
+<p>{{ unchecked_meaning(r.reason) }}</p>
+{{ most("Where they point", "group", r.groups, 5) -}}
+{% endfor %}
+<h3>External hosts checked</h3>
+<p>The other websites whose links this run did check: those on its <code>allowlist</code> that these pages link to.</p>
+{{ most("Host", "host", checked_hosts, 10) -}}
+</details>
+<details>
+<summary><span class="ttl">Settings off their defaults</span><span class="cnt">{{ num(settings|length) }}</span></summary>
+{% if trial %}
+<p><strong>A trial.</strong> This report was judged by the judging settings of <code>{{ trial }}</code>, in place of those the runs recorded; nothing was crawled again, so the settings for asking are the run's own. The settings it was judged by and asked with that differ from the defaults, as the configuration file writes them:</p>
+{% else %}
+<p>The settings this run was judged by and asked with that differ from the defaults, as the configuration file writes them. A report judges the run by the policy it recorded, and a comparison judges both runs by the policy of the run it reports on.</p>
+{% endif %}
+{% if not settings %}
+<p class="muted">None: every setting is at its default.</p>
+{% else %}
+<ul>
+{% for s in settings %}
+<li><code>{{ s }}</code></li>
+{% endfor %}
+</ul>
+{% endif %}
+</details>
+{% if setting_changes %}
+<details>
+<summary><span class="ttl">Settings that differ between the runs</span><span class="cnt">{{ num(setting_changes.count) }}</span></summary>
+<p>The rows of the policy the two runs recorded that differ, as the configuration file writes them: <strong>−</strong> a row only the compared run recorded, <strong>+</strong> a row only this run recorded, and an arrow where a row changed. A declared profile's rows are compared when a page of either run was extracted by it, and a source rule is named by its place in each run's list.</p>
+{% if setting_changes.count == 0 %}
+<p class="muted">None: the runs recorded the same policy.</p>
+{% else %}
+{% if setting_changes.rest %}
+<ul>
+{% for c in setting_changes.rest %}
+<li>{% if c.from and c.to %}<code>{{ c.from }}</code> → <code>{{ c.to }}</code>{% elif c.from %}− <code>{{ c.from }}</code>{% else %}+ <code>{{ c.to }}</code>{% endif %}</li>
+{% endfor %}
+</ul>
+{% endif %}
+{% if setting_changes.judging %}
+<p>These judging settings differ too, but both runs were judged by {% if trial %}the judging settings of <code>{{ trial }}</code>{% else %}this run's settings{% endif %}, so they changed no verdict here:</p>
+<ul>
+{% for c in setting_changes.judging %}
+<li>{% if c.from and c.to %}<code>{{ c.from }}</code> → <code>{{ c.to }}</code>{% elif c.from %}− <code>{{ c.from }}</code>{% else %}+ <code>{{ c.to }}</code>{% endif %}</li>
+{% endfor %}
+</ul>
+{% endif %}
+{% endif %}
+</details>
+{% endif %}
+</details>
+</section>
+{% endblock %}
+{% block guide %}
+<section id="guide">
+<h2>How to read this report</h2>
+{% block guide_doubled_slash %}
+{% if judged.doubled_slash %}
+<h3 id="guide-doubled-slash">{{ question("doubled-slash") }}</h3>
+<p>Sometimes page B is fine if you go there the right way, but page A links to it in a way that adds an extra slash, e.g. <code>example.com/foo//page_B/</code> or <code>example.com/foo/page_B//</code>, or links to a URL that redirects to one like it.</p>
+<p>If you navigate from A to B that way, page B will work, but all of its relative links (<code>../../blah</code>) are broken because of the extra slash in the path. They are not counted against page B, because there's nothing wrong there: the problem is in page A. So A's link is listed as broken, with the reason <code>doubled_slash</code>, and {% if judged.reach == "full" %}the links on B that the extra slash breaks, and those on every other page at a doubled URL that B's relative links lead on to, are counted on page A as "broken through it"{% elif judged.reach == "immediate" %}the links on B that the extra slash breaks are counted on page A as "broken through it", though not those of the pages B's relative links lead on to{% else %}the links on B that the extra slash breaks are counted nowhere, this report being set to blame page A's link alone{% endif %}.</p>
+{% endif %}
+{% endblock %}
+{% block guide_pedantic %}
+{% if judged.pedantic_trailing_slash %}
+<h3 id="guide-pedantic">{{ question("pedantic") }}</h3>
+<p>Humans generally write URLs like <code>example.com/foo</code> but <em>technically</em> the correct form is <code>example.com/foo/</code>: notice the trailing slash. These are actually two separate web pages as far as most web servers are concerned, and if you visit the first one the web server will helpfully tell your browser, "Hey dummy, there's no page here, it's over at <code>example.com/foo/</code>". So your browser has to make a second request.</p>
+<p>Should the "wrong" URL count as broken, considering that the reader eventually ends up in the right place? It's debatable, but it is certainly lower priority than an actually broken link (a 404, say). These are not counted as broken: {% if pedantic == "pedantic" %}they are under Housekeeping's redirected links, marked as pedantic with a ring, after the other redirects{% elif pedantic == "attention" %}they are under Housekeeping's redirected links, marked as attention with an amber dot, after the other redirects{% elif pedantic == "broken" %}they are under Housekeeping's redirected links, marked as broken with a red dot, after the other redirects{% else %}this report is set to treat them as no finding, so it does not list them{% endif %}.</p>
+{% endif %}
+{% endblock %}
+</section>
+{% endblock %}
+</main>
+<footer>Written by bruce <span class="version">{{ bruce.version }}</span>, document format {{ bruce.model_version }}. The JSON digest of this day holds the same figures and lists, and every broken and error row, but not the sentences that explain them.</footer>
+</body>
+</html>

@@ -26,10 +26,10 @@ Code: `report::run::one`. Evidence: `report::tests::the_default_refuses_the_base
 
 ### D64 The digest is one document over a crawl run's crawled pages in every kind, its JSON holds every broken and error row, and its HTML is that document rendered with no script
 Its sections are ranked tables under a `format_version` apart from the schema's (D43), bumped only for a change a loader
-would misread; it counts every kind (D13) on crawled pages. The HTML shows nothing the JSON lacks but the profiles'
-sitemap notes (D87), lists only targets more than one link names; Why: the CI database is truncated; a loader dating a
-breakage needs rows its runs no longer hold. Rejected: aggregates alone; a flag on `bruce crawl`, which cannot digest an
-earlier run (D6); `serde_json` for a few `format!`s (D60); ranking targets by pages, hiding the links one restored
+would misread; it counts every kind (D13) on crawled pages. The HTML (D95) shows nothing the JSON lacks but the
+profiles' sitemap notes (D87), lists only targets more than one link names; Why: the CI database is truncated; a loader
+dating a breakage needs rows its runs no longer hold. Rejected: aggregates alone; a flag on `bruce crawl`, which cannot
+digest an earlier run (D6); `serde_json` for a few `format!`s (D60); ranking targets by pages, hiding what a restored
 anchor fixes; a page that runs script, blank from disk; "By repo" by the target's repo (maintainer, 2026-10-24).
 Reopens: an every-locale digest too large to open (P9). Code: `report::digest`. Evidence: `report::digest::tests`,
 `scripts/e2e.py`'s golden file.
@@ -74,8 +74,8 @@ it lands, but not where it says) amber; *pedantic* (`pedantic_trailing_slash`) a
 amber. Maintainer, 2026-10-24: the digest is skimmed by severity. Why: the colour repeats the row's text; the ring reads
 apart without colour and in print. Rejected: a `severity` field in the JSON, restating outcome and reason; a column of
 words, read where a dot is seen; error-only pages kept out of the pages, leaving a repo's red in links no listed page
-shows. Reopens: a level of a kind D82 cannot name. Code: `report::digest::html::severity`. Evidence:
-`report::digest::html::tests`.
+shows. Reopens: a level of a kind D82 cannot name. Code: `report::digest::view`. Evidence:
+`report::digest::view::tests`.
 
 ### D80 The doubled slash's reach is the digest's, and it moves what is blamed on the linking page, not what is counted
 `judge.doubled_slash_reach` is `full` (the doubled-slash pages a link lands on and its relative links reach),
@@ -97,7 +97,7 @@ changes no outcome, so needs no comparison rule; a reason's key that moved only 
 would, left its page ranked red (maintainer, 2026-10-31). Rejected: levels or colours a site defines, making legend,
 ranking and print styling data; a count by level alone ("5 red"), losing the kinds it holds; parts told apart by colour
 alone (D76). Code: `config::policy::severity`, `report::digest::model::standing`. Evidence:
-`report::digest::html::tests`.
+`report::digest::view::tests`.
 
 ### D86 The digest groups its pages by the fact `[digest]` `group_by` names, and by nothing unless a site says so
 `group_by` is a full fact key (D37), recorded as one `digest.group_by` row (D78) and read from the policy in force
@@ -117,7 +117,7 @@ inserted is named alone. A judging row is listed apart, as changing no verdict (
 broken experience; the defaults list shows no row removed, and rules alone would hide a changed root or scope.
 Rejected: the JSON alone; grouping by key, which a moved rule's two keys defeat; dropping a judging row, the older run's
 being a true fact.
-Code: `report::digest::changes`, `report::digest::html::{policy, guide}`. Evidence: `report::digest::tests`.
+Code: `report::digest::changes`, `report::digest::view`. Evidence: `report::digest::tests`.
 
 ### D92 A kind at `none` is no finding in the digest, and its JSON and figures keep it
 Its links leave the HTML's lists, counts and ranking, and a page whose only findings are at `none` has no row; the
@@ -127,4 +127,14 @@ untouched. Why: a level is the report's, never the data's (D76). Rejected: `none
 silenced still ranking its page; ranking or dropping `none` rows in the JSON, making the data the policy; a redirect at
 `none` listed undotted, or the legend silent on it (maintainer, 2026-10-31). Code:
 `config::policy::severity::Severity::is_finding`, `report::digest::model::standing`. Evidence:
-`report::digest::html::tests::a_kind_at_none_is_in_no_list_the_figures_and_the_json_keep_it`.
+`report::digest::view::tests::a_kind_at_none_is_in_no_list_the_figures_and_the_json_keep_it`.
+
+### D95 The digest's HTML is a minijinja template over the model, its default view embedded in the binary
+The default view (`view/default/`) holds every sentence of the document and the model none: it words levels, counts,
+reasons and times. Undefined names are errors; a block tag on a line of its own prints nothing. Escaping is bruce's
+formatter: HTML's five characters as D64's document has them, a `none` printing nothing, a name not ending `.html`
+printing as it is. Why: one file (D23); the engine's escape writes `'` and `/` as numeric references, so no cell would
+match the document it replaces. Rejected: tera, whose semantics changed in minor releases; handlebars and upon, which
+cannot extend; the model through `serde`, which `Digest` does not derive. Reopens: a view in a format the formatter
+cannot escape. Code: `report::digest::view`, `report::digest::model::context`. Evidence: `report::digest::view::tests`,
+`scripts/e2e.py`'s golden file.

@@ -101,4 +101,9 @@ roadmap's phase index.
   two runs of one site can disagree (D14). **(b) owned by P14**. Detail:
   `src/crawl.rs`
 
-<!-- deficiency-watermark: KD38 -->
+- **KD39** — The default view's "By: Source Page" note opens with an `<i>` and closes a `</p>` no `<p>` opened, and
+  "Unchecked links" opens a `<p>` it never closes, so a browser repairs both. **(c) unowned**: the next change to
+  the default view's wording, which moves the golden file anyway, would promote it. Detail:
+  `src/report/digest/view.rs`
+
+<!-- deficiency-watermark: KD39 -->

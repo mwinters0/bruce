@@ -5,7 +5,7 @@ release binary is built from the crates below, each under the license named.
 Generated from Cargo.lock by scripts/notices.py; do not edit by hand.
 
 ========================================================================
-CRATES (242)
+CRATES (243)
 ========================================================================
 
 adler2 2.0.1: 0BSD OR MIT OR Apache-2.0 (https://github.com/oyvindln/adler2)
@@ -139,6 +139,7 @@ log 0.4.34: MIT OR Apache-2.0 (https://github.com/rust-lang/log)
 lol_html 3.0.1: BSD-3-Clause (https://github.com/cloudflare/lol-html)
 memchr 2.8.3: Unlicense OR MIT (https://github.com/BurntSushi/memchr)
 mime 0.3.17: MIT OR Apache-2.0 (https://github.com/hyperium/mime)
+minijinja 3.0.5: Apache-2.0 (https://github.com/mitsuhiko/minijinja)
 minimal-lexical 0.2.1: MIT/Apache-2.0 (https://github.com/Alexhuszagh/minimal-lexical)
 miniz_oxide 0.9.1: MIT OR Zlib OR Apache-2.0 (https://github.com/Frommi/miniz_oxide/tree/master/miniz_oxide)
 mio 1.2.4: MIT (https://github.com/tokio-rs/mio)
@@ -2737,7 +2738,7 @@ IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------
-Used by: ahash 0.8.12, async-compression 0.4.51, atomic-waker 1.1.2, base64 0.22.1, base64 0.23.1, bitflags 2.13.2, bstr 0.2.17, bstr 1.13.1, cast 0.3.0, cfg-if 1.0.5, compression-codecs 0.4.46, compression-core 0.4.34, const-random 0.1.18, const-random-macro 0.1.16, core_detect 1.0.0, critical-section 1.2.0, crossbeam-channel 0.5.17, crossbeam-epoch 0.9.21, crossbeam-utils 0.8.23, displaydoc 0.2.7, either 1.19.0, equivalent 1.0.3, errno 0.3.14, fastrand 2.5.0, flate2 1.1.10, fnv 1.0.7, form_urlencoded 1.2.2, hashbrown 0.15.5, hashbrown 0.17.1, heck 0.5.0, httparse 1.10.1, hyper-rustls 0.27.10, idna 1.1.0, idna_adapter 1.2.2, indexmap 2.14.2, lazy_static 1.5.1, linux-raw-sys 0.4.15, lock_api 0.4.14, log 0.4.34, mime 0.3.17, num-bigint 0.4.8, num-complex 0.4.6, num-integer 0.1.47, num-traits 0.2.19, once_cell 1.21.4, openssl-probe 0.2.1, parking_lot 0.12.5, parking_lot_core 0.9.12, percent-encoding 2.3.2, regex 1.13.1, regex-automata 0.4.18, regex-syntax 0.8.11, rustix 0.38.44, rustls 0.23.46, rustls-native-certs 0.8.5, scopeguard 1.2.0, servo_arc 0.4.3, signal-hook-registry 1.4.8, smallvec 1.16.3, socket2 0.6.5, stable_deref_trait 1.2.1, unicode-segmentation 1.13.3, unicode-width 0.2.2, url 2.5.8, uuid 1.28.0
+Used by: ahash 0.8.12, async-compression 0.4.51, atomic-waker 1.1.2, base64 0.22.1, base64 0.23.1, bitflags 2.13.2, bstr 0.2.17, bstr 1.13.1, cast 0.3.0, cfg-if 1.0.5, compression-codecs 0.4.46, compression-core 0.4.34, const-random 0.1.18, const-random-macro 0.1.16, core_detect 1.0.0, critical-section 1.2.0, crossbeam-channel 0.5.17, crossbeam-epoch 0.9.21, crossbeam-utils 0.8.23, displaydoc 0.2.7, either 1.19.0, equivalent 1.0.3, errno 0.3.14, fastrand 2.5.0, flate2 1.1.10, fnv 1.0.7, form_urlencoded 1.2.2, hashbrown 0.15.5, hashbrown 0.17.1, heck 0.5.0, httparse 1.10.1, hyper-rustls 0.27.10, idna 1.1.0, idna_adapter 1.2.2, indexmap 2.14.2, lazy_static 1.5.1, linux-raw-sys 0.4.15, lock_api 0.4.14, log 0.4.34, mime 0.3.17, minijinja 3.0.5, num-bigint 0.4.8, num-complex 0.4.6, num-integer 0.1.47, num-traits 0.2.19, once_cell 1.21.4, openssl-probe 0.2.1, parking_lot 0.12.5, parking_lot_core 0.9.12, percent-encoding 2.3.2, regex 1.13.1, regex-automata 0.4.18, regex-syntax 0.8.11, rustix 0.38.44, rustls 0.23.46, rustls-native-certs 0.8.5, scopeguard 1.2.0, servo_arc 0.4.3, signal-hook-registry 1.4.8, smallvec 1.16.3, socket2 0.6.5, stable_deref_trait 1.2.1, unicode-segmentation 1.13.3, unicode-width 0.2.2, url 2.5.8, uuid 1.28.0
 ------------------------------------------------------------------------
 
                               Apache License

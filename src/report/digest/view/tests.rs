@@ -1,4 +1,7 @@
+use minijinja::value::Value;
+
 use super::super::tests::{compared, of, ranked, store, with_doubled_slashes, with_unchecked};
+use super::{default_view, filters, model};
 use crate::config::{Reason, Severity, SeverityMap};
 use crate::report::table::Cell;
 use crate::report::tests::{registry, xrefs};
@@ -15,6 +18,18 @@ fn section<'a>(html: &'a str, id: &str) -> &'a str {
 
 fn html() -> String {
     of(&store()).html()
+}
+
+/// What the default view's macro `name` prints for `args`.
+pub(super) fn call(name: &str, args: &[Value]) -> String {
+    let env = default_view();
+    let template = env.get_template("digest.html").unwrap();
+    let mut rendered = template
+        .render_captured(model::context(&of(&store())))
+        .unwrap();
+    rendered
+        .with_state_mut(|state| state.call_macro(name, args))
+        .unwrap()
 }
 
 /// Every `name="..."` attribute value in `html`.
@@ -263,8 +278,8 @@ fn each_term_the_guide_explains_links_to_its_entry() {
     )));
     assert!(section(&html, "figures").contains("href=\"#guide-pedantic\""));
     // A reason the guide has no entry for carries none.
-    assert_eq!(super::guide::info_of(Some("wrong_trailing_slash")), "");
-    assert_eq!(super::guide::info_of(None), "");
+    assert_eq!(call("info_of", &["wrong_trailing_slash".into()]), "");
+    assert_eq!(call("info_of", &[Value::from(())]), "");
 }
 
 #[test]
@@ -412,13 +427,18 @@ fn a_run_with_nothing_to_report_says_so_in_each_section() {
 
 #[test]
 fn numbers_have_thousands_separators() {
-    assert_eq!(super::num(0), "0");
-    assert_eq!(super::num(999), "999");
-    assert_eq!(super::num(1_000), "1,000");
-    assert_eq!(super::num(586_175), "586,175");
-    assert_eq!(super::num(-1_234_567), "-1,234,567");
-    assert_eq!(super::duration(59), "59 s");
-    assert_eq!(super::duration(125), "2 min 5 s");
+    for (n, said) in [
+        (0, "0"),
+        (999, "999"),
+        (1_000, "1,000"),
+        (586_175, "586,175"),
+        (-1_234_567, "-1,234,567"),
+    ] {
+        assert_eq!(call("num", &[n.into()]), said);
+    }
+    assert_eq!(call("duration", &[59.into()]), "59 s");
+    assert_eq!(call("duration", &[125.into()]), "2 min 5 s");
+    assert_eq!(call("duration", &[4_233.into()]), "1 h 10 min 33 s");
 }
 
 #[test]
@@ -462,8 +482,14 @@ fn anchor_names_only_the_element_and_every_count_says_which_way_it_points() {
     assert!(html.contains("<td>fragment missing</td>"));
     assert!(html.contains("<td>URL broken</td>"));
     assert!(!html.contains("anchor missing") && !html.contains("Broken anchors"));
-    assert_eq!(super::counted(1, "broken link"), "1 broken link");
-    assert_eq!(super::counted(1_000, "link"), "1,000 links");
+    assert_eq!(
+        call("counted", &[1.into(), "broken link".into()]),
+        "1 broken link"
+    );
+    assert_eq!(
+        call("counted", &[1_000.into(), "link".into()]),
+        "1,000 links"
+    );
     for header in [
         "Links to it",
         "Linking pages",
@@ -487,17 +513,19 @@ fn a_page_whose_links_hold_a_hint_shows_a_hint_column_and_no_other_does() {
     assert!(!html().contains("<th>Hint</th>"));
 }
 
+/// Whether the view has no description for `reason`.
+fn unexplained(reason: &str) -> bool {
+    call("unchecked_meaning", &[reason.into()]).contains("has no description for this reason")
+}
+
 #[test]
 fn every_reason_an_unchecked_link_carries_is_explained() {
     // The reasons that take no level are those of an `unchecked` link.
     for reason in Reason::ALL.iter().filter(|r| !r.takes_level()) {
-        assert!(
-            super::unchecked_meaning(reason.as_str()).is_some(),
-            "{reason:?}"
-        );
+        assert!(!unexplained(reason.as_str()), "{reason:?}");
     }
-    assert!(super::unchecked_meaning("broken").is_none());
-    assert!(super::unchecked_meaning("nxdomain").is_none());
+    assert!(unexplained("broken"));
+    assert!(unexplained("nxdomain"));
 }
 
 #[test]
@@ -658,7 +686,7 @@ fn each_redirected_landing_is_a_details_with_its_hops_and_pages_inside() {
 
 #[test]
 fn a_doubled_slash_is_marked_in_the_path_alone() {
-    let slashes = super::slashes;
+    let slashes = |text: &str| call("runs", &[Value::from(filters::slash_runs(text))]);
     assert_eq!(
         slashes("https://fedoraproject.org//"),
         "https://fedoraproject.org<mark>//</mark>"
@@ -1286,4 +1314,56 @@ fn the_fixed_since_section_says_where_the_map_empties_it() {
     );
     assert!(!fixed.contains("<table"));
     assert!(html.contains("<a href=\"#fixed-since\">"));
+}
+
+/// `source` rendered as the template `name` over `context`.
+fn render(name: &str, source: &str, context: Value) -> Result<String, minijinja::Error> {
+    let mut env = super::environment();
+    env.add_template(name, source).unwrap();
+    env.get_template(name).unwrap().render(context)
+}
+
+#[test]
+fn a_value_is_escaped_by_the_name_of_the_template_that_prints_it() {
+    let context = || {
+        Value::from_pairs([
+            ("text", Value::from("<a href=\"/\">'&'</a>")),
+            ("nothing", Value::from(())),
+            ("n", Value::from(5)),
+        ])
+    };
+    assert_eq!(
+        render("v.html", "{{ text }}|{{ nothing }}|{{ n }}", context()).unwrap(),
+        "&lt;a href=&quot;/&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;||5"
+    );
+    assert_eq!(
+        render("v.txt", "{{ text }}|{{ nothing }}", context()).unwrap(),
+        "<a href=\"/\">'&'</a>|"
+    );
+}
+
+#[test]
+fn a_view_naming_what_the_model_lacks_fails_with_the_name() {
+    let error = render("v.html", "{{ run.nope }}", model_of_the_store()).unwrap_err();
+    assert!(format!("{error:#}").contains("nope"), "{error:#}");
+    let error = render("v.html", "{{ nope }}", model_of_the_store()).unwrap_err();
+    assert!(format!("{error:#}").contains("nope"), "{error:#}");
+}
+
+fn model_of_the_store() -> Value {
+    model::context(&of(&store()))
+}
+
+#[test]
+fn the_filters_take_the_conventions_a_view_states() {
+    let said = |source: &str| render("v.txt", source, model_of_the_store()).unwrap();
+    assert_eq!(said("{{ 1234567 | thousands(' ') }}"), "1 234 567");
+    assert_eq!(said("{{ -1234 | thousands('.') }}"), "-1.234");
+    assert_eq!(
+        said("{{ run.started | time('%d. %m. %Y, %H:%M:%S %%') }}"),
+        "23. 10. 2026, 20:04:11 %"
+    );
+    assert!(render("v.txt", "{{ 0 | time('%Q') }}", model_of_the_store()).is_err());
+    assert_eq!(said("{{ 'https://e.test/a' | short }}"), "e.test/a");
+    assert_eq!(said("{{ 'ftp://e.test/a' is web }}"), "False");
 }

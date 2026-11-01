@@ -1,7 +1,16 @@
-use super::tally;
+//! The default view's macros that word a count, over the model's counts.
+
+use minijinja::value::Value;
+
+use super::tests::call;
 use crate::config::Severity;
-use crate::report::digest::model::{Counts, Kind, pages};
+use crate::report::digest::model::{Counts, Kind, counts_value, pages};
 use crate::report::digest::tests::{mapped, of, ranked};
+
+/// A page's or a repo's summary count as the default view words it.
+fn tally(counts: &Counts) -> String {
+    call("tally", &[counts_value(counts)])
+}
 
 #[test]
 fn a_summary_counts_red_then_amber_and_leaves_out_a_level_with_no_links() {
@@ -33,7 +42,7 @@ fn a_summary_counts_red_then_amber_and_leaves_out_a_level_with_no_links() {
     // The links broken through a link and those that could not be verified
     // are red, in that order after the broken ones, the first with the
     // guide's ⓘ.
-    let info = super::super::guide::Entry::DoubledSlash.info();
+    let info = call("info", &[Value::from("doubled-slash")]);
     assert_eq!(
         tally(&counts(&[
             (Kind::Broken, Severity::Broken, 1),
