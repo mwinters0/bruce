@@ -17,14 +17,17 @@ run 1's 9,002 (2,329 `fedora` for 2,329 `antora`, 6,672 `generic` for 6,673).
   No page differs in title, content type, hash scope, source, placement or sitemap membership.
 - **Locales**: the targets under docs.fp.o outside `/en-US/` are the same 154,770 `out_of_scope`, 6 `ok` and 5
   `broken_url`, so `locale_links` learns what the compiled profile did.
-- **Verdicts**: 3 of 590,047 link verdict rows differ, each with a cause outside bruce.
+- **Verdicts**: 3 of 590,047 link verdict rows differ, each with a cause outside bruce. No judging `policy` row
+  changed, so a verdict moves only where its page or its target answered differently. The handoff's test, a verdict
+  moving on a page whose content hash is unchanged, catches the first two: it assumed a target answers alike twice.
   - `releases/branched/` to `http://download.fedoraproject.org/pub/fedora/linux/development/`: `unchecked`/`robots`
     became `broken_url` 404 (the digest's one `new_breakage`). The host redirects to a mirror picked per request:
-    `insect.mm.fcix.net` in run 1, whose robots.txt disallowed the path, `mirror.cs.odu.edu` in run 2 (`final_url`).
-    The page's content hash is unchanged, so this is the one case the handoff's "a verdict moving on an unchanged
-    page" rule meets; it moves with the target, not the page.
-  - `infra/sysadmin_sops/copr/` to `http://copr-be-dev.cloud.fedoraproject.org/`: 200 became a `timeout` error, so
-    that host's page, in run 1 only, is the 9,002nd. This also moves `report stats` by one broken URL and one error.
+    `insect.mm.fcix.net` in run 1, whose robots.txt disallowed the path, `mirror.cs.odu.edu` in run 2 (`final_url`),
+    which MirrorManager sends to `/fedora/development/` where the mirror serves `/fedora/linux/development/`. What it
+    means for CI is P9's spec, "What the declarative extraction rules left".
+  - `infra/sysadmin_sops/copr/` to `http://copr-be-dev.cloud.fedoraproject.org/`: 200 became a `timeout` error on an
+    unchanged page, so that host's page, in run 1 only, is the 9,002nd. This also moves `report stats` by one broken
+    URL and one error.
   - `quick-docs/rpmfusion-setup/` links `docs.fedoraproject.org/en-US/legal/` where it linked a wiki page: the page
     changed, and it is the only en-US page `report changed` lists (the other 890 changed hashes are `generic` pages
     outside the root). The 140 pages whose anchor sets differ all have a changed hash.

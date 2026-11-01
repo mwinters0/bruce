@@ -355,3 +355,19 @@ Found 2026-10-31, for the re-grilling.
   doubled slash's reach on the 2026-10-24 crawl, 554 pages `full` and 183
   `immediate`, was not measured again; hand-edited `policy` rows reproduce it
   on any schema-6 database.
+
+## What the declarative extraction rules left
+
+Found 2026-11-01, for the re-grilling.
+
+- **A link to `download.fedoraproject.org` is judged by whichever mirror the
+  request draws.** MirrorManager redirects each request; 7 of 40 for
+  `/pub/fedora/linux/development/` landed on a 404, at five mirrors whose
+  records are wrong, and the fcix mirrors' robots.txt leaves most of the rest
+  `unchecked` (D69). So the link on `releases/branched/` was `unchecked` in
+  10.1's crawl and `broken_url` in 10.8's, its page unchanged. A baseline that
+  drew the 404 fails a PR adding a link to that URL (D9, D22's `--externals`
+  default), and the nightly digest's `new_breakage` comes and goes with the
+  draw. The guide sets no `skip` for the host (D50); whether it should is the
+  grilling's. Contingent on the mirror records staying wrong; the robots draw
+  stays either way.
