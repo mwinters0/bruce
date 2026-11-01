@@ -40,53 +40,12 @@ the gate's exit status and sections.
 The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball (D60).
 `.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), its body the annotated tag's release notes, drafted by `/release` from its template, with a schema change from the latest release's named in them (D43; a lightweight tag is refused), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
 
-## P10 progress
-
-The spec is [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.md).
-
-- [x] **10.1** Evidence: docs.antora.org's and a Sphinx site's pages saved as
-  fixtures, and the "before" en-US crawl launched detached from a copy of
-  today's binary: finished, exit 0, in
-  `runs/p10-before-20261031-1647/en-us.duckdb`
-  ([notes](../wip/roadmap-P10.1-evidence-notes.md)).
-- [x] **10.2** Selectors compiled once per run, with no change of behaviour
-  ([notes](../wip/roadmap-P10.2-selectors-notes.md)).
-- [x] **10.3** A standalone declarative profile: `[[profile]]`'s
-  `region`, `generator`, fact rules and `edit_link`, the registry, the
-  `policy` rows, checked on the Sphinx fixture
-  ([notes](../wip/roadmap-P10.3-declarative-notes.md)).
-- [x] **10.3.1** Declared profiles as a `[[profile]]` array named by `name`,
-  tried in its order, a name given twice refused, and toml's `preserve_order`
-  dropped; D33's syntax, the manual's Profiles section and the loader's tests
-  follow ([notes](../wip/roadmap-P10.3.1-profile-array-notes.md)).
-- [x] **10.4** Source rules before `forge::parse`, and struck `KD1` and `KD2`
-  ([notes](../wip/roadmap-P10.4-source-rules-notes.md)).
-- [x] **10.5** `extends`: an extension over a compiled profile, its facts
-  `<name>.*` beside the base's, and `pages.profile` its name
-  ([notes](../wip/roadmap-P10.5-extends-notes.md)).
-- [x] **10.5.1** A report giving an extension's pages its base's sitemap note
-  through the run's recorded `extends`, and a comparison digest listing the
-  `policy` rows that differ between its runs, the profile rules aligned
-  ([notes](../wip/roadmap-P10.5.1-report-notes.md)).
-- [x] **10.6** Locale learning in the core, `locale_links`, and the guide's
-  `fedora` extension extracting what today's code does
-  ([notes](../wip/roadmap-P10.6-locale-links-notes.md)).
-- [x] **10.7** Neutral help examples and palette
-  ([notes](../wip/roadmap-P10.7-neutral-text-notes.md)).
-- [x] **10.8** The "after" crawl compared with 10.1's: no fact, locale or
-  verdict differs that bruce caused; the three link verdicts that moved follow
-  their targets or a page's own edit
-  ([notes](../wip/roadmap-P10.8-closing-evidence-notes.md)).
-- [x] **10.9** Antora's implicit ROOT module: a `pages/` directly under a
-  start path read as `ROOT`'s, and KD34 struck
-  ([notes](../wip/roadmap-P10.9-implicit-root-notes.md)).
-
 ## Not started
 
 Every phase in [`../design/roadmap.md`](../design/roadmap.md)'s index not
 `Current`, `Complete` or `Struck`: P11 has not been grilled; P9, which
-follows P10 and P11, is specified, to be grilled again before it is sliced;
-P12 and P13 have not been grilled.
+follows P11, is specified, to be grilled again before it is sliced; P12 and
+P13 have not been grilled.
 
 ## Decisions worth another look
 

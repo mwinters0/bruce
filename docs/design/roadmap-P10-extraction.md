@@ -1,7 +1,7 @@
 # P10 — Declarative extraction rules
 
 What P10 does and why, settled in the grilling of 2026-10-31. The decisions
-are in [`../design/decisions.md`](../design/decisions.md) and are cited here,
+are in [`decisions.md`](decisions.md) and are cited here,
 never restated. Its inbox was drained into it ("What the inbox asked").
 
 ## Intent
@@ -64,7 +64,7 @@ code, beside the Fedora fixtures.
 
 Settled 2026-10-31 (maintainer). **The line is drawn by best effort against
 docs.antora.org**; it is settled only once several kinds of site are
-supported, which is P12's (`../design/roadmap.md`). So **the Sphinx site's
+supported, which is P12's (`roadmap.md`). So **the Sphinx site's
 config is a test fixture**, checking the mechanism, not the line: what it
 shows a compiled `sphinx` profile would need goes to P12's inbox, and P10
 compiles no profile for another generator.
@@ -108,7 +108,7 @@ Settled 2026-10-31 (maintainer). **D36's phrase tier keeps matching a link's
 Fedora's. **A declarative profile may set `edit_link = "<selector>"`**, the
 Sink's `prefer_edit_link`, for a site whose link earns no tier (another
 language or theme). Matching on strings at all is P13's to replace
-(`../design/roadmap.md`).
+(`roadmap.md`).
 
 ## Selectors are CSS, under a key that leaves room
 

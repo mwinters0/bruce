@@ -15,9 +15,9 @@ never reused.
 | Phase | State | Where it is |
 |---|---|---|
 | P1–P8 | **Struck** at the keystones of 2026-10-21 to 2026-10-31 | their decisions are [`decisions.md`](decisions.md)'s |
-| P10 — declarative extraction rules | Current; sliced 2026-10-31 | [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.md) |
+| P10 — declarative extraction rules | **Complete**, 2026-11-01 | [`roadmap-P10-extraction.md`](roadmap-P10-extraction.md), its notes [`roadmap-P10-extraction-notes.md`](roadmap-P10-extraction-notes.md) |
 | P11 — the digest's prose in config | Sketched; not grilled | this file, below |
-| P9 — the deployment guide | Specified; follows P10 and P11, and is grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
+| P9 — the deployment guide | Specified; follows P11, and is grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
 | P12 — compiled profiles for other generators | Sketched; not grilled | this file, below |
 | P13 — a selection language beyond CSS | Sketched; not grilled | this file, below |
 
@@ -79,7 +79,8 @@ A standing rule is added only with the maintainer, and carries its check.
 
 ## P10 — Declarative extraction rules
 
-Specified: [`../wip/roadmap-P10-extraction.md`](../wip/roadmap-P10-extraction.md).
+Complete: [`roadmap-P10-extraction.md`](roadmap-P10-extraction.md), and its notes
+[`roadmap-P10-extraction-notes.md`](roadmap-P10-extraction-notes.md).
 
 ## P11 — The digest's prose in config
 
