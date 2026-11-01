@@ -40,10 +40,19 @@ the gate's exit status and sections.
 The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball (D60).
 `.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), its body the annotated tag's release notes, drafted by `/release` from its template, with a schema change from the latest release's named in them (D43; a lightweight tag is refused), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
 
+## P11 progress
+
+The digest's view: [`../wip/roadmap-P11-view.md`](../wip/roadmap-P11-view.md).
+
+- [ ] **11.1** The model: the derived part out of `html` into `report::digest::model`, the sitemap note a key and a text; output unchanged
+- [ ] **11.2** The engine and the default view: minijinja, the default rendering today's HTML byte for byte, `html` deleted
+- [ ] **11.3** Views from the command line: `--view`, `--json` / `--no-json`, `--write-default-view`, `bruce:`, the version declaration, all or nothing, the filters, CSV escaping
+- [ ] **11.4** The litmus tests: a Czech view and a CSV view over the e2e fixture site, the derived part in the manual
+
 ## Not started
 
 Every phase in [`../design/roadmap.md`](../design/roadmap.md)'s index not
-`Current`, `Complete` or `Struck`: P11 and P14 have not been grilled; P9,
+`Current`, `Complete` or `Struck`: P14 has not been grilled; P9,
 which follows them, is specified, to be grilled again before it is sliced;
 P15, P16, P12 and P13 have not been grilled.
 

@@ -38,7 +38,7 @@ against what the policy added (below, "What the site policy left").
 ## P9 follows the declarative extraction rules and P11
 
 Settled 2026-10-31 (maintainer). **P9 follows the declarative extraction
-rules and the digest's prose in config (P11)**: the maintainer does not
+rules and the digest's view (P11)**: the maintainer does not
 consider `bruce` ready for a content repo's CI until both have landed. The
 guide then documents their config once, as it does the site policy's. When P9
 is sliced, the grilling re-reads this spec against what they added.

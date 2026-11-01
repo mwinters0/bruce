@@ -15,7 +15,7 @@ never reused.
 | Phase | State | Where it is |
 |---|---|---|
 | P1–P8, P10 | **Struck** at the keystones of 2026-10-21 to 2026-11-01 | their decisions are [`decisions.md`](decisions.md)'s |
-| P11 — the digest's prose in config | Sketched; not grilled | this file, below |
+| P11 — the digest's view | Current; sliced, its checklist in [`../status/STATUS.md`](../status/STATUS.md) | [`../wip/roadmap-P11-view.md`](../wip/roadmap-P11-view.md) |
 | P14 — redirects as facts | Sketched; not grilled | this file, below |
 | P9 — the deployment guide | Specified; follows P11 and P14, and is grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
 | P15 — what a repo owns, for every site | Sketched; not grilled | this file, below |
@@ -79,16 +79,9 @@ A standing rule is added only with the maintainer, and carries its check.
   `scripts/workflows.py`, which fails on a `uses:` (`mise run check` runs its
   tests over the real workflows).
 
-## P11 — The digest's prose in config
+## P11 — The digest's view
 
-A deployment replacing the digest's built-in text with its own, the guide
-that closes the HTML ("How to read this report") first: an entry's text
-overridden or an entry added, read from the deployment's config, not a
-compiled profile (D32), and perhaps a template filled from the run. The
-maintainer foresees more overrides and basic templating; which texts, and
-whether a template reads the run's recorded policy, is the grilling's.
-Follows the site policy, which decides what the guide's text may claim
-(D91), and precedes P9, whose guide documents the config.
+Specified: [`../wip/roadmap-P11-view.md`](../wip/roadmap-P11-view.md).
 
 ## P14 — Redirects as facts
 
