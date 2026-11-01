@@ -130,11 +130,11 @@ silenced still ranking its page; ranking or dropping `none` rows in the JSON, ma
 `report::digest::view::tests::a_kind_at_none_is_in_no_list_the_figures_and_the_json_keep_it`.
 
 ### D95 The digest's HTML is a minijinja template over the model, its default view embedded in the binary
-The default view (`view/default/`) holds every sentence of the document and the model none: it words levels, counts,
-reasons and times. Undefined names are errors; a block tag on a line of its own prints nothing. Escaping is bruce's
-formatter: HTML's five characters as D64's document has them, a `none` printing nothing, a name not ending `.html`
-printing as it is. Why: one file (D23); the engine's escape writes `'` and `/` as numeric references, so no cell would
-match the document it replaces. Rejected: tera, whose semantics changed in minor releases; handlebars and upon, which
-cannot extend; the model through `serde`, which `Digest` does not derive. Reopens: a view in a format the formatter
-cannot escape. Code: `report::digest::view`, `report::digest::model::context`. Evidence: `report::digest::view::tests`,
-`scripts/e2e.py`'s golden file.
+The default view (`view/default/`) holds every sentence and the model none, reaching the engine as maps and lists, which
+the builtin filters walk. Escaping is bruce's formatter: HTML's five characters as D64 has them, a `none` printing
+nothing, a view not named `.html` escaping nothing. Why: one file (D23); the engine's escape writes `'` and `/` as
+numeric references, not D64's bytes. Rejected: tera, whose semantics changed in minor releases; handlebars and upon,
+which cannot extend; `serde`, which `Digest` does not derive; `Object`s over the `Digest`, rendering lazily, the copy
+costing nothing measured. Reopens: a view in a format the formatter cannot escape. Code: `report::digest::view`,
+`report::digest::model::context`. Evidence: `report::digest::view::tests`, `scripts/e2e.py`'s golden file,
+`runs/p11-view-cost-20261101/`.

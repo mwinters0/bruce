@@ -49,5 +49,5 @@ What 11.3 inherits. The spec's slice list is [`roadmap-P11-view.md`](roadmap-P11
   not the bytes of D64's document, so the environment has a formatter (D95).
 - The spec's feature list (`builtins`, `debug`, `multi_template`) lacks `macros`, without which a template repeats every
   link, dot and number; it is enabled. `fuel` is not (the spec).
-- The model as `Object`s over an `Arc<Digest>` was not built (STATUS, "Decisions worth another look").
+- The model as `Object`s over an `Arc<Digest>` was not built (D95).
 - Two defects of the document are kept, to hold the bytes: KD39.

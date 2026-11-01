@@ -87,6 +87,15 @@ blocks it names and inheriting every block a later release adds, or is a
 whole document, as a translation is. Rejected: replacement alone, a
 deployment that set only its palette missing every section a release adds.
 
+Settled 2026-11-01 (maintainer, reviewing 11.2). **The palette is a
+`palette` block inside a `style` block** holding the whole sheet:
+`palette` includes `palette.css`, both `:root` rules (the screen's and
+`@media print`'s) and nothing else, and `style` the rest from `style.css`.
+A view replaces `palette`, or writes `{{ super() }}` before its own `:root`
+to inherit a property a later release adds, or replaces `style` whole.
+Rejected: one `style` block, where a view's palette is appended after the
+sheet and a `:root` without its print twin turns the printed digest dark.
+
 ## The engine is minijinja, and a CSV view quotes every value
 
 Settled 2026-11-01 (maintainer). **Views are minijinja 3 templates**, with
@@ -115,7 +124,8 @@ its own, a view reading the JSON's fields as well.
 
 Settled 2026-11-01 (maintainer). **`report digest --write-default-view DIR`
 writes the default's files and exits** without reading a database:
-`digest.html`, and `style.css` apart so a palette edit is small. **An
+`digest.html`, `style.css`, and `palette.css` apart so a palette edit is
+small. **An
 override extends the default as `{% extends "bruce:digest.html" %}`**,
 needing no exported copy; what else it includes or extends resolves inside
 its own directory, and nothing outside it. A whole-document view is the
@@ -146,11 +156,12 @@ Settled 2026-11-01 (maintainer). All of it is `report::digest`'s, above
 - **`report::digest::model`**: the derived part, each link's level and the
   findings' ranking (today `html::standing` and `html::severity`), the
   reasons the policy judges (the guide's `Judged`) and the policy changes'
-  rows, and the `Digest` presented to minijinja as `Object`s, no serde.
+  rows, and the `Digest` presented to minijinja as maps and lists, no serde
+  (D95).
 - **`report::digest::view`**: the environment, its loader (`bruce:` names, and
   the override's own directory), the filters, the CSV escaping, the version
   check and rendering before writing; **the default's templates in
-  `view/default/`** (`digest.html`, `style.css`), embedded.
+  `view/default/`** (`digest.html`, `style.css`, `palette.css`), embedded.
 - **`report::digest::html` and its children are deleted** once the default
   reproduces them, `markup`'s helpers with them.
 - **`profile`**: `sitemap_note` gives a key and a text.
@@ -182,13 +193,17 @@ Each makes the next one's mistakes visible:
    Rust values, `html` reading it; the sitemap note becomes a key and a text
    in `profile` (D87 amended). Output unchanged, golden file and tests as
    they are.
-2. **11.2 The engine and the default view.** minijinja; `model`'s `Object`s;
+2. **11.2 The engine and the default view.** minijinja; `model`'s maps and lists;
    the default's templates rendering byte for byte; `html` deleted; the
    notices regenerated; the concept map, D64 and D76 amended.
+   **11.2.1 The palette block**, earned: 11.2 shipped one `style` block
+   for the spec's `palette`; `palette.css` and the nested blocks, the golden
+   file regenerated once for the print `:root` moving up.
 3. **11.3 Views from the command line.** `--view` (repeatable, `default`, the
    files' names), `--json` / `--no-json`, `--write-default-view`, `bruce:`
    and the directory's bound, the version declaration, writing all or
-   nothing, the filters and the CSV escaping; the manual's rows.
+   nothing, the model built once per call and every view rendered over it,
+   the filters and the CSV escaping; the manual's rows.
 4. **11.4 The litmus tests.** A Czech view and a CSV view, fixtures
    rendered over the e2e fixture site by `scripts/e2e.py`, a last-digit
    plural rule's unit test beside them; the derived part documented beside

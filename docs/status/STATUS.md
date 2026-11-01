@@ -46,6 +46,7 @@ The digest's view: [`../wip/roadmap-P11-view.md`](../wip/roadmap-P11-view.md).
 
 - [x] **11.1** The model: the derived part out of `html` into `report::digest::model`, the sitemap note a key and a text; output unchanged ([notes](../wip/roadmap-P11.1-model-notes.md))
 - [x] **11.2** The engine and the default view: minijinja, the default rendering today's HTML byte for byte, `html` deleted ([notes](../wip/roadmap-P11.2-engine-notes.md))
+- [ ] **11.2.1** The palette block: `palette` (`palette.css`, both `:root` rules) inside `style`, the golden file regenerated once
 - [ ] **11.3** Views from the command line: `--view`, `--json` / `--no-json`, `--write-default-view`, `bruce:`, the version declaration, all or nothing, the filters, CSV escaping
 - [ ] **11.4** The litmus tests: a Czech view and a CSV view over the e2e fixture site, the derived part in the manual
 
@@ -65,11 +66,3 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-- **The model reaches the engine as a tree of values built per render, not as `Object`s.** The spec has the `Digest`
-  presented as `Object`s; `model::context` instead copies each cell into maps and lists, so nothing borrows from the
-  `Digest` and a row is a map of its columns. The cost is one copy of the tables per digest written, which 11.3's views
-  can share. Reconsidering means `Object`s over an `Arc<Digest>`, rendering lazily.
-- **The default view's `palette` block is called `style` and holds the whole stylesheet.** The palette is `:root` and
-  the `@media print` block, with rules between them in one file, and a block cannot sit inside an included file.
-  A view replaces `style` or appends to it with `{{ super() }}`. Reconsidering means splitting the stylesheet into a
-  palette file and the rest, the print block moving up, and the golden file regenerated once.
