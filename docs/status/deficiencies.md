@@ -96,13 +96,12 @@ roadmap's phase index.
   reference one would promote it. Detail: `src/extract/links.rs`
 
 - **KD36** — `bruce export-baseline --db X.partial --out X`, with `X` absent,
-  deletes the database it was asked to export. **(c) unowned**: anyone naming
-  a database `*.partial` would promote it. Detail: `src/cli/export_baseline.rs`
+  deletes the database it was asked to export. **(b) owned by M40**. Detail:
+  `src/cli/export_baseline.rs`
 
 - **KD37** — A `Crawl-delay` too large for an `f32` is ignored where a smaller
   absurd one is capped at an hour, so the host is paced at its rate or the
   default, and it displaces a finite delay another origin of the name states
-  (D18, D69). **(c) unowned**: a robots.txt stating one would promote it.
-  Detail: `src/fetch/http/host.rs`
+  (D18, D69). **(b) owned by M41**. Detail: `src/fetch/http/host.rs`
 
 <!-- deficiency-watermark: KD37 -->
