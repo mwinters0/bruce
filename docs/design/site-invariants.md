@@ -6,7 +6,7 @@ discovery and never reused. Walk this file whenever Antora's version changes (I8
 names it), or when docs.fp.o's build or hosting moves: a change here surfaces as wrong verdicts,
 not as an error.
 
-<!-- invariant-watermark: I25 -->
+<!-- invariant-watermark: I26 -->
 
 ### I1 docs.fp.o's sitemap is an index at `/en-US/sitemap.xml`, and lists no translated page
 - **Claim.** `/sitemap.xml` is 404, and robots.txt names no `Sitemap:`. `/en-US/sitemap.xml` is
@@ -344,3 +344,17 @@ not as an error.
 - **Relied on by.** D67, and the deployment guide's `fedora` profile (`docs/manual/deploy.md`), whose `locale_links`
   selects these links.
 - **Re-verify.** `curl -s https://docs.fedoraproject.org/en-US/a11y/ | grep -o '<a[^>]*class="language"[^>]*>' | head -3; curl -s 'https://gitlab.com/api/v4/projects/fedora%2Fdocs%2Fdocs-website%2Fdocs-fp-o/repository/files/build-scripts%2Frebuild-site.py/raw?ref=prod' | grep -n 'class="language"\|lang_switch_ui('`
+
+### I26 Antora 3.2 reads a content source's `pages/` as the `ROOT` module's where it has no `modules/` directory
+- **Claim.** A content source (a repo's start path) holding no `modules/` directory has its files classified as if
+  under `modules/ROOT/`, so `<start_path>/pages/<rel>.adoc` is the `ROOT` module's page `<rel>.adoc`. Any `modules/`
+  there turns it off for the whole source. A page's edit path, which begins at the repo's root, then has `pages/` in
+  place of `modules/<module>/pages/`, and nothing in it says where the start path ends.
+- **Proof.** Upstream source: `@antora/content-classifier` 3.2.0 `lib/classify-content.js` (`allocateSrc`, with
+  `implicitRoot`, and `origin.hasModulesDir`); its CHANGELOG, "Support content source root as implicit ROOT module if
+  modules directory is absent (#1127)". Observed: docs.antora.org's `assembler/latest/`, whose edit link is
+  `…/antora-assembler/-/edit/main/docs/assembler/pages/index.adoc` (`fixtures/docs-antora-org`).
+- **Scope limit.** Antora 3.2; 3.1.15 has no such rule (`runs/e2e/antora`), and docs.fp.o's pages are all under `modules/`.
+- **Verified against.** Antora 3.2.0, 2026-11-01.
+- **Relied on by.** D19 (`profile::antora::module_and_path`).
+- **Re-verify.** `curl -s https://gitlab.com/antora/antora/-/raw/v3.2.0/packages/content-classifier/lib/classify-content.js | grep -n 'implicitRoot\|hasModulesDir'; curl -s https://docs.antora.org/assembler/latest/ | grep -o 'edit/main/[^"]*'`

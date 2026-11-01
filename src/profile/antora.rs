@@ -86,23 +86,29 @@ fn component_under(page: &Url, root_path: &str) -> Option<String> {
 }
 
 /// `(module, rel_path)` from an edit path holding `modules/<module>/pages/<rel_path>`
-/// somewhere below a start path, as Antora lays a repo out.
+/// somewhere below a start path, as Antora lays a repo out, or else
+/// `pages/<rel_path>` below one, the `ROOT` module Antora 3.2 implies where a
+/// content source has no `modules/` (I26).
+///
+/// A `modules/<module>/pages/` tail takes precedence, and the first `pages`
+/// segment is the implicit one's, so a start path with a directory named
+/// `pages` above the real one is misread: the path cannot say where the start
+/// path ends.
 fn module_and_path(path: &str) -> Option<(String, String)> {
-    // deficiency: KD34 Antora also takes the ROOT module's `pages/` directly
-    // under a start path, as docs.antora.org's assembler does
-    // (`docs/assembler/pages/index.adoc`, `fixtures/docs-antora-org`); this
-    // finds no `modules/` there, so the page records no `module` or `rel_path`
-    // and Resolve, which matches both, cannot find it. Reading `pages/` below
-    // a start path as `ROOT`'s, `modules/` taking precedence, is the fix.
     let segments: Vec<&str> = path.split('/').collect();
-    let at = segments
+    let (module, rel_path) = match segments
         .windows(3)
-        .position(|w| w[0] == "modules" && w[2] == "pages")?;
-    let rel_path = &segments[at + 3..];
+        .position(|w| w[0] == "modules" && w[2] == "pages")
+    {
+        Some(at) => (decode(segments[at + 1]), &segments[at + 3..]),
+        None => {
+            let at = segments.iter().position(|s| *s == "pages")?;
+            ("ROOT".to_string(), &segments[at + 1..])
+        }
+    };
     if rel_path.is_empty() || rel_path.iter().any(|s| s.is_empty()) {
         return None;
     }
-    let module = decode(segments[at + 1]);
     Some((module, decode(&rel_path.join("/"))))
 }
 
@@ -238,7 +244,31 @@ mod tests {
             module_and_path("modules/user/pages/a/b%20c.adoc"),
             pair("user", "a/b c.adoc")
         );
-        assert_eq!(module_and_path("start/pages/index.adoc"), None);
+        assert_eq!(
+            module_and_path("start/pages/index.adoc"),
+            pair("ROOT", "index.adoc")
+        );
+        assert_eq!(
+            module_and_path("docs/assembler/pages/a/b.adoc"),
+            pair("ROOT", "a/b.adoc")
+        );
+        assert_eq!(
+            module_and_path("pages/index.adoc"),
+            pair("ROOT", "index.adoc")
+        );
+        assert_eq!(
+            module_and_path("pages/modules/user/pages/a.adoc"),
+            pair("user", "a.adoc"),
+            "modules/ takes precedence"
+        );
+        assert_eq!(
+            module_and_path("start/pages/x/pages/a.adoc"),
+            pair("ROOT", "x/pages/a.adoc"),
+            "the first pages segment"
+        );
+        assert_eq!(module_and_path("start/index.adoc"), None);
+        assert_eq!(module_and_path("start/pages/"), None);
+        assert_eq!(module_and_path("start/pages"), None);
         assert_eq!(module_and_path("modules/ROOT/pages/"), None);
         assert_eq!(module_and_path("modules/ROOT/pages"), None);
         assert_eq!(module_and_path("modules/ROOT/pages/a//b.adoc"), None);

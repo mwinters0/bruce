@@ -177,6 +177,25 @@ fn a_refspec_resolves_to_the_page_with_its_coordinates() {
     assert_eq!(resolved("nobody::install.adoc", &pages), None);
 }
 
+/// I26: a page whose edit path has `pages/` directly under a start path
+/// records `ROOT` and its `rel_path`, so an xref to it resolves.
+#[test]
+fn an_xref_to_a_page_in_the_implicit_root_module_resolves() {
+    let (module, rel_path) =
+        super::super::module_and_path("docs/assembler/pages/index.adoc").unwrap();
+    let pages = Pages::new(&[(
+        "https://docs.antora.org/assembler/latest/",
+        "assembler",
+        Some("1.0"),
+        &module,
+        &rel_path,
+    )]);
+    assert_eq!(
+        resolved("assembler::index.adoc#top", &pages).as_deref(),
+        Some("https://docs.antora.org/assembler/latest/#top")
+    );
+}
+
 #[test]
 fn a_refspec_no_page_has_the_coordinates_of_names_its_url() {
     let pages = site();

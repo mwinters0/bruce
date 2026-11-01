@@ -78,7 +78,7 @@ profile driving the pass (D39). Reopens: a hook empty in `generic` for any other
 Antora. Code: `profile::Profile`, `profile::Sink`.
 
 ### D19 Pages carry Antora resource IDs, and unresolved refspecs resolve through them
-Antora records `(component, version, module, rel_path)` as facts (D37): module and `rel_path` from the edit URL (I8);
+Antora records `(component, version, module, rel_path)` as facts (D37): module and `rel_path` from the edit URL (I8, I26);
 component and version verbatim from the nav container, or on a page with none the component from the URL under the site
 root (I13) and no version. A refspec with no version takes the only or latest version among the pages holding its module
 and path, else the component's latest (KD18). Rejected: the module from the URL, ambiguous with subdirectories; no

@@ -607,6 +607,11 @@ fn docs_antora_org_is_read_right_by_compiled_antora_alone() {
         };
         assert_eq!(fact(&x, "antora.component"), Some(*component), "{url}");
         assert_eq!(fact(&x, "antora.version"), Some(*version), "{url}");
+        // I26: a start path's `pages/` is `ROOT`'s; the rest are under `modules/`.
+        if key == "assembler/latest/" {
+            assert_eq!(fact(&x, "antora.module"), Some("ROOT"), "{url}");
+            assert_eq!(fact(&x, "antora.rel_path"), Some("index.adoc"), "{url}");
+        }
         let source = x.source.as_ref().expect(url);
         assert_eq!(source.repo, format!("https://gitlab.com/{repo}"), "{url}");
         assert_eq!(source.git_ref.as_deref(), Some(*git_ref), "{url}");
