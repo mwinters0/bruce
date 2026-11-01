@@ -16,7 +16,8 @@ because the history entry *is* the notes.
 
 **A number is allocated on admission, not on landing.** The Date column stays
 empty until the item lands, or names the day it was withdrawn. Row order is
-allocation order.
+allocation order. `scripts/repoint.py` holds the watermark at or above every
+row, the prose stating it alike, and the rows in order.
 
 **The admitting session sets the Blocks column.** It names the open phase when
 that phase's remaining slices should not be landed around the item, and is

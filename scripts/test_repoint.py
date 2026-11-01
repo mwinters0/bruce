@@ -118,6 +118,39 @@ class Register(unittest.TestCase):
         self.assertTrue(any("watermark" in p for p in problems))
 
 
+class Ledger(unittest.TestCase):
+    HEAD = "# O\n\nAllocated so far: M1–M5. <!-- out-of-band-watermark: M5 -->\n\n| Item | Date |\n|---|---|\n"
+
+    def check(self, text: str) -> list[str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            write(Path(tmp), repoint.LEDGER, text)
+            return repoint.ledger_problems(Path(tmp))
+
+    def test_rows_at_or_under_the_watermark_in_order_pass_and_an_empty_ledger_too(self):
+        self.assertEqual(self.check(self.HEAD + "| M4 | |\n| M5 | |\n"), [])
+        self.assertEqual(self.check(self.HEAD), [])
+
+    def test_a_row_above_the_watermark_is_named(self):
+        problems = self.check(self.HEAD + "| M5 | |\n| M6 | |\n")
+        self.assertEqual(problems, ["the out-of-band watermark M5 is below row M6"])
+
+    def test_prose_disagreeing_with_the_marker_is_named(self):
+        problems = self.check(self.HEAD.replace("M1–M5.", "M1–M4."))
+        self.assertTrue(any("does not say M1–M5" in p for p in problems))
+
+    def test_rows_out_of_allocation_order_are_named(self):
+        problems = self.check(self.HEAD + "| M4 | |\n| M3 | |\n")
+        self.assertEqual(len([p for p in problems if "allocation order" in p]), 1)
+
+    def test_zero_or_two_markers_are_named(self):
+        self.assertTrue(self.check(self.HEAD.replace("<!-- out-of-band-watermark: M5 -->", "")))
+        self.assertTrue(self.check(self.HEAD + "<!-- out-of-band-watermark: M5 -->\n"))
+
+    def test_no_ledger_is_no_problem(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(repoint.ledger_problems(Path(tmp)), [])
+
+
 class History(unittest.TestCase):
     def test_every_dated_entry_is_held_to_the_cap_and_the_readme_is_not(self):
         with tempfile.TemporaryDirectory() as tmp:

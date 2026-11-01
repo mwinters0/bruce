@@ -13,6 +13,10 @@ it and its claims rot unseen. Both halves are mechanical, so both are here:
   `CLAUDE.md`, `docs/process.md` and each skill at the sizes that keep
   orientation cheap. Adding under a full one means striking; a session never
   raises a cap to fit what it is landing, and only the maintainer moves one.
+* **The allocation marks.** The decision register's watermark and the
+  out-of-band ledger's at or above every number allocated, the ledger's
+  stated once in prose and once in its marker, alike, its rows in allocation
+  order: a session reading only a watermark must not reissue a spent number.
 * **No narration where a conclusion belongs.** No phase, ledger or date
   provenance in a source comment (a comment states the contract and cites
   `D<k>`).
@@ -83,6 +87,12 @@ EMPTY_BASE = "the empty tree"
 ENTRY_RE = re.compile(r"^### (D\d+)\b ?(.*)$")
 INDEX_RE = re.compile(r"^- \*\*(D\d+)\*\* (.*)$")
 WATERMARK_RE = re.compile(r"<!-- decision-watermark: D(\d+) -->")
+#: The out-of-band ledger: `docs/process.md`, "Out-of-band work". A row is
+#: `| M<k> | ...`; the allocated range is a marker beside the prose stating it.
+LEDGER = "docs/design/out-of-band.md"
+LEDGER_MARK_RE = re.compile(r"<!-- out-of-band-watermark: M(\d+) -->")
+LEDGER_PROSE_RE = re.compile(r"\bM1[–-]M(\d+)\b")
+LEDGER_ROW_RE = re.compile(r"^\| M(\d+) \|")
 HISTORY_NAME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.md$")
 #: Provenance: a slice, a ledger row, a date. `D<k>`, `KD<k>`, `I<n>`, `S<k>`
 #: and `UF<k>` are handles, not provenance, and are what a comment should carry.
@@ -169,6 +179,29 @@ def register_bytes(repo: Path, rev: str | None = None) -> int:
         return sum(p.stat().st_size for p in register_files(repo) if p.exists())
     listing = _git(repo, "ls-tree", "-r", "-l", rev, "--", "docs/design/decisions.md", REGISTER_DIR)
     return sum(int(row.split()[3]) for row in listing.splitlines() if row.strip())
+
+
+def ledger_problems(repo: Path) -> list[str]:
+    path = repo / LEDGER
+    if not path.exists():
+        return []
+    lines = _lines(path)
+    marks = [(line, m) for line in lines for m in LEDGER_MARK_RE.finditer(line)]
+    if len(marks) != 1:
+        return [f"{LEDGER} carries {len(marks)} `<!-- out-of-band-watermark: M<k> -->` markers, not one"]
+    line, mark = marks[0]
+    top = int(mark.group(1))
+    problems = []
+    prose = LEDGER_PROSE_RE.search(line)
+    if prose is None or int(prose.group(1)) != top:
+        problems.append(f"{LEDGER}'s prose beside the watermark M{top} does not say M1–M{top}")
+    rows = [int(m.group(1)) for m in map(LEDGER_ROW_RE.match, lines) if m]
+    if rows and max(rows) > top:
+        problems.append(f"the out-of-band watermark M{top} is below row M{max(rows)}")
+    for before, after in zip(rows, rows[1:]):
+        if after <= before:
+            problems.append(f"{LEDGER} lists M{after} after M{before}, against allocation order")
+    return problems
 
 
 def history_problems(repo: Path) -> list[str]:
@@ -371,6 +404,7 @@ def check(
 ) -> int:
     problems = (
         register_problems(repo)
+        + ledger_problems(repo)
         + history_problems(repo)
         + orientation_problems(repo)
         + comment_problems(repo)
