@@ -45,7 +45,7 @@ The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-P
 Every phase in [`../design/roadmap.md`](../design/roadmap.md)'s index not
 `Current`, `Complete` or `Struck`: P11 and P14 have not been grilled; P9,
 which follows them, is specified, to be grilled again before it is sliced;
-P12 and P13 have not been grilled.
+P15, P16, P12 and P13 have not been grilled.
 
 ## Decisions worth another look
 

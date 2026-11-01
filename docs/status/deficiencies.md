@@ -40,8 +40,8 @@ roadmap's phase index.
   `src/crawl/baseline.rs`
 
 - **KD6** — A build of a site whose pages carry no `antora` facts holds nothing, so a
-  link to a page the change deletes passes on the baseline's `ok`. **(c) unowned**: a
-  non-Antora site checked in CI would promote it. Detail: `src/crawl.rs`
+  link to a page the change deletes passes on the baseline's `ok`. **(b) owned by
+  P15**. Detail: `src/crawl.rs`
 
 - **KD10** — Resolve's parse departs from Antora's resource-ID grammar (I21): it
   takes the family before the component, not after the module, refuses a version

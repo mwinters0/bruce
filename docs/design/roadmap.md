@@ -18,6 +18,8 @@ never reused.
 | P11 — the digest's prose in config | Sketched; not grilled | this file, below |
 | P14 — redirects as facts | Sketched; not grilled | this file, below |
 | P9 — the deployment guide | Specified; follows P11 and P14, and is grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
+| P15 — what a repo owns, for every site | Sketched; not grilled | this file, below |
+| P16 — issues for broken links | Sketched; not grilled | this file, below |
 | P12 — compiled profiles for other generators | Sketched; not grilled | this file, below |
 | P13 — a selection language beyond CSS | Sketched; not grilled | this file, below |
 
@@ -109,6 +111,36 @@ the limit and whose gate fails by it.
 ## P9 — The deployment guide
 
 Specified: [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md).
+
+## P15 — What a repo owns, for every site
+
+Whatever `antora` gives a site beyond `generic`, given to every site whose
+pages link an edit page on a forge (maintainer, 2026-11-01). The tie-back,
+`report --repo` and the digest's `by_repo` are core already (D36, D17); what
+is Antora's alone is the gate's knowledge of what a partial build stands
+for, its held set read from `antora.*` facts and I16's layout (D54, D56), so
+a build of any other generator holds nothing (KD6). A held set read from the
+repo a CI run builds, as the baseline's pages name their source, would hold
+for any site, and perhaps for Antora's too in place of the
+component-version (KD5). How a run knows its repo, what a page with no edit
+link is held as, and whether xref resolution (D19, D55, D57), being Antora's
+refspec grammar, has any counterpart elsewhere, are the grilling's. Placed
+before P12, so a generator compiled there has the gate unchanged.
+
+## P16 — Issues for broken links
+
+A subcommand of its own, run by nothing else, filing an issue for each
+broken link in the repo that owns it and closing it once a later run finds
+it fixed, Fedora Forge's Forgejo first (maintainer, 2026-11-01). An issue is
+known as bruce's by a marker in its body, so its owner may retitle and
+relabel it and a later run still finds it. One issue per link is the
+default, one dashboard issue per repo, as Renovate keeps, an owner's
+alternative. Trackers follow the generators' pattern: the common forges
+compiled in, and `generic` as hooks, a deployment's programs called on
+events such as a link newly broken or fixed. What a link's identity across
+runs is, which repo owns a break the target caused, where credentials and
+an owner's choices live (D5, D41), whether issue state is stored (D2, D43)
+and how a hook is called are the grilling's.
 
 ## P12 — Compiled profiles for other generators
 
