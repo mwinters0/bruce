@@ -501,8 +501,8 @@ async fn the_slowest_crawl_delay_among_a_names_origins_paces_it() {
     }
 }
 
-/// A `Crawl-delay` past what an `f32` holds is read as an hour, and does not
-/// displace another origin's smaller one in either order (D18, D69).
+/// A `Crawl-delay` past what an `f32` holds is read as an hour, and is the
+/// slowest among a name's origins in either order (D18, D69).
 #[tokio::test]
 async fn an_infinite_crawl_delay_paces_a_name_at_the_cap_whichever_origin_was_read_first() {
     for order in [["1e999", "3"], ["3", "1e999"]] {

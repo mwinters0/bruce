@@ -137,7 +137,8 @@ fn partial(out: &Path) -> PathBuf {
     PathBuf::from(name)
 }
 
-/// Whether both paths name one existing file.
+/// Whether both paths resolve to one existing path, symlinks followed; two
+/// hard links to one file are two paths.
 fn same_file(a: &Path, b: &Path) -> bool {
     matches!((a.canonicalize(), b.canonicalize()), (Ok(a), Ok(b)) if a == b)
 }

@@ -34,10 +34,11 @@ pub enum Listing {
     Found(Vec<u8>),
     /// A 4xx answer but 429: no file, so everything is allowed (RFC 9309).
     Absent,
-    /// The host answered, but with no file to read: a 5xx or a 429 that
-    /// outlasts the retries or the `Retry-After` ceiling, or redirects that led
-    /// nowhere; or a stop. A silence on another name a redirect reached is
-    /// `Failed` under that name, which the host reads as this. The origin is disallowed
+    /// No file to read: an answer of a 5xx or a 429 that outlasts the retries
+    /// or the `Retry-After` ceiling, or redirects that led nowhere; a stop; or
+    /// a silence on another name a redirect reached, which a redirect onto
+    /// that origin's own robots.txt makes `Failed` under that name and the host
+    /// reads as this. The origin is disallowed
     /// for the run (RFC 9309), its targets `unchecked`, `robots_unavailable`.
     Unreachable,
     /// A request on `name`, the first or one a redirect kept there, produced
@@ -51,7 +52,7 @@ pub enum Listing {
 /// An origin's robots.txt, settled once per run.
 #[derive(Debug)]
 enum Robots {
-    /// Not there (a 4xx), or a file the parser refuses: all allowed. A host
+    /// Not there (a 4xx but 429), or a file the parser refuses: all allowed. A host
     /// with `robots = false` never reads one.
     Open,
     Rules(Robot),
