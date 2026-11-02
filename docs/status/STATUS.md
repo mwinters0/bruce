@@ -49,11 +49,11 @@ The deployment guide: [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-depl
 - [ ] **9.3** Exit status 3: the typed schema refusal in `store::schema`, mapped in `cli` for `crawl`, `check-dir`, `report`, `prune` and `export-baseline`, the manuals' exit tables
 - [ ] **9.4** The guide's scheduling, publishing and delivery: the script, the systemd units, `bruce-locales.toml`, `per_second = 3`, the staged directory with `SHA256SUMS` and names by content, retention and the schema archive, the digest's comparison, the pull script, the workflows' flowchart; `sim` checking the scripts, `e2e` running the pull
 - [ ] **9.5** The guide's CI section: the workflow with its fetch and check, `sim`'s YAML and `uses:` checks, `e2e` running its steps, the Antora pin checked against production's
-- [ ] **9.6** The dev deployment: `v0.3.0-rc.1` (the maintainer's tag), the deployment repo's nightly workflow and orphan Pages branch, the crawl's time on Actions, the guide corrected where they show it wrong
+- [ ] **9.6** The dev deployment: `v0.3.0-rc.1` (its notes drafted by `/release` for the maintainer to edit, the tag the maintainer's), the deployment repo's nightly workflow and orphan Pages branch, the crawl's time on Actions, the guide corrected where they show it wrong
 - [ ] **9.7** The closing evidence: a quick-docs mirror (the maintainer's repository) running the guide's workflow against the Pages URL, a planted break failing and a clean change passing
 - [ ] **9.8** The maintainer's review of the en-US reports, the digest included: no code
 - [ ] **9.9** The every-locale crawl, weekly on the maintainer's machine: history, `prune` and the schema archive exercised, the guide's locale figures, the digest's size deciding whether its results are published
-- [ ] **9.10** The release P9 closes on (the maintainer's tag), and the README's CI section corrected
+- [ ] **9.10** The release P9 closes on (its notes drafted by `/release` for the maintainer to edit, the tag the maintainer's), and the README's CI section corrected
 
 ## Not started
 

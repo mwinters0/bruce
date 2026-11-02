@@ -461,7 +461,8 @@ evidence** and lands no code, so each later slice meets what it found.
 5. **9.5 The guide's CI section**: the workflow, its fetch and check
    included, `sim`'s YAML and `uses:` checks, `e2e` running its steps, the
    Antora pin checked against production's.
-6. **9.6 The dev deployment**: `v0.3.0-rc.1`, the deployment repo's nightly
+6. **9.6 The dev deployment**: `v0.3.0-rc.1`, its notes drafted by
+   `/release` for the maintainer to edit (maintainer, 2026-11-02), the deployment repo's nightly
    workflow and its orphan Pages branch, the crawl's time on Actions, the
    guide corrected where they show it wrong.
 7. **9.7 The closing evidence**: a quick-docs mirror running the guide's
@@ -475,7 +476,7 @@ evidence** and lands no code, so each later slice meets what it found.
    digest's every-row HTML where either is bad (D64, Reopens) and deciding
    whether the guide publishes its results (above, "Every locale is a weekly
    crawl of its own").
-10. **9.10 The release P9 closes on**, and the README's CI section corrected.
+10. **9.10 The release P9 closes on**, its notes drafted the same way, and the README's CI section corrected.
 
 **A round commits and pushes to the deployment repo**, its settings
 (Pages, the schedule) included (maintainer, 2026-11-02). Every tag push
