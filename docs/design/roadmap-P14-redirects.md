@@ -1,7 +1,7 @@
 # P14 — Redirects as facts
 
 What P14 does and why, settled in the grilling of 2026-11-02. The decisions
-are in [`../design/decisions.md`](../design/decisions.md) and are cited here,
+are in [`decisions.md`](decisions.md) and are cited here,
 never restated.
 
 ## Intent
@@ -128,7 +128,7 @@ target that is `ok`, 716 of them (577, 127, 8, 3, 1): a limit of 1 breaks 139,
 ## Where it lives
 
 Settled 2026-11-02 (maintainer). **P14 adds no module**; each part widens a
-concept already placed (`../design/concepts.md`): the setting in
+concept already placed (`concepts.md`): the setting in
 `config::policy`, the rule in `store::views`' `link_verdicts`, the derived
 columns in `report::views` and the reach reports, the cause in
 `report::digest::cause`, the dropped columns in `store::schema` and the

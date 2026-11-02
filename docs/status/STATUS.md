@@ -40,18 +40,11 @@ the gate's exit status and sections.
 The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball (D60).
 `.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), its body the annotated tag's release notes, drafted by `/release` from its template, with a schema change from the latest release's named in them (D43; a lightweight tag is refused), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
 
-## P14 progress
-
-Redirects as facts: [`../wip/roadmap-P14-redirects.md`](../wip/roadmap-P14-redirects.md).
-
-- [x] **14.1** Discovery as facts ([notes](../wip/roadmap-P14.1-discovery-notes.md)): `pages.in_sitemap` and `via_links` dropped (a schema bump), `report_pages`' `listed` and `linked` derived from `links` and `final_url`, the reach reports and the digest's sitemap entries, orphans and unlisted reading them, D14 and D47 amended, KD38 struck, `review.py crawl` starting a new database across a schema change
-- [x] **14.2** The chain limit ([notes](../wip/roadmap-P14.2-chain-limit-notes.md)): `max_redirects` under `[default]` and `[host."…"]` (0 to 10, D100), its policy rows and manual rows, `link_verdicts`' `too_many_redirects` past it, `target_moved` on a changed chain, D7, D70, D74 and D79 amended
-
 ## Not started
 
 Every phase in [`../design/roadmap.md`](../design/roadmap.md)'s index not
-`Current`, `Complete` or `Struck`: P9, which follows P14, is specified, to be
-grilled again before it is sliced; P15, P16, P12 and P13 have not been
+`Current`, `Complete` or `Struck`: P9 is specified, to be grilled again before
+it is sliced; P15, P16, P12 and P13 have not been
 grilled.
 
 ## Decisions worth another look

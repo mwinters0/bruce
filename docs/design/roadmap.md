@@ -15,8 +15,8 @@ never reused.
 | Phase | State | Where it is |
 |---|---|---|
 | P1–P8, P10, P11 | **Struck** at the keystones of 2026-10-21 to 2026-11-02 | their decisions are [`decisions.md`](decisions.md)'s |
-| P14 — redirects as facts | Current; sliced, its checklist in [`../status/STATUS.md`](../status/STATUS.md) | [`../wip/roadmap-P14-redirects.md`](../wip/roadmap-P14-redirects.md) |
-| P9 — the deployment guide | Specified; follows P14, and is grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
+| P14 — redirects as facts | **Complete**, 2026-11-02 | [`roadmap-P14-redirects.md`](roadmap-P14-redirects.md), its notes [`roadmap-P14-redirects-notes.md`](roadmap-P14-redirects-notes.md) |
+| P9 — the deployment guide | Specified; next, and grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
 | P15 — what a repo owns, for every site | Sketched; not grilled | this file, below |
 | P16 — issues for broken links | Sketched; not grilled | this file, below |
 | P12 — compiled profiles for other generators | Sketched; not grilled | this file, below |
@@ -80,7 +80,8 @@ A standing rule is added only with the maintainer, and carries its check.
 
 ## P14 — Redirects as facts
 
-Specified: [`../wip/roadmap-P14-redirects.md`](../wip/roadmap-P14-redirects.md).
+Complete: [`roadmap-P14-redirects.md`](roadmap-P14-redirects.md), and its notes
+[`roadmap-P14-redirects-notes.md`](roadmap-P14-redirects-notes.md).
 
 ## P9 — The deployment guide
 

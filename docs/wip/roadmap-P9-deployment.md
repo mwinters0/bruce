@@ -49,7 +49,7 @@ Settled 2026-11-01 (maintainer). **P9 follows P14**, redirects read as facts
 and a chain past a site's configured length broken: the guide sets the
 limit for docs.fp.o, and the gate's `fail` list decides whether it fails a
 content repo's CI. The limit is `max_redirects`, counting every hop, a
-delay-0 refresh included ([`roadmap-P14-redirects.md`](roadmap-P14-redirects.md)),
+delay-0 refresh included ([`../design/roadmap-P14-redirects.md`](../design/roadmap-P14-redirects.md)),
 so a CI build's site-root meta refresh is a hop: a guide limit of 0 breaks a
 built page's home link unless 9.1 has made the prefix not built.
 
