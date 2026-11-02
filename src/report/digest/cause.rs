@@ -18,8 +18,8 @@ use crate::report::table::Table;
 use crate::store::RunId;
 
 /// The causes of a new break, the order they are listed in. The first three
-/// are a change in what a link names: the target page is gone, moved or lost
-/// the anchor, and the source shown is the target's, as the comparison
+/// are a change in what a link names: the target page is gone, moved (its
+/// landing or its chain differs) or lost the anchor, and the source shown is the target's, as the comparison
 /// recorded it where it did, else as this run does; the rest are the linking
 /// page's own.
 pub const CAUSES: [&str; 7] = [
@@ -68,7 +68,8 @@ pub(super) fn new_breakage(conn: &Connection, from: RunId, to: RunId) -> Result<
          WHEN NOT pr.was_ok AND pr.was_unjudged THEN 'first_judged' \
          WHEN NOT pr.was_ok THEN 'unexplained' \
          WHEN t.outcome = 'broken_url' THEN 'target_removed' \
-         WHEN t.final_url IS NOT NULL AND ct.final_url IS DISTINCT FROM t.final_url \
+         WHEN t.final_url IS NOT NULL AND (ct.final_url IS DISTINCT FROM t.final_url \
+         OR ct.redirect_chain IS DISTINCT FROM t.redirect_chain) \
          THEN 'target_moved' \
          WHEN b.outcome = 'broken_anchor' AND EXISTS (SELECT 1 FROM anchors a \
          WHERE a.run_id = {c} AND a.url_id = coalesce(cl.url_id, ct.url_id) \

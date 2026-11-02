@@ -31,12 +31,13 @@ outcomes, one name for two verdicts. Reopens: a listed scheme found broken, or a
 `crawl::tests::a_scheme_no_reader_can_follow_is_reported_broken_and_a_working_one_unchecked`.
 
 ### D70 A redirect that only adds or drops a final `/` is `ok`, reason `pedantic_trailing_slash`
-Whatever the hops between; a missing fragment still makes the link `broken_anchor`. Reports list the pedantic rows last,
-and the gate fails on none, as on no redirect (D7). Maintainer, 2026-10-24: a slash is to be corrected, below a 404 or a
-missing fragment; the class is named for one form so that others (a scheme upgrade, a moved page) can stand beside it.
-Rejected: a sixth outcome (D16) for a link a reader follows; `redirected` alone, which hid the 2026-10-24 crawl's 496
-such links among its redirects. Reopens: a second pedantic class, making the reason a list or the view a table.
-`judge.pedantic_trailing_slash = false` turns it off (D77). Code: `store::views`. Evidence:
+Whatever the hops between, within `max_redirects` (D100); a missing fragment still makes the link `broken_anchor`.
+Reports list the pedantic rows last, and the gate fails on none, as on no redirect (D7). Maintainer, 2026-10-24: a slash
+is to be corrected, below a 404 or a missing fragment; the class is named for one form so that others (a scheme upgrade,
+a moved page) can stand beside it. Rejected: a sixth outcome (D16) for a link a reader follows; `redirected` alone,
+which hid the 2026-10-24 crawl's 496 such links among its redirects. Reopens: a second pedantic class, making the reason
+a list or the view a table. `judge.pedantic_trailing_slash = false` turns it off (D77).
+Code: `store::views`. Evidence:
 `store::views::tests::a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic`.
 
 ### D71 A doubled slash in a URL's path is the linking page's fault: the link is `broken_url`, reason `doubled_slash`
@@ -90,13 +91,13 @@ not text in a row. Code: `config::Policy::entries`, `store::Store::begin_run`. E
 `store::baseline::tests::a_run_policy_travels_in_the_baseline_file_and_into_the_run_that_imports_it`.
 
 ### D79 A status is judged by the host that answered, a URL's shape by the host linked, and a scheme by the URL
-Read over what the crawl stored (D77): a code by the answering host's `status` map over the default; `doubled_slash` by
-the linked URL's host; a scheme by the policy's list. Why: a redirect onto a forge's 403 is the forge's answer; a
-doubled slash is the linked URL's or its host's redirect's, as on every landing doubling one on the 2026-10-28 crawl.
-Rejected: the linked host for a status; the landing's host for a doubled slash, switching off its own doubled URLs; a
-host's map replacing the default, not laid over it per code (maintainer, 2026-10-30); the crawl storing the policy's
-answer, a trial then needing a crawl; a class such as `4xx`, ambiguous beside single codes. Reopens: a host's code and a
-landing's disagreeing. Code: `store::views`. Evidence:
+Read over what the crawl stored (D77): a code by the answering host's `status` map over the default; `doubled_slash` and
+`max_redirects` by the linked URL's host; a scheme by the policy's list. Why: a redirect onto a forge's 403 is the
+forge's answer; a doubled slash is the linked URL's or its host's redirect's. Rejected: the linked host for a status;
+the landing's host for a doubled slash, switching off its own doubled URLs; a host's map replacing the default, not laid
+over it per code (maintainer, 2026-10-30); the crawl storing the policy's answer, a trial then needing a crawl; a class
+such as `4xx`, ambiguous beside single codes. Reopens: a host's code and a landing's disagreeing.
+Code: `store::views`. Evidence:
 `store::views::tests::a_status_the_policy_judges_is_read_over_the_outcome_the_crawl_stored`.
 
 ### D81 A comparison judges both runs by the policy of the run it reports on, through a session variable the macro reads
@@ -128,3 +129,13 @@ D48's grace). Rejected: a profile's defaults under config's, until a generator d
 at crawl time, a comparison refusing a policy change; `wrong_trailing_slash` switchable, hiding the fix on a link broken
 anyway. Code: `config::policy`. Evidence:
 `config::policy::tests::the_default_policy_is_what_bruce_has_always_judged_by`.
+
+### D100 A redirect chain longer than a host's `max_redirects` makes its link `broken_url`, reason `too_many_redirects`
+Judged at read time (D77) from the chain the crawl stored: more entries than the limit, 0 to 10, default 10 (D7's
+ceiling, so a file without the key judges as before), the linked URL's host's over `[default]`'s (D79). Every entry
+counts, a slash-only chain and an `http` upgrade included, which then is no `pedantic_trailing_slash` (D70). A target
+broken for its own reason keeps it; the fragment is not looked at. Why: the limit is what a reader sits through, and a
+site may hold any redirect a problem (maintainer, 2026-11-02). Rejected: a reason apart from the crawl's ceiling; `ok`
+with a level, which `gate.fail` cannot fail; a slash-only chain exempt; a tighter default; the landing's host.
+Code: `config::policy`, `store::views`. Evidence:
+`store::views::tests::a_chain_longer_than_the_hosts_limit_is_broken_whatever_its_fragment_and_ok_within_it`.

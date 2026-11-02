@@ -29,9 +29,9 @@ use policy::{RawAsking, RawDigest, RawGate, RawJudge, RawJudging};
 use selector::selectors;
 
 pub use policy::{
-    ASKING_KEYS, Answer, Asking, DEFAULT_FAIL, Entry, FailOn, HostAsking, HostJudging, Outcome,
-    Policy, Reach, Reason, Severity, SeverityMap, WORKING_SCHEMES, backoff, expand_reasons,
-    group_by_from_row,
+    ASKING_KEYS, Answer, Asking, DEFAULT_FAIL, Entry, FailOn, HostAsking, HostJudging,
+    MAX_REDIRECTS, Outcome, Policy, Reach, Reason, Severity, SeverityMap, WORKING_SCHEMES, backoff,
+    expand_reasons, group_by_from_row,
 };
 pub use profile::{AUTO_PROFILE, Definition, Fact, SourceRule};
 
@@ -277,6 +277,7 @@ impl Config {
         let token = robots_token(&user_agent).map_err(|e| invalid(format!("user_agent: {e}")))?;
         let default_judging = RawJudging {
             doubled_slash: raw.default.doubled_slash,
+            max_redirects: raw.default.max_redirects,
             status: raw.default.status.clone(),
         };
         let default_asking = RawAsking {
@@ -526,6 +527,7 @@ fn host_settings(raw: BTreeMap<String, RawHost>) -> Result<Hosts, Error> {
             &name,
             &RawJudging {
                 doubled_slash: h.doubled_slash,
+                max_redirects: h.max_redirects,
                 status: h.status,
             },
         )
@@ -757,6 +759,7 @@ struct RawRate {
     per_second: Option<f64>,
     concurrency: Option<u32>,
     doubled_slash: Option<bool>,
+    max_redirects: Option<u32>,
     #[serde(default)]
     status: BTreeMap<String, String>,
     connect_timeout: Option<u64>,
@@ -773,6 +776,7 @@ struct RawHost {
     concurrency: Option<u32>,
     robots: Option<bool>,
     doubled_slash: Option<bool>,
+    max_redirects: Option<u32>,
     #[serde(default)]
     status: BTreeMap<String, String>,
     connect_timeout: Option<u64>,

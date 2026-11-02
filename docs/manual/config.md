@@ -302,6 +302,7 @@ precedence over it, and `[host]` (below) says when a host's own rate does.
 | `default.per_second` | `2` | Requests a second to any one host. |
 | `default.concurrency` | `4` | Requests in flight to any one host at once. At the default rate it binds only on a host slow to answer. At least 1. |
 | `default.doubled_slash` | `true` | Whether a link to a URL that doubles a slash is broken, for a host that sets none ([Judging](#judging)). |
+| `default.max_redirects` | `10` | The most hops a redirect chain may take before a link to it is broken, for a host that sets none ([Judging](#judging)). From 0 to 10. |
 | `default.status` | `{ 401 = "error", 403 = "error", 429 = "error" }` | What a status code is judged to be, for a host that sets none; the file's codes are laid over these, a code at a time ([Judging](#judging)). |
 | `default.connect_timeout` | `10` | Seconds to connect to a host, for a host that sets none ([Asking](#asking)). At least 1. |
 | `default.timeout` | `30` | Seconds for a whole response, body included, for a host that sets none ([Asking](#asking)). At least 1. |
@@ -325,9 +326,11 @@ schemes = ["matrix"]
 
 [default]
 status = { 403 = "ok" }
+max_redirects = 3
 
 [host."pagure.io"]
 doubled_slash = false
+max_redirects = 5
 status = { 403 = "broken_url" }
 ```
 
@@ -349,6 +352,20 @@ with no twin in the run counts none of its broken relative links (`../`,
 following their relative links on; `immediate` counts those of the page the link
 lands on alone; `off` counts them nowhere, the link itself being the one red
 finding. The digest's guide states the reach the run was judged by.
+
+**`max_redirects`** is the most hops a link's redirect chain may take. A link to
+a URL whose chain is longer is `broken_url`, reason `too_many_redirects`, the
+reason the crawl already gives a chain past 10 hops; the row still names where
+the chain lands, which is the URL to link to. Every hop counts: each 3xx, each
+page that refreshes at once, and an `http` to `https` upgrade, so a slash-only
+chain counts like any other and, over the limit, is no longer
+`pedantic_trailing_slash`. The limit is the setting of the host in the link's
+URL, which answered the first hop. `0` breaks every redirect, and 10, the
+default, is the most a crawl follows, so past it is refused and a file without
+the key judges as before. It is judged from the run's recorded policy, so
+`--config` shows a limit's effect on a run already crawled. A URL that is
+broken for another reason keeps that reason, and the fragment of a link over
+the limit is not looked at.
 
 **`status`** maps single codes, `"<code>" = "<outcome>"`, the outcome `ok`,
 `broken_url` or `error`. A class such as `4xx` is refused, and so is a 3xx,
@@ -521,6 +538,7 @@ per_second = 10
 | `host."<host>".concurrency` | `default.concurrency` | Requests in flight to that host at once. |
 | `host."<host>".robots` | `true` | Whether the host's `robots.txt` is obeyed, its `Crawl-delay` included. |
 | `host."<host>".doubled_slash` | `default.doubled_slash` | Whether a link to a URL on that host that doubles a slash is broken ([Judging](#judging)). |
+| `host."<host>".max_redirects` | `default.max_redirects` | The most hops a redirect chain from a URL on that host may take ([Judging](#judging)). From 0 to 10. |
 | `host."<host>".status` | `{}` | What a status code that host answered is judged to be, over `default.status` ([Judging](#judging)). |
 | `host."<host>".connect_timeout` | `default.connect_timeout` | Seconds to connect to that host ([Asking](#asking)). |
 | `host."<host>".timeout` | `default.timeout` | Seconds for a whole response from that host ([Asking](#asking)). |

@@ -11,13 +11,14 @@ use std::collections::HashSet;
 
 use url::Url;
 
-use crate::config::Reason;
+use crate::config::{MAX_REDIRECTS, Reason};
 use crate::extract::{Kind, Link};
 use crate::fetch::Response;
 use crate::store::Hop;
 
-/// The most hops a target may take (D7); one more is `broken_url`.
-pub const MAX_HOPS: usize = 10;
+/// The most hops a target may take (D7); one more is `broken_url`. It is the
+/// ceiling of a site's `max_redirects` (D100).
+pub const MAX_HOPS: usize = MAX_REDIRECTS as usize;
 
 /// Why a chain cannot go on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

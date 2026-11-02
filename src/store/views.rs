@@ -17,7 +17,7 @@
 //!    `broken_url`, reason `unresolved_xref`, whatever its target answered
 //!    (D20). A CI run that resolved the refspec points the link at the page it
 //!    names with the refspec's own fragment, and keeps the refspec: rules 2 to
-//!    8 judge it (D55), unless the URL it names, which Resolve may only have
+//!    9 judge it (D55), unless the URL it names, which Resolve may only have
 //!    derived, is itself broken (D57).
 //! 2. A link whose target has no row, which only a stopped run leaves, is
 //!    `unchecked`, reason `cut`.
@@ -28,13 +28,16 @@
 //!    unless the policy turns it off for the host of the URL linked.
 //! 4. A target that is not `ok` gives its link its own outcome and reason: the
 //!    fragment is not looked at (D16).
-//! 5. No fragment, an empty one, and `top` in any case are `ok` (D12). `top`
+//! 5. A target whose redirect chain has more entries than the policy's
+//!    `max_redirects` for the host of the URL linked is `broken_url`, reason
+//!    `too_many_redirects`, whatever the fragment (D100).
+//! 6. No fragment, an empty one, and `top` in any case are `ok` (D12). `top`
 //!    is a browser's own and HTML matches it without regard to case.
-//! 6. A text fragment (`:~:`) is `unchecked`, reason `text_fragment` (D12).
-//! 7. An `ok` target with no page to read (`too_large`, an asset, an
+//! 7. A text fragment (`:~:`) is `unchecked`, reason `text_fragment` (D12).
+//! 8. An `ok` target with no page to read (`too_large`, an asset, an
 //!    allowlisted URL first named by a non-anchor link) is `unchecked`,
 //!    reason `no_anchors`: nothing is known, so nothing is broken.
-//! 8. Otherwise the fragment is checked against the anchors of the page the
+//! 9. Otherwise the fragment is checked against the anchors of the page the
 //!    target landed on (D46): `ok` where an anchor is the fragment as written
 //!    or percent-decoded, as a browser looks (D12), else `broken_anchor`.
 //!
@@ -205,6 +208,7 @@ pub(super) fn link_verdicts_with() -> String {
         .replace("$SCHEMES", &schemes.join(", "))
         .replace("$ANSWERED_HOST", host!("coalesce(th.final_url, th.url)"))
         .replace("$DOUBLED_HOST", host!("d.url"))
+        .replace("$LINKED_HOST", host!("th.url"))
 }
 
 // upstream: UF2 -- `pr` maps each run to the one whose policy judges it, since
@@ -214,9 +218,11 @@ CREATE OR REPLACE MACRO link_verdicts_with(policy_run := NULL) AS TABLE
 WITH pr AS (
     SELECT run_id, coalesce(policy_run, getvariable('judged_by')::UBIGINT, run_id) AS prun FROM runs
 ), th AS (
-    SELECT th.*, $ANSWERED_HOST AS answered_host FROM targets th
+    SELECT th.*, $ANSWERED_HOST AS answered_host, $LINKED_HOST AS linked_host FROM targets th
 ), tj AS (
     SELECT th.run_id, th.url_id, th.url, th.final_url,
+        coalesce(len(th.redirect_chain), 0)
+            > coalesce(try_cast(hr.value AS INTEGER), try_cast(dr.value AS INTEGER), 10) AS too_long,
         CASE
             WHEN th.reason IN ($reason(scheme), $reason(bad_scheme)) THEN
                 CASE WHEN list_contains(coalesce(sch.schemes, [$SCHEMES]),
@@ -235,6 +241,10 @@ WITH pr AS (
         AND hm.key = 'status.' || th.status::VARCHAR AND hm.host = th.answered_host
     LEFT JOIN policy_in_force dm ON dm.run_id = pr.prun
         AND dm.key = 'status.' || th.status::VARCHAR AND dm.host IS NULL
+    LEFT JOIN policy_in_force hr ON hr.run_id = pr.prun
+        AND hr.key = 'max_redirects' AND hr.host = th.linked_host
+    LEFT JOIN policy_in_force dr ON dr.run_id = pr.prun
+        AND dr.key = 'max_redirects' AND dr.host IS NULL
 ), dsl AS (
     SELECT d.run_id, d.url_id, d.own, d.twin_id
     FROM doubled_slash d
@@ -250,6 +260,7 @@ WITH pr AS (
         t.url_id IS NOT NULL AS found,
         t.answer[1] AS target_outcome,
         t.answer[2] AS target_reason,
+        t.too_long,
         t.final_url IS NOT NULL AS redirected,
         coalesce(t.final_url <> t.url
             AND regexp_replace(t.final_url, '/([?].*)?$', '\1')
@@ -274,6 +285,7 @@ WITH pr AS (
         WHEN NOT found THEN ['unchecked', $reason(cut)]
         WHEN doubled AND target_url_id <> src_url_id THEN ['broken_url', $reason(doubled_slash)]
         WHEN target_outcome <> 'ok' THEN [target_outcome, target_reason]
+        WHEN too_long THEN ['broken_url', $reason(too_many_redirects)]
         WHEN coalesce(fragment, '') = '' OR lower(fragment) = 'top' THEN ['ok', NULL]
         WHEN contains(fragment, ':~:') THEN ['unchecked', $reason(text_fragment)]
         WHEN page_id IS NULL THEN ['unchecked', $reason(no_anchors)]

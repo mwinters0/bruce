@@ -21,6 +21,9 @@
 {{ target_link(r.target, fragment) }}
 {%- if r.landing -%}<br><small>→ lands on {{ a(r.landing, runs((r.landing|short)|final_slash_runs)) }}</small>{%- endif -%}
 <br><small>→ try {{ a(r.fix, r.fix|short) }}</small>
+{%- elif r.reason == "too_many_redirects" -%}
+{{ target_link(r.target, fragment) }}
+{%- if r.landing -%}<br><small>→ lands on {{ a(r.landing, r.landing|short) }}</small>{%- endif -%}
 {%- elif r.reason != "doubled_slash" -%}
 {{ target_link(r.target, fragment) }}
 {%- else -%}

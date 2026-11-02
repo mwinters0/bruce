@@ -12,7 +12,7 @@ entries quote are named by their day (2026-10-23, 2026-10-24, 2026-10-25, run 2 
 2026-10-28). Their databases predate schema 6 and are no longer kept: a figure stands as recorded, and a new crawl
 remeasures it. The en-US crawl of 2026-11-01 is kept, beside the one before it, in `runs/en-us-20261101-0005/`.
 
-<!-- decision-watermark: D99 -->
+<!-- decision-watermark: D100 -->
 
 ## Modes, commands and deployment
 [`decisions/modes.md`](decisions/modes.md)
@@ -98,6 +98,7 @@ remeasures it. The en-US crawl of 2026-11-01 is kept, beside the one before it, 
 - **D81** A comparison judges both runs by the policy of the run it reports on, through a session variable the macro reads
 - **D84** A trial policy is a temporary table of the policy rows every reader asks for, one set per run
 - **D90** A constant becomes a site's setting where a site would rightly choose otherwise and the choice is meaning
+- **D100** A redirect chain longer than a host's `max_redirects` makes its link `broken_url`, reason `too_many_redirects`
 
 ## CI mode
 [`decisions/ci.md`](decisions/ci.md)

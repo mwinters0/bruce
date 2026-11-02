@@ -625,6 +625,44 @@ fn a_doubled_slash_a_redirect_lands_on_is_the_links_landing() {
 }
 
 #[test]
+fn a_chain_over_the_limit_is_a_broken_link_naming_its_landing_and_stays_a_redirect() {
+    let store = store();
+    let conn = store.connection();
+    page(&store, 1, 7, Some("r/seven"), Some(ROOT));
+    target(&store, 1, 71, 200, "ok", None);
+    target(&store, 1, 72, 301, "ok", None);
+    conn.execute(
+        "UPDATE targets SET final_url = ?, redirect_chain = [{'url': 'https://e.test/hop', \
+         'status': 301, 'refresh': false}, {'url': 'https://e.test/hop2', 'status': 301, \
+         'refresh': false}] WHERE url_id = 72",
+        params![url(71)],
+    )
+    .unwrap();
+    conn.execute(
+        "INSERT INTO policy VALUES (1, NULL, 'max_redirects', '1')",
+        [],
+    )
+    .unwrap();
+    written(&store, 7, 72, &url(72));
+    let d = of(&store);
+    let at = |t: &crate::report::table::Table, name: &str| {
+        let row = column(t, "target")
+            .iter()
+            .position(|u| *u == url(72))
+            .unwrap();
+        t.rows[row][t.columns.iter().position(|c| c == name).unwrap()].clone()
+    };
+    assert_eq!(
+        at(&d.broken, "reason"),
+        Cell::Text("too_many_redirects".to_owned())
+    );
+    assert_eq!(at(&d.broken, "landing"), Cell::Text(url(71)));
+    assert_eq!(at(&d.broken_targets, "landing"), Cell::Text(url(71)));
+    // The same link is among the redirects, by its landing.
+    assert!(column(&d.redirects, "landing").contains(&url(71)));
+}
+
+#[test]
 fn a_wrong_trailing_slash_names_the_url_that_answers_as_the_fix() {
     let store = store();
     store

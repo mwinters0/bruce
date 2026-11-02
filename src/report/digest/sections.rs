@@ -317,13 +317,15 @@ pub(super) fn pages(conn: &Connection, run: RunId, _: PageCounts) -> Result<Tabl
 /// The redirected targets doubling no slash themselves, joined as `dl` to a
 /// `doubled_slash` link `b`, whose `dl.final_url` is its `landing` and then
 /// doubles one (D71), or a `wrong_trailing_slash` one, whose landing is the
-/// URL the crawl toggled (D72). Only the redirected targets are joined, a join
+/// URL the crawl toggled (D72), or a `too_many_redirects` one, whose landing
+/// is the fix (D100). Only the redirected targets are joined, a join
 /// of every target by URL taking several times as long.
 fn landing_join() -> String {
     format!(
         "LEFT JOIN (SELECT t.run_id, t.url, t.final_url FROM targets t \
          WHERE t.final_url IS NOT NULL AND NOT {TARGET_URL_DOUBLES}) dl \
-         ON b.reason IN ($reason(doubled_slash), $reason(wrong_trailing_slash)) \
+         ON b.reason IN ($reason(doubled_slash), $reason(wrong_trailing_slash), \
+         $reason(too_many_redirects)) \
          AND dl.run_id = b.run_id AND dl.url = b.target "
     )
 }

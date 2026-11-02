@@ -141,6 +141,42 @@ fn each_new_break_says_what_the_comparison_held() {
 }
 
 #[test]
+fn a_target_that_redirects_by_another_chain_has_moved_though_it_lands_where_it_did() {
+    let store = compared();
+    let conn = store.connection();
+    page(&store, 4, 61, Some("r/sixtyone"), None);
+    target(&store, 1, 61, 200, "ok", None);
+    for run in [4, 1] {
+        target(&store, run, 62, 301, "ok", None);
+        let hops = if run == 4 { 1 } else { 3 };
+        let chain = vec!["{'url': 'https://e.test/hop', 'status': 301, 'refresh': false}"; hops];
+        conn.execute(
+            &format!(
+                "UPDATE targets SET final_url = ?, redirect_chain = [{}] \
+                 WHERE run_id = {run} AND url_id = 62",
+                chain.join(", ")
+            ),
+            params![url(61)],
+        )
+        .unwrap();
+        link(&store, run, 1, 62, None, "anchor");
+    }
+    // The digest's run judges by a limit of 2 hops, which the compared run's
+    // chain of one met and this run's of three does not.
+    conn.execute(
+        "INSERT INTO policy VALUES (1, NULL, 'max_redirects', '2'), \
+         (4, NULL, 'max_redirects', '2')",
+        [],
+    )
+    .unwrap();
+    let t = new(&store);
+    assert_eq!(of(&t, 1, 62, None, "cause"), text("target_moved"));
+    assert_eq!(of(&t, 1, 62, None, "reason"), text("too_many_redirects"));
+    // The target's source, as the compared run recorded it.
+    assert_eq!(of(&t, 1, 62, None, "source_repo"), text("r/sixtyone"));
+}
+
+#[test]
 fn a_link_broken_in_both_runs_is_no_new_break() {
     let t = new(&compared());
     assert!(!column(&t, "raw_href").contains(&"1>10#".to_owned()));

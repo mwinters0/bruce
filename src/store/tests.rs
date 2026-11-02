@@ -552,8 +552,8 @@ fn a_run_records_its_whole_policy_beside_itself() {
     let (first, second) = (recorded(first), recorded(second));
     assert_eq!(pedantic(&first).as_deref(), Some("false"));
     assert_eq!(pedantic(&second).as_deref(), Some("true"));
-    // Every setting is a row, the defaults too: twelve schemes, a status map.
-    assert_eq!(first.len(), 1 + 12 + 1 + 1 + 3 + 5 + 1 + 1 + 6);
+    // Every setting is a row, the defaults too: twelve schemes, a status map and the chain limit.
+    assert_eq!(first.len(), 1 + 12 + 1 + 1 + 1 + 3 + 5 + 1 + 1 + 6);
     assert!(first.iter().all(|(host, _, _)| host.is_none()));
 }
 
@@ -566,6 +566,7 @@ fn a_hosts_own_settings_are_rows_carrying_the_host() {
         crate::config::HostJudging {
             doubled_slash: Some(false),
             status: [(403, crate::config::Answer::BrokenUrl)].into(),
+            ..Default::default()
         },
     );
     let run = store

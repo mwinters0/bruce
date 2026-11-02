@@ -64,7 +64,7 @@ those, and `--from` or `--to` with any other report, are command-line errors.
 
 `--config FILE` judges the run, and any run compared with it, by the **judging
 settings** of a [configuration file](config.md#judging) (`[judge]`, `[severity]`,
-`[gate]`, and the `status` and `doubled_slash` of `[default]` and `[host]`), and
+`[gate]`, and the `status`, `doubled_slash` and `max_redirects` of `[default]` and `[host]`), and
 by its `[digest]`, as if each run had recorded them. It is how to see what a severity map, a
 `status` map or a `fail` list does without a crawl, which takes 75 minutes for
 en-US. The file's asking settings are ignored, a run being unable to be asked
@@ -91,7 +91,7 @@ group and page. `--top N` keeps the first N.
 | `fragment` | The `#fragment`, or none. |
 | `kind` | The link's kind. |
 | `outcome` | `broken_url` or `broken_anchor`. |
-| `reason` | Why, where the crawl knew: `unresolved_xref` for an Antora `xref:` that names no page, a redirect loop, an unparseable URL, `bad_scheme` for a scheme no reader can follow from a web page, as `file:` ([which schemes](digest.md#why-a-link-is-unchecked)), and `doubled_slash` for a link to a URL whose path doubles a slash (`a//b`), or to one that redirects to such a URL, whatever the URL answered and whether it was asked: the page linking there is the one to correct, and `wrong_trailing_slash` for a broken 4xx (any but 401, 403 and 429) whose URL with its final `/` added or dropped answered 2xx when the crawl asked it for its status alone, that URL being the fix (the URL a redirect landed on, for a target that was redirected first). None for any other 4xx or a missing fragment. |
+| `reason` | Why, where the crawl knew: `unresolved_xref` for an Antora `xref:` that names no page, a redirect loop, `too_many_redirects` for a redirect chain longer than the host's [`max_redirects`](config.md#judging), an unparseable URL, `bad_scheme` for a scheme no reader can follow from a web page, as `file:` ([which schemes](digest.md#why-a-link-is-unchecked)), and `doubled_slash` for a link to a URL whose path doubles a slash (`a//b`), or to one that redirects to such a URL, whatever the URL answered and whether it was asked: the page linking there is the one to correct, and `wrong_trailing_slash` for a broken 4xx (any but 401, 403 and 429) whose URL with its final `/` added or dropped answered 2xx when the crawl asked it for its status alone, that URL being the fix (the URL a redirect landed on, for a target that was redirected first). None for any other 4xx or a missing fragment. |
 | `hint` | For an `unresolved_xref`, the nearest page ID among the run's pages, written as the `xref:` writes one (`component:module:path`, the module empty for `ROOT`), where one is within three tenths of the longer ID's length in edits, so a typo finds its page; none for a site with no Antora pages. |
 | `status` | The HTTP status the target answered, where it answered. |
 | `source_repo`, `source_path` | The repo and file the page was built from, where the page links its edit page. |
@@ -147,9 +147,11 @@ the hops the first of those URLs took, each a status (`refresh` for a page's
 own redirect) and the URL asked, joined by `>`. No link is left out for
 being on another host. `reason` is `pedantic_trailing_slash` for the links
 whose landing differs from the URL they name only by a final `/` added or
-removed, whatever the hops between: the server supplies the slash, the link
-works, and writing it is a tidiness. Those links are a row of their own, after
-all the others, and are otherwise none. With `--format json` each row also has `pages`, an
+removed, whatever the hops between, up to [`max_redirects`](config.md#judging):
+the server supplies the slash, the link works, and writing it is a tidiness.
+Those links are a row of their own, after all the others, and are otherwise
+none. A link whose chain is longer than `max_redirects` is broken, and is
+listed here as well, by its landing, which is the URL to link to. With `--format json` each row also has `pages`, an
 array of the pages whose links they are.
 
 **`diff`** has a row for each link that is broken (as `broken` has it) in

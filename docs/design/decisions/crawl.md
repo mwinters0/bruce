@@ -9,10 +9,10 @@ stop or a second press leaves behind. `crawl` holds the frontier, the hops and t
 ### D7 Canonical URLs keep the fragment apart; redirects are followed and stated
 The canonical form decodes only unreserved escapes, a `%2F` never moving the path; keeps the query unless the root
 strips it; and keeps `/foo` and `/foo/` distinct. Redirects are followed to 10 hops, a 2xx page's delay-0 refresh one of
-them (I14), a loop or more being `broken_url`. The fragment is checked against the final page, and `redirected` never
-fails (I4, I5), a final `/` alone pedantic (D70). `crawl` follows hops, not `fetch`: a refresh is found only by reading
-the page. Rejected: normalising the trailing slash, which servers do not; a delayed refresh as a hop, its page having
-content of its own.
+them (I14), a loop or more being `broken_url`, as a longer chain than `max_redirects` is (D100). The fragment is checked
+against the final page, and `redirected` never fails (I4, I5), a final `/` alone pedantic (D70). `crawl` follows hops,
+not `fetch`: a refresh is found only by reading the page. Rejected: normalising the trailing slash, which servers do
+not; a delayed refresh as a hop, its page having content of its own.
 Code: `url::canonical`, `crawl::hops`. Evidence: `url::tests`, `crawl::hops::tests`.
 
 ### D14 Discovery is sitemap and link-following both, and how a page was reached is read from the links

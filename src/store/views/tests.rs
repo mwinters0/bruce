@@ -726,6 +726,7 @@ fn a_status_the_policy_judges_is_read_over_the_outcome_the_crawl_stored() {
         crate::config::HostJudging {
             doubled_slash: None,
             status: [(403, Answer::BrokenUrl), (404, Answer::BrokenUrl)].into(),
+            ..Default::default()
         },
     );
     let store = judged_by(&policy);
@@ -876,6 +877,7 @@ fn a_doubled_slash_is_a_fault_only_on_a_host_the_policy_judges_it_on() {
         crate::config::HostJudging {
             doubled_slash: Some(false),
             status: Default::default(),
+            ..Default::default()
         },
     );
     let store = judged_by(&policy);
@@ -922,6 +924,7 @@ fn a_doubled_slash_is_a_fault_only_on_a_host_the_policy_judges_it_on() {
         crate::config::HostJudging {
             doubled_slash: Some(true),
             status: Default::default(),
+            ..Default::default()
         },
     );
     store
@@ -930,6 +933,110 @@ fn a_doubled_slash_is_a_fault_only_on_a_host_the_policy_judges_it_on() {
     let got = verdicts_of(&store, "link_verdicts_with(policy_run := 2)");
     expect(&got, "on", "broken_url", Some("doubled_slash"));
     expect(&got, "off", "ok", None);
+}
+
+/// A target that took `hops` hops to `final_url`, landing `ok`.
+fn chained(store: &Store, id: u64, url: &str, outcome: &str, hops: usize, final_url: &str) {
+    let chain = vec!["{'url': 'https://e.test/hop', 'status': 301, 'refresh': false}"; hops];
+    store
+        .connection()
+        .execute(
+            &format!(
+                "INSERT INTO targets (answered_by, run_id, url_id, url, outcome, final_url, \
+                 redirect_chain) VALUES ('live', 1, ?, ?, ?, ?, [{}])",
+                chain.join(", ")
+            ),
+            params![id, url, outcome, final_url],
+        )
+        .unwrap();
+}
+
+#[test]
+fn a_chain_longer_than_the_hosts_limit_is_broken_whatever_its_fragment_and_ok_within_it() {
+    let mut policy = crate::config::Policy {
+        max_redirects: 2,
+        ..crate::config::Policy::default()
+    };
+    for (host, limit) in [("forge.test", 4), ("strict.test", 0)] {
+        policy.hosts.insert(
+            host.to_string(),
+            crate::config::HostJudging {
+                max_redirects: Some(limit),
+                ..Default::default()
+            },
+        );
+    }
+    let store = judged_by(&policy);
+    chained(&store, 2, "https://e.test/a", "ok", 2, "https://e.test/z");
+    chained(&store, 3, "https://e.test/b", "ok", 3, "https://e.test/z");
+    chained(
+        &store,
+        4,
+        "https://forge.test/c",
+        "ok",
+        4,
+        "https://e.test/z",
+    );
+    chained(
+        &store,
+        5,
+        "https://strict.test/d",
+        "ok",
+        1,
+        "https://e.test/z",
+    );
+    chained(
+        &store,
+        6,
+        "https://e.test/e",
+        "broken_url",
+        3,
+        "https://e.test/z",
+    );
+    chained(&store, 7, "https://e.test/f/", "ok", 3, "https://e.test/f");
+    chained(&store, 8, "https://e.test/g", "ok", 0, "https://e.test/z");
+    for (label, id, fragment) in [
+        ("within", 2, None),
+        ("over", 3, None),
+        ("over-fragment", 3, Some("nope")),
+        ("forge", 4, None),
+        ("strict", 5, None),
+        ("target-broken", 6, None),
+        ("slash-only", 7, None),
+        ("none", 8, None),
+    ] {
+        link(&store, label, id, fragment, None);
+    }
+    let over = Some("too_many_redirects");
+    let got = verdicts(&store);
+    expect(&got, "within", "ok", None);
+    expect(&got, "over", "broken_url", over);
+    expect(&got, "over-fragment", "broken_url", over);
+    // The limit is the linked URL's host's, over the default.
+    expect(&got, "forge", "ok", None);
+    expect(&got, "strict", "broken_url", over);
+    // A target broken for its own reason keeps it, the worse fault.
+    expect(&got, "target-broken", "broken_url", None);
+    // The slash-only chain counts like any other, and is no longer pedantic.
+    expect(&got, "slash-only", "broken_url", over);
+    expect(&got, "none", "ok", None);
+    // A link over the limit is still a redirected one, naming its landing.
+    assert!(got["over"].2);
+
+    // A policy with the default limit, another run's, judges the same rows ok.
+    store
+        .begin_run(
+            Mode::Crawl,
+            "t",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
+    let got = verdicts_of(&store, "link_verdicts_with(policy_run := 2)");
+    expect(&got, "over", "ok", None);
+    expect(&got, "strict", "ok", None);
+    expect(&got, "slash-only", "ok", Some("pedantic_trailing_slash"));
 }
 
 /// The query UF2 describes, run by the watch test below in a process of its own.

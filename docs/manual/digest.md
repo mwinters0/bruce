@@ -198,7 +198,9 @@ new or all fixed. In this order:
    names that URL, "→ try docs.example.org/page/". Where a redirect lands
    on the 404, the landing is under *Resolves to* with its final `/` marked,
    "→ lands on docs.example.org/page/", and the URL named is the landing's
-   with its final `/` toggled.
+   with its final `/` toggled. A link whose redirect chain is longer than
+   [`max_redirects`](config.md#judging) is red, reason `too_many_redirects`, and
+   *Resolves to* names the landing the same way.
    Its *Written
    as* is the link as the page has it, *Resolves to* the URL it names, *Kind*
    the element holding it (`anchor` is an `<a href>`, as [`bruce report`](report.md)'s `--kind` names it),
@@ -315,7 +317,7 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `run` | The run digested: its `id`, start and finish (`finished_at` and `duration_seconds` are `null` for a run that never finished) and the `roots` it crawled. |
 | `compared_with` | The run compared with: its `id` (`null` for a baseline file's run, `from_file` true, whose number is that of a run the database held only while the digest was made), its start and finish (`finished_at` `null` for a run that never finished), the `bruce` that crawled it, its `roots` and its `totals`, which a loader subtracts to give a figure's change. |
 | `totals` | The pages the roots cover and the links on them, and the links by outcome, over every kind. `unchecked` links are not broken: `housekeeping.unchecked` says why. |
-| `broken_targets` | Each target a broken link names, with its `fragment` when the link names one, the target named by the most `links` first, then by `pages`: one anchor restored in the target's repo removes that many links. `outcome` is `broken_url` or `broken_anchor`, and `reason` and `status` are the target's answer. `landing` is, for a target whose `reason` is `doubled_slash` and whose own URL doubles no slash, the URL it redirected to, which does, and for a target whose `reason` is `wrong_trailing_slash` and which redirected, the URL it landed on; else `null`. `fix` is, for a target whose `reason` is `wrong_trailing_slash`, its URL (its `landing` where it has one) with the final `/` added or dropped, which answered when the crawl asked it; else `null`. `source_repo`, `source_path` and `source_url` are those of the target page, where the run holds it: the repo that would restore a missing anchor. |
+| `broken_targets` | Each target a broken link names, with its `fragment` when the link names one, the target named by the most `links` first, then by `pages`: one anchor restored in the target's repo removes that many links. `outcome` is `broken_url` or `broken_anchor`, and `reason` and `status` are the target's answer. `landing` is, for a target whose `reason` is `doubled_slash` and whose own URL doubles no slash, the URL it redirected to, which does, and for a target that redirected whose `reason` is `wrong_trailing_slash` or `too_many_redirects`, the URL it landed on; else `null`. `fix` is, for a target whose `reason` is `wrong_trailing_slash`, its URL (its `landing` where it has one) with the final `/` added or dropped, which answered when the crawl asked it; else `null`. `source_repo`, `source_path` and `source_url` are those of the target page, where the run holds it: the repo that would restore a missing anchor. |
 | `pages` | The pages that hold a broken link or one whose outcome is `error`, the most `broken_url` plus `error` plus `through` first, then the most `broken_anchor`. `links` counts every link on the page that counts, `error` its links that could not be verified, and `through` the broken or errored relative links (a `?query` is one) on the pages at doubled-slash URLs that its `doubled_slash` links reach, each page once, less those broken or errored on the page's twin too (zero for nearly every page). A page at a doubled-slash URL counts no link where the URL with its slashes collapsed is a page of the run, and else all but its broken relative links. `source_url` is the forge's view of the page's file. |
 | `broken` | Every broken link on the pages of `pages`, a page's links together and the pages in that order; a link whose outcome is `error` is in `errors`, where the HTML's drill-down finds it. `page` joins to `pages`. `hint` is, for an Antora `xref:` that names no page, the nearest page ID in the run, as `component:module:path` with an empty module for `ROOT`, where one is close enough to be a typo of it, else `null`. `landing` and `fix` are as in `broken_targets`. |
 | `by_repo` | Each repo the pages were built from, ranked as `pages` are, `through` the sum of its pages'; `repo` is `null` for the pages that record none. `pages` counts the repo's pages, `broken_pages` those holding a broken link or an error. |
@@ -388,7 +390,7 @@ make:
 | `cause` | The link |
 |---|---|
 | `target_removed` | Was `ok` in the compared run, and its target now answers with an error, the page it redirects to included. |
-| `target_moved` | Was `ok` in the compared run, and its target now redirects somewhere else, where the link breaks. |
+| `target_moved` | Was `ok` in the compared run, and its target now redirects somewhere else or by another chain, where the link breaks: a link newly over [`max_redirects`](config.md#judging) at the same landing is this. |
 | `anchor_removed` | Was `ok` in the compared run, whose page at the target had the fragment then and does not now: the links behind a row of `anchors_removed`. |
 | `link_added` | Is on a page the compared run checked, which did not hold the link. |
 | `new_page` | Is on a page the compared run did not check. |

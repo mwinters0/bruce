@@ -20,6 +20,7 @@ fn rows(policy: &Policy) -> Vec<String> {
 fn the_default_policy_is_what_bruce_has_always_judged_by() {
     let policy = Policy::default();
     assert!(policy.pedantic_trailing_slash && policy.doubled_slash);
+    assert_eq!(policy.max_redirects, 10);
     assert_eq!(policy.schemes, WORKING_SCHEMES);
     assert_eq!(
         policy.status.keys().copied().collect::<Vec<_>>(),
@@ -33,13 +34,14 @@ fn the_default_policy_is_what_bruce_has_always_judged_by() {
 fn every_setting_is_an_entry_with_its_value_written_out() {
     let mut policy = Policy::default();
     let defaults = rows(&policy);
-    assert_eq!(defaults.len(), 1 + 12 + 1 + 1 + 3 + 5 + 1 + 1 + 6);
+    assert_eq!(defaults.len(), 1 + 12 + 1 + 1 + 1 + 3 + 5 + 1 + 1 + 6);
     for row in [
         "/pedantic_trailing_slash=true",
         "/schemes=mailto",
         "/schemes=javascript",
         "/doubled_slash=true",
         "/doubled_slash_reach=full",
+        "/max_redirects=10",
         "/status.403=error",
         "/gate.fail=broken_url,broken_anchor",
         "/digest.group_by=",
@@ -65,10 +67,12 @@ fn a_file_sets_the_judging_keys_over_the_defaults() {
 
         [default]
         doubled_slash = false
+        max_redirects = 3
         status = { 403 = "ok", 500 = "broken_url" }
 
         [host."Pagure.io"]
         doubled_slash = true
+        max_redirects = 0
         status = { 403 = "broken_url", 404 = "error" }
 
         [host."quiet.example"]
@@ -78,6 +82,7 @@ fn a_file_sets_the_judging_keys_over_the_defaults() {
     .unwrap();
     assert!(!policy.pedantic_trailing_slash && !policy.doubled_slash);
     assert_eq!(policy.doubled_slash_reach, Reach::Immediate);
+    assert_eq!(policy.max_redirects, 3);
     assert!(rows(&policy).contains(&"/doubled_slash_reach=immediate".to_string()));
     assert_eq!(policy.schemes.len(), 14);
     assert_eq!(&policy.schemes[12..], ["matrix", "web+x"]);
@@ -90,6 +95,8 @@ fn a_file_sets_the_judging_keys_over_the_defaults() {
     let rows = rows(&policy);
     for row in [
         "/status.403=ok",
+        "/max_redirects=3",
+        "pagure.io/max_redirects=0",
         "pagure.io/doubled_slash=true",
         "pagure.io/status.403=broken_url",
         "pagure.io/status.404=error",
@@ -120,6 +127,12 @@ fn a_judging_key_that_cannot_mean_anything_is_refused_naming_it() {
             "[judge]\ndoubled_slash_reach = \"deep\"",
             "judge.doubled_slash_reach",
         ),
+        ("[default]\nmax_redirects = 11", "default.max_redirects"),
+        (
+            "[host.\"a.example\"]\nmax_redirects = 11",
+            "host.\"a.example\".max_redirects",
+        ),
+        ("[default]\nmax_redirects = -1", "max_redirects"),
         ("[judge]\nunknown = 1", "unknown"),
     ] {
         let err = parse(extra).unwrap_err();
@@ -241,6 +254,14 @@ fn a_setting_is_written_as_the_file_writes_it() {
     assert_eq!(
         written(None, "doubled_slash", "false"),
         "default.doubled_slash = false"
+    );
+    assert_eq!(
+        written(None, "max_redirects", "3"),
+        "default.max_redirects = 3"
+    );
+    assert_eq!(
+        written(Some("pagure.io"), "max_redirects", "0"),
+        "host.\"pagure.io\".max_redirects = 0"
     );
     assert_eq!(
         written(None, "severity.error", "none"),

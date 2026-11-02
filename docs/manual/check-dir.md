@@ -62,6 +62,9 @@ not on the allowlist) stays `unchecked`:
 - **A link to a URL whose path doubles a slash** (`a//b`), or that redirects
   to one, is `broken_url`, reason `doubled_slash`, whatever the URL answered
   and whether it was asked, as in a crawl.
+- **A link whose redirect chain is longer than** [`max_redirects`](config.md#judging)
+  is `broken_url`, reason `too_many_redirects`, as in a crawl; the limit is the
+  CI run's own.
 - **A link to a URL that answers 404** where the same URL with its final `/`
   added or dropped answers 2xx is `broken_url`, reason `wrong_trailing_slash`,
   as in a crawl ([`bruce crawl`](crawl.md#output)).

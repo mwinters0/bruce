@@ -49,6 +49,11 @@ pub const WORKING_SCHEMES: [&str; 12] = [
     "javascript",
 ];
 
+/// The most hops a redirect chain may take and still be followed (D7): the
+/// ceiling of `max_redirects` and its default, so a file without the key
+/// judges as before (D90).
+pub const MAX_REDIRECTS: u32 = 10;
+
 /// What a status code is judged to be (D16): the outcomes a response can
 /// carry, `unchecked` being a link not asked about and `broken_anchor` a
 /// fragment's.
@@ -136,6 +141,10 @@ pub struct Policy {
     /// How far the breakage a doubled slash causes is counted on the page that
     /// wrote the link (D88, D80).
     pub doubled_slash_reach: Reach,
+    /// The most hops a redirect chain may take where a host sets none: a link
+    /// to a longer one is `broken_url`, reason `too_many_redirects`, 0 making
+    /// every redirect so (D100).
+    pub max_redirects: u32,
     /// What a status code is judged to be where a host sets none, a code
     /// not here being judged as the crawl classed it (D16).
     pub status: BTreeMap<u16, Answer>,
@@ -162,6 +171,8 @@ pub struct Policy {
 pub struct HostJudging {
     /// A link to a URL on this host, in place of [`Policy::doubled_slash`].
     pub doubled_slash: Option<bool>,
+    /// A link to a URL on this host, in place of [`Policy::max_redirects`].
+    pub max_redirects: Option<u32>,
     /// What a code this host answered is judged to be, over [`Policy::status`].
     pub status: BTreeMap<u16, Answer>,
 }
@@ -173,6 +184,7 @@ impl Default for Policy {
             schemes: WORKING_SCHEMES.iter().map(|s| (*s).to_owned()).collect(),
             doubled_slash: true,
             doubled_slash_reach: Reach::Full,
+            max_redirects: MAX_REDIRECTS,
             // D16's class for these three, which the crawl records the same.
             status: [401, 403, 429]
                 .into_iter()
@@ -209,6 +221,7 @@ impl Policy {
             "doubled_slash_reach",
             self.doubled_slash_reach.as_str().to_owned(),
         ));
+        rows.push(run("max_redirects", self.max_redirects.to_string()));
         rows.extend(statuses(None, &self.status));
         rows.extend(self.severity.entries());
         rows.push(run("gate.fail", FailOn::row(&self.gate_fail)));
@@ -230,6 +243,13 @@ impl Policy {
                     host: Some(host.clone()),
                     key: "doubled_slash".to_owned(),
                     value: on.to_string(),
+                });
+            }
+            if let Some(n) = h.max_redirects {
+                rows.push(Entry {
+                    host: Some(host.clone()),
+                    key: "max_redirects".to_owned(),
+                    value: n.to_string(),
                 });
             }
             rows.extend(statuses(Some(host), &h.status));
@@ -264,6 +284,10 @@ impl Policy {
         }
         if let Some(on) = default.doubled_slash {
             policy.doubled_slash = on;
+        }
+        if let Some(n) = default.max_redirects {
+            policy.max_redirects =
+                max_redirects(n).map_err(|e| format!("default.max_redirects: {e}"))?;
         }
         policy
             .status
@@ -304,9 +328,26 @@ impl HostJudging {
     pub(super) fn from_raw(name: &str, raw: &RawJudging) -> Result<HostJudging, String> {
         Ok(HostJudging {
             doubled_slash: raw.doubled_slash,
+            max_redirects: raw
+                .max_redirects
+                .map(max_redirects)
+                .transpose()
+                .map_err(|e| format!("host.\"{name}\".max_redirects: {e}"))?,
             status: statuses_of(&raw.status).map_err(|e| format!("host.\"{name}\".status: {e}"))?,
         })
     }
+}
+
+/// A `max_redirects` as a file writes it: from 0, which breaks any redirect, to
+/// the most the crawl follows ([`MAX_REDIRECTS`]), which breaks those past it
+/// already.
+fn max_redirects(written: u32) -> Result<u32, String> {
+    if written > MAX_REDIRECTS {
+        return Err(format!(
+            "{written} is more than the {MAX_REDIRECTS} hops a crawl follows"
+        ));
+    }
+    Ok(written)
 }
 
 /// A scheme as a file writes it, in the form a URL has it: lower case, the
@@ -365,6 +406,7 @@ pub(super) struct RawJudge {
 #[derive(Default)]
 pub(super) struct RawJudging {
     pub doubled_slash: Option<bool>,
+    pub max_redirects: Option<u32>,
     pub status: BTreeMap<String, String>,
 }
 
