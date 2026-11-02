@@ -1,7 +1,7 @@
 //! What a view's templates are given beyond the engine's own: the formatter
 //! that prints a value in the view's format, and the filters taking the
 //! conventions a view states for its numbers and dates, so the model holds raw
-//! values and no locale (D95).
+//! values and no locale (D97).
 
 use std::fmt::Write as _;
 

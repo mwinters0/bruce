@@ -1,7 +1,7 @@
 //! The digest's views (D95): a document made from the model by a template. The
 //! default view, `view/default/`, is embedded and renders the one HTML
 //! document D64 describes, so a release stays one file (D23); a deployment's
-//! own is a file, alone or extending the default as `bruce:digest.html`, and
+//! own is a file, alone or extending the default as `bruce:digest.html` (D98), and
 //! sees its own directory and nothing outside it (D96). The model it reads is
 //! [`model::context`](super::model), and nothing else is. Escaping follows the
 //! name of the template printing: HTML's for `.html`, `.htm` and `.xml`, one RFC 4180 field for

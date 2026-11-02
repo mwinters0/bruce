@@ -3,8 +3,8 @@
 Part of the decision register, [`../decisions.md`](../decisions.md), whose rules are `docs/process.md`, "The decision
 register"; an entry is cited by its `D<k>` against that index. What a run's rows are read back as: the stored report
 views and `bruce report`, the run a bare report reads, and the digest, its comparison with an earlier run, its causes
-and novelty marks, the severity a reader skims by, and how it groups pages and charges a doubled slash. `report` holds
-them; `report::digest` the digest, `config::policy` the settings it reads.
+and novelty marks, the severity a reader skims by, the views it is written through, and how it groups pages and charges
+a doubled slash. `report` holds them; `report::digest` the digest, `config::policy` the settings it reads.
 
 ### D6 Reports are SQL views stored in the DB and run by `bruce report <kind>`
 A one-run report reads `report_*` views, grouping or counting their rows in its query (`stats` reads `link_verdicts`
@@ -131,13 +131,12 @@ silenced still ranking its page; ranking or dropping `none` rows in the JSON, ma
 
 ### D95 The digest's HTML is a minijinja template over the model, its default view embedded in the binary
 The default view (`view/default/`) holds every sentence, the model none but a sitemap note's (D87), reaching the engine
-as maps and lists. Escaping is bruce's formatter: HTML's five characters as D64 has them, a `none` printing nothing,
-the rest by the view's extension (D96). Why: one file (D23); the engine's escape writes `'` and `/` as numeric
-references, not D64's bytes. Rejected: tera, whose semantics changed in minor releases; handlebars and upon, which
-cannot extend; `serde`, which `Digest` does not derive; `Object`s over the `Digest`, rendering lazily, the copy costing
-nothing measured. Reopens: a view in a format the formatter cannot escape. Code: `report::digest::view`,
-`report::digest::model::context`. Evidence: `report::digest::view::tests`, `report::digest::view::litmus`,
-`scripts/e2e.py`, `runs/p11-view-cost-20261101/`.
+as maps and lists. Escaping is bruce's formatter: HTML's five characters as D64 has them, a `none` printing nothing.
+Why: one file (D23); the engine's escape writes `'` and `/` as numeric references, not D64's bytes. Rejected: tera,
+whose semantics changed in minor releases; handlebars and upon, which cannot extend; askama, compiled in; `serde`, which
+`Digest` does not derive; `Object`s over the `Digest`, rendering lazily, the copy costing nothing measured. Reopens: a
+view in a format the formatter cannot escape. Code: `report::digest::view`, `report::digest::model::context`. Evidence:
+`report::digest::view::tests`, `report::digest::view::litmus`, `scripts/e2e.py`, `runs/p11-view-cost-20261101/`.
 
 ### D96 A view sees the built-in files and its own directory, declares its model version as text, and quotes CSV whole
 A view's templates are `bruce:` names and files of its own directory, a `..`, an absolute name or a link out refused,
@@ -145,5 +144,33 @@ the built-in's own includes staying inside it. A `.csv` template quotes every va
 RFC 4180 field. A view's `{% set bruce_model = N %}` is read off its text before rendering and refused unless N is the
 JSON's `format_version` (D64). Why: a view the model outgrew is told its version, not the first name it lost; a title's
 comma must not shift a column. Rejected: a `csv` filter on each value; the declaration read from the render's state,
-which a failing render never reaches; the files that rendered written before a failure. Reopens: a view needing a file
-outside its directory. Code: `report::digest::view`. Evidence: `report::digest::view::views`.
+which a failing render never reaches; a `view_version` of its own; the files that rendered written before a failure.
+Reopens: a view needing a file outside its directory. Code: `report::digest::view`. Evidence:
+`report::digest::view::views`.
+
+### D97 A view formats raw numbers and UTC timestamps through filters taking its conventions, and bruce holds no locale
+Every number the model holds is an integer, every time UTC seconds. `thousands`, `time` and `plural` take what a view
+states once at its top; more plural forms, month names or another date order are the view's macros, a ratio its own
+`//` and `%`. Why: a translation is the view whole, its numbers' conventions included. Rejected: a locale name over
+CLDR data (icu4x), megabytes in the one binary (D23) for what a view states in a line; raw values and no filter, a
+separator rewritten in every view; a `decimal` filter, no number being one. Reopens: a convention a template cannot
+compute. Code: `report::digest::view::filters`. Evidence: `report::digest::view::tests`, `report::digest::view::litmus`,
+`report::digest::view::views`.
+
+### D98 The default view is named blocks a view extends as `bruce:digest.html`, its palette a block inside the sheet's
+A view replaces the blocks it names or is a whole document, as a translation is; `palette`, both `:root` rules (the
+screen's and `@media print`'s), sits inside `style`, the whole sheet. `--write-default-view` replaces no file. Why: a
+deployment changing its palette or intro inherits each section a later release adds. Rejected: replacement alone,
+missing those sections; one `style` block, a palette appended after the sheet losing its print `:root`; an export
+overwriting the last, a deployment's edits lost to a re-run. Reopens: a deployment changing less than a block. Code:
+`report::digest::view`'s `default/digest.html`, `cli::report`. Evidence: `report::digest::view::views`,
+`report::digest::view::tests`, `cli::report::tests`.
+
+### D99 A view is named on `report digest`'s command line, recorded by no run, and the JSON is none
+`--view` repeats, naming any dropping the built-in but for `--view default`; `--json` and `--no-json` switch the JSON.
+No key names a view, so no run records one (D78) and no gate renders one. Why: a policy's words are read from the
+run's recorded policy, so today's view renders an old run truly, and a reworded view needs no crawl; the JSON is the
+model's serialization (D64). Rejected: a `[digest]` key naming views, as `group_by` (D86), a run's record changed for
+its words; the JSON as a view; views over every report, each needing its own model and version; fuel, a view being the
+deployer's own file, trusted as its config is. Reopens: a deployment needing its view chosen by its config. Code:
+`cli::report::DigestArgs`. Evidence: `cli::report::tests`.

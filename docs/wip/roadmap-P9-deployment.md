@@ -35,10 +35,10 @@ sets `[digest]` `group_by = "antora.component"`**, the core grouping by
 nothing by default (D86). When P9 is sliced, the grilling re-reads this spec
 against what the policy added (below, "What the site policy left").
 
-## P9 follows the declarative extraction rules and P11
+## P9 follows the declarative extraction rules and the digest's view
 
 Settled 2026-10-31 (maintainer). **P9 follows the declarative extraction
-rules and the digest's view (P11)**: the maintainer does not
+rules and the digest's view**: the maintainer does not
 consider `bruce` ready for a content repo's CI until both have landed. The
 guide then documents their config once, as it does the site policy's. When P9
 is sliced, the grilling re-reads this spec against what they added.
@@ -387,3 +387,17 @@ Found 2026-11-01, for the re-grilling.
 - **A run before the declarative profiles has no `profile.*` rows**, so a
   digest comparing one with a run under the guide lists the extension's rows
   as added (D91).
+
+## What the digest's view left
+
+Found 2026-11-02, for the re-grilling.
+
+- **A deployment's view is a file its job names with `--view`**: no key
+  names one and no run records one (D99), so the guide documents the view
+  beside the scheduled job's script, not in its config.
+- **The palette docs.fp.o's deployment may want back** is `git show
+  e30483c:src/report/digest/html/style.css`, its `:root` and `@media print`
+  rules, which become the guide's view's `palette` block (D98).
+- **A view extending the default sees its own top-level macros and `set`s in
+  its blocks**, which minijinja 3.0.5 does and no test holds: the slice
+  writing the guide's view adds one if the view relies on it.

@@ -4,8 +4,8 @@
 //! latest finished run, and for those the two latest. `bruce report digest --out dir [--name s] [--db f]
 //! [--run n] [--from n | --since file|url] [--view f]... [--json | --no-json]` writes a
 //! crawl run's dated digest instead (D64), compared with another run or a baseline file's (D73), through
-//! the views named (D95); `bruce report digest --write-default-view dir` writes the
-//! built-in view's files and reads no database.
+//! the views named (D95, D99); `bruce report digest --write-default-view dir` writes the
+//! built-in view's files and reads no database (D98).
 //!
 //! `--config FILE` judges the run, and any run compared with it, by the judging
 //! settings of that file in place of those each run recorded, the trial

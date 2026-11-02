@@ -33,7 +33,7 @@ fetched for.
 | `--run N` | the latest finished run | The run to digest, as [`bruce report`](report.md#which-run) chooses it. A run that never finished is digested with a warning on stderr. A run that [`bruce check-dir`](check-dir.md) made has no digest. |
 | `--from N` | the finished crawl run before `--run` | The run to [compare with](#the-comparison): a crawl run of the database, finished or not. |
 | `--since FILE\|URL` | none | Compare with the run of a baseline file, as [`bruce check-dir`](check-dir.md)'s `--baseline` takes one: a path or an `http(s)` URL, gzipped or not. It holds one finished run, which [`bruce export-baseline`](export-baseline.md) writes. Not with `--from`. |
-| `--view FILE` | the built-in view | Write the digest through this [view](#views), a template file. Repeat it for several; `default` names the built-in view. With none named the built-in view is written, and with any named only those are, so `--view default --view links.csv` writes both. |
+| `--view FILE` | the built-in view | Write the digest through this [view](#views), a template file. Repeat it for several; `default` names the built-in view (a file of that name is `./default`). With none named the built-in view is written, and with any named only those are, so `--view default --view links.csv` writes both. |
 | `--json`, `--no-json` | `--json` | Write the [JSON](#the-json) beside the views, or only the views. |
 | `--write-default-view DIR` | none | Write the built-in view's files to `DIR`, made where missing, to edit and name with `--view`, and exit; no database is read, and no other option is taken. It replaces no file: one already there is an error. |
 
@@ -80,7 +80,7 @@ data, and the view the binary holds is the default. A deployment writes its own 
 colours: `--write-default-view DIR` writes `digest.html`, `style.css` and `palette.css`, and `--view DIR/digest.html`
 writes the digest through the edited copy. A view is any text format: the extension of the file printing a
 value picks how it is escaped, HTML's for `.html`, `.htm` and `.xml`, **one quoted CSV field for `.csv`** (the view writes the
-commas and line ends, and a value's quotes are doubled), and none for any other. A `none` prints as nothing, and
+commas and line ends, and a value's quotes are doubled), and none for any other. A `none` prints as nothing, though `~` joins it as `none`, and
 `{{ x|safe }}` prints `x` as it is; a boolean prints `True` or `False`, as in Jinja. Every number the model holds is an
 integer, and a ratio is the view's own arithmetic (`//` and `%`, or `/` and `round`, both the engine's builtins). A name
 the model lacks is an error naming the file, the line and the expression, never an empty string.
