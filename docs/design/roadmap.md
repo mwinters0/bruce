@@ -14,8 +14,7 @@ never reused.
 
 | Phase | State | Where it is |
 |---|---|---|
-| P1–P8, P10, P11 | **Struck** at the keystones of 2026-10-21 to 2026-11-02 | their decisions are [`decisions.md`](decisions.md)'s |
-| P14 — redirects as facts | **Complete**, 2026-11-02 | [`roadmap-P14-redirects.md`](roadmap-P14-redirects.md), its notes [`roadmap-P14-redirects-notes.md`](roadmap-P14-redirects-notes.md) |
+| P1–P8, P10, P11, P14 | **Struck** at the keystones of 2026-10-21 to 2026-11-02 | their decisions are [`decisions.md`](decisions.md)'s |
 | P9 — the deployment guide | Specified; next, and grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
 | P15 — what a repo owns, for every site | Sketched; not grilled | this file, below |
 | P16 — issues for broken links | Sketched; not grilled | this file, below |
@@ -77,11 +76,6 @@ A standing rule is added only with the maintainer, and carries its check.
   included, and what an action would give is built from commands. Check:
   `scripts/workflows.py`, which fails on a `uses:` (`mise run check` runs its
   tests over the real workflows).
-
-## P14 — Redirects as facts
-
-Complete: [`roadmap-P14-redirects.md`](roadmap-P14-redirects.md), and its notes
-[`roadmap-P14-redirects-notes.md`](roadmap-P14-redirects-notes.md).
 
 ## P9 — The deployment guide
 

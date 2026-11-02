@@ -131,11 +131,11 @@ anyway. Code: `config::policy`. Evidence:
 `config::policy::tests::the_default_policy_is_what_bruce_has_always_judged_by`.
 
 ### D100 A redirect chain longer than a host's `max_redirects` makes its link `broken_url`, reason `too_many_redirects`
-Judged at read time (D77) from the chain the crawl stored: more entries than the limit, 0 to 10, default 10 (D7's
-ceiling, so a file without the key judges as before), the linked URL's host's over `[default]`'s (D79). Every entry
-counts, a slash-only chain and an `http` upgrade included, which then is no `pedantic_trailing_slash` (D70). A target
-broken for its own reason keeps it; the fragment is not looked at. Why: the limit is what a reader sits through, and a
-site may hold any redirect a problem (maintainer, 2026-11-02). Rejected: a reason apart from the crawl's ceiling; `ok`
-with a level, which `gate.fail` cannot fail; a slash-only chain exempt; a tighter default; the landing's host.
-Code: `config::policy`, `store::views`. Evidence:
-`store::views::tests::a_chain_longer_than_the_hosts_limit_is_broken_whatever_its_fragment_and_ok_within_it`.
+Judged off the stored chain (D77): more entries than the limit, 0 to 10, default 10 (D7's ceiling), the linked URL's
+host's over `[default]`'s (D79). Every entry counts, a slash-only chain and an `http` upgrade included. A target broken
+for its own reason keeps it; the fragment is unread. The link stays in `report_redirects`, its landing the fix. Why: the
+limit is what a reader sits through, and a site may hold any redirect a problem (maintainer, 2026-11-02); per host for a
+forge's login walls, four hops. Rejected: a reason apart from the crawl's ceiling; `ok` with a level, which `gate.fail`
+cannot fail; a tighter default; the landing's host; dropping it from the redirects, one list each. Code:
+`config::policy`, `store::views`.
+Evidence: `store::views::tests::a_chain_longer_than_the_hosts_limit_is_broken_whatever_its_fragment_and_ok_within_it`.

@@ -38,4 +38,3 @@ Allocated so far: M1–M43. <!-- out-of-band-watermark: M43 -->
 
 | Item | Date | What changed | Blocks | Why |
 |---|---|---|---|---|
-| M43 | 2026-11-02 | The default view's and the Czech view's `target_moved` sentence names a changed chain, and their *Resolves to* gloss the URL the link names, the golden files regenerated |  | [2026-11-02](../status/history/2026-11-02.md), "M43: the view's redirect sentences" |

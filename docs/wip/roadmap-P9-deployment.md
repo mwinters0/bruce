@@ -45,12 +45,12 @@ is sliced, the grilling re-reads this spec against what they added.
 
 ## P9 follows the redirect facts
 
-Settled 2026-11-01 (maintainer). **P9 follows P14**, redirects read as facts
-and a chain past a site's configured length broken: the guide sets the
-limit for docs.fp.o, and the gate's `fail` list decides whether it fails a
-content repo's CI. The limit is `max_redirects`, counting every hop, a
-delay-0 refresh included ([`../design/roadmap-P14-redirects.md`](../design/roadmap-P14-redirects.md)),
-so a CI build's site-root meta refresh is a hop: a guide limit of 0 breaks a
+Settled 2026-11-01 (maintainer). **P9 follows redirects read as facts**
+and a chain past a site's configured length broken (D100): the guide sets
+the limit for docs.fp.o, and the gate's `fail` list decides whether it fails
+a content repo's CI. The limit is `max_redirects`, counting every hop, a
+delay-0 refresh included (D7, D100), so a CI build's site-root meta refresh
+is a hop: a guide limit of 0 breaks a
 built page's home link unless 9.1 has made the prefix not built.
 
 ## The guide's hash scope is the profile's region
@@ -404,3 +404,24 @@ Found 2026-11-02, for the re-grilling.
 - **A view extending the default sees its own top-level macros and `set`s in
   its blocks**, which minijinja 3.0.5 does and no test holds: the slice
   writing the guide's view adds one if the view relies on it.
+
+## What the redirect facts left
+
+Found 2026-11-02, for the re-grilling.
+
+- **Schema 7 refuses every kept database** (D43), `runs/en-us-20261101-0005/`
+  included, `pages.in_sitemap` and `via_links` having gone; `review.py crawl`
+  starts a new one. A fresh en-US crawl so comes before any limit is tried
+  against docs.fp.o with `report --config` (D84).
+- **docs.fp.o's chains**, read off run 2 of that database: 798 redirected
+  targets, by hops 646, 131, 14, 6 and 1 (one to five); slash-only, 241 of
+  one hop and 31 of two (I4's, through `http://`). The limit breaks only an
+  `ok` target, 716 of them: a limit of 1 breaks 139, 31 slash-only; 0, all
+  716.
+- **A host's limit is the linked URL's host's**, not the landing's (D100):
+  the guide says so beside a forge's key.
+- **`report_pages` costs a pass over `links`** for every reader (`report_reach`):
+  0.3 s against the 2026-11-01 run's 1.18 million links, 1.2 s for both runs
+  unfiltered, in the duckdb CLI. The `max_redirects` rule's cost in
+  `link_verdicts` was not measured. A report that is slow at docs.fp.o's
+  size looks there first.
