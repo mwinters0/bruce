@@ -15,9 +15,9 @@ never reused.
 | Phase | State | Where it is |
 |---|---|---|
 | P1–P8, P10 | **Struck** at the keystones of 2026-10-21 to 2026-11-01 | their decisions are [`decisions.md`](decisions.md)'s |
-| P11 — the digest's view | Current; sliced, its checklist in [`../status/STATUS.md`](../status/STATUS.md) | [`../wip/roadmap-P11-view.md`](../wip/roadmap-P11-view.md) |
+| P11 — the digest's view | **Complete**, 2026-11-02 | [`roadmap-P11-view.md`](roadmap-P11-view.md), its notes [`roadmap-P11-view-notes.md`](roadmap-P11-view-notes.md) |
 | P14 — redirects as facts | Sketched; not grilled | this file, below |
-| P9 — the deployment guide | Specified; follows P11 and P14, and is grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
+| P9 — the deployment guide | Specified; follows P14, and is grilled again before it is sliced | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
 | P15 — what a repo owns, for every site | Sketched; not grilled | this file, below |
 | P16 — issues for broken links | Sketched; not grilled | this file, below |
 | P12 — compiled profiles for other generators | Sketched; not grilled | this file, below |
@@ -81,7 +81,8 @@ A standing rule is added only with the maintainer, and carries its check.
 
 ## P11 — The digest's view
 
-Specified: [`../wip/roadmap-P11-view.md`](../wip/roadmap-P11-view.md).
+Complete: [`roadmap-P11-view.md`](roadmap-P11-view.md), and its notes
+[`roadmap-P11-view-notes.md`](roadmap-P11-view-notes.md).
 
 ## P14 — Redirects as facts
 

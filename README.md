@@ -71,7 +71,7 @@ bruce report stats --top 20  # the pages with the most breakage
 bruce report diff            # what changed since the previous run
 ```
 
-Each report can also print JSON (`--format json`). The database is ordinary
+Each of these reports can also print JSON (`--format json`). The database is ordinary
 DuckDB, so `duckdb bruce.duckdb` lets you query it directly.
 
 A large site takes hours at a polite rate. Start a long crawl detached from
@@ -115,7 +115,8 @@ The manual is in [`docs/manual/`](docs/manual/):
 - [`bruce report`](docs/manual/report.md): every report, its columns, and the
   views for querying the database yourself.
 - [`bruce report digest`](docs/manual/digest.md): a crawl run's dated JSON
-  and HTML report, to keep after the database is pruned.
+  and HTML report, to keep after the database is pruned, and the views that
+  write it in your own words and formats.
 - [`bruce check-dir`](docs/manual/check-dir.md): the CI gate, how each link is
   answered, and what fails.
 - [`bruce export-baseline`](docs/manual/export-baseline.md): writing the

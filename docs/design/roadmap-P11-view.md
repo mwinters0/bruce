@@ -1,7 +1,7 @@
 # P11 — The digest's view
 
 What P11 does and why, settled in the grilling of 2026-11-01. The decisions
-are in [`../design/decisions.md`](../design/decisions.md) and are cited here,
+are in [`decisions.md`](decisions.md) and are cited here,
 never restated.
 
 ## Intent
