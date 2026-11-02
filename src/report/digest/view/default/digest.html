@@ -1,4 +1,4 @@
-{# The default view of the digest (D95): the one HTML document, no script and no outside file, dark on a screen and light in print. Every sentence is here and no value is: the model gives levels, counts, reasons and times, and this file words them. A block tag on a line of its own prints nothing. #}
+{# The default view of the digest (D95): the one HTML document, no script and no outside file, dark on a screen and light in print. Every sentence is here but a profile's sitemap note, printed as the model gives it, and no value is: the model gives levels, counts, reasons and times, and this file words them. A block tag on a line of its own prints nothing. #}
 {% macro num(n) %}{{ n|thousands(",") }}{% endmacro %}
 {% macro counted(n, noun) %}{{ num(n) }} {{ noun }}{% if n != 1 %}s{% endif %}{% endmacro %}
 {% macro a(url, label) %}{% if url is web %}<a href="{{ url }}">{{ label }}</a>{% else %}{{ label }}{% endif %}{% endmacro %}

@@ -6,7 +6,7 @@
 //! figures, the broken targets ranked by the links naming them, the pages
 //! ranked by their broken links, the repos and the groups a site names, the errors apart
 //! from breakage (D16) and the housekeeping. Every section but the figures, the
-//! settings and the sitemap notes is a [`Table`] whose rows are already in the
+//! settings, the sitemap notes and the roots without a sitemap is a [`Table`] whose rows are already in the
 //! order a reader wants them, so a rendering walks
 //! them and ranks nothing but a page's drill-down, its errors joined to its
 //! broken links by severity, and the HTML's pages and repos, by the severity

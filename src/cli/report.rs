@@ -3,7 +3,7 @@
 //! or `diff`, `changed` or `anchors-removed` over two (D6, D27): by default the
 //! latest finished run, and for those the two latest. `bruce report digest --out dir [--name s] [--db f]
 //! [--run n] [--from n | --since file|url] [--view f]... [--json | --no-json]` writes a
-//! crawl run's dated digest instead (D64), compared with another run (D73), through
+//! crawl run's dated digest instead (D64), compared with another run or a baseline file's (D73), through
 //! the views named (D95); `bruce report digest --write-default-view dir` writes the
 //! built-in view's files and reads no database.
 //!
@@ -54,7 +54,7 @@ pub struct Args {
     pub format: Format,
 }
 
-/// What the command line asked of `report`: a report, or the digest.
+/// What the command line asked of `report`: a report, the digest, or the built-in view's files.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Job {
     Report(Args),
@@ -262,7 +262,7 @@ pub fn command() -> Command {
                 .action(ArgAction::Append)
                 .help(
                     "`digest` only: write the digest through this view, a template file, as \
-                     DIR/STEM-DATE-FILE; repeat for several, `default` for the built-in view, \
+                     DIR/STEM-DATE-NAME, NAME the file's name; repeat for several, `default` for the built-in view, \
                      which is written when none is named and otherwise only when named",
                 ),
         )
@@ -556,7 +556,7 @@ fn report(args: &Args, registry: &Registry) -> Result<(), String> {
 
 /// Writes the digest of the run named: `DIR/STEM-YYYY-MM-DD.json` unless
 /// `--no-json`, `DIR/STEM-YYYY-MM-DD.html` for the built-in view and
-/// `DIR/STEM-YYYY-MM-DD-FILE` for the view in `FILE`, and prints the path of each
+/// `DIR/STEM-YYYY-MM-DD-NAME` for a view in a file named `NAME`, and prints the path of each
 /// (D64, D95). Every view is rendered before any file is written, so a view that
 /// fails leaves the directory as it was (D96).
 fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {

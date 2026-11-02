@@ -1,7 +1,7 @@
-//! The two litmus tests of P11, read from the fixtures the e2e site renders:
-//! a view entirely in Czech, and a CSV view (`fixtures/antora/views/`). They
-//! show what a view can do with the model alone, so no language and no format
-//! is in the crate.
+//! The two litmus tests of the views, read from the fixtures the e2e site
+//! renders: a view entirely in Czech, and a CSV view
+//! (`fixtures/antora/views/`). They show what a view can do with the model
+//! alone, so neither one's words nor its columns are in the crate.
 
 use std::path::PathBuf;
 

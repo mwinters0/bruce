@@ -44,7 +44,7 @@ what varies from run to run (`normalise_digest`), is held to `fixtures/antora/
 digest.html`, the golden file of the rendering over this site; `--save-digest`
 writes it anew, to be read in a diff before it is committed.
 
-The digest is written through two more views, the litmus tests of P11
+The digest is written through two more views, the litmus tests of the views
 (`fixtures/antora/views/`): `cs.html`, the whole digest in Czech, and
 `links.csv`, one record to each finding. Each is held to a golden file beside
 them (`views/golden/`), the Czech page less what varies like the English one,
@@ -128,7 +128,7 @@ LANGUAGES = """<div class="page-languages">
 PAGES = FIXTURES / "pages"
 #: The digest's HTML over the whole site's crawl, as `normalise_digest` leaves it.
 GOLDEN = FIXTURES / "digest.html"
-#: The litmus views (P11), each named for the file it writes, and the golden
+#: The litmus views, each named for the file it writes, and the golden
 #: files of what they write over the whole site's crawl.
 VIEWS = FIXTURES / "views"
 CS_VIEW, CSV_VIEW = VIEWS / "cs.html", VIEWS / "links.csv"

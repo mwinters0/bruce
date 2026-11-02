@@ -25,7 +25,7 @@ run's [`status`](config.md#judging) map judges a code otherwise.
 | `--db FILE` | `bruce.duckdb` | The database to read. It must exist; a report never creates one. |
 | `--config FILE` | none | Judge by this file's judging settings, in place of the policy each run recorded: see [A trial policy](#a-trial-policy). |
 | `--run N` | the latest finished run | The run to read. See [Which run](#which-run). Not for `diff`, `changed` or `anchors-removed`. For `introduced` and `inverse`, a [`check-dir`](check-dir.md) run. |
-| `--from N` | the finished run before `--to` | `diff`, `changed` and `anchors-removed` only: the run to compare against. |
+| `--from N` | the finished run before `--to` | `diff`, `changed` and `anchors-removed`: the run to compare against (the digest's is [its own](digest.md#arguments)). |
 | `--to N` | the latest finished run | `diff`, `changed` and `anchors-removed` only: the run to compare. |
 | `--repo REPO` | none | Only pages whose source file is in this repo, as the page records it (`https://forge.fedoraproject.org/fedora/docs`); for `broken`, `errors`, `stats`, `redirects`, `diff`, `introduced` and `inverse`, the links on those pages; for `changed` and `anchors-removed`, the page a row lists (for `inverse`, the baseline's pages outside the build). |
 | `--fact KEY=VALUE` | none | Only pages with this fact, such as `antora.component=docs`, or the links on them. Repeat to require several. |

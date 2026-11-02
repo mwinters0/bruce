@@ -1,8 +1,10 @@
 //! The model as a view reads it: the [`Digest`] and its derived part as one
-//! tree of values for a template (D95). Every key is a fact the run recorded
-//! or a judgement of the severity map, a level spelled as the store spells it
-//! and a reason as the tables hold it, and no key is a sentence, so a view in
-//! any language words them. A table's row is a map from its column names to
+//! tree of values for a template (D95). Every key is a fact of the run or of
+//! the binary rendering it (`bruce.version`, `trial`, a page's `id`) or a
+//! judgement of the severity map, a level spelled as the store spells it and
+//! a reason as the tables hold it, and no key is a sentence but a sitemap
+//! note's `text`, its `key`'s fallback (D87), so a view in any language words
+//! them. A table's row is a map from its column names to
 //! its cells, a missing cell `none`, so a view naming a column the digest
 //! lacks fails (strict undefined names) and never prints nothing.
 

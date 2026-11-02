@@ -112,7 +112,7 @@ fn time(seconds: i64, pattern: &str) -> Result<String, Error> {
     Ok(out)
 }
 
-/// `url` without its scheme, to show.
+/// `url` without its `https://` or `http://`, to show.
 fn short(url: Option<&str>) -> String {
     let url = url.unwrap_or("");
     url.strip_prefix("https://")

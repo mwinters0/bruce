@@ -4,7 +4,7 @@
 //! own is a file, alone or extending the default as `bruce:digest.html`, and
 //! sees its own directory and nothing outside it (D96). The model it reads is
 //! [`model::context`](super::model), and nothing else is. Escaping follows the
-//! view's name: HTML's for `.html`, `.htm` and `.xml`, one RFC 4180 field for
+//! name of the template printing: HTML's for `.html`, `.htm` and `.xml`, one RFC 4180 field for
 //! `.csv`, and none for any other.
 
 mod declared;
