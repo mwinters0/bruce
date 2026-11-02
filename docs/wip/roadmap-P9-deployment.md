@@ -14,6 +14,15 @@ against the simulated deployment (D41, D42). **The deployment will soon check
 every locale, not only en-US** (maintainer, 2026-10-21), so each part is
 designed for a site of many locale roots, not for one.
 
+**P9 builds whatever a CI installation needs, then stands one up for
+docs.fp.o as the exemplar and its validation, and only then is the next
+full version cut** (maintainer, 2026-11-02). Code changes being anticipated
+(the site-root refresh above all), no release is cut before P9's rc (below, "Prereleases while
+the deployment is stood up").
+
+**An installation must survive a schema change and must not grow without
+end** (maintainer, 2026-11-02): below, "Schema changes and retention".
+
 ## P9 follows the run-history reports
 
 Settled 2026-10-21 (maintainer). **P9 follows the run-history reports**,
@@ -51,7 +60,7 @@ the limit for docs.fp.o, and the gate's `fail` list decides whether it fails
 a content repo's CI. The limit is `max_redirects`, counting every hop, a
 delay-0 refresh included (D7, D100), so a CI build's site-root meta refresh
 is a hop: a guide limit of 0 breaks a
-built page's home link unless 9.1 has made the prefix not built.
+built page's home link unless 9.2 has made the prefix not built.
 
 ## The guide's hash scope is the profile's region
 
@@ -109,6 +118,12 @@ crawl out of the nightly one's. CI's baseline stays en-US's. Rejected: a
 rotation of a few locales a night, each run blind to the links into the
 locales it skips.
 
+**The every-locale crawl's DB, digest and baseline stay on the maintainer's
+machine** until 9.9 measures its digest (maintainer, 2026-11-02); the guide
+publishes them as a second directory, `locales/`, only if they fit Pages'
+1 GB beside 30 nights of en-US's. Rejected: publishing from the start, on a
+size nobody has measured.
+
 **Runs stay en-US only until the maintainer has judged the reports
 acceptable on en-US runs** (maintainer, 2026-10-21), so **the every-locale
 crawl is a P9 slice**, run after that verdict, on the maintainer's machine,
@@ -145,18 +160,28 @@ deployment must build and push before the example works.
 
 ## The dev deployment is a GitHub repo of its own
 
-Settled 2026-10-21. **A deployment repo on the maintainer's GitHub (say
-`mwinters0/bruce-fedora-docs`) holds the guide's `bruce.toml` and a scheduled
-workflow** that crawls en-US nightly, exports and gzips the baseline, and
-publishes binary, config and baseline on that repo's GitHub Pages, never on
-releases, an immutable release refusing a nightly overwrite. The crawl's
+Settled 2026-10-21. **A deployment repo on the maintainer's GitHub,
+`mwinters0/bruce-fedora-docs-ci` (created empty, 2026-11-02), holds the guide's `bruce.toml` and a scheduled
+workflow** that crawls en-US nightly and publishes the staged directory
+(below, "The published directory is the contract") on that repo's GitHub
+Pages, **from a branch holding one orphan commit, force-pushed each night**
+(maintainer, 2026-11-02): the site changes as a set in one deploy, the digest's
+HTML renders, and the repo does not gain the night's 26 MB, `main` alone
+keeping history. The crawl's
 1:48 fits GitHub's six-hour job; **the weekly every-locale crawl runs on the
 maintainer's machine**, its 20 hours fitting no runner. Mirrors of content repos
 on the same GitHub run the guide's CI workflow against the Pages URL: **that
 is P9's closing evidence**, as quick-docs' build was CI mode's. The slice standing
 it up measures whether Anubis challenges a GitHub runner's address, which no
 crawl from here has met. D41 holds: the deployment lives outside this repo.
-Rejected: crawling on the maintainer's machine alone.
+If CI's fetches near Pages' soft 100 GB a month, CI takes the binary from the
+pinned `bruce` release, which has no bandwidth limit. Rejected: crawling on
+the maintainer's machine alone; a rolling release (immutability being opt-in,
+it could be overwritten), whose HTML downloads rather than renders and whose
+assets are replaced one at a time, so a CI job between two fetches a binary
+and baseline of different nights; Pages deployed from an Actions artifact,
+which takes GitHub's `deploy-pages` actions (the no-`uses:` rule) or the
+artifact service's undocumented API.
 
 ## The guide's new parts are executed, as its config is
 
@@ -172,13 +197,12 @@ section free to drift from the tool.
 ## The scheduled job is one script, and history lives on a disk
 
 Settled 2026-10-21. **The guide gives one script that both schedules run**:
-`crawl`, then `export-baseline --force` and gzip, then the binary,
-`bruce.toml` and `baseline.duckdb.gz` staged in a publish directory, then
-`prune --keep 30` (about 1 GB of en-US runs at 33 MB each,
-2026-10-20's crawl). A crawl exiting non-zero stops it
-before anything is published. One sequence is what keeps `prune` off a DB a
-crawl holds (`../manual/prune.md`, "Not beside a crawl"). Moving the
-directory to a web server is the deployer's, left out. **The guide schedules
+`crawl`, then `export-baseline --force` and gzip, then the digest, then the
+published directory staged (below), then `prune --keep 30` (about 1 GB of
+en-US runs at 33 MB each, 2026-10-20's crawl). A crawl exiting non-zero stops
+it before anything is published. One sequence is what keeps `prune` off a DB
+a crawl holds (`../manual/prune.md`, "Not beside a crawl"). Delivering the
+directory is a step after it (below, "Delivery is pushed or pulled"). **The guide schedules
 it with a systemd timer and service**, Fedora's own, and names the one-line
 crontab. **The dev deployment's nightly job keeps no history**, crawling into
 a fresh DB each night on a runner with no disk to keep; history and `prune`
@@ -195,6 +219,203 @@ locales are found by the language menu's links, a locale added later is
 crawled unasked, and the stray first segments (`infra`, `f28`, …) are
 crawled, where en-US's config asks each once (D10, D67). CI's config stays the nightly
 en-US one. Rejected: 69 roots, a list kept by hand.
+
+## Schema changes and retention
+
+Raised 2026-11-02 (maintainer).
+
+**An installation pins the exact `bruce` release its scheduled job runs**
+(maintainer, 2026-11-02), `-rc.N` tags while the dev deployment is stood up,
+so an upgrade, and with it any schema change, is a commit in the deployment
+repo; content repos still fetch the binary from beside the baseline (above).
+Rejected: following the latest release, which puts a schema change on an
+unattended night; building from source.
+
+**A schema change is met by the guide's script, not a person**
+(maintainer, 2026-11-02): every command that opens a DB or a baseline
+(`crawl`, `check-dir`, `report`, `prune`, `export-baseline`) **exits 3 for
+"another schema version"**, `check-dir`'s 2 keeping its other could-not-run
+causes, and a CI workflow treating 3 as it does 2. The refusal is a typed
+error of `store::schema`'s, mapped to the status in `cli`. On it the script
+moves the DB aside as an archive, crawls into a fresh one, and writes that
+run's digest uncompared. **D43's refusal to migrate stands**, for a reason
+beyond cost: runs are append-only (D2), and a migrated run lacks what its
+crawl never collected (the hops before schema 7, the recorded policy before
+6), so the new views would judge it on missing facts and a comparison across
+the change would mislead. Rejected: a guide procedure keyed on the release
+notes, which an unattended job cannot follow; migrations.
+
+**What grows is bounded by count** (maintainer, 2026-11-02): a history DB by
+`prune --keep 30` nightly and `--keep 8` for the weekly every-locale crawl
+(two months, its size unmeasured); the dated digests in the published
+directory, **30 nights of HTML and other views and 13 months of JSON**
+(maintainer, 2026-11-02), the JSON being the report a loader keeps
+(`../manual/digest.md`), some 450 MB on Pages with two nights of binary and
+baseline; one archived DB, the last schema's, deleted at
+the next change; the Pages branch by its single commit. **The scheduling slice
+first measures whether a DB pruned nightly holds a steady size**, and if it
+does not, the script copies the DB fresh after pruning.
+
+Facts found that day:
+
+- **What an installation accumulates**: the history DB (a disk-backed
+  deployer's, and the weekly every-locale crawl's on the maintainer's
+  machine), pruned by `bruce prune` (`--keep N`, `--older-than AGE`); the
+  digests, one dated JSON and one file per view a day (`../manual/digest.md`,
+  "The files"), which nothing prunes; and on the dev deployment, whatever its
+  publishing leaves in the repo, a GitHub Pages branch committed to nightly
+  growing its git history without end.
+- **`prune` checkpoints so the file "can give the freed blocks back"**
+  (`store::prune`). DuckDB truncates only trailing free blocks and reuses the
+  rest, so whether a DB pruned nightly holds a steady size is unmeasured.
+- **A schema change is refused, never migrated** (D43): every command exits 1
+  on a DB of another schema, `check-dir` 2, and nothing tells that refusal
+  from any other failure. The release body names the change. A digest
+  comparing with the last night's baseline file (D73) is refused across one.
+- **v0.2.0's archive is 20 MB**; the en-US baseline 5.9 MiB gzipped (above).
+- **The dev deployment's nightly keeps no DB** (above, "The scheduled job is
+  one script"), so GitHub holds no history: 30 en-US runs, about 1 GB, is a
+  disk-backed deployer's total, and an every-locale run, perhaps 69 times
+  en-US's 33 MB, the maintainer's machine's.
+- **GitHub Pages** (docs.github.com, "GitHub Pages limits", 2026-11-02): a
+  published site of at most 1 GB, a soft 100 GB a month of bandwidth (about
+  3,800 CI fetches of binary and baseline), a source repo recommended under
+  1 GB, a soft 10 builds an hour for a branch-built site. A Pages branch
+  committed to nightly gains some 26 MB a night of binary and baseline.
+- **GitHub Pages serves each file `Cache-Control: max-age=600`** with an
+  ETag (`curl -sI https://pages.github.com/`, 2026-11-02), so for ten minutes
+  after a deploy a fetch may be answered from the CDN's cache, file by file.
+- **GitHub releases** (docs.github.com, "About releases"): no limit on a
+  release's total size or bandwidth, each asset under 2 GiB. **Immutability
+  is an opt-in repository setting** (GA 2025-10-28), so a release on a repo
+  without it can have its assets replaced; replacing one is per asset, never
+  the set at once.
+
+## The published directory is the contract
+
+Settled 2026-11-02 (maintainer). **The scheduled job ends by staging one
+directory**: the latest files under fixed names (`bruce.tar.gz`, `bruce.toml`,
+`baseline.duckdb.gz`, `digest.json`, `digest.html` and any other view's
+file) for people, `digests/` holding the dated ones, and **`SHA256SUMS`**,
+in `sha256sum`'s format. CI names no version (above, "CI fetches the binary
+from beside the baseline"). **Whoever fetches from it, CI or a puller,
+fetches `SHA256SUMS` first, then the files it lists, and runs `sha256sum
+-c`**, failing as could-not-run, never as broken links. **The files it lists
+are named by their content** (`baseline-<sha>.duckdb.gz`, `bruce-<sha>.tar.gz`)
+**and last night's are kept one more night** (maintainer, 2026-11-02), so a
+fetcher handed a stale `SHA256SUMS` by Pages' ten-minute cache (above, "Facts
+found that day") finds last night's whole set, and one handed a fresh one
+fetches names no cache holds. A puller knows there is something new when
+`SHA256SUMS` has changed. CI downloads the baseline to check it and hands
+`check-dir` the path. Rejected: waiting and retrying on a mismatch, a ten
+minutes the forge's ten-minute job cannot spend; failing a PR checked in the
+ten minutes after a deploy as could-not-run. The run, version and
+schema are `digest.json`'s and the binary's, not the manifest's. It is not the
+version file rejected above, which restated CI's lockstep: without it a
+fetcher cannot tell a binary and baseline of two nights apart. Rejected: a
+`manifest.json`, which every CI image would need `jq` or Python to read,
+`sha256sum` being coreutils, in `fedora-minimal`.
+
+**The digest compares with the baseline the publish replaces** (D73's
+baseline file), so one script serves a deployment with a disk or none, and a
+digest says what changed since the baseline CI last judged by, a night that
+failed to publish folded into the next. With none, or one of another schema,
+it is uncompared. **The script reads the last published set from a local
+directory** (maintainer, 2026-11-02): a disk-backed host's published
+directory, or on the dev deployment the `gh-pages` branch's one commit
+fetched first, which also carries the dated digests into the next orphan
+commit. **A failing digest does not stop the job**: the baseline CI needs is
+published, and the job exits non-zero at its end. Rejected: the run before it
+in the DB where there is one (D73's default), a second path; fetching the
+baseline from the published URL, which loses the dated digests on a host
+with no disk.
+
+## Delivery is pushed or pulled
+
+Settled 2026-11-02 (maintainer). **Some deployers push the results when the
+job ends; others, docs.fp.o first, need a cron job on the web server to find
+and pull them.** So the guide's script stops at the staged directory, and the
+guide shows both: a push step the deployer writes (`rsync`, `scp`, a commit;
+the dev deployment's publishes to Pages), and a pull script on the server's
+timer that fetches the manifest from the published URL and, where its run is
+new, the files it lists, checks their sha256s and moves them into place.
+docs.fp.o's proxies are rsynced with `--delete` (below, "Facts the grilling
+found"), so its pull goes in `rebuild-site.py` or on a path the rsync spares,
+a choice the guide leaves to the site's operators. Both scripts are tagged
+blocks `sim` checks, and `mise run e2e` runs the pull against a directory it
+serves locally.
+
+## The workflows, step by step
+
+Settled 2026-11-02 (maintainer): what each workflow does, the guide's
+flowchart drawn from it (9.4).
+
+**The scheduled job**, one script (above, "The scheduled job is one
+script"), given the config, the DB, the published directory as last
+published (`PUB`) and the keep count; `bruce` on the `PATH` is the pinned
+release, its archive beside it.
+
+- **S1 Crawl** into the DB. On 3, the DB moves aside as the one archive
+  (replacing the last) and the crawl runs again into a fresh DB. On any other
+  failure the job stops non-zero and `PUB` is left as it was.
+- **S2 Export** the run as the baseline, gzipped.
+- **S3 Digest** the run, `--since PUB`'s baseline where there is one; on 3
+  (another schema), again without it. A failing digest does not stop the
+  job, so CI still gets its baseline, and the job exits non-zero at the end.
+- **S4 Stage** a new directory beside `PUB`: the archive, `bruce.toml`, the
+  baseline, the digest under fixed names, `digests/` carried over from `PUB`
+  with tonight's added and the oldest past the counts dropped, the files
+  `SHA256SUMS` will list under names by content, last night's carried one
+  more night, and `SHA256SUMS` last. The new directory then replaces `PUB` by
+  rename.
+- **S5 Prune** the DB to the count (and copy it fresh, if 9.1 shows pruning
+  alone does not hold its size). A DB-less run skips it.
+- **S6 Deliver** `PUB`: the deployer's push step, or nothing where the server
+  pulls.
+
+**The dev deployment's nightly workflow** (GitHub Actions, on a schedule and
+on demand, in `fedora-minimal:44`):
+
+- **D1** Install git, tar, gzip and curl; clone `main` (the config, the
+  script, the pinned tag).
+- **D2** Fetch the pinned `bruce` release's archive and its `.sha256` from
+  `mwinters0/bruce`'s releases, check, unpack. Fetch the `gh-pages`
+  branch's one commit (`git fetch --depth 1`) as `PUB`, absent on the first
+  night.
+- **D3** Run the script with a fresh DB.
+- **D4** Commit `PUB` as one orphan commit and force-push it as `gh-pages`;
+  Pages serves it.
+
+**The pull script** (a timer on the web server):
+
+- **P1** Fetch `SHA256SUMS`; the same as the local copy, stop.
+- **P2** Fetch each file it lists into a new directory, reusing a local file
+  whose sum matches (the binary changes only at an upgrade).
+- **P3** `sha256sum -c`; failing, stop non-zero, the served copy untouched,
+  the next timer trying again.
+- **P4** Rename the new directory into place.
+
+**A content repo's CI workflow** (Forgejo and GitHub Actions, on a pull
+request, in `fedora-minimal:44`, inside the forge's 10 minutes):
+
+- **C1** Install node, npm, git, tar and gzip; fetch the PR's commit with git.
+- **C2** `npm install` the pinned Antora; build the repo's playbook with
+  `CI=true` (I15).
+- **C3** Fetch `SHA256SUMS`, then the binary, config and baseline it names
+  by content; `sha256sum -c --ignore-missing`. Failing, the job fails as could-not-run.
+- **C4** Unpack `bruce`; `bruce check-dir` the build against the baseline and
+  config.
+- **C5** 0 passes; 1 fails the PR's check, the report in the log; 2 or 3
+  fails as could-not-run, the message saying the job failed and not the PR.
+
+**An upgrade** is a commit changing the pinned tag. Across a schema change
+the next night's S1 meets 3 and starts fresh, S3 meets 3 and is uncompared,
+and the new binary and new-schema baseline are published in one set, which
+CI's next fetch takes whole.
+
+**The weekly every-locale crawl** is the same script with
+`bruce-locales.toml`, its own DB, `--keep 8`, and a `PUB` on the maintainer's
+machine, delivered nowhere until 9.9.
 
 ## Prereleases while the deployment is stood up
 
@@ -216,35 +437,50 @@ being asked of production whatever `--externals` says (D22); the build sets
 `CI=true`, dropping the `file://` edit link (I15); the config comes from
 beside the baseline (D27).
 
-## The slice order the grilling proposed
+## The slice order
 
-Proposed 2026-10-21, to be re-checked against what the run-history reports changed when P9 is
-sliced; not yet a checklist.
+Settled 2026-11-02 (maintainer); the checklist is `../status/STATUS.md`'s. **9.1 gathers
+evidence** and lands no code, so each later slice meets what it found.
 
-1. **9.1 The site-root refresh**: `ci`, D22 amended, the concept map's
+1. **9.1 Evidence**: a fresh en-US crawl under schema 7, detached (the kept DB
+   being refused, and the review and a `max_redirects` trial needing one);
+   whether a DB pruned nightly holds a steady size, one run of that crawl
+   copied many times under `prune --keep 30`; whether Anubis challenges a
+   GitHub runner, a throwaway workflow in the deployment repo fetching a
+   sample of docs.fp.o and forge pages under the guide's User-Agent.
+2. **9.2 The site-root refresh**: `ci`, D22 amended, the concept map's
    clause, `scripts/e2e.py`'s `UNCHANGED_REDIRECTED` reversed.
-2. **9.2 The guide's scheduling and publishing**: the script, the systemd
-   units, `bruce-locales.toml`, `per_second = 3`, the hash-scope and
-   faster-rate sentences, `sim` checking the script's `bruce` lines.
-3. **9.3 The guide's CI section**: the workflow, `sim`'s YAML and `uses:`
-   checks, `e2e` running its steps, the Antora pin checked against
-   production's.
-4. **9.4 The dev deployment**: the deployment repo, its nightly workflow and
-   Pages; whether Anubis challenges a runner and the crawl's time on Actions,
-   the guide corrected where they show it wrong.
-5. **9.5 The closing evidence**: a quick-docs mirror running the guide's
-   workflow against the Pages URL, a planted break failing and a clean
-   change passing.
-6. **9.6 The maintainer's review of the en-US reports**, the digest included: no
-   code; the verdict and what it spawns in the notes.
-7. **9.7 The every-locale crawl**, on the maintainer's machine after 9.6's
-   verdict, and the guide's locale figures; and its digest's size and
-   rendering, reopening the digest's every-row HTML where either is bad
-   (D64, Reopens).
-8. **9.8 The release P9 closes on**, and the README's CI section corrected.
+3. **9.3 Exit status 3**: the typed refusal in `store::schema`, the status in
+   `cli`, the manuals' exit tables.
+4. **9.4 The guide's scheduling, publishing and delivery**: the script, the
+   systemd units, `bruce-locales.toml`, `per_second = 3`, the hash-scope and
+   faster-rate sentences, the staged directory and `SHA256SUMS`, retention
+   and the archive at a schema change, the digest's comparison, the pull
+   script, the workflows' flowchart; `sim` checking the scripts' `bruce`
+   lines, `e2e` running the pull against a directory it serves.
+5. **9.5 The guide's CI section**: the workflow, its fetch and check
+   included, `sim`'s YAML and `uses:` checks, `e2e` running its steps, the
+   Antora pin checked against production's.
+6. **9.6 The dev deployment**: `v0.3.0-rc.1`, the deployment repo's nightly
+   workflow and its orphan Pages branch, the crawl's time on Actions, the
+   guide corrected where they show it wrong.
+7. **9.7 The closing evidence**: a quick-docs mirror running the guide's
+   workflow against the Pages URL, a planted break failing and a clean change
+   passing.
+8. **9.8 The maintainer's review of the en-US reports**, the digest
+   included: no code; the verdict and what it spawns in the notes.
+9. **9.9 The every-locale crawl**, weekly on the maintainer's machine after
+   9.8's verdict: history, `prune` and the schema archive exercised, the
+   guide's locale figures, and its digest's size and rendering, reopening the
+   digest's every-row HTML where either is bad (D64, Reopens) and deciding
+   whether the guide publishes its results (above, "Every locale is a weekly
+   crawl of its own").
+10. **9.10 The release P9 closes on**, and the README's CI section corrected.
 
-Every tag push and every new repository (9.4, 9.5, 9.8) is the
-maintainer's: a round stops there, as at 9.6's verdict.
+**A round commits and pushes to the deployment repo**, its settings
+(Pages, the schedule) included (maintainer, 2026-11-02). Every tag push
+(9.6, 9.10) and every new repository (9.7's mirror) is the maintainer's: a
+round stops there, as at 9.8's verdict.
 
 ## Facts the grilling found
 

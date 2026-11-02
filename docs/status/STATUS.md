@@ -40,11 +40,25 @@ the gate's exit status and sections.
 The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-PARTY-NOTICES.txt` is generated from `Cargo.lock` and the DuckDB library texts vendored under `licenses/duckdb/` (libpg_query's PostgreSQL License paragraphs by hand) by `scripts/notices.py`, whose unit tests fail when it is out of date or the texts have drifted from the DuckDB tarball (D60).
 `.github/workflows/release.yml` builds a `v*` tag in `debian:trixie` and links `libstdc++` and `libgcc_s` in, so glibc is the binary's only library, and publishes the archive on GitHub (D23), its body the annotated tag's release notes, drafted by `/release` from its template, with a schema change from the latest release's named in them (D43; a lightweight tag is refused), `v0.1.0` being the first release; `scripts/workflows.py` fails on any workflow's `uses:` and prints a workflow's steps as a script to rehearse in a container.
 
+## P9 progress
+
+The deployment guide: [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md).
+
+- [ ] **9.1** Evidence: a fresh en-US crawl under schema 7, detached; whether a DB pruned nightly holds a steady size under `prune --keep 30`; whether Anubis challenges a GitHub runner, from a throwaway workflow in the deployment repo
+- [ ] **9.2** The site-root refresh: `ci` serving a top `index.html` meta refresh at its own path, D22 amended, the concept map's clause, `e2e.py`'s `UNCHANGED_REDIRECTED` reversed
+- [ ] **9.3** Exit status 3: the typed schema refusal in `store::schema`, mapped in `cli` for `crawl`, `check-dir`, `report`, `prune` and `export-baseline`, the manuals' exit tables
+- [ ] **9.4** The guide's scheduling, publishing and delivery: the script, the systemd units, `bruce-locales.toml`, `per_second = 3`, the staged directory with `SHA256SUMS` and names by content, retention and the schema archive, the digest's comparison, the pull script, the workflows' flowchart; `sim` checking the scripts, `e2e` running the pull
+- [ ] **9.5** The guide's CI section: the workflow with its fetch and check, `sim`'s YAML and `uses:` checks, `e2e` running its steps, the Antora pin checked against production's
+- [ ] **9.6** The dev deployment: `v0.3.0-rc.1` (the maintainer's tag), the deployment repo's nightly workflow and orphan Pages branch, the crawl's time on Actions, the guide corrected where they show it wrong
+- [ ] **9.7** The closing evidence: a quick-docs mirror (the maintainer's repository) running the guide's workflow against the Pages URL, a planted break failing and a clean change passing
+- [ ] **9.8** The maintainer's review of the en-US reports, the digest included: no code
+- [ ] **9.9** The every-locale crawl, weekly on the maintainer's machine: history, `prune` and the schema archive exercised, the guide's locale figures, the digest's size deciding whether its results are published
+- [ ] **9.10** The release P9 closes on (the maintainer's tag), and the README's CI section corrected
+
 ## Not started
 
 Every phase in [`../design/roadmap.md`](../design/roadmap.md)'s index not
-`Current`, `Complete` or `Struck`: P9 is specified, to be grilled again before
-it is sliced; P15, P16, P12 and P13 have not been
+`Current`, `Complete` or `Struck`: P15, P16, P12 and P13 have not been
 grilled.
 
 ## Decisions worth another look
