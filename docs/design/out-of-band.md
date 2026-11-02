@@ -32,9 +32,10 @@ grilling, spec amendment and a numbered slice.
 **Ledger lines stay one line each.** The detail lives in the dated history
 entry each line points at.
 
-Allocated so far: M1–M42. <!-- out-of-band-watermark: M42 -->
+Allocated so far: M1–M43. <!-- out-of-band-watermark: M43 -->
 
 ## The ledger
 
 | Item | Date | What changed | Blocks | Why |
 |---|---|---|---|---|
+| M43 | 2026-11-02 | The default view's and the Czech view's `target_moved` sentence names a changed chain, and their *Resolves to* gloss the URL the link names, the golden files regenerated |  | [2026-11-02](../status/history/2026-11-02.md), "M43: the view's redirect sentences" |

@@ -61,7 +61,7 @@
 {% macro listed(kinds) %}{% for kind in kinds %}{% if loop.first %}{% elif loop.last %}, or {% else %}, {% endif %}{{ kind_words(kind, kinds[:loop.index0]) }}{% endfor %}{% endmacro %}
 {% set cause_words = {
   "target_removed": ["Target removed", "The link was fine in the compared run and its target answers with an error now: the page, or the page it redirects to, is gone.", "Target's source, as the compared run recorded it, else as this run does"],
-  "target_moved": ["Target moved", "The link was fine in the compared run and its target now redirects somewhere it did not, where the link breaks.", "Target's source, as the compared run recorded it, else as this run does"],
+  "target_moved": ["Target moved", "The link was fine in the compared run and its target now redirects somewhere it did not, or by another chain, where the link breaks.", "Target's source, as the compared run recorded it, else as this run does"],
   "anchor_removed": ["Anchor removed", "The link was fine in the compared run, its target page had the fragment then, and does not now.", "Target's source, as the compared run recorded it, else as this run does"],
   "link_added": ["Link added", "The page was in the compared run and did not hold this link.", "Linking page's source"],
   "new_page": ["New page", "The compared run did not check the page the link is on.", "Linking page's source"],
@@ -207,7 +207,7 @@
 <section id="pages">
 <details class="sect">
 <summary><h2>By: Source Page</h2></summary>
-<i>Written as</i> is the link in the page. <i>Resolves to</i> is the URL it landed at. <i>Kind</i> is the type of element holding it (<code>anchor</code> is an <code>&lt;a href&gt;</code>). <i>Problem</i> and <i>Status</i> are what the target answered.</p>
+<i>Written as</i> is the link in the page. <i>Resolves to</i> is the URL it names, and where a redirect lands when the redirect is the fault. <i>Kind</i> is the type of element holding it (<code>anchor</code> is an <code>&lt;a href&gt;</code>). <i>Problem</i> and <i>Status</i> are what the target answered.</p>
 {% if not pages %}
 {% if pages_any %}
 <p>No page holds a finding under this report's severity map.</p>

@@ -63,7 +63,7 @@
 {% macro listed(kinds) %}{% for kind in kinds %}{% if loop.first %}{% elif loop.last %} nebo {% else %}, {% endif %}{{ kind_words(kind, kinds[:loop.index0]) }}{% endfor %}{% endmacro %}
 {% set cause_words = {
   "target_removed": ["Cíl odstraněn", "Odkaz byl v porovnávaném běhu v pořádku a jeho cíl nyní odpovídá chybou: stránka, nebo stránka, na kterou přesměrovával, je pryč.", "Zdroj cíle podle porovnávaného běhu, jinak podle tohoto"],
-  "target_moved": ["Cíl přesunut", "Odkaz byl v porovnávaném běhu v pořádku a jeho cíl nyní přesměrovává jinam než dřív, a odkaz proto přestal fungovat.", "Zdroj cíle podle porovnávaného běhu, jinak podle tohoto"],
+  "target_moved": ["Cíl přesunut", "Odkaz byl v porovnávaném běhu v pořádku a jeho cíl nyní přesměrovává jinam nebo jinou cestou než dřív, a odkaz proto přestal fungovat.", "Zdroj cíle podle porovnávaného běhu, jinak podle tohoto"],
   "anchor_removed": ["Kotva odstraněna", "Odkaz byl v porovnávaném běhu v pořádku, cílová stránka tehdy fragment měla a nyní ho nemá.", "Zdroj cíle podle porovnávaného běhu, jinak podle tohoto"],
   "link_added": ["Odkaz přidán", "Stránka v porovnávaném běhu byla a tento odkaz neobsahovala.", "Zdroj stránky s odkazem"],
   "new_page": ["Nová stránka", "Porovnávaný běh stránku, na které odkaz je, nekontroloval.", "Zdroj stránky s odkazem"],
@@ -208,7 +208,7 @@
 <section id="pages">
 <details class="sect">
 <summary><h2>Podle zdrojové stránky</h2></summary>
-<p><i>Zapsáno jako</i> je odkaz na stránce. <i>Vede na</i> je adresa URL, na které skončil. <i>Druh</i> je typ prvku, který ho obsahuje (<code>anchor</code> je <code>&lt;a href&gt;</code>). <i>Problém</i> a <i>Stav</i> jsou to, čím odpověděl cíl.</p>
+<p><i>Zapsáno jako</i> je odkaz na stránce. <i>Vede na</i> je adresa URL, kterou odkaz uvádí, a kde přesměrování skončí, je-li chyba v něm. <i>Druh</i> je typ prvku, který ho obsahuje (<code>anchor</code> je <code>&lt;a href&gt;</code>). <i>Problém</i> a <i>Stav</i> jsou to, čím odpověděl cíl.</p>
 {% if not pages %}
 {% if pages_any %}
 <p>Žádná stránka neobsahuje nález podle mapy závažnosti tohoto přehledu.</p>
