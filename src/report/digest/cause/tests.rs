@@ -39,7 +39,8 @@ fn compared() -> Store {
     ] {
         page(&store, run, id, Some(repo), Some(ROOT));
     }
-    // Pages the links name, as the comparison recorded them.
+    // Pages the links name, as the comparison recorded them, and 33 as only
+    // this run does.
     page(&store, 4, 30, Some("r/thirty"), None);
     page(&store, 4, 31, Some("r/thirtyone"), None);
     page(&store, 1, 33, Some("r/thirtythree"), None);

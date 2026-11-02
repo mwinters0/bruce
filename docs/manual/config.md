@@ -369,8 +369,9 @@ the limit is not looked at.
 
 **`status`** maps single codes, `"<code>" = "<outcome>"`, the outcome `ok`,
 `broken_url` or `error`. A class such as `4xx` is refused, and so is a 3xx,
-which is a hop the crawl follows. The host judged is the one that **answered**,
-the last of a redirect's hops. A code no table names is judged as it was
+which the crawl follows as a hop or, leading nowhere, records as
+`bad_redirect`. The host judged is the one that **answered**, where a
+redirect's hops end. A code no table names is judged as it was
 crawled: a 4xx other than 401, 403 and 429 is `broken_url`, a 5xx `error`. A map that gives
 the outcome the crawl stored keeps the crawl's reason (`wrong_trailing_slash`, `too_large`);
 any other drops it. A fragment on a URL judged `ok`

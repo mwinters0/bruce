@@ -70,7 +70,8 @@ back. Numbers up to the watermark are allocated, and none is reused.
   NULL) AS TABLE SELECT a.x, b.v FROM a LEFT JOIN b ON b.x = coalesce(r, a.x)`,
   then `CREATE VIEW vv AS SELECT * FROM m()` and a select from it.
 - **Watch.** `store::views::tests::a_macro_parameter_in_a_join_condition_still_aborts_a_debug_duckdb`
-  runs the query in a child process and asserts that it aborts; it asserts
+  runs the query in a child process and asserts that it fails, which an
+  abort and a panic on an error alike satisfy; it asserts
   nothing in a build without debug assertions.
 - **When it lands.** Drop the `pr` CTE and use `coalesce(policy_run, getvariable('judged_by')::UBIGINT, <alias>.run_id)`
   in the joins; delete the watch test and its child.

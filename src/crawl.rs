@@ -232,7 +232,8 @@ struct Shared<F> {
     pending: baseline::Pending,
 }
 
-/// A target claimed and waiting to be asked about.
+/// A target waiting to be asked about: claimed, but for a sitemap probe,
+/// which is claimed only once it answers as one.
 struct Item {
     url: Url,
     /// The kind of the link that found it; a root's URL counts as an anchor.

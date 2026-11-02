@@ -48,12 +48,12 @@ Code: `report::digest::compare`, `Store::discard_import`. Evidence:
 
 ### D74 A new break is attributed by the first thing the compared run held that explains it, and a link is keyed by its page, target and fragment
 A link broken now, not in the compared run, takes the first cause in `new_breakage` that holds, a target cause showing
-the target's source as the compared run recorded it. Maintainer, 2026-10-23: never a hash.
+the target's source, the compared run's where it has one. Maintainer, 2026-10-23: never a hash.
 Why: removal is tested before the move, a redirect onto a 404 being a page gone, and the move before the anchor, a page
-that moved having lost the fragment by moving, a move a landing or chain that differs (D100); `unexplained` is a rule
-judging differently since (a doubled slash). Rejected: "the linking page changed", read off the hash, blaming an edit
-for a break it did not make; a cause per reason, the reason column's; a row per key, hiding the links a maintainer
-edits. Reopens: runs that differ, where `unexplained` is large or `target_moved` mostly removals.
+that moved having lost the fragment by moving, a move a redirect whose landing or chain differs (D100); `unexplained` is
+a rule judging differently since (a doubled slash). Rejected: "the linking page changed", read off the hash, blaming an
+unrelated edit; a cause per reason, the reason column's; a row per key, hiding the links a maintainer edits. Reopens:
+runs that differ, where `unexplained` is large or `target_moved` mostly removals.
 Code: `report::digest::cause`. Evidence: `report::digest::cause::tests`.
 
 ### D75 A row is new where the compared run's same section lacked it, a broken link where section 3 lists it, and a bar marks it

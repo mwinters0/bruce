@@ -4,8 +4,9 @@
 //! was judged by, so a report reads the run and never the file. Every setting
 //! has a default, today's value (D77); [`Policy::default`] is the policy of a
 //! run given no file. A setting is a field and a row of [`Policy::entries`],
-//! so a new one changes no schema. A setting that is a host's own is a field
-//! of [`HostJudging`], its rows carrying the host. The settings that decide how
+//! so a new one changes no schema. A judging setting that is a host's own is a
+//! field of [`HostJudging`], an asking one of [`HostAsking`], their rows
+//! carrying the host. The settings that decide how
 //! a crawl asks are recorded beside them and judged by nothing ([`Asking`],
 //! D85).
 
@@ -369,7 +370,8 @@ fn scheme(written: &str) -> Result<String, String> {
 }
 
 /// A table of `"<code>" = "<outcome>"` as a file writes it. A code is one
-/// response's, and not a 3xx, which is a hop the crawl follows (D7).
+/// response's, and not a 3xx, which the crawl follows as a hop or, leading
+/// nowhere, records as `bad_redirect` (D7).
 fn statuses_of(written: &BTreeMap<String, String>) -> Result<BTreeMap<u16, Answer>, String> {
     let mut map = BTreeMap::new();
     for (code, outcome) in written {

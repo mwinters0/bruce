@@ -853,7 +853,7 @@ fn a_scheme_is_unchecked_where_the_policy_lists_it_and_broken_where_it_does_not(
     expect(&got, "matrix", "unchecked", Some("scheme"));
     expect(&got, "mail", "unchecked", Some("scheme"));
     expect(&got, "ssh", "broken_url", Some("bad_scheme"));
-    // Under the defaults the same rows read the other way.
+    // Under the defaults `matrix` reads the other way.
     store
         .begin_run(
             Mode::Crawl,
@@ -935,7 +935,7 @@ fn a_doubled_slash_is_a_fault_only_on_a_host_the_policy_judges_it_on() {
     expect(&got, "off", "ok", None);
 }
 
-/// A target that took `hops` hops to `final_url`, landing `ok`.
+/// A target that took `hops` hops to `final_url`, answering `outcome`.
 fn chained(store: &Store, id: u64, url: &str, outcome: &str, hops: usize, final_url: &str) {
     let chain = vec!["{'url': 'https://e.test/hop', 'status': 301, 'refresh': false}"; hops];
     store

@@ -20,7 +20,7 @@ use crate::report::table::{Cell, Table};
 use crate::store::{Mode, RunId, TARGET_URL_DOUBLES};
 use crate::url::toggle_slash;
 
-/// A link of `view`, a `report_*` link view, on a crawled page.
+/// A link `b` of a `report_*` link view, on a crawled page.
 pub(super) const ON_CRAWLED: &str = " JOIN report_pages pg ON pg.run_id = b.run_id \
                           AND pg.url_id = b.src_url_id AND pg.crawled ";
 
@@ -37,7 +37,7 @@ pub(super) const ON_CRAWLED: &str = " JOIN report_pages pg ON pg.run_id = b.run_
 /// the broken or errored relative links on those pages (`brk`) are the linking page's,
 /// each counted once however many links of the page reach the same page, bar
 /// one whose copy on the page's twin, the same `raw_href` and kind, is broken
-/// too, which the twin's row counts. The run's `doubled_slash_reach` (D80)
+/// or errored too, which the twin's row counts. The run's `doubled_slash_reach` (D80)
 /// stands in for `$REACH`: `immediate` leaves the recursion its first step and
 /// `off` not even that.
 const PAGE_COUNTS: &str = "CREATE OR REPLACE TEMP TABLE digest_page_counts AS \
@@ -318,7 +318,7 @@ pub(super) fn pages(conn: &Connection, run: RunId, _: PageCounts) -> Result<Tabl
 /// `doubled_slash` link `b`, whose `dl.final_url` is its `landing` and then
 /// doubles one (D71), or a `wrong_trailing_slash` one, whose landing is the
 /// URL the crawl toggled (D72), or a `too_many_redirects` one, whose landing
-/// is the fix (D100). Only the redirected targets are joined, a join
+/// is the URL the link should name (D100). Only the redirected targets are joined, a join
 /// of every target by URL taking several times as long.
 fn landing_join() -> String {
     format!(
@@ -354,7 +354,8 @@ fn add_fix(table: &mut Table) {
 
 /// Every broken link on a crawled page, a page's together, an unresolved
 /// xref with its `hint` (D65), a doubled slash its `landing` and a wrong final
-/// slash its `fix`, and its `landing` where it redirected; the caller puts the pages in `pages`' order.
+/// slash its `fix`, and a doubled slash, a wrong final slash or a chain past
+/// `max_redirects` its `landing`; the caller puts the pages in `pages`' order.
 pub(super) fn broken(conn: &Connection, run: RunId) -> Result<Table, Error> {
     let mut sql = Sql::new(
         "SELECT b.page, b.raw_href, b.target, dl.final_url AS landing, b.fragment, b.kind, \

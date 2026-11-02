@@ -1,7 +1,7 @@
 //! Redirect hops (D7): the chain of one target, its limit, and where a hop
 //! leads.
 //!
-//! A hop is a 3xx with a `Location`, or a 2xx HTML page whose `refresh` has
+//! A hop is a 3xx whose `Location` is an `http` or `https` URL, or a 2xx HTML page whose `refresh` has
 //! delay 0 (D7, I14), so a docs.fp.o alias is a hop and never a `pages` row.
 //! [`Chain`] records them
 //! in the shape the `targets` row stores; the crawler decides what to ask

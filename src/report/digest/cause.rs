@@ -6,8 +6,8 @@
 //! A link is keyed as `diff` keys it, by its page, its target and its
 //! fragment, several links sharing a key being a key's, but a row is a link.
 //! The cause is read off the comparison, never off a hash, and the first that
-//! holds is the one named (D74): [`CAUSES`] lists them in the order a
-//! maintainer reads.
+//! holds, in the order [`new_breakage`]'s `CASE` tests them, is the one named
+//! (D74); [`CAUSES`] lists them in the order a maintainer reads.
 
 use duckdb::Connection;
 
@@ -18,8 +18,8 @@ use crate::report::table::Table;
 use crate::store::RunId;
 
 /// The causes of a new break, the order they are listed in. The first three
-/// are a change in what a link names: the target page is gone, moved (its
-/// landing or its chain differs) or lost the anchor, and the source shown is the target's, as the comparison
+/// are a change in what a link names: the target page is gone, moved (it
+/// redirects, and its landing or its chain differs) or lost the anchor, and the source shown is the target's, as the comparison
 /// recorded it where it did, else as this run does; the rest are the linking
 /// page's own.
 pub const CAUSES: [&str; 7] = [

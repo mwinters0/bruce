@@ -86,7 +86,8 @@ impl Drop for JudgedBy<'_> {
     }
 }
 
-/// The `doubled_slash` view, created before the macro that joins it.
+/// The `policy_in_force` and `doubled_slash` views, created before the macro
+/// that joins them.
 pub(super) const FIRST: &[View] = &[POLICY_IN_FORCE, DOUBLED_SLASH_TARGETS];
 
 /// The policy rows the views and the reports read (D78): the stored `policy`,

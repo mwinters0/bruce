@@ -119,7 +119,8 @@ pub struct Digest {
     pub redirects: Table,
     /// The sitemap's pages no page links to (`orphans`' columns).
     pub orphans: Table,
-    /// The pages absent from their root's sitemap (`unlisted`' columns).
+    /// The crawled pages no sitemap lists, where their root read one
+    /// (`unlisted`' columns).
     pub unlisted: Table,
     /// The sitemap's entries no page was fetched for, those that did not
     /// answer `ok` first: `page`, `outcome`, `reason` and `status`.
