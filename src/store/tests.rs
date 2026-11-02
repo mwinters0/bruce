@@ -56,8 +56,6 @@ fn page(run: RunId, url_id: u64) -> PageRow {
         source_repo: None,
         source_ref: None,
         source_path: None,
-        in_sitemap: true,
-        via_links: false,
         root: Some("https://example.test/docs/".into()),
     }
 }

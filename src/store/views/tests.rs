@@ -38,7 +38,7 @@ fn page(store: &Store, run: u64, id: u64, anchors: &[&str]) {
     let conn = store.connection();
     conn.execute(
         "INSERT INTO pages VALUES (?, ?, NULL, NULL, NULL, NULL, 'whole', 'generic', NULL, NULL, NULL, \
-         NULL, false, true, NULL)",
+         NULL, NULL)",
         params![run, id],
     )
     .unwrap();
@@ -386,8 +386,8 @@ fn a_redirect_that_only_adds_or_drops_a_final_slash_is_ok_and_pedantic() {
                  VALUES ('live', 1, 20, 'https://e.test/h/', 'ok'), \
                         ('live', 1, 21, 'https://e.test/i/', 'ok');
              INSERT INTO pages VALUES (1, 20, NULL, NULL, NULL, NULL, 'whole', 'generic', NULL, NULL, \
-                 NULL, NULL, false, true, NULL), (1, 21, NULL, NULL, NULL, NULL, 'whole', 'generic', \
-                 NULL, NULL, NULL, NULL, false, true, NULL);
+                 NULL, NULL, NULL), (1, 21, NULL, NULL, NULL, NULL, 'whole', 'generic', \
+                 NULL, NULL, NULL, NULL, NULL);
              INSERT INTO anchors VALUES (1, 21, 'here', 'h2', 'content');",
         )
         .unwrap();

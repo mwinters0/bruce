@@ -23,7 +23,7 @@ fn put(store: &Store, run: u64, id: u64, path: &str, outcome: &str, by: &str, pa
     if page {
         conn.execute(
             "INSERT INTO pages VALUES (?, ?, NULL, NULL, NULL, NULL, 'whole', 'generic', NULL, ?, NULL, \
-             ?, false, true, ?)",
+             ?, ?)",
             params![run, id, format!("r/{id}"), format!("{id}.adoc"), ROOT],
         )
         .unwrap();

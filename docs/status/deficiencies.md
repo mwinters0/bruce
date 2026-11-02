@@ -95,13 +95,6 @@ roadmap's phase index.
   broken one is never found (D13). **(c) unowned**: a site whose pages
   reference one would promote it. Detail: `src/extract/links.rs`
 
-- **KD38** — A page a redirect lands on takes `in_sitemap` and `via_links`
-  from the target that claimed it, so a page a sitemap entry redirects to is
-  listed or unlisted by whether that redirect or a link claimed it first, and
-  two runs of one site can disagree (D14). **(b) owned by P14**, slice 14.1.
-  Detail:
-  `src/crawl.rs`
-
 - **KD39** — The default view's "By: Source Page" note opens with an `<i>` and closes a `</p>` no `<p>` opened, and
   "Unchecked links" opens a `<p>` it never closes, so a browser repairs both. **(c) unowned**: the next change to
   the default view's wording, which moves the golden file anyway, would promote it. Detail:

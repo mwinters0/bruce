@@ -123,6 +123,28 @@ class CrawlScript(unittest.TestCase):
             self.assertTrue((run / "ended").exists())
 
 
+class Opens(unittest.TestCase):
+    def fake(self, d: str, stderr: str, code: int) -> Path:
+        fake = Path(d) / "bruce"
+        fake.write_text(f"#!/bin/sh\necho '{stderr}' >&2\nexit {code}\n", encoding="utf-8")
+        fake.chmod(0o755)
+        return fake
+
+    def test_a_database_that_opens_is_kept(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertTrue(review.opens(self.fake(d, "", 0), Path(d) / "x.duckdb"))
+
+    def test_another_schema_starts_a_new_database(self):
+        with tempfile.TemporaryDirectory() as d:
+            refusal = "database has schema version 6, but this bruce reads version 7"
+            self.assertFalse(review.opens(self.fake(d, refusal, 1), Path(d) / "x.duckdb"))
+
+    def test_any_other_refusal_stops_the_crawl(self):
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaisesRegex(review.ReviewError, "does not open"):
+                review.opens(self.fake(d, "not a bruce database", 1), Path(d) / "x.duckdb")
+
+
 class Digest(unittest.TestCase):
     def test_an_unfinished_crawl_is_refused_with_its_state(self):
         with tempfile.TemporaryDirectory() as d:

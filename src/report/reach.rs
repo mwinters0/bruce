@@ -3,8 +3,9 @@
 //! (D14); each is about a page, so the filters name the page a row lists.
 //!
 //! A link counts for the page it lands on, so one to a URL that redirected
-//! counts for the page it reached (`report_inbound`). The sitemap kinds do not
-//! count, and neither does a page's link to itself.
+//! counts for the page it reached (`report_inbound`), and a sitemap entry
+//! that redirected lists the page it reached (`report_reach`). The sitemap
+//! kinds do not count as links, and neither does a page's link to itself.
 
 use duckdb::Connection;
 
@@ -34,7 +35,7 @@ pub(super) fn inbound(conn: &Connection, run: RunId, request: &Request) -> Resul
 pub(super) fn orphans(conn: &Connection, run: RunId, request: &Request) -> Result<Table, Error> {
     let mut sql = Sql::new(
         "SELECT pg.url AS page, pg.title, pg.root, pg.source_repo, pg.source_path \
-         FROM report_pages pg WHERE pg.crawled AND pg.in_sitemap AND NOT EXISTS \
+         FROM report_pages pg WHERE pg.crawled AND pg.listed IS NOT NULL AND NOT EXISTS \
          (SELECT 1 FROM report_inbound i WHERE i.run_id = pg.run_id AND i.url_id = pg.url_id AND ",
     );
     sql.kinds("i.kind", request).push(") AND ");
@@ -57,7 +58,7 @@ pub(super) fn unlisted(
         "SELECT pg.url AS page, pg.root, pg.title, pg.source_repo, pg.source_path \
          FROM report_pages pg JOIN report_roots r \
          ON r.run_id = pg.run_id AND r.root = pg.root AND r.has_sitemap \
-         WHERE pg.crawled AND NOT pg.in_sitemap AND ",
+         WHERE pg.crawled AND pg.listed IS NULL AND ",
     );
     sql.scope(run, request, PAGE)
         .push(" ORDER BY pg.root, pg.url")
@@ -81,7 +82,7 @@ pub(super) fn unlisted(
 /// page to match `--repo` or `--fact` against.
 pub(super) fn sitemap(conn: &Connection, run: RunId, request: &Request) -> Result<Table, Error> {
     let mut sql = Sql::new(
-        "SELECT page, title, in_sitemap, via_links, outcome, reason, status::INTEGER AS status, \
+        "SELECT page, title, listed, linked, outcome, reason, status::INTEGER AS status, \
          source_repo, source_path FROM report_sitemap WHERE ",
     );
     sql.scope(
@@ -93,7 +94,7 @@ pub(super) fn sitemap(conn: &Connection, run: RunId, request: &Request) -> Resul
             page: "url_id",
         },
     )
-    .push(" ORDER BY via_links IS NOT NULL, in_sitemap, page")
+    .push(" ORDER BY entry DESC, listed IS NOT NULL, page")
     .limit(request);
     sql.fetch(conn)
 }

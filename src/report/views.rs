@@ -7,18 +7,20 @@ use crate::profile::View;
 
 /// Every view the reports ship.
 pub const VIEWS: &[View] = &[
-    PAGES, BROKEN, ERRORS, STATS, INBOUND, ROOTS, SITEMAP, REDIRECTS,
+    INBOUND, REACH, PAGES, BROKEN, ERRORS, STATS, ROOTS, SITEMAP, REDIRECTS,
 ];
 
 /// A page of a run and where it came from. `crawled` is a page a root's scope
-/// claimed (`pages.root`), not an allowlisted one fetched for its anchors.
+/// claimed (`pages.root`), not an allowlisted one fetched for its anchors;
+/// `listed` and `linked` are `report_reach`'s.
 const PAGES: View = View {
     name: "report_pages",
     select: "\
 SELECT p.run_id, p.url_id, t.url, p.title, p.source_repo, p.source_path, p.root,
-    p.root IS NOT NULL AS crawled, p.in_sitemap, p.via_links, p.profile
+    p.root IS NOT NULL AS crawled, r.listed, r.linked, p.profile
 FROM pages p
-JOIN targets t ON t.run_id = p.run_id AND t.url_id = p.url_id",
+JOIN targets t ON t.run_id = p.run_id AND t.url_id = p.url_id
+LEFT JOIN report_reach r ON r.run_id = p.run_id AND r.url_id = p.url_id",
 };
 
 /// The links of one outcome set that count (D88), with the page they are on and
@@ -81,17 +83,46 @@ GROUP BY run_id, src_url_id, kind",
 };
 
 /// A link from one page to another, by the page it lands on, so a link to a
-/// URL that redirected counts for the page it reached. A page's link to
-/// itself is no row, and nor is a sitemap's, which only lists.
+/// URL that redirected counts for the page it reached, its `via` then
+/// `'redirect'` and else `'direct'`. A page's link to itself is no row, and
+/// nor is a sitemap's, which only lists.
 const INBOUND: View = View {
     name: "report_inbound",
     select: "\
-SELECT v.run_id, v.src_url_id, coalesce(landing.url_id, v.target_url_id) AS url_id, v.kind
+SELECT v.run_id, v.src_url_id, coalesce(landing.url_id, v.target_url_id) AS url_id, v.kind,
+    CASE WHEN landing.url_id IS NULL OR landing.url_id = v.target_url_id
+        THEN 'direct' ELSE 'redirect' END AS via
 FROM link_verdicts v
 LEFT JOIN targets t ON t.run_id = v.run_id AND t.url_id = v.target_url_id
 LEFT JOIN targets landing ON landing.run_id = t.run_id AND landing.url = t.final_url
 WHERE v.kind NOT IN ('sitemap', 'sitemap_file')
     AND v.src_url_id <> coalesce(landing.url_id, v.target_url_id)",
+};
+
+/// How a URL is reached (D14), from the rows that say so rather than from the
+/// target that claimed it. `listed`: `'direct'` where a `sitemap` entry names
+/// the URL, `'redirect'` where one names a URL that redirects to it, else NULL.
+/// `linked`: the same over `report_inbound`'s links. `'direct'` wins where both
+/// hold.
+const REACH: View = View {
+    name: "report_reach",
+    select: "\
+SELECT run_id, url_id,
+    min(via) FILTER (WHERE how = 'listed') AS listed,
+    min(via) FILTER (WHERE how = 'linked') AS linked
+FROM (
+    SELECT run_id, target_url_id AS url_id, 'listed' AS how, 'direct' AS via
+    FROM links WHERE kind = 'sitemap'
+    UNION ALL
+    SELECT e.run_id, landing.url_id, 'listed', 'redirect'
+    FROM links e
+    JOIN targets t ON t.run_id = e.run_id AND t.url_id = e.target_url_id
+    JOIN targets landing ON landing.run_id = t.run_id AND landing.url = t.final_url
+    WHERE e.kind = 'sitemap' AND landing.url_id <> t.url_id
+    UNION ALL
+    SELECT run_id, url_id, 'linked', via FROM report_inbound
+)
+GROUP BY run_id, url_id",
 };
 
 /// A root of a run, and whether it read a sitemap: a file reached from the
@@ -123,22 +154,23 @@ FROM r",
 };
 
 /// The pages a sitemap report lists: every crawled page, and every sitemap
-/// entry no page was fetched for (`via_links` is NULL for those, which have
-/// no page row).
+/// entry no page was fetched for (`entry`, which have no page row, so no title
+/// or source), their `linked` that of the URL they land on.
 const SITEMAP: View = View {
     name: "report_sitemap",
     select: "\
-SELECT pg.run_id, pg.url_id, pg.url AS page, pg.title, pg.in_sitemap, pg.via_links,
+SELECT pg.run_id, pg.url_id, pg.url AS page, pg.title, pg.listed, pg.linked, false AS entry,
     t.outcome, t.reason, t.status, pg.source_repo, pg.source_path
 FROM report_pages pg
 JOIN targets t ON t.run_id = pg.run_id AND t.url_id = pg.url_id
 WHERE pg.crawled
 UNION ALL
-SELECT DISTINCT e.run_id, e.target_url_id, t.url, NULL, true, NULL,
+SELECT DISTINCT e.run_id, e.target_url_id, t.url, NULL, 'direct', r.linked, true,
     t.outcome, t.reason, t.status, NULL, NULL
 FROM links e
 JOIN targets t ON t.run_id = e.run_id AND t.url_id = e.target_url_id
 LEFT JOIN targets landing ON landing.run_id = t.run_id AND landing.url = t.final_url
+LEFT JOIN report_reach r ON r.run_id = t.run_id AND r.url_id = coalesce(landing.url_id, t.url_id)
 WHERE e.kind = 'sitemap' AND NOT EXISTS (SELECT 1 FROM pages p
     WHERE p.run_id = t.run_id AND p.url_id = coalesce(landing.url_id, t.url_id))",
 };

@@ -496,7 +496,7 @@ fn a_run_and_a_trial(dir: &TempDir) -> (PathBuf, PathBuf) {
          ('live', 1, 2, 'https://a.test/gone', 404, 'broken_url'), \
          ('live', 1, 3, 'https://a.test/login', 403, 'error'); \
          INSERT INTO pages VALUES (1, 1, 'P', 'text/html', 5, NULL, 'whole', 'generic', NULL, \
-         NULL, NULL, NULL, true, false, 'https://a.test/'); \
+         NULL, NULL, NULL, 'https://a.test/'); \
          INSERT INTO links VALUES (1, 1, 2, NULL, '/gone', 'anchor', NULL), \
          (1, 1, 3, NULL, '/login', 'anchor', NULL)",
     )

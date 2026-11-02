@@ -6,7 +6,7 @@
 /// The version this build writes and reads (D43). A schema change bumps it;
 /// a 0.x release migrates no database (D43). `release.yml` reads this line by
 /// its text, so it stays one `pub const SCHEMA_VERSION: u32 = N;` line.
-pub const SCHEMA_VERSION: u32 = 6;
+pub const SCHEMA_VERSION: u32 = 7;
 
 /// The `meta` key holding [`SCHEMA_VERSION`].
 pub const VERSION_KEY: &str = "schema_version";
@@ -75,8 +75,6 @@ CREATE TABLE pages (
     source_repo VARCHAR,
     source_ref VARCHAR,
     source_path VARCHAR,
-    in_sitemap BOOLEAN NOT NULL,
-    via_links BOOLEAN NOT NULL,
     root VARCHAR
 );
 CREATE TABLE page_facts (

@@ -106,14 +106,13 @@ fn count(store: &Store, sql: &str) -> i64 {
     store.connection().query_row(sql, [], |r| r.get(0)).unwrap()
 }
 
-/// A page's URL, title, content type, size, profile, `via_links` and hash length.
+/// A page's URL, title, content type, size, profile and hash length.
 type PageFacts = (
     String,
     Option<String>,
     Option<String>,
     Option<u64>,
     String,
-    bool,
     usize,
 );
 
@@ -459,7 +458,7 @@ async fn a_page_records_the_scope_its_hash_covered_and_a_run_its_roots_scopes() 
 }
 
 #[tokio::test]
-async fn a_page_row_holds_what_was_read_and_which_way_it_was_found() {
+async fn a_page_row_holds_what_was_read() {
     let server = MockServer::start().await;
     page(
         &server,
@@ -473,7 +472,7 @@ async fn a_page_row_holds_what_was_read_and_which_way_it_was_found() {
 
     let got: Vec<PageFacts> = rows(
         &done.store,
-        "SELECT t.url, p.title, p.content_type, p.size, p.profile, p.via_links, \
+        "SELECT t.url, p.title, p.content_type, p.size, p.profile, \
              octet_length(p.content_hash) \
              FROM pages p JOIN targets t USING (run_id, url_id) ORDER BY t.url",
         |r| {
@@ -484,7 +483,6 @@ async fn a_page_row_holds_what_was_read_and_which_way_it_was_found() {
                 r.get(3)?,
                 r.get(4)?,
                 r.get(5)?,
-                r.get(6)?,
             ))
         },
     );
@@ -498,7 +496,6 @@ async fn a_page_row_holds_what_was_read_and_which_way_it_was_found() {
                 Some("text/html".into()),
                 Some(46),
                 "generic".into(),
-                false,
                 16
             ),
             (
@@ -507,7 +504,6 @@ async fn a_page_row_holds_what_was_read_and_which_way_it_was_found() {
                 Some("text/html".into()),
                 Some(28),
                 "generic".into(),
-                true,
                 16
             ),
         ]
@@ -1481,12 +1477,13 @@ fn index(base: &str, paths: &[&str]) -> String {
 }
 
 impl Done {
-    /// The pages' URLs with `in_sitemap` and `via_links`.
-    fn found(&self) -> Vec<(String, bool, bool)> {
+    /// The crawled pages' URLs with how each is `listed` and `linked`
+    /// (`report_pages`).
+    fn found(&self) -> Vec<(String, Option<String>, Option<String>)> {
+        self.store.install(crate::report::VIEWS).unwrap();
         rows(
             &self.store,
-            "SELECT t.url, p.in_sitemap, p.via_links FROM pages p \
-             JOIN targets t USING (run_id, url_id) ORDER BY t.url",
+            "SELECT url, listed, linked FROM report_pages WHERE crawled ORDER BY url",
             |r| Ok((r.get::<_, String>(0)?, r.get(1)?, r.get(2)?)),
         )
         .into_iter()
@@ -1603,11 +1600,15 @@ async fn a_sitemap_index_seeds_its_pages_and_each_entry_is_a_link() {
     assert_eq!(
         done.found(),
         [
-            ("/docs/".to_owned(), true, false),
-            ("/docs/linked".to_owned(), false, true),
-            ("/docs/listed".to_owned(), true, false),
+            ("/docs/".to_owned(), Some("direct".to_owned()), None),
+            ("/docs/linked".to_owned(), None, Some("direct".to_owned())),
+            (
+                "/docs/listed".to_owned(),
+                Some("direct".to_owned()),
+                Some("direct".to_owned())
+            ),
         ],
-        "a listed page is claimed by its sitemap before any link names it"
+        "a page's discovery is the sitemap entries and links that name it, whichever claimed it"
     );
     let s = |src: &str, href: &str| (src.to_owned(), href.to_owned());
     assert_eq!(

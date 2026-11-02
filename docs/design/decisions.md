@@ -36,7 +36,7 @@ remeasures it. The en-US crawl of 2026-11-01 is kept, beside the one before it, 
 ## The crawl
 [`decisions/crawl.md`](decisions/crawl.md)
 - **D7** Canonical URLs keep the fragment apart; redirects are followed and stated
-- **D14** Discovery is sitemap and link-following both, and each page records which
+- **D14** Discovery is sitemap and link-following both, and how a page was reached is read from the links
 - **D47** A run reads its sitemaps before any page, and each root links to its sitemaps
 - **D46** Where a redirect lands is a target of its own, written by whoever claims it first
 - **D61** Live slots are shared among the hosts with work, and a build's reads have a budget of their own

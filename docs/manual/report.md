@@ -120,18 +120,18 @@ the links counted.
 
 **`sitemap`** has a row for each page a root's scope covers, and for each
 sitemap entry that no page was fetched for: columns `page`, `title`,
-`in_sitemap`, `via_links` (whether a link, not a sitemap or the root, claimed it first: false for every page the sitemap lists, which is read before any page), `outcome` and `reason`
+`listed` and `linked` (how the sitemap and the links reach it: `direct` where an entry or a link names the page's own URL, `redirect` where one names a URL that redirects to it, and empty where none does; `direct` wins where both hold), `outcome` and `reason`
 (what its URL answered, as `errors` gives them), `status`, `source_repo` and
-`source_path`. The entries come first, with no title, `via_links` or source
+`source_path`. The entries come first, with no title or source, listed `direct`, their `linked` that of the URL they land on
 (a page robots.txt kept the crawl from shows here, never as broken), then the pages absent from the sitemap, then the rest. `--repo` and
 `--fact` leave only pages, an entry having none to match.
 
-**`orphans`** has the pages a sitemap lists that no other page links to, by
-the links `--kind` chooses: `page`, `title`, `root`, `source_repo` and
-`source_path`.
+**`orphans`** has the pages a sitemap lists, a redirecting entry listing the
+page it lands on, that no other page links to, by the links `--kind` chooses:
+`page`, `title`, `root`, `source_repo` and `source_path`.
 
 **`unlisted`** has the pages a root's scope covers that its sitemap does not
-list: `page`, `root`, `title`, `source_repo` and `source_path`. A root read a
+list, an entry that redirects to a page listing it: `page`, `root`, `title`, `source_repo` and `source_path`. A root read a
 sitemap when a sitemap file reached from it (those it names or robots.txt
 does, and the files an index lists) answered with a page and no note: a file
 that failed, was refused by robots.txt or ran past the size cap listed
@@ -250,8 +250,8 @@ or status a number:
 Opening a database with `bruce` installs the views the reports read, so
 `duckdb bruce.duckdb` finds them after a crawl alone: `report_broken`,
 `report_errors`, `report_stats` (counts by page and kind) and
-`report_pages`, `report_inbound`, `report_roots`, `report_sitemap` and
-`report_redirects`, and beneath them `link_verdicts`, every link with its
+`report_pages`, `report_inbound`, `report_reach` (how a URL is `listed` and
+`linked`), `report_roots`, `report_sitemap` and `report_redirects`, and beneath them `link_verdicts`, every link with its
 outcome and reason (`ok`, reason `pedantic_trailing_slash`, for a link through
 a redirect that only adds or drops a final `/`), and whether it is `counted`: `broken`, `errors`, `stats` and `redirects` leave out the links of a
 page whose URL doubles a slash and whose twin, the URL with the slashes collapsed, is a page of the run, and its

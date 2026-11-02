@@ -22,18 +22,18 @@ fn store() -> Store {
         params![format!("['{ROOT}', '{OTHER}']")],
     )
     .unwrap();
-    for (id, repo, root, listed) in [
-        (1, Some("r/one"), ROOT, true),
-        (2, None, ROOT, true),
-        (3, None, ROOT, true),
-        (4, None, ROOT, false),
-        (5, None, OTHER, false),
-        (7, None, ROOT, true),
+    for (id, repo, root) in [
+        (1, Some("r/one"), ROOT),
+        (2, None, ROOT),
+        (3, None, ROOT),
+        (4, None, ROOT),
+        (5, None, OTHER),
+        (7, None, ROOT),
     ] {
         page(&store, 1, id, repo, Some(root));
         conn.execute(
-            "UPDATE pages SET in_sitemap = ?, title = ? WHERE url_id = ?",
-            params![listed, format!("Page {id}"), id],
+            "UPDATE pages SET title = ? WHERE url_id = ?",
+            params![format!("Page {id}"), id],
         )
         .unwrap();
     }
@@ -194,9 +194,61 @@ fn sitemap_lists_what_was_not_fetched_then_what_it_does_not_list_then_what_it_do
     );
     assert_eq!(column(&out.table, "outcome")[..2], ["unchecked", "ok"]);
     assert_eq!(column(&out.table, "reason")[0], "robots");
-    assert_eq!(out.table.rows[0][3], Cell::Null);
-    assert_eq!(out.table.rows[1][2], Cell::Bool(false));
-    assert_eq!(out.table.rows[3][2], Cell::Bool(true));
+    assert_eq!(out.table.columns[2..4], ["listed", "linked"]);
+    // The entry is listed and linked by nothing; page 4 is neither; page 1 is
+    // listed by the sitemap and linked by page 4.
+    assert_eq!(out.table.rows[0][2..4], [text("direct"), Cell::Null]);
+    assert_eq!(out.table.rows[1][2..4], [Cell::Null, Cell::Null]);
+    assert_eq!(out.table.rows[3][2..4], [text("direct"), text("direct")]);
+}
+
+fn text(s: &str) -> Cell {
+    Cell::Text(s.to_owned())
+}
+
+/// [`store`] with page 3 named by no sitemap entry and no link but through
+/// the redirect 20, which the sitemap lists and page 4 links to.
+fn through_redirects() -> Store {
+    let store = store();
+    store
+        .connection()
+        .execute(
+            "DELETE FROM links WHERE target_url_id = 3 AND src_url_id IN (1, 3, 101)",
+            [],
+        )
+        .unwrap();
+    store
+}
+
+#[test]
+fn a_page_a_sitemap_entry_redirects_to_is_listed_and_one_a_link_redirects_to_is_linked() {
+    let store = through_redirects();
+    let out = report(&store, Report::Sitemap, |_| {});
+    let row = |n: u64| {
+        let at = column(&out.table, "page")
+            .iter()
+            .position(|p| p == &url(n))
+            .unwrap();
+        out.table.rows[at][2..4].to_vec()
+    };
+    assert_eq!(row(3), [text("redirect"), text("redirect")]);
+    assert_eq!(row(2), [text("direct"), text("direct")]);
+    // Listed, so neither unlisted nor, linked by way of page 4, an orphan.
+    let out = report(&store, Report::Unlisted, |_| {});
+    assert_eq!(column(&out.table, "page"), [url(4)]);
+    let out = report(&store, Report::Orphans, |_| {});
+    assert_eq!(column(&out.table, "page"), [url(7)]);
+}
+
+#[test]
+fn direct_wins_where_a_page_is_reached_both_ways() {
+    // Page 3 is listed by entries 3 and 20 and linked by 1 and, through 20, 4.
+    let out = report(&store(), Report::Sitemap, |_| {});
+    let at = column(&out.table, "page")
+        .iter()
+        .position(|p| p == &url(3))
+        .unwrap();
+    assert_eq!(out.table.rows[at][2..4], [text("direct"), text("direct")]);
 }
 
 #[test]

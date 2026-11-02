@@ -325,8 +325,8 @@ Every list below is **already ranked**; a loader needs to sort none of them.
 | `anchors_removed` | The pages of `run` that lost an anchor since `compared_with`, links still naming it, one row to a `page` and `anchor`, the most `links` first and then the most `pages`: the links to it, the distinct pages they are on and those pages as `linking_pages`, over every kind of link. A page that landed a redirect is the page it landed on. Empty where `compared_with` is `null`. |
 | `errors` | Every link whose outcome is `error`, apart from breakage: the target could not be asked, not necessarily wrong. `source_url` is the linking page's. |
 | `housekeeping.redirects` | The redirected links by landing URL, the most `links` first: `urls` distinct URLs reached it, `chain` is the hops the first took, and `pages` the pages whose links they are. `reason` is `pedantic_trailing_slash` on a landing whose links name a URL that differs from it only by a final `/`, which comes after every other row, else `null`: such a landing has two rows where other links reach it too. |
-| `housekeeping.orphans` | The pages a sitemap lists that no other page links to. |
-| `housekeeping.unlisted` | The pages absent from the sitemap of a root that read one. |
+| `housekeeping.orphans` | The pages a sitemap lists (an entry that redirects to a page lists it) that no other page links to. |
+| `housekeeping.unlisted` | The pages absent from the sitemap of a root that read one (an entry that redirects to a page lists it). |
 | `housekeeping.sitemap_entries` | The sitemap entries no page was fetched for, those whose `outcome` is not `ok` first: what the URL answered. The HTML says what the generator's sitemap guarantees where its profile has something to say: Antora writes one from what it publishes, so such an entry is a build or deploy fault. |
 | `housekeeping.roots_without_sitemap` | The roots that read no sitemap, whose pages cannot be unlisted. |
 | `housekeeping.unchecked` | The `unchecked` links by `reason` ([below](#why-a-link-is-unchecked)), and the distinct `targets` they name. |

@@ -43,19 +43,18 @@ pub(super) fn store() -> Store {
         )
         .unwrap();
     }
-    for (id, repo, root, listed) in [
-        (1, Some("r/one"), Some(ROOT), true),
-        (2, Some("r/two"), Some(ROOT), true),
-        (3, None, Some(ROOT), true),
-        (4, None, Some(ROOT), false),
-        (5, None, Some(OTHER), false),
-        (6, None, None, false),
+    for (id, repo, root) in [
+        (1, Some("r/one"), Some(ROOT)),
+        (2, Some("r/two"), Some(ROOT)),
+        (3, None, Some(ROOT)),
+        (4, None, Some(ROOT)),
+        (5, None, Some(OTHER)),
+        (6, None, None),
     ] {
         page(&store, 1, id, repo, root);
         conn.execute(
-            "UPDATE pages SET in_sitemap = ?, title = ?, source_url = ? WHERE url_id = ?",
+            "UPDATE pages SET title = ?, source_url = ? WHERE url_id = ?",
             params![
-                listed,
                 format!("Page {id}"),
                 repo.map(|r| format!("https://forge.test/{r}/{id}.adoc")),
                 id

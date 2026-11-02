@@ -6,12 +6,15 @@ copies the newest finished en-US crawl's database (`runs/*/en-us.duckdb`
 whose directory's `exit` reads 0) into a new `runs/en-us-<YYYYMMDD-HHMM>/`
 and crawls into the copy: the new run is the latest, and the digest's default
 `--from` (the finished crawl run before it) is the copied one. Each crawl so
-copies the last, and a database carries every run before it.
+copies the last, and a database carries every run before it. Where the copy is
+of a schema this build does not read (D43 refuses it, and a 0.x release
+migrates none), the crawl starts a new database instead, with one run and
+nothing to compare with.
 
 - `crawl` makes a release build, regenerates `sim/` (`sim.py`) and launches
   `bruce crawl --config bruce.toml` from there in its own session, so it
   outlives the terminal, and returns (`CLAUDE.md`, "Long-running processes").
-  The directory holds `en-us.duckdb`, `baseline` (the database copied),
+  The directory holds `en-us.duckdb`, `baseline` (the database copied, or `none` for a new one),
   `pgid`, `started`, `crawl.log`, `time.log` (`/usr/bin/time -v`), `exit`
   and `ended`, the last two written when the crawl ends. `crawl.log` is empty
   until then, the run line printing on exit. Stop it with `pkill -g <pgid>`;
@@ -58,6 +61,8 @@ NAME = "en-us"
 #: A review crawl's directory under `runs/` is this and its UTC minute.
 PREFIX = "en-us-"
 PORT = 8086
+#: A crawl directory's `baseline` when the database copied was of another schema.
+NEW = "none: the database copied is of another schema, so this one is new\n"
 
 
 class ReviewError(Exception):
@@ -149,16 +154,24 @@ def cargo_release() -> None:
         raise ReviewError("the release build failed")
 
 
-def opens(bruce: Path, db: Path) -> None:
-    """Refuses a database this build cannot open (a schema it does not
-    carry), before an hour's crawl finds out."""
+#: What `bruce` says of a database of another schema version (`Error::SchemaVersion`).
+SCHEMA_REFUSAL = "schema version"
+
+
+def opens(bruce: Path, db: Path) -> bool:
+    """Whether this build opens `db`, before an hour's crawl finds out: false
+    for a database of another schema version, the one refusal a crawl answers
+    by starting a new database. Any other failure raises."""
     done = subprocess.run(
         [str(bruce), "report", "stats", "--db", str(db)],
         capture_output=True,
         text=True,
     )
-    if done.returncode != 0:
-        raise ReviewError(f"{db} does not open: {done.stderr.strip()}")
+    if done.returncode == 0:
+        return True
+    if SCHEMA_REFUSAL in done.stderr:
+        return False
+    raise ReviewError(f"{db} does not open: {done.stderr.strip()}")
 
 
 def crawl(runs: Path, chosen: Path | None, now: datetime.datetime) -> Path:
@@ -185,7 +198,9 @@ def crawl(runs: Path, chosen: Path | None, now: datetime.datetime) -> Path:
     (run / "baseline").write_text(f"{source.resolve()}\n", encoding="utf-8")
     bruce = (REPO / BRUCE).resolve()
     try:
-        opens(bruce, run / DB)
+        if not opens(bruce, run / DB):
+            (run / DB).unlink()
+            (run / "baseline").write_text(NEW, encoding="utf-8")
     except ReviewError:
         shutil.rmtree(run)
         raise
@@ -240,7 +255,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     steps = parser.add_subparsers(dest="step", required=True)
-    c = steps.add_parser("crawl", help="launch a crawl into a copy of the last")
+    c = steps.add_parser("crawl", help="launch a crawl into a copy of the last (a new database across a schema change)")
     c.add_argument("--baseline", type=Path, help="the database to copy [default: the newest finished crawl's]")
     d = steps.add_parser("digest", help="write a finished crawl's digest")
     d.add_argument("dir", nargs="?", type=Path, help=f"the crawl's directory, relative to the repository [default: the newest {PREFIX}*]")
@@ -256,7 +271,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             now = datetime.datetime.now(datetime.timezone.utc)
             run = crawl(runs, args.baseline, now)
             pgid = (run / "pgid").read_text(encoding="utf-8").strip()
-            print(f"review: crawling into {run / DB}, a copy of {(run / 'baseline').read_text().strip()}")
+            kept = (run / "baseline").read_text(encoding="utf-8").strip()
+            print(
+                f"review: crawling into {run / DB}, "
+                + (kept if kept.startswith("none") else f"a copy of {kept}")
+            )
             print(f"review: process group {pgid}; stop it with `pkill -g {pgid}`")
             print("review: about 70 minutes; then `mise run digest` and `mise run serve`")
         elif args.step == "digest":

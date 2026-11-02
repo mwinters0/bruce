@@ -169,8 +169,6 @@ impl<'a> Tables<'a> {
                 p.source_repo,
                 p.source_ref,
                 p.source_path,
-                p.in_sitemap,
-                p.via_links,
                 p.root
             ])?,
             Row::Fact(f) => self

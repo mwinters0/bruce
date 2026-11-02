@@ -27,11 +27,6 @@ pub struct PageRow {
     pub source_repo: Option<String>,
     pub source_ref: Option<String>,
     pub source_path: Option<String>,
-    pub in_sitemap: bool,
-    /// Whether a link, not a seed or a sitemap, claimed the page. A listed
-    /// page is claimed by its sitemap first (D47), so this is false even where
-    /// links name it; whether anything links to a page is `links`' to say.
-    pub via_links: bool,
     /// The root whose scope claimed the page, as the root's canonical URL
     /// (`Root::canonical_url`); `None` for an allowlisted page, which no
     /// root's scope holds (D3).

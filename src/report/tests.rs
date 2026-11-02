@@ -41,8 +41,7 @@ pub(super) fn page(store: &Store, run: u64, id: u64, repo: Option<&str>, root: O
     let conn = store.connection();
     target(store, run, id, 200, "ok", None);
     conn.execute(
-        "INSERT INTO pages VALUES (?, ?, NULL, NULL, NULL, NULL, 'whole', 'generic', NULL, ?, NULL, ?, \
-         false, true, ?)",
+        "INSERT INTO pages VALUES (?, ?, NULL, NULL, NULL, NULL, 'whole', 'generic', NULL, ?, NULL, ?, ?)",
         params![run, id, repo, repo.map(|_| format!("{id}.adoc")), root],
     )
     .unwrap();

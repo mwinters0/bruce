@@ -44,7 +44,7 @@ The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-P
 
 Redirects as facts: [`../wip/roadmap-P14-redirects.md`](../wip/roadmap-P14-redirects.md).
 
-- [ ] **14.1** Discovery as facts: `pages.in_sitemap` and `via_links` dropped (a schema bump), `report_pages`' `listed` and `linked` derived from `links` and `final_url`, the reach reports and the digest's sitemap entries, orphans and unlisted reading them, D14 and D47 amended, KD38 struck, `review.py crawl` starting a new database across a schema change
+- [x] **14.1** Discovery as facts ([notes](../wip/roadmap-P14.1-discovery-notes.md)): `pages.in_sitemap` and `via_links` dropped (a schema bump), `report_pages`' `listed` and `linked` derived from `links` and `final_url`, the reach reports and the digest's sitemap entries, orphans and unlisted reading them, D14 and D47 amended, KD38 struck, `review.py crawl` starting a new database across a schema change
 - [ ] **14.2** The chain limit: `max_redirects` under `[default]` and `[host."…"]`, its policy rows, manual row and Housekeeping, `link_verdicts`' `too_many_redirects` past it, `target_moved` on a changed chain, D7 amended and an entry of its own
 
 ## Not started

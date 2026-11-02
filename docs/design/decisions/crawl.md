@@ -15,20 +15,23 @@ the page. Rejected: normalising the trailing slash, which servers do not; a dela
 content of its own.
 Code: `url::canonical`, `crawl::hops`. Evidence: `url::tests`, `crawl::hops::tests`.
 
-### D14 Discovery is sitemap and link-following both, and each page records which
-Each root's sitemap is discovered (D40) or set (docs.fp.o's is under its en-US root, I1). Recording both sources yields
-orphans (listed, with no inbound link) and unlisted pages (reachable, not listed). Each page records the root whose
-scope claimed it, and each run its roots, both canonical, so a root is its own target's `url`. Rejected: either source
-alone, which loses one of those reports; matching a page to its root by scope in SQL, which `include` globs (D44)
-defeat; the root as configured, which an escape or a stripped query fails to match.
-Code: `report::views`, `store::rows`.
+### D14 Discovery is sitemap and link-following both, and how a page was reached is read from the links
+Each root's sitemap is discovered (D40) or set (docs.fp.o's is under its en-US root, I1). Both sources yield orphans
+(listed, no inbound link) and unlisted pages (reachable, not listed). `report_pages` derives `listed` and `linked`,
+`'direct'`, `'redirect'` or NULL, from `sitemap` links and `report_inbound`'s through `final_url`: a page a sitemap
+entry reaches only by a redirect is listed, one linked only through a redirect no orphan. Each page records its root,
+each run its roots, both canonical, so a root is its own target's `url`. Rejected: either source alone; flags written
+by whichever target claimed the page, which a redirect's race decided; a redirecting entry not listing its landing,
+one defect twice; matching a page to its root by scope in SQL, which `include` globs (D44) defeat.
+Code: `report::views`. Evidence: `report::reach::tests`.
 
 ### D47 A run reads its sitemaps before any page, and each root links to its sitemaps
-A listed page is then claimed by its sitemap before a link can name it, so `pages.in_sitemap` holds for every listed
-page, at the cost of the files' time (69 on docs.fp.o, about a minute at its pace). A root links, `sitemap_file`, to
+Every listed URL is then claimed before a link can name it, so a stopped run's cut (D48) counts every listed page it
+lacks, and a listed page's plan is the sitemap's, never a link's, at the cost of the files' time (69 on docs.fp.o,
+about a minute at its pace). A root links, `sitemap_file`, to
 each `http(s)` top-level sitemap it names or found, an index to the files it lists, so a broken one shows as any broken
 link and "no sitemap" is per root; a probe that misses writes nothing, nothing having named it. Rejected: reading
-sitemaps beside the pages, `in_sitemap` left to a race; a target per failed probe; a `runs` column, per run and naming
+sitemaps beside the pages, which undercounts that cut; a target per failed probe; a `runs` column, per run and naming
 no broken file. Code: `crawl::Shared::discover`. Evidence: `crawl::tests::each_root_links_once_to_each_sitemap_it_read`.
 
 ### D46 Where a redirect lands is a target of its own, written by whoever claims it first

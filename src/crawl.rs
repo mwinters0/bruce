@@ -237,10 +237,6 @@ struct Item {
     url: Url,
     /// The kind of the link that found it; a root's URL counts as an anchor.
     kind: Kind,
-    /// Found by a link, not seeded.
-    via_links: bool,
-    /// Listed by a sitemap.
-    in_sitemap: bool,
     plan: Plan,
     form: Canonical,
 }
@@ -370,8 +366,6 @@ where
                 listed.push(Item {
                     url: root.url.clone(),
                     kind: Kind::Anchor,
-                    via_links: false,
-                    in_sitemap: false,
                     plan,
                     form,
                 });
@@ -432,7 +426,7 @@ where
             for url in seeds {
                 let (plan, form) = shared.frontier.plan(&url, Kind::Anchor);
                 if shared.frontier.claim(form.id()) {
-                    items.extend(shared.dispatch(url, Kind::Anchor, false, plan, form)?);
+                    items.extend(shared.dispatch(url, Kind::Anchor, plan, form)?);
                 }
             }
             Ok(items)
@@ -623,8 +617,6 @@ where
         Item {
             url,
             kind: Kind::SitemapFile,
-            via_links: false,
-            in_sitemap: false,
             plan: Plan::Sitemap { depth },
             form,
         }
@@ -862,7 +854,7 @@ where
         if owns && let End::Answered(answer) = &end {
             if let Some(page) = &answer.page {
                 let content_type = answer.content_type.as_deref();
-                self.write_page(&item, plan, &form, content_type, page, &mut found)?;
+                self.write_page(plan, &form, content_type, page, &mut found)?;
             }
             if let (Some(listed), Plan::Sitemap { depth }) = (&answer.sitemap, plan) {
                 self.write_sitemap(depth, &form, listed, &mut found)?;
@@ -924,8 +916,6 @@ where
                             None => found.push(Item {
                                 url: bare,
                                 kind: Kind::Sitemap,
-                                via_links: false,
-                                in_sitemap: true,
                                 plan,
                                 form: target_form,
                             }),
@@ -965,15 +955,8 @@ where
     /// facts and links of the page `form` names. An allowlisted page is one hop
     /// deep: its links were never followed, and recording them would have
     /// orphan and inbound reports count a site nobody crawls.
-    // deficiency: KD38 `in_sitemap` and `via_links` are `item`'s, the target
-    // that claimed the page: for a page a redirect lands on, the redirecting
-    // URL's. A page a sitemap entry redirects to is listed where that
-    // redirect's hops end before a link to the page is claimed, and unlisted
-    // where they end after, so two runs of one site can disagree. Deriving the
-    // flags from `links` and `targets.final_url` would close it.
     fn write_page(
         &self,
-        item: &Item,
         plan: Plan,
         form: &Canonical,
         content_type: Option<&str>,
@@ -999,8 +982,6 @@ where
             source_repo: source.map(|s| s.repo.clone()),
             source_ref: source.and_then(|s| s.git_ref.clone()),
             source_path: source.map(|s| s.path.clone()),
-            in_sitemap: item.in_sitemap,
-            via_links: item.via_links,
             root: match plan {
                 Plan::Page { root } => Some(self.frontier.config().roots[root].canonical_url()),
                 _ => None,
@@ -1040,7 +1021,7 @@ where
                     let (plan, target_form) = self.frontier.plan(&bare, link.kind);
                     if self.frontier.claim(target_form.id()) {
                         let (kind, form) = (link.kind, target_form.clone());
-                        found.extend(self.dispatch(bare, kind, true, plan, form)?);
+                        found.extend(self.dispatch(bare, kind, plan, form)?);
                     }
                     (target_form.id(), target.fragment().map(str::to_owned))
                 }
@@ -1094,7 +1075,6 @@ where
         &self,
         url: Url,
         kind: Kind,
-        via_links: bool,
         plan: Plan,
         form: Canonical,
     ) -> Result<Option<Item>, Error> {
@@ -1114,8 +1094,6 @@ where
                 return Ok(Some(Item {
                     url,
                     kind,
-                    via_links,
-                    in_sitemap: false,
                     plan,
                     form,
                 }));
@@ -1171,7 +1149,7 @@ where
                     let (plan, form) = shared.frontier.plan(&bare, Kind::Anchor);
                     link.target_url_id = form.id();
                     if shared.frontier.claim(form.id()) {
-                        items.extend(shared.dispatch(bare, Kind::Anchor, true, plan, form)?);
+                        items.extend(shared.dispatch(bare, Kind::Anchor, plan, form)?);
                     }
                 }
                 shared.rows.send(Row::Link(link))?;
@@ -1211,7 +1189,7 @@ where
             let mut items = Vec::new();
             for u in rest {
                 let plan = shared.frontier.beyond(&u.form, u.kind);
-                items.extend(shared.dispatch(u.url, u.kind, true, plan, u.form)?);
+                items.extend(shared.dispatch(u.url, u.kind, plan, u.form)?);
             }
             Ok(items)
         })
@@ -1232,7 +1210,7 @@ where
                     return Ok(items);
                 };
                 for (o, plan) in judged.into_iter().take_while(|_| !shared.stopping()) {
-                    items.extend(shared.dispatch(o.url, o.kind, true, plan, o.form)?);
+                    items.extend(shared.dispatch(o.url, o.kind, plan, o.form)?);
                 }
                 Ok::<_, Error>(items)
             })

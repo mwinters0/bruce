@@ -543,7 +543,7 @@ pub(super) fn sitemap_notes(
 pub(super) fn sitemap_entries(conn: &Connection, run: RunId) -> Result<Table, Error> {
     let mut sql = Sql::new(
         "SELECT page, outcome, reason, status::INTEGER AS status FROM report_sitemap \
-         WHERE via_links IS NULL AND run_id = ",
+         WHERE entry AND run_id = ",
     );
     sql.bind(run.0).push(" ORDER BY outcome = 'ok', page");
     sql.fetch(conn)

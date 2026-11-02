@@ -44,7 +44,7 @@ fn run(store: &Store, n: u64, baseline: Option<RunId>, finished: bool) -> RunId 
         .unwrap();
     }
     for sql in [
-        "INSERT INTO pages VALUES (?, 1, 'T', 'text/html', 5, NULL, 'whole', 'generic', NULL, NULL, NULL, NULL, true, false, NULL)",
+        "INSERT INTO pages VALUES (?, 1, 'T', 'text/html', 5, NULL, 'whole', 'generic', NULL, NULL, NULL, NULL, NULL)",
         "INSERT INTO page_facts VALUES (?, 1, 'k', 'v')",
         "INSERT INTO anchors VALUES (?, 1, 'x', 'h2', 'content')",
         "INSERT INTO links VALUES (?, 1, 1, 'x', '#x', 'anchor', NULL)",
@@ -412,7 +412,7 @@ fn two_runs() -> (Store, RunId, RunId) {
          [{'url': 'https://a.test/old', 'status': 301, 'refresh': false}], 'ok', NULL, NULL, 5, 'live')",
         "INSERT INTO targets VALUES (1, 11, 'https://a.test/new', 200, NULL, [], 'ok', NULL, NULL, 5, 'live')",
         "INSERT INTO targets VALUES (1, 12, 'https://a.test/gone', 404, NULL, [], 'broken_url', 'status', NULL, 5, 'live')",
-        "INSERT INTO pages VALUES (1, 11, 'New', 'text/html', 5, NULL, 'whole', 'generic', NULL, NULL, NULL, NULL, true, false, NULL)",
+        "INSERT INTO pages VALUES (1, 11, 'New', 'text/html', 5, NULL, 'whole', 'generic', NULL, NULL, NULL, NULL, NULL)",
         "INSERT INTO page_facts VALUES (1, 11, 'k', 'v')",
         "INSERT INTO anchors VALUES (1, 11, 'x', 'h2', 'content')",
         "INSERT INTO links VALUES (2, 20, 10, 'x', '/old#x', 'anchor', NULL)",
