@@ -58,9 +58,9 @@ Settled 2026-11-01 (maintainer). **P9 follows redirects read as facts**
 and a chain past a site's configured length broken (D100): the guide sets
 the limit for docs.fp.o, and the gate's `fail` list decides whether it fails
 a content repo's CI. The limit is `max_redirects`, counting every hop, a
-delay-0 refresh included (D7, D100), so a CI build's site-root meta refresh
-is a hop: a guide limit of 0 breaks a
-built page's home link unless 9.2 has made the prefix not built.
+delay-0 refresh included (D7, D100), so production's home link is three
+hops (below, "Facts the grilling found") and a guide limit under 3 breaks it
+on every page, the baseline's included.
 
 ## The guide's hash scope is the profile's region
 
@@ -74,15 +74,33 @@ extractor's grilling's intent that the guide show a whole-page scope less
 
 ## A partial build's site-root refresh is not the production page
 
-Settled 2026-10-21. **Where a build's `index.html` at the prefix is a
-meta refresh, the gate treats the prefix as not built**, so a built page's
-home link is answered from the baseline (D22's "under the prefix and not
-built") and is not an introduced `redirected` row. Today 236 of quick-docs's
-239 redirected rows are that link (a quick-docs CI run, no longer kept),
-burying a real one. This amends D22 for that one file; the slice that lands
-it writes the amendment. Rejected: the guide telling a repo to expect the
-rows; a report filter dropping redirected rows to the prefix, which hides the
-symptom and leaves the run's data wrong.
+Settled 2026-10-21, amended 2026-11-02 (maintainer). **Where a build's
+`index.html` at the prefix is a meta refresh, the gate treats the prefix as
+not built**, so a link to it is answered from the baseline (D22's "under the
+prefix and not built"), landing where production's does, its hops and its
+fragment checked as production's. This amends D22 for that one file; the
+slice that lands it writes the amendment. It removes no gate row: the
+build's refresh and production's `/en-US/` both redirect, so what keeps a
+built page's home link out of `redirected` is the key (next section).
+Rejected: a report filter dropping redirected rows to the prefix, which
+hides the symptom and leaves the run's data wrong.
+
+## The gate matches a link with its final `/` toggled
+
+Settled 2026-11-02 (maintainer). **The gate's key matches a CI link to a
+baseline link from the same page whose target differs from its own only by
+a final `/`**, wherever it keys: the `baseline` state, `introduced` and the
+breakage already in the baseline, and `redirected`. Production's `site.url`
+has no final `/`, so its pages link home at `.../en-US`, where a partial
+build, having none (I11), links `.../en-US/`; both are redirected, and 236 of
+a quick-docs CI run's 239 redirected rows were that link, burying a real
+one. A match hides a CI link only where the baseline's was in the same
+state, so a `/foo` that 404s where the baseline's `/foo/` answered is still
+introduced. Rejected: the toggle in `redirected` alone, leaving the home link
+introduced under a `max_redirects` that breaks it; matching a redirected
+link by its landing, which hides an edit from one outdated href to another
+landing alike, the edit `redirected` exists to show; the guide telling a
+repo to expect the rows, or to build with `site.url` (I15, D53).
 
 ## The site-root refresh rule is `ci`'s
 
@@ -448,8 +466,10 @@ evidence** and lands no code, so each later slice meets what it found.
    copied many times under `prune --keep 30`; whether Anubis challenges a
    GitHub runner, a throwaway workflow in the deployment repo fetching a
    sample of docs.fp.o and forge pages under the guide's User-Agent.
-2. **9.2 The site-root refresh**: `ci`, D22 amended, the concept map's
-   clause, `scripts/e2e.py`'s `UNCHANGED_REDIRECTED` reversed.
+2. **9.2 The site-root refresh and the gate's key**: the final `/` toggled
+   in the gate's key, `ci` serving the refresh at its own path, D22
+   amended, the concept map's clause, `scripts/e2e.py`'s
+   `UNCHANGED_REDIRECTED` empty and `PLANTED_REDIRECTED` the alias's row alone.
 3. **9.3 Exit status 3**: the typed refusal in `store::schema`, the status in
    `cli`, the manuals' exit tables.
 4. **9.4 The guide's scheduling, publishing and delivery**: the script, the
@@ -529,7 +549,10 @@ Found 2026-10-21, for the decisions above.
   build's `rebuild-site.py`. The proxies set `anubis: true`
   (`playbooks/include/proxies-websites.yml`); the en-US crawls and curl have
   not met its challenge, a browser-like User-Agent having.
-- **docs.fp.o's `/` is a 200 meta refresh to `./en-US/`.** The en-US run's
+- **docs.fp.o's `/` is a 200 meta refresh to `./en-US/`, and `/en-US/` one
+  to `/en-US/docs/`.** `/en-US`, the home link of all 2,341 pages of the
+  2026-11-02 en-US run, 301s to `http://…/en-US/` and 302s back to https
+  before that refresh (`runs/en-us-20261102-2011/en-us.duckdb`). The en-US run's
   docs.fp.o targets begin with 72 distinct first segments: the locales,
   2,307 targets apiece, and a few others (`infra`, `f28`, `fedora-project`),
   each asked once (D10, D67).
