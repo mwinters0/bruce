@@ -44,7 +44,7 @@ The crate is `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`), and `THIRD-P
 
 The deployment guide: [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md).
 
-- [ ] **9.1** Evidence: a fresh en-US crawl under schema 7, detached; whether a DB pruned nightly holds a steady size under `prune --keep 30`; whether Anubis challenges a GitHub runner, from a throwaway workflow in the deployment repo
+- [x] **9.1** Evidence: a fresh en-US crawl under schema 7 (1:16:15, 295 MiB, kept at `runs/en-us-20261102-2011/`), a DB pruned nightly under `prune --keep 30` holding a steady size (no fresh copy needed), and Anubis not challenging a GitHub runner under the guide's User-Agent (I27): [notes](../wip/roadmap-P9.1-evidence-notes.md)
 - [ ] **9.2** The site-root refresh: `ci` serving a top `index.html` meta refresh at its own path, D22 amended, the concept map's clause, `e2e.py`'s `UNCHANGED_REDIRECTED` reversed
 - [ ] **9.3** Exit status 3: the typed schema refusal in `store::schema`, mapped in `cli` for `crawl`, `check-dir`, `report`, `prune` and `export-baseline`, the manuals' exit tables
 - [ ] **9.4** The guide's scheduling, publishing and delivery: the script, the systemd units, `bruce-locales.toml`, `per_second = 3`, the staged directory with `SHA256SUMS` and names by content, retention and the schema archive, the digest's comparison, the pull script, the workflows' flowchart; `sim` checking the scripts, `e2e` running the pull

@@ -6,7 +6,7 @@ discovery and never reused. Walk this file whenever Antora's version changes (I8
 names it), or when docs.fp.o's build or hosting moves: a change here surfaces as wrong verdicts,
 not as an error.
 
-<!-- invariant-watermark: I26 -->
+<!-- invariant-watermark: I27 -->
 
 ### I1 docs.fp.o's sitemap is an index at `/en-US/sitemap.xml`, and lists no translated page
 - **Claim.** `/sitemap.xml` is 404, and robots.txt names no `Sitemap:`. `/en-US/sitemap.xml` is
@@ -358,3 +358,19 @@ not as an error.
 - **Verified against.** Antora 3.2.0, 2026-11-01.
 - **Relied on by.** D19 (`profile::antora::module_and_path`).
 - **Re-verify.** `curl -s https://gitlab.com/antora/antora/-/raw/v3.2.0/packages/content-classifier/lib/classify-content.js | grep -n 'implicitRoot\|hasModulesDir'; curl -s https://docs.antora.org/assembler/latest/ | grep -o 'edit/main/[^"]*'`
+
+### I27 docs.fp.o and the forge challenge a browser-like User-Agent with Anubis, and not a GitHub runner's address
+- **Claim.** The proxies in front of docs.fp.o and forge.fedoraproject.org answer a request under a Chrome `Mozilla/5.0`
+  User-Agent with a 4 to 5 KB Anubis challenge page (status 200), and answer the guide's `bruce-fedora-docs/1.0`
+  and curl's own with the page. The choice is made on the User-Agent, not on the client's address: a GitHub-hosted
+  runner is not challenged under the first two.
+- **Proof.** Observed behaviour: a throwaway workflow on a GitHub-hosted runner (20.55.213.112, ubuntu-24.04),
+  40 requests, `runs/p9.1-evidence/anubis-probe.log`. That the proxies run Anubis is upstream source
+  (`infra/ansible`, `playbooks/include/proxies-websites.yml`, `anubis: true`).
+- **Scope limit.** One runner address and one night; Anubis's rules are the proxies' to change, and a rate or
+  an address reputation rule would challenge a client this does not. The forge's challenge was not read past
+  the first page.
+- **Verified against.** docs.fp.o and forge.fedoraproject.org, 2026-11-02, from the runner, and docs.fp.o from a workstation.
+- **Relied on by.** The deployment guide's `user_agent` and the dev deployment's nightly crawl and CI fetches on
+  GitHub Actions (P9).
+- **Re-verify.** `for ua in 'bruce-fedora-docs/1.0 (+https://docs.fedoraproject.org/)' 'Mozilla/5.0 (X11; Linux x86_64) Chrome/130.0 Safari/537.36'; do curl -s -A "$ua" https://docs.fedoraproject.org/en-US/quick-docs/ | grep -ci anubis; done` prints 0, then a positive count.
