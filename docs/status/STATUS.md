@@ -52,6 +52,7 @@ The deployment guide: [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-depl
 - [x] **9.6** The dev deployment: `v0.3.0-rc.1`, the deployment repo's nightly workflow (scheduled, `KEEP_JSON=30`) and orphan Pages branch, served at `https://mwinters0.github.io/bruce-fedora-docs-ci/`, the crawl's time on Actions (1:12:41) and the guide's figures corrected (the digest's size above all; `runs/p9.6/`): [notes](../wip/roadmap-P9.6-dev-deployment-notes.md)
 - [ ] **9.7** The closing evidence: a quick-docs mirror (a temporary repository the round creates) running the guide's workflow against the Pages URL, a planted break failing and a clean change passing. Landed: the mirror, the workflow end to end on Actions and the planted break failing. Not delivered: the clean change fails on a link it never touched, its pass waiting on 9.13: [notes](../wip/roadmap-P9.7-closing-evidence-notes.md)
 - [x] **9.11** The guide's view: docs.fp.o's palette over `bruce:digest.html`, named by the script's `VIEW` (`--view`), checked by `sim` and `e2e`, carried by the deployment repo, which publishes `digest-fedora.html`: [notes](../wip/roadmap-P9.11-guide-view-notes.md)
+- [ ] **9.11.1** The view under the contract's names: the script publishing a view's file as `digest.<ext>` and `digests/<stem>-<date>.<ext>`, refusing one with no extension or `.json` before it crawls; `sim`, `deployment`, `e2e`, the deployment repo and its README following; before 9.12
 - [ ] **9.12** The published directory's index: `index.html` of the current digests, the fixed-name files and `SHA256SUMS`, written by the guide's script under `INDEX` (off by default, on in the deployment repo), listed in `SHA256SUMS`; before 9.8
 - [ ] **9.13** An xref whose derived URL is `broken_url` kept on its own page, as production renders it (KD40, amending D57); then 9.7's pass on the mirror's `clean-change`; before 9.8
 - [ ] **9.8** The maintainer's review of the en-US reports, the digest included: no code
@@ -75,9 +76,3 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-- **The guide's view replaces `digest.html` with `digest-fedora.html`** (9.11). The script's `VIEW` names one view and
-  writes that alone, a view in a file being published as `digest-<file>`, so the dev deployment's latest HTML moves
-  from `.../digest.html` to `.../digest-fedora.html`, and 9.12's index must list the file it finds. Why: writing
-  `--view default` beside it would double each night's 10 MB of HTML against Pages' 1 GB. Reconsidering changes
-  whether the guide's view is named `html` for a `digest.html`-compatible name, which `--view` cannot give a file
-  today, or the built-in view is written too.

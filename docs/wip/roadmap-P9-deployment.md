@@ -333,7 +333,10 @@ found that day") finds last night's whole set, and one handed a fresh one
 fetches names no cache holds. **That holds for CI's three files; the digests
 are listed too, the latest under fixed names, so a puller may fail its check in
 those ten minutes and retry on its next timer** (maintainer, 2026-11-03,
-"Review of the `SHA256SUMS` call" that day). A puller knows there is something new when
+"Review of the `SHA256SUMS` call" that day). **A digest is published under
+`digest.<ext>` and dated `digests/<stem>-<date>.<ext>`, whatever file its view is in**, the
+script refusing a view with no extension or a `.json` one before it crawls (maintainer,
+2026-11-03, "Review of the guide's view's published name" that day). A puller knows there is something new when
 `SHA256SUMS` has changed. CI downloads the baseline to check it and hands
 `check-dir` the path. Rejected: waiting and retrying on a mismatch, a ten
 minutes the forge's ten-minute job cannot spend; failing a PR checked in the
@@ -505,6 +508,10 @@ evidence** and lands no code, so each later slice meets what it found.
      with `--view`; `sim` extracting it, `e2e` rendering the fixture digest
      through it; the deployment repo carrying it. 9.8 reviews the digest as the
      deployment publishes it.
+   - **9.11.1 The view under the contract's names**, earned 2026-11-03 and done before
+     9.12: 9.11 published `digest-fedora.html`; the script renames each view's file to
+     the names above, refuses the views it cannot name, and the checks, the deployment
+     repo and its README follow.
    - **9.12 The published directory's index**, admitted 2026-11-03 and done before
      9.8: the guide's script, under an `INDEX` variable off by default and set by
      the deployment repo's `nightly.yml`, writes `index.html` in its staging, after
