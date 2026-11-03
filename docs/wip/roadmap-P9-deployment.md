@@ -497,7 +497,8 @@ evidence** and lands no code, so each later slice meets what it found.
    guide corrected where they show it wrong.
 7. **9.7 The closing evidence**: a quick-docs mirror running the guide's
    workflow against the Pages URL, a planted break failing and a clean change
-   passing.
+   passing. The mirror is a snapshot, the forge's `main` at one commit plus the
+   workflow's, never synced: the two runs meet one night's baseline.
 8. **9.8 The maintainer's review of the en-US reports**, the digest
    included: no code; the verdict and what it spawns in the notes.
 9. **9.9 The every-locale crawl**, weekly on the maintainer's machine after
@@ -510,8 +511,15 @@ evidence** and lands no code, so each later slice meets what it found.
 
 **A round commits and pushes to the deployment repo**, its settings
 (Pages, the schedule) included (maintainer, 2026-11-02). Every tag push
-(9.6, 9.10) and every new repository (9.7's mirror) is the maintainer's: a
-round stops there, as at 9.8's verdict.
+(9.6, 9.10) is the maintainer's: a round stops there, as at 9.8's verdict.
+**A round may create the repositories P9's evidence needs, 9.7's mirror among
+them, and push and open pull requests on them, each deleted at P9's wrap**
+(maintainer, 2026-11-03); the deployment repo is not one of them. The round
+creating one lists its full name under STATUS's P9 progress; the wrap checks each
+listed repository's name, description and creation date against the record and
+stops with one `gh repo delete` per repository for the maintainer to run, the
+token holding no `delete_repo`. Rejected: granting that scope, which reaches every
+repository on the account.
 
 ## Facts the grilling found
 

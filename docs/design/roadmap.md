@@ -16,6 +16,7 @@ never reused.
 |---|---|---|
 | P1–P8, P10, P11, P14 | **Struck** at the keystones of 2026-10-21 to 2026-11-02 | their decisions are [`decisions.md`](decisions.md)'s |
 | P9 — the deployment guide | Current; sliced, its checklist in [`../status/STATUS.md`](../status/STATUS.md) | [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md) |
+| P17 — the CI workflow on Forgejo Actions | Sketched; not grilled | this file, below |
 | P15 — what a repo owns, for every site | Sketched; not grilled | this file, below |
 | P16 — issues for broken links | Sketched; not grilled | this file, below |
 | P12 — compiled profiles for other generators | Sketched; not grilled | this file, below |
@@ -80,6 +81,17 @@ A standing rule is added only with the maintainer, and carries its check.
 ## P9 — The deployment guide
 
 Specified: [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-deployment.md).
+
+## P17 — The CI workflow on Forgejo Actions
+
+The guide's CI workflow run on Forgejo Actions, the Fedora forge's, as 9.7 runs it
+on GitHub: a planted break failing and a clean change passing, against the dev
+deployment's published directory. Out of P9's scope and after its GitHub evidence
+(maintainer, 2026-11-03); until then the guide's claim that the workflow runs on
+both forges is measured on GitHub alone. The forge's runners are per-org and capped
+at ten minutes (P9's spec, "Facts the grilling found"), and whether its runner sets
+the `GITHUB_*` variables the checkout step reads is unmeasured. Which Forgejo host
+and runner, and whether one workflow still serves both forges, are the grilling's.
 
 ## P15 — What a repo owns, for every site
 
