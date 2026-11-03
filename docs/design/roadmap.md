@@ -89,8 +89,8 @@ on GitHub: a planted break failing and a clean change passing, against the dev
 deployment's published directory. Out of P9's scope and after its GitHub evidence
 (maintainer, 2026-11-03); until then the guide's claim that the workflow runs on
 both forges is measured on GitHub alone. The forge's runners are per-org and capped
-at ten minutes (P9's spec, "Facts the grilling found"), and whether its runner sets
-the `GITHUB_*` variables the checkout step reads is unmeasured. Which Forgejo host
+at ten minutes (P9's spec, "Facts the grilling found"); what Forgejo's runners
+do with the workflow, read off its source but never run, is the inbox's. Which Forgejo host
 and runner, and whether one workflow still serves both forges, are the grilling's.
 
 ## P15 — What a repo owns, for every site
