@@ -32,10 +32,11 @@ grilling, spec amendment and a numbered slice.
 **Ledger lines stay one line each.** The detail lives in the dated history
 entry each line points at.
 
-Allocated so far: M1–M44. <!-- out-of-band-watermark: M44 -->
+Allocated so far: M1–M45. <!-- out-of-band-watermark: M45 -->
 
 ## The ledger
 
 | Item | Date | What changed | Blocks | Why |
 |---|---|---|---|---|
 | M44 | | `e2e.check_workflow` parses every workflow under `.github/workflows/` with js-yaml as it does the guide's, the steps held equal to `workflows.steps`; `.github/workflows/` joins `E2E_READS` |  | [2026-11-03](../status/history/2026-11-03.md), "Review of the CI workflow's YAML parse" |
+| M45 | | The deployment repo's `nightly.yml` sets `KEEP_JSON=30`, and its `bruce-nightly.sh` is the guide's again (`KEEP_JSON` defaulting to 90) | P9 | [2026-11-03](../status/history/2026-11-03.md), "Review of the dev deployment's JSON retention" |

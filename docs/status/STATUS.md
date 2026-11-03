@@ -70,10 +70,3 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-- **The guide's `KEEP_JSON` stays 400 though a night's JSON is 5.4 MB.** The spec
-  (`../wip/roadmap-P9-deployment.md`, "Schema changes and retention") sized 13 months of JSON at
-  0.7 MB a night; the dev deployment's first digest is 5.4 MB (`runs/p9.6/sizes.txt`), so the
-  default holds 2.2 GB, which a disk takes and Pages' 1 GB does not. I corrected the guide's
-  figures and had only the dev deployment's workflow set `KEEP_JSON=60`, leaving the maintainer's
-  13 months as the default. Reconsidering means lowering the default, or shrinking the JSON
-  (one 403 target is 2.3 MB of it as repeated rows), which is a digest change and D64's `Reopens`.

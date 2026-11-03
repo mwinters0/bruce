@@ -139,8 +139,9 @@ locales it skips.
 **The every-locale crawl's DB, digest and baseline stay on the maintainer's
 machine** until 9.9 measures its digest (maintainer, 2026-11-02); the guide
 publishes them as a second directory, `locales/`, only if they fit Pages'
-1 GB beside 30 nights of en-US's. Rejected: publishing from the start, on a
-size nobody has measured.
+1 GB beside en-US's, each keeping at least a week (above, "Schema changes and
+retention"). Rejected: publishing from the start, on a size nobody has
+measured.
 
 **Runs stay en-US only until the maintainer has judged the reports
 acceptable on en-US runs** (maintainer, 2026-10-21), so **the every-locale
@@ -267,11 +268,16 @@ notes, which an unattended job cannot follow; migrations.
 **What grows is bounded by count** (maintainer, 2026-11-02): a history DB by
 `prune --keep 30` nightly and `--keep 8` for the weekly every-locale crawl
 (two months, its size unmeasured); the dated digests in the published
-directory, **30 nights of HTML and other views and 13 months of JSON**
-(maintainer, 2026-11-02), the JSON being the report a loader keeps
-(`../manual/digest.md`), some 450 MB on Pages with two nights of binary and
-baseline; one archived DB, the last schema's, deleted at
-the next change; the Pages branch by its single commit. **The scheduling slice
+directory, **30 nights of HTML and other views and 90 of JSON**
+(maintainer, 2026-11-03), the JSON being the report a loader keeps
+(`../manual/digest.md`), some 850 MB on Pages with two nights of binary and
+baseline at 9.6's sizes, so the guide's defaults fit Pages and still show the
+two counts apart; one archived DB, the last schema's, deleted at
+the next change; the Pages branch by its single commit. **A published
+directory outgrowing its host keeps fewer nights, and the JSON keeps every
+row** (maintainer, 2026-11-03); the dev deployment keeps its JSON as long as
+its views, and never less than a week of either. Rejected: a JSON shrunk to
+fit a host. **The scheduling slice
 first measures whether a DB pruned nightly holds a steady size**, and if it
 does not, the script copies the DB fresh after pruning.
 

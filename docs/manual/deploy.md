@@ -273,7 +273,7 @@ and a runner with no disk to keep.
 | `KEEP` | `30` | The runs the database keeps (`bruce prune --keep`). Empty keeps no history, and the job does not prune. |
 | `NAME` | `bruce` | The digest files' stem, so two jobs' digests can share a directory. |
 | `KEEP_VIEWS` | `30` | The nights of digest kept in HTML and every other view. |
-| `KEEP_JSON` | `400` | The nights of digest kept as JSON: about 13 months. |
+| `KEEP_JSON` | `90` | The nights of digest kept as JSON: about three months. |
 | `DELIVER` | none | A command run with `PUB` once it is staged ([below](#delivering-the-results)). |
 
 ```bash file=bruce-nightly.sh
@@ -291,7 +291,7 @@ PUB=${PUB%/}
 KEEP=${KEEP-30}
 NAME=${NAME:-bruce}
 KEEP_VIEWS=${KEEP_VIEWS:-30}
-KEEP_JSON=${KEEP_JSON:-400}
+KEEP_JSON=${KEEP_JSON:-90}
 DELIVER=${DELIVER:-}
 
 # The first failure's status is the job's, once it has done what it still can.
@@ -614,12 +614,11 @@ unattended:
   a steady size once it holds the thirty (`prune` returns almost nothing to the
   file, and DuckDB reuses the freed blocks).
 - **The dated digests**, by `KEEP_VIEWS` and `KEEP_JSON`: 30 nights of HTML and
-  of any other view, and 13 months of JSON, the report a loader keeps
+  of any other view, and 90 nights of JSON, the report a loader keeps
   ([`digest.md`](digest.md)). An en-US night adds about 10 MB of HTML and 5.4 MB
-  of JSON, so at the defaults the directory approaches 2.5 GB, nearly all of it
-  the JSON. A disk holds that; GitHub Pages' 1 GB does not, and a deployment
-  publishing there sets `KEEP_JSON=60`, which with two nights of binary and
-  baseline leaves it near 700 MB.
+  of JSON, so at the defaults, with two nights of binary and baseline, the
+  directory is some 850 MB, inside GitHub Pages' 1 GB. A directory outgrowing
+  its host keeps fewer nights; one on a disk may keep more JSON.
 - **The archive of a database of another schema**, one, replaced by the next.
 
 ### A schema change
