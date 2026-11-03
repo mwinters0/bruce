@@ -9,6 +9,7 @@ change, a failing digest, retention) are exercised without a crawl;
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -287,6 +288,105 @@ class Pull(unittest.TestCase):
 
     def test_no_sums_to_fetch_fails_the_pull(self) -> None:
         self.assertEqual(self.pull().returncode, 1)
+
+
+class CiWorkflow(unittest.TestCase):
+    """The guide's CI workflow, its fetch and check steps run on their own: the build is
+    Antora's and `e2e.py` runs it."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.guide = deployment.extract(deployment.REPO / "docs/manual/deploy.md", self.tmp / "guide")
+        self.pub = self.tmp / "pub"
+        self.pub.mkdir()
+        self.ws = self.tmp / "ws"
+
+    def publish(self, baselines: int = 1, bad: str | None = None) -> str:
+        """A published directory of the contract's three files by content; returns its URL."""
+        binary = self.tmp / "bruce"
+        binary.write_text("#!/bin/sh\n")
+        deployment.release_archive(binary, self.pub / "bruce.tar.gz")
+        lines = []
+        names = [
+            ("bruce-{}.tar.gz", (self.pub / "bruce.tar.gz").read_bytes()),
+            ("config-{}.toml", b"# the config\n"),
+            *[("baseline-{}.duckdb.gz", f"baseline {i}".encode()) for i in range(baselines)],
+        ]
+        for pattern, body in names:
+            sha = hashlib.sha256(body).hexdigest()
+            name = pattern.format(sha[:16])
+            (self.pub / name).write_bytes(body)
+            lines.append(f"{sha}  {name}\n")
+            if bad and pattern.startswith(bad):
+                (self.pub / name).write_bytes(body + b"!")
+        (self.pub / "SHA256SUMS").write_text("".join(lines))
+        server = deployment.serve_directory(self.pub, 0)
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        return f"http://127.0.0.1:{server.server_address[1]}"
+
+    def fetch(self, url: str) -> subprocess.CompletedProcess[str]:
+        shutil.rmtree(self.ws, ignore_errors=True)
+        return deployment.ci_job(self.guide, self.ws, {"PUB_URL": url}, only=[deployment.FETCH_STEP])
+
+    def test_the_env_is_the_workflows_own_and_a_comment_is_skipped(self) -> None:
+        env = deployment.workflow_env("jobs:\n  j:\n    env:\n      # why\n      A: x y\n      B: 1\n    steps:\n")
+        self.assertEqual(env, {"A": "x y", "B": "1"})
+        guide = deployment.workflow_env(deployment.workflow_text(self.guide))
+        for key in ("PUB_URL", "PREFIX", "PLAYBOOK", "SITE_DIR", "ANTORA_VERSION", "ANTORA_DIR"):
+            self.assertIn(key, guide)
+
+    def test_the_fetch_takes_the_three_files_by_content_and_unpacks_the_binary(self) -> None:
+        done = self.fetch(self.publish())
+        self.assertEqual(done.returncode, 0, done.stderr)
+        for name in ("bruce.toml", "baseline.duckdb.gz", "bin/bruce"):
+            self.assertTrue((self.ws / "bruce-ci" / name).is_file(), name)
+
+    def test_a_file_failing_its_sum_fails_the_job_as_could_not_run(self) -> None:
+        for kind in ("bruce-", "config-", "baseline-"):
+            with self.subTest(kind):
+                done = self.fetch(self.publish(bad=kind))
+                self.assertEqual(done.returncode, 2, done.stderr)
+                self.assertIn("fails its sum", done.stderr)
+                self.assertIn("says nothing of the change", done.stderr)
+
+    def test_no_directory_and_an_ambiguous_one_fail_the_job_as_could_not_run(self) -> None:
+        done = self.fetch(self.publish() + "/nothing")
+        self.assertEqual(done.returncode, 2, done.stderr)
+        self.assertIn("no SHA256SUMS", done.stderr)
+        self.pub.joinpath("SHA256SUMS").unlink()
+        done = self.fetch(self.publish(baselines=2))
+        self.assertEqual(done.returncode, 2, done.stderr)
+        self.assertIn("no single baseline", done.stderr)
+
+    def check(self, status: int) -> subprocess.CompletedProcess[str]:
+        shutil.rmtree(self.ws, ignore_errors=True)
+        stub = self.ws / "bruce-ci" / "bin" / "bruce"
+        stub.parent.mkdir(parents=True)
+        stub.write_text(f"#!/bin/sh\necho \"$*\"\nexit {status}\n")
+        stub.chmod(0o755)
+        return deployment.ci_job(self.guide, self.ws, {"SITE_DIR": "site", "PREFIX": "https://x/"}, only=["Check the build"])
+
+    def test_the_checks_exit_status_is_the_jobs_and_says_whose_failure_it_is(self) -> None:
+        for status, word in ((0, "breaks no link"), (1, "breaks the links listed above"), (2, "the job failed, not the change"),
+                             (3, "the job failed, not the change")):
+            with self.subTest(status):
+                done = self.check(status)
+                self.assertEqual(done.returncode, status, done.stderr)
+                self.assertIn(word, done.stdout + done.stderr)
+
+    def test_the_check_names_the_baseline_and_config_the_fetch_leaves(self) -> None:
+        done = self.check(0)
+        self.assertIn("--baseline bruce-ci/baseline.duckdb.gz --config bruce-ci/bruce.toml", done.stdout)
+        self.assertIn("check-dir site --prefix https://x/", done.stdout)
+
+    def test_the_guides_workflow_uses_no_action_and_its_steps_are_the_ones_e2e_skips_and_runs(self) -> None:
+        text = deployment.workflow_text(self.guide)
+        self.assertEqual(deployment.workflows.uses(text), [])
+        names = [s.name for s in deployment.workflows.steps(text)]
+        for step in (*deployment.INSTALL_STEPS, deployment.FETCH_STEP, "Build the site", "Check the build"):
+            self.assertIn(step, names)
 
 
 class Published(unittest.TestCase):

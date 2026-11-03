@@ -41,7 +41,12 @@ the network.
 
 The deployment guide's scripts run over this site (`deployment.py`): its scheduled job
 twice, with the real binary, then its pull script over the directory the second night
-published, served locally.
+published, served locally. The guide's CI workflow runs over that directory too, less the steps
+that install the tools and Antora and fetch the repo: its build step builds the `tools` repo
+(`ci_run`), its fetch step takes the binary, config and baseline the second night published, and
+its check step must pass the unchanged repo, fail the planted one and, given a directory whose
+baseline fails its sum or one with no `SHA256SUMS`, fail the job as could not run (exit 2). The workflow also
+parses with Antora's `js-yaml` as the steps `workflows.py` reads, and pins the Antora `ANTORA` names.
 
 The crawl's digest is written too (`bruce report digest`), and its HTML, less
 what varies from run to run (`normalise_digest`), is held to `fixtures/antora/
@@ -90,6 +95,7 @@ from typing import Any, Sequence
 from urllib.parse import urlsplit
 
 import deployment
+import workflows
 from sim import GUIDE, tagged_blocks
 
 REPO = Path(__file__).resolve().parent.parent
@@ -407,6 +413,80 @@ def digest(bin: Path, db: Path, out: Path) -> dict[str, str]:
     return written
 
 
+def check_workflow(guide: Path, modules: Path) -> list[str]:
+    """Every way the guide's CI workflow is not what e2e runs: a YAML parser reads
+    other steps than `workflows.py` does, or it pins another Antora than `ANTORA`."""
+    text = deployment.workflow_text(guide)
+    problems = []
+    try:
+        parsed = deployment.yaml_steps(text, modules)
+    except deployment.DeploymentError as err:
+        return [str(err)]
+    ours = workflows.steps(text, "the guide's CI workflow")
+    if parsed != ours:
+        problems.append(f"the guide's CI workflow reads as {[s.name for s in parsed]} by js-yaml and {[s.name for s in ours]} by workflows.py")
+    pin = deployment.workflow_env(text).get("ANTORA_VERSION")
+    if pin != ANTORA:
+        problems.append(f"the guide's CI workflow pins Antora {pin}, e2e builds with {ANTORA}")
+    return problems
+
+
+def ci_run(
+    guide: Path, port: int, antora_dir: Path, playbook_text: str, workspace: Path, url: str,
+    only: Sequence[str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """The guide's CI workflow over the `tools` repo as `playbook_text` builds it, fetching
+    from `url`, in a fresh `workspace`: what a content repo's pull request runs. With
+    `only`, just the steps it names."""
+    shutil.rmtree(workspace, ignore_errors=True)
+    workspace.mkdir(parents=True)
+    (workspace / "ci.yml").write_text(playbook_text)
+    env = {
+        "PUB_URL": url,
+        "PREFIX": f"http://127.0.0.1:{port}{SITE_PATH}/",
+        "PLAYBOOK": "ci.yml",
+        "SITE_DIR": "ci-site",
+        "ANTORA_DIR": str(antora_dir),
+    }
+    return deployment.ci_job(guide, workspace, env, skip=deployment.INSTALL_STEPS, only=only)
+
+
+def sums_baseline(pub: Path) -> str:
+    """The name of the baseline `pub`'s `SHA256SUMS` lists, the one by content."""
+    named = [n for n in deployment.sums(pub) if deployment.BY_CONTENT[2].fullmatch(n)]
+    if len(named) != 1:
+        raise E2eError(f"{pub}'s SHA256SUMS lists {len(named)} baselines, not one")
+    return named[0]
+
+
+def check_ci_jobs(unchanged: Any, planted: Any, broken: Any, missing: Any) -> list[str]:
+    """Every way the CI workflow's four runs differ from what the guide promises, empty
+    when there is none: a pass, a failed check, and two jobs that could not run."""
+    problems: list[str] = []
+
+    def expect(what: str, ok: bool, done: Any) -> None:
+        if not ok:
+            problems.append(f"CI workflow, {what}: exit {done.returncode}\n{done.stdout}{done.stderr}")
+
+    expect("the unchanged build passes", unchanged.returncode == 0, unchanged)
+    expect(
+        "the planted build fails the check, the report in the log",
+        planted.returncode == 1 and "nowhere/" in planted.stdout and "breaks the links listed above" in planted.stderr,
+        planted,
+    )
+    expect(
+        "a baseline failing its sum fails the job as could not run",
+        broken.returncode == 2 and "fails its sum" in broken.stderr and "says nothing of the change" in broken.stderr,
+        broken,
+    )
+    expect(
+        "no published directory fails the job as could not run",
+        missing.returncode == 2 and "no SHA256SUMS" in missing.stderr,
+        missing,
+    )
+    return problems
+
+
 def check_digest(js: str, html: str, port: int, golden: Path = GOLDEN, save: bool = False) -> list[str]:
     """Every way the digest of the whole site's crawl differs from what the site
     promises, empty when there is none. The golden file is written anew with `save`."""
@@ -617,7 +697,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--save-digest", action="store_true", help="write the digest's HTML as the golden file")
     ap.add_argument("--save-pages", action="store_true", help="copy a few built pages into fixtures/antora/pages/")
     args = ap.parse_args(argv)
-    server = None
+    server = pub_server = None
     try:
         ui = check_ui()
         antora = install_antora()
@@ -660,8 +740,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         if problems:
             raise E2eError("the deployment guide's scripts are not what it promises:\n  " + "\n  ".join(problems))
         print("deployment: two nights of the guide's job published, and the guide's pull fetched them")
+        guide_dir = OUT / "deployment" / "guide"
+        problems = check_workflow(guide_dir, OUT / "antora" / "node_modules")
+        if problems:
+            raise E2eError("the guide's CI workflow is not what e2e runs:\n  " + "\n  ".join(problems))
+        pub = deployment.published(OUT / "deployment")
+        pub_server = deployment.serve_directory(pub, 0)
+        pub_url = f"http://127.0.0.1:{pub_server.server_address[1]}"
+        ci_playbook = playbook([repos[PARTIAL]], f"{PARTIAL}::index.adoc", ui, OUT / "ci" / "ci-site", OUT / "cache")
+        ci_args = (guide_dir, args.port, OUT / "antora", ci_playbook, OUT / "ci")
         ci = (args.port, config, baseline, ci_db)
         unchanged = check_dir(bin, partial, *ci)
+        ci_unchanged = ci_run(*ci_args, pub_url)
         (repos[PARTIAL] / "modules" / "ROOT" / "images" / "diagram.svg").unlink()
         image_build = build(antora, "partial-image", [repos[PARTIAL]], f"{PARTIAL}::index.adoc", ui, OUT)
         image_only = (check_dir(bin, image_build, *ci), check_dir(bin, image_build, *ci, "--inverse", "warn"))
@@ -669,6 +759,25 @@ def main(argv: Sequence[str] | None = None) -> int:
         plant(repos[PARTIAL])
         changed_build = build(antora, "partial-changed", [repos[PARTIAL]], f"{PARTIAL}::index.adoc", ui, OUT)
         changed = check_dir(bin, changed_build, *ci)
+        ci_planted = ci_run(*ci_args, pub_url)
+        broken = OUT / "deployment" / "broken"
+        shutil.rmtree(broken, ignore_errors=True)
+        shutil.copytree(pub, broken, copy_function=os.link)
+        (broken / sums_baseline(pub)).unlink()
+        (broken / sums_baseline(pub)).write_bytes(b"not the baseline")
+        broken_server = deployment.serve_directory(broken, 0)
+        try:
+            ci_broken = ci_run(
+                *ci_args, f"http://127.0.0.1:{broken_server.server_address[1]}", only=[deployment.FETCH_STEP]
+            )
+        finally:
+            broken_server.shutdown()
+            broken_server.server_close()
+        ci_missing = ci_run(*ci_args, f"{pub_url}/nothing", only=[deployment.FETCH_STEP])
+        problems = check_ci_jobs(ci_unchanged, ci_planted, ci_broken, ci_missing)
+        if problems:
+            raise E2eError("the guide's CI workflow is not what it promises:\n  " + "\n  ".join(problems))
+        print("ci workflow: the unchanged build passes, the planted one fails, a bad set or none fails the job")
         reports = []
         for kind in ("introduced", "inverse"):
             code, out, err = bruce(
@@ -683,9 +792,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"e2e: {err}", file=sys.stderr)
         return 1
     finally:
-        if server:
-            server.shutdown()
-            server.server_close()
+        for s in (server, pub_server):
+            if s:
+                s.shutdown()
+                s.server_close()
     return 0
 
 

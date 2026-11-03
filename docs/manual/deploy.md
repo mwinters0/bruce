@@ -8,11 +8,10 @@ The configuration keys are explained in [`config.md`](config.md), and
 `bruce crawl` in [`crawl.md`](crawl.md); this guide says which to write for a
 site like this one, and why.
 
-The guide is in two parts: the configuration, which says what is crawled and how,
-and the scheduled job that crawls with it and publishes the results, which
-[starts here](#scheduling-a-crawl). A content repo's CI job, which checks its
-build against what the job publishes, is the guide's last part, not yet
-written.
+The guide is in three parts: the configuration, which says what is crawled and how,
+the scheduled job that crawls with it and publishes the results, which
+[starts here](#scheduling-a-crawl), and a content repo's CI job, which checks its
+build against what the job publishes, which [starts here](#checking-a-content-repos-build).
 
 The code blocks marked `file=<path>` are the files of the example: this
 repository extracts them into a directory and checks that `bruce` accepts the
@@ -720,3 +719,154 @@ by `rsync --delete`, as docs.fedoraproject.org's proxies are, pulls into a
 directory the build keeps, which is for the site's operators to choose. On
 docs.fedoraproject.org that is a top-level directory of the build's output
 volume, never one inside a language's tree, which every build replaces.
+
+## Checking a content repo's build
+
+A content repo's CI job builds the repo's pages, takes the binary, the
+configuration and the baseline from the published directory, and runs `bruce
+check-dir` on the build ([`check-dir.md`](check-dir.md)): the pull request fails
+on a link the change broke, and on no link that was already broken. The workflow
+below runs on Forgejo Actions, which the Fedora forge runs, and on GitHub
+Actions. It uses no action: every step is a command in the job's container, so
+nothing in it is another project's to change, and `mise run sim` fails the
+example on a `uses:`.
+
+```mermaid
+flowchart TD
+  C1["C1 install the tools,<br/>fetch the change with git"] --> C2["C2 install the pinned Antora,<br/>build the repo's playbook (CI=true)"]
+  C2 --> C3["C3 fetch SHA256SUMS, then the binary, config<br/>and baseline it names by content; sha256sum -c"]
+  C3 -->|fails| NOTRUN(["the job fails, exit 2:<br/>it could not run"])
+  C3 --> C4["C4 unpack bruce;<br/>bruce check-dir the build"]
+  C4 -->|0| PASS(["the check passes"])
+  C4 -->|1| FAIL(["the check fails,<br/>the report in the log"])
+  C4 -->|2 or 3| NOTRUN
+```
+
+```yaml file=.github/workflows/links.yml
+name: links
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    container: registry.fedoraproject.org/fedora-minimal:44
+    env:
+      PUB_URL: https://example.org/bruce
+      PREFIX: https://docs.fedoraproject.org/en-US/
+      PLAYBOOK: site.yml
+      SITE_DIR: public
+      ANTORA_VERSION: 3.1.15
+      ANTORA_DIR: /opt/antora
+    steps:
+      - name: Install the tools
+        run: |
+          microdnf -y install --setopt=install_weak_deps=False nodejs-npm git tar gzip
+
+      - name: Check out the change
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git init -q .
+          git fetch -q --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$GITHUB_SHA"
+          git checkout -q FETCH_HEAD
+
+      - name: Install Antora
+        run: |
+          npm install --no-audit --no-fund --prefix "$ANTORA_DIR" \
+            "@antora/cli@$ANTORA_VERSION" "@antora/site-generator@$ANTORA_VERSION"
+
+      - name: Build the site
+        run: |
+          CI=true "$ANTORA_DIR/node_modules/.bin/antora" --html-url-extension-style=indexify "$PLAYBOOK"
+
+      - name: Fetch what the deployment published
+        run: |
+          fail() {
+            echo "bruce: $1; the job could not run, which says nothing of the change" >&2
+            exit 2
+          }
+          mkdir bruce-ci
+          cd bruce-ci
+          curl -fsS --retry 3 -o SHA256SUMS "$PUB_URL/SHA256SUMS" || fail "no SHA256SUMS at $PUB_URL"
+          # The one file of a kind that SHA256SUMS lists, named by its content.
+          pick() {
+            found=$(grep -E "^[0-9a-f]{64} [ *]$1\$" SHA256SUMS | cut -c67-)
+            [ -n "$found" ] && [ "$(echo "$found" | wc -l)" -eq 1 ] || fail "SHA256SUMS lists no single $1"
+            echo "$found"
+          }
+          archive=$(pick 'bruce-[0-9a-f]{16}\.tar\.gz')
+          config=$(pick 'config-[0-9a-f]{16}\.toml')
+          baseline=$(pick 'baseline-[0-9a-f]{16}\.duckdb\.gz')
+          for name in "$archive" "$config" "$baseline"; do
+            curl -fsS --retry 3 -O "$PUB_URL/$name" || fail "cannot fetch $name"
+          done
+          sha256sum -c --quiet --ignore-missing SHA256SUMS || fail "a file fails its sum in SHA256SUMS"
+          mv "$config" bruce.toml
+          mv "$baseline" baseline.duckdb.gz
+          mkdir bin
+          tar -xzf "$archive" --strip-components=1 -C bin
+
+      - name: Check the build
+        run: |
+          export PATH="$GITHUB_WORKSPACE/bruce-ci/bin:$PATH"
+          bruce check-dir "$SITE_DIR" --prefix "$PREFIX" \
+            --baseline bruce-ci/baseline.duckdb.gz --config bruce-ci/bruce.toml \
+            --db bruce-ci/ci.duckdb && status=0 || status=$?
+          case $status in
+            0) echo "This change breaks no link." ;;
+            1) echo "This change breaks the links listed above." >&2; exit 1 ;;
+            *) echo "bruce could not check the build (exit $status): the job failed, not the change" >&2; exit "$status" ;;
+          esac
+```
+
+Put the file at `.github/workflows/links.yml`, which both forges read. Five
+settings are the deployment's, in the job's `env`:
+
+- **`PUB_URL`** is the address of the published directory, where `SHA256SUMS`
+  is ([above](#the-published-directory)).
+- **`PREFIX`** is the production address of the build's root, which must be
+  inside a root of the configuration ([`check-dir.md`](check-dir.md)).
+- **`PLAYBOOK` and `SITE_DIR`** are the repo's Antora playbook and the
+  directory it writes the site to: `site.yml` and `public` for a repo following
+  Fedora's docs template.
+- **`ANTORA_VERSION`** is the Antora to build with, pinned, so the build does
+  not change under a pull request. Production's image installs `@antora/cli@3.1`,
+  the newest 3.1, which on 2026-11-03 is 3.1.15. Raise the pin in a commit when
+  production's moves; the pages `bruce` reads are the same across 3.1.
+
+Where the example says `ubuntu-latest`, the Fedora forge's runners are labelled
+`podman`. They cap a job at ten minutes. Installing the tools and Antora takes
+half a minute, and the check took 9 seconds over quick-docs' 236 pages; the build
+is the repo's own. The installs can be baked into an image to save the half
+minute.
+
+What each step does, and what a failure at it means:
+
+- **C1, the tools and the change.** The job starts from Fedora's latest
+  container, 44, not from the docs site's own image, which is Fedora 42, past
+  its end of life. The change is fetched by its commit with `git`, a public
+  repository needing no credential; a private one needs it added to that
+  command. A fetch made this way has no `origin`, so the build writes no edit
+  link.
+- **C2, the build.** `CI=true` drops the link to a local file the Fedora UI
+  otherwise writes. The repo's playbook may name other repositories, which
+  Antora fetches, so the build needs the network, as the check does: a link on
+  the site that the baseline lacks is asked of the live site.
+- **C3, the fetch.** `SHA256SUMS` first, then the one binary, configuration and
+  baseline it names by content, then `sha256sum -c`. A file that cannot be
+  fetched or fails its sum fails the job with status 2: a cache in front of the
+  directory can answer `SHA256SUMS` from before the last deploy, and the names
+  are why the files it lists are still there ([the directory](#the-published-directory)).
+  The binary and the baseline are of one night, so they are of one schema.
+- **C4, the check.** `bruce check-dir` runs the binary that crawled the
+  baseline, under the configuration it crawled with. The release binary links
+  only glibc, 2.41 or older, so it runs on Fedora 44.
+- **C5, the exit status.** 0 passes the check. 1 fails it: the log holds the
+  report ([`check-dir.md`](check-dir.md#output)). 2 or 3 (`bruce` could not
+  run, or the baseline is of another schema) fails the job with a message that
+  says the job failed and not the change; a forge cannot show a status in a
+  colour of its own, so the message is the difference.

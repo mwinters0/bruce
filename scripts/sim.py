@@ -19,8 +19,11 @@ What it checks: the guide has tagged blocks, every path stays inside `sim/`,
 sim_config -- FILE` accepts each. That example loads a config as `bruce crawl
 --config` does, with no request sent. Each script (`*.sh`) is parsed by `bash -n`
 and made executable, and the systemd units are wired: a timer names a service
-template whose environment file and script the guide also tags. The `bruce` lines
-of the scripts are held to the command line by `cli::tests`, which reads the same
+template whose environment file and script the guide also tags. The CI workflow
+is read as `workflows.py` reads one, its steps being what `e2e.py` runs, and a
+`uses:` fails it (`WORKFLOW`); `e2e.py` also parses it as YAML, which this check,
+standard library only, cannot. The `bruce` lines of the scripts and of the
+workflow are held to the command line by `cli::tests`, which reads the same
 guide. **The crawl is not run**: at one to two hours it is launched detached from
 `sim/` by `mise run crawl` (`review.py`); `e2e.py` runs the scripts over the
 fixture site.
@@ -45,12 +48,16 @@ import sys
 from pathlib import Path, PurePosixPath
 from typing import Sequence, TextIO
 
+import workflows
+
 REPO = Path(__file__).resolve().parent.parent
 GUIDE = Path("docs/manual/deploy.md")
 OUT = Path("sim")
 #: The tagged files the load check reads.
 CONFIG = "bruce.toml"
 CONFIGS = (CONFIG, "bruce-locales.toml")
+#: The CI workflow the guide tags, where a content repo keeps it.
+WORKFLOW = ".github/workflows/links.yml"
 
 FENCE_RE = re.compile(r"^(`{3,})(.*)$")
 TAG_RE = re.compile(r"(?:^|\s)file=(\S+)")
@@ -182,6 +189,23 @@ def check_scripts(written: list[Path]) -> list[str]:
     return problems
 
 
+def check_workflow(out: Path) -> list[str]:
+    """Every way the guide's CI workflow is not one this repository can run: it is
+    tagged, it uses no action (the standing rule, `workflows.py`'s) and its steps
+    read as `workflows.py` reads them."""
+    path = out / WORKFLOW
+    if not path.is_file():
+        return [f"the guide tags no {WORKFLOW}"]
+    text = path.read_text(encoding="utf-8")
+    problems = [f"{WORKFLOW}:{n}: `uses:`, and no workflow uses an action" for n in workflows.uses(text)]
+    try:
+        if not workflows.steps(text, WORKFLOW):
+            problems.append(f"{WORKFLOW}: no steps")
+    except workflows.WorkflowError as e:
+        problems.append(str(e))
+    return problems
+
+
 def load_command(config: Path) -> list[str]:
     return ["cargo", "run", "--quiet", "--example", "sim_config", "--", str(config)]
 
@@ -194,7 +218,7 @@ def run(guide: Path, out: Path, load: bool, stdout: TextIO = sys.stdout) -> int:
         return 1
     for path in written:
         print(f"sim: wrote {path}", file=stdout)
-    problems = check_scripts(written) + check_units(out)
+    problems = check_scripts(written) + check_units(out) + check_workflow(out)
     for problem in problems:
         print(f"sim: {problem}", file=sys.stderr)
     if problems:

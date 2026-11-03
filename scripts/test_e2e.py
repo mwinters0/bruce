@@ -333,6 +333,52 @@ class Views(unittest.TestCase):
             self.assertTrue(any("--save-digest" in p for p in problems), problems)
 
 
+class CiWorkflow(unittest.TestCase):
+    class Done:
+        def __init__(self, code: int, out: str = "", err: str = "") -> None:
+            self.returncode, self.stdout, self.stderr = code, out, err
+
+    def runs(self, **over):
+        done = self.Done
+        runs = {
+            "unchanged": done(0),
+            "planted": done(1, "../nowhere/", "This change breaks the links listed above."),
+            "broken": done(2, "", "a file fails its sum; says nothing of the change"),
+            "missing": done(2, "", "no SHA256SUMS at x"),
+        }
+        runs.update(over)
+        return [runs[k] for k in ("unchanged", "planted", "broken", "missing")]
+
+    def test_the_four_runs_the_guide_promises_are_accepted(self) -> None:
+        self.assertEqual(e2e.check_ci_jobs(*self.runs()), [])
+
+    def test_each_run_that_is_not_what_it_promises_is_named(self) -> None:
+        for name, bad, want in (
+            ("unchanged", self.Done(1), "unchanged build passes"),
+            ("planted", self.Done(0, "../nowhere/"), "planted build fails"),
+            ("planted", self.Done(1, "", "breaks the links listed above"), "planted build fails"),
+            ("broken", self.Done(1, "", "fails its sum"), "failing its sum"),
+            ("missing", self.Done(0), "no published directory"),
+        ):
+            with self.subTest(f"{name}: {want}"):
+                problems = e2e.check_ci_jobs(*self.runs(**{name: bad}))
+                self.assertEqual(len(problems), 1, problems)
+                self.assertIn(want, problems[0])
+
+    def test_the_guide_pins_the_antora_e2e_builds_with(self) -> None:
+        blocks = e2e.tagged_blocks((e2e.REPO / e2e.GUIDE).read_text(), "guide")
+        env = e2e.deployment.workflow_env("".join(blocks[e2e.deployment.sim.WORKFLOW]))
+        self.assertEqual(env["ANTORA_VERSION"], e2e.ANTORA)
+
+    def test_a_yaml_parser_reads_the_guides_workflow_as_workflows_py_does(self) -> None:
+        modules = e2e.OUT / "antora" / "node_modules"
+        if not (modules / "js-yaml").is_dir():
+            self.skipTest("Antora is not installed under runs/e2e yet")
+        with tempfile.TemporaryDirectory() as d:
+            guide = e2e.deployment.extract(e2e.REPO / e2e.GUIDE, Path(d))
+            self.assertEqual(e2e.check_workflow(guide, modules), [])
+
+
 class Committed(unittest.TestCase):
     def test_every_saved_page_hashes_to_the_manifest(self) -> None:
         manifest = e2e.PAGES / "manifest.json"

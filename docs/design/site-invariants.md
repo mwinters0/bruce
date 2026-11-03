@@ -6,7 +6,7 @@ discovery and never reused. Walk this file whenever Antora's version changes (I8
 names it), or when docs.fp.o's build or hosting moves: a change here surfaces as wrong verdicts,
 not as an error.
 
-<!-- invariant-watermark: I28 -->
+<!-- invariant-watermark: I29 -->
 
 ### I1 docs.fp.o's sitemap is an index at `/en-US/sitemap.xml`, and lists no translated page
 - **Claim.** `/sitemap.xml` is 404, and robots.txt names no `Sitemap:`. `/en-US/sitemap.xml` is
@@ -385,3 +385,17 @@ not as an error.
 - **Verified against.** pages.github.com, 2026-11-03.
 - **Relied on by.** D103 (names by content, last night's set kept) and the deployment guide's published directory.
 - **Re-verify.** `curl -sI https://pages.github.com/ | grep -i '^cache-control'` prints `cache-control: max-age=600`.
+
+### I29 docs.fp.o is built with the newest Antora 3.1
+- **Claim.** The site builder installs `@antora/cli@3.1` and `@antora/site-generator@3.1`, so it builds with the newest
+  3.1.x npm serves, which is 3.1.15, the version the guide's CI workflow and `scripts/e2e.py` pin. The pages `bruce`
+  reads are the same across 3.1 (I15).
+- **Proof.** Upstream source: `docs/site-builder` `prod` (`87767a7`), `Dockerfile` (`npm i -g @antora/cli@3.1
+  @antora/site-generator@3.1`) and `package.json` (`^3.1`); npm's version list for the newest 3.1.x. Observed:
+  Antora 3.1.15 installed in `fedora-minimal:44` by the guide's step.
+- **Scope limit.** An image built earlier carries the 3.1.x current on its day: the content repos' `docs-fp-o:latest`
+  (2025-09-08) carries 3.1.12. 3.2 reads a source with no `modules/` differently (I26), and the pin follows `prod` to it only by a commit.
+- **Verified against.** `docs/site-builder` `prod` and npm, 2026-11-03.
+- **Relied on by.** The guide's CI workflow (`ANTORA_VERSION`, P9) and `scripts/e2e.py`'s `ANTORA`, which
+  `scripts/test_e2e.py` holds equal.
+- **Re-verify.** `curl -s https://forge.fedoraproject.org/docs/site-builder/raw/branch/prod/Dockerfile | grep antora; npm view @antora/cli versions --json | grep '"3\.1\.' | tail -1`

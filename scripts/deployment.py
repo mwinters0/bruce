@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""The deployment guide's scripts, run (D42): the scheduled job over a site
-and the pull over what it published.
+"""The deployment guide's scripts, run (D42): the scheduled job over a site,
+the pull over what it published and the CI workflow's steps over a build.
 
-`docs/manual/deploy.md` tags `bruce-nightly.sh`, which a timer runs, and
-`bruce-pull.sh`, which a web server's timer runs. `sim.py` parses them; this
-module runs them, as `e2e.py` does over the fixture Antora site and
-`test_deployment.py` does over a stub `bruce`:
+`docs/manual/deploy.md` tags `bruce-nightly.sh`, which a timer runs,
+`bruce-pull.sh`, which a web server's timer runs, and the content repo's CI
+workflow. `sim.py` parses them; this module runs them, as `e2e.py` does over the
+fixture Antora site and `test_deployment.py` does over a stub `bruce`:
 
 - `night` runs the job once, with the guide's variables in its environment,
   `bruce` first on the `PATH`.
@@ -15,6 +15,10 @@ module runs them, as `e2e.py` does over the fixture Antora site and
 - `check_published` holds the published directory to the guide's contract: the
   fixed names, the files named by content, `SHA256SUMS` listing what it should
   and every sum right.
+- `ci_job` runs the workflow's `run:` steps as `workflows.py script` joins them,
+  with the workflow's own `env:` as the defaults, the runner's variables set by
+  the caller and the steps that install or fetch the repo left out by name.
+  `yaml_steps` has Node's `js-yaml`, which Antora installs, parse the same file.
 
 Nothing here is a command line; `e2e.py` calls it.
 """
@@ -25,6 +29,7 @@ import functools
 import hashlib
 import http.server
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -34,6 +39,7 @@ from pathlib import Path
 from typing import Mapping, Sequence
 
 import sim
+import workflows
 
 REPO = Path(__file__).resolve().parent.parent
 NIGHTLY = "bruce-nightly.sh"
@@ -41,6 +47,9 @@ PULL = "bruce-pull.sh"
 #: The names the contract gives a night's three files: fixed, for people, and
 #: by content, for a fetcher, 16 hex digits of the sha256 in the second.
 FIXED = ("bruce.tar.gz", "bruce.toml", "baseline.duckdb.gz")
+#: The CI workflow's steps that install or fetch what a caller already has.
+INSTALL_STEPS = ("Install the tools", "Check out the change", "Install Antora")
+FETCH_STEP = "Fetch what the deployment published"
 BY_CONTENT = (
     re.compile(r"bruce-[0-9a-f]{16}\.tar\.gz"),
     re.compile(r"config-[0-9a-f]{16}\.toml"),
@@ -162,11 +171,95 @@ def check_published(pub: Path) -> list[str]:
     return problems
 
 
+def workflow_text(guide_dir: Path) -> str:
+    """The CI workflow the guide tags, extracted under `guide_dir`."""
+    try:
+        return (guide_dir / sim.WORKFLOW).read_text(encoding="utf-8")
+    except OSError as e:
+        raise DeploymentError(f"the guide's CI workflow: {e}") from e
+
+
+def workflow_env(text: str) -> dict[str, str]:
+    """The `key: value` pairs of the workflow's first `env:` mapping, a comment line skipped."""
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip() == "env:":
+            base = len(line) - len(line.lstrip())
+            break
+    else:
+        return {}
+    env = {}
+    for line in lines[i + 1:]:
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if len(line) - len(line.lstrip()) <= base:
+            break
+        key, _, value = line.strip().partition(":")
+        env[key] = value.strip()
+    return env
+
+
+def ci_job(
+    guide_dir: Path, workspace: Path, env: Mapping[str, str], skip: Sequence[str] = (),
+    only: Sequence[str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """The workflow's steps, less `skip` and, with `only`, those it names, run in
+    `workspace` as the runner would: its `env:` for the variables `env` does not set,
+    and the runner's `GITHUB_WORKSPACE`."""
+    text = workflow_text(guide_dir)
+    try:
+        chosen = workflows.select(workflows.steps(text, sim.WORKFLOW), skip, None)
+    except workflows.WorkflowError as e:
+        raise DeploymentError(str(e)) from e
+    chosen = [s for s in chosen if only is None or s.name in only]
+    workspace.mkdir(parents=True, exist_ok=True)
+    job = workspace.parent / f"{workspace.name}.job.sh"
+    job.write_text(workflows.script(chosen), encoding="utf-8")
+    proc_env = {
+        "PATH": os.environ["PATH"],
+        "HOME": str(workspace),
+        "LC_ALL": "C",
+        **workflow_env(text),
+        **env,
+        "GITHUB_WORKSPACE": str(workspace),
+    }
+    return subprocess.run(["bash", str(job)], cwd=workspace, env=proc_env, capture_output=True, text=True)
+
+
+#: Loads the workflow on stdin with the `js-yaml` under `argv[1]` and prints its steps as JSON.
+YAML_STEPS = (
+    "const y=require(process.argv[1]+'/js-yaml');"
+    "const d=y.load(require('fs').readFileSync(0,'utf8'));"
+    "const j=Object.values(d.jobs);"
+    "console.log(JSON.stringify({jobs:j.length,steps:j[0].steps,on:d.on}))"
+)
+
+
+def yaml_steps(text: str, modules: Path) -> list[workflows.Step]:
+    """The steps of the workflow `text` as a YAML parser, `js-yaml` under the node
+    `modules` directory, reads them; an error if it is not one job of `run:` steps."""
+    done = subprocess.run(["node", "-e", YAML_STEPS, str(modules)], input=text, capture_output=True, text=True)
+    if done.returncode != 0:
+        raise DeploymentError(f"the guide's CI workflow does not parse as YAML:\n{done.stderr}")
+    doc = json.loads(done.stdout)
+    if doc["jobs"] != 1 or not doc["on"]:
+        raise DeploymentError(f"the guide's CI workflow holds {doc['jobs']} jobs and on: {doc['on']}, not one job on an event")
+    for s in doc["steps"]:
+        if "run" not in s:
+            raise DeploymentError(f"the guide's CI workflow has a step with no run: {s}")
+    return [workflows.Step(s["name"], s["run"].rstrip("\n"), s.get("working-directory", ".")) for s in doc["steps"]]
+
+
 def release_archive(binary: Path, dest: Path) -> Path:
     """`binary` archived as a release is: a directory of its own holding `bruce`."""
     with tarfile.open(dest, "w:gz") as tar:
         tar.add(binary, arcname="bruce-v0-x86_64-unknown-linux-gnu/bruce")
     return dest
+
+
+def published(work: Path) -> Path:
+    """Where `exercise` leaves the second night's published directory under `work`."""
+    return work / "run" / "pub"
 
 
 def exercise(binary: Path, config: Path, work: Path) -> list[str]:
@@ -188,7 +281,7 @@ def exercise(binary: Path, config: Path, work: Path) -> list[str]:
     }
     run = work / "run"
     shutil.rmtree(run, ignore_errors=True)
-    pub = run / "pub"
+    pub = published(work)
     first_names: set[str] = set()
     for night_no in (1, 2):
         done = night(guide, run, [bindir], env)

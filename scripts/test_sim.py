@@ -182,6 +182,43 @@ class Wiring(unittest.TestCase):
             self.assertFalse(os.access(Path(d) / "sim" / "bruce.toml", os.X_OK))
 
 
+WORKFLOW = """name: x
+on:
+  pull_request:
+jobs:
+  j:
+    runs-on: ubuntu-latest
+    steps:
+      - name: One
+        run: |
+          echo one
+"""
+
+
+class Workflow(unittest.TestCase):
+    def out(self, text: str | None) -> Path:
+        d = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, d, True)
+        if text is not None:
+            (d / sim.WORKFLOW).parent.mkdir(parents=True)
+            (d / sim.WORKFLOW).write_text(text)
+        return d
+
+    def test_a_workflow_of_run_steps_is_accepted(self):
+        self.assertEqual(sim.check_workflow(self.out(WORKFLOW)), [])
+
+    def test_each_way_it_is_not_one_this_repository_can_run_is_named(self):
+        for text, want in (
+            (None, "tags no"),
+            (WORKFLOW.replace("      - name: One\n        run: |\n          echo one\n", "      - uses: x/y@v1\n"), "`uses:`"),
+            (WORKFLOW.replace("run: |\n          echo one\n", "shell: bash\n"), "no `run:`"),
+            (WORKFLOW.split("steps:")[0], "no steps"),
+        ):
+            with self.subTest(want):
+                problems = sim.check_workflow(self.out(text))
+                self.assertTrue(any(want in p for p in problems), problems)
+
+
 class ThisRepo(unittest.TestCase):
     def test_the_guide_extracts_both_configs_its_scripts_and_units(self):
         with tempfile.TemporaryDirectory() as d:
@@ -190,6 +227,7 @@ class ThisRepo(unittest.TestCase):
                 self.assertIn(Path(d) / config, written)
             self.assertEqual(sim.check_scripts(written), [])
             self.assertEqual(sim.check_units(Path(d)), [])
+            self.assertEqual(sim.check_workflow(Path(d)), [])
             self.assertTrue((Path(d) / "bruce-nightly.sh").exists())
 
 

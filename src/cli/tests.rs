@@ -284,8 +284,8 @@ fn a_baseline_of_another_schema_version_exits_3_whoever_reads_it() {
     );
 }
 
-/// The `bruce` command lines of the deployment guide's tagged scripts (D42):
-/// a logical line (continuations joined) that starts with `bruce`, cut at the
+/// The `bruce` command lines of the deployment guide's tagged scripts and CI
+/// workflow, whose `run:` blocks are scripts too (D42): a logical line (continuations joined) that starts with `bruce`, cut at the
 /// shell's `||`, `&&`, `;`, `|` or a redirection, each `$`-word a stand-in
 /// number that every option's value accepts.
 fn guide_command_lines() -> Vec<Vec<String>> {
@@ -295,7 +295,9 @@ fn guide_command_lines() -> Vec<Vec<String>> {
     let mut joined = String::new();
     for line in guide.lines() {
         if let Some(info) = line.strip_prefix("```") {
-            tagged = !tagged && info.contains("file=") && info.starts_with("bash");
+            tagged = !tagged
+                && info.contains("file=")
+                && (info.starts_with("bash") || info.starts_with("yaml"));
             continue;
         }
         if !tagged {
@@ -328,9 +330,15 @@ fn guide_command_lines() -> Vec<Vec<String>> {
 #[test]
 fn every_bruce_line_of_the_guides_scripts_is_a_command_line_bruce_accepts() {
     let lines = guide_command_lines();
-    // Crawl, export, two digests, prune: a script rewritten so that this
-    // reads none has not been checked.
-    assert!(lines.len() >= 5, "found {lines:?}");
+    // Crawl, export, two digests, prune, and the CI workflow's `check-dir`: a
+    // script rewritten so that this reads none has not been checked.
+    assert!(lines.len() >= 6, "found {lines:?}");
+    assert!(
+        lines
+            .iter()
+            .any(|l| l.get(1).map(String::as_str) == Some("check-dir")),
+        "the CI workflow's check-dir line is not read: {lines:?}"
+    );
     for line in lines {
         if let Err(e) = super::accepts(&line) {
             panic!("{}\nthe guide's script runs `{}`", e, line.join(" "));
