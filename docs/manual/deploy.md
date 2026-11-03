@@ -594,8 +594,10 @@ between the job, a content repo's CI and whatever serves the results:
 could-not-run, never as broken links. The names are why: a directory served
 through a cache can answer `SHA256SUMS` from before the last deploy and a file
 from after it. GitHub Pages serves each file with `Cache-Control: max-age=600`,
-file by file. A fetcher handed a stale `SHA256SUMS` finds last night's whole set,
-which stays, and one handed a fresh one asks for names no cache holds. The
+file by file. CI, handed a stale `SHA256SUMS`, finds last night's three files,
+which stay, and handed a fresh one asks for names no cache holds. A puller, which
+takes the digests too, can instead fail its check and retry
+([below](#delivering-the-results)). The
 sums say nothing of the release or the schema: the binary and the baseline of
 one night are listed together, and the digest's JSON says which `bruce` crawled.
 
@@ -705,8 +707,16 @@ flowchart TD
   P3 -->|passes| P4["P4 rename the new directory into place"]
 ```
 
-A pull run while the set is being deployed may find `SHA256SUMS` and a fixed-name
-file from different nights: its check fails, and the next run, after the cache
-expires, passes. A site whose pages are copied from a build by `rsync --delete`,
-as docs.fedoraproject.org's proxies are, runs the pull inside that build or into
-a path the copy spares; which is for the site's operators to decide.
+A pull run while the set is being deployed may find `SHA256SUMS` and a file it
+lists from different nights: its check fails, and a run after the cache expires
+passes. CI never meets this, fetching only the files named by content.
+
+**`DEST` must persist from one run to the next, and nothing else may rewrite
+it.** The script knows there is nothing new by the `SHA256SUMS` there, reuses
+the files there whose sums match, and leaves what is there served when a run
+fails. Rebuilt empty for every run, it fetches the whole set each time, and a
+failed run leaves nothing to serve. A site whose pages are copied from a build
+by `rsync --delete`, as docs.fedoraproject.org's proxies are, pulls into a
+directory the build keeps, which is for the site's operators to choose. On
+docs.fedoraproject.org that is a top-level directory of the build's output
+volume, never one inside a language's tree, which every build replaces.

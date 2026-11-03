@@ -69,10 +69,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **`SHA256SUMS` lists the latest digest under its fixed name.** The spec names content-addressed files for the binary,
-  config and baseline, CI's three; a pulling server also wants the digest, so `digest.json`, `digest.html` and
-  `digests/*` are listed too, the latest by a name that stays the same while its content changes nightly. A pull racing
-  a cache can find `digest.html` of one night with a `SHA256SUMS` of another, fail its sums and retry on the next timer;
-  CI is unaffected (`--ignore-missing`). Reconsidering: naming the latest digest by content too costs a second copy of
-  each view a night and a third for people.

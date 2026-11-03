@@ -63,5 +63,5 @@ and "The workflows, step by step". The decisions are D103, D104 and I28.
   written as two lines.
 - `set -e` is ignored inside a function called from `||` or `if`: `stage` runs in
   a subshell as a statement of its own so a failed copy leaves `PUB` as it was.
-- Naming the latest digest by content was not done (see STATUS, "Decisions worth
-  another look").
+- Naming the latest digest by content was not done, and the review kept it so
+  (D103).

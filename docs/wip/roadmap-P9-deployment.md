@@ -323,7 +323,10 @@ are named by their content** (`baseline-<sha>.duckdb.gz`, `bruce-<sha>.tar.gz`)
 **and last night's are kept one more night** (maintainer, 2026-11-02), so a
 fetcher handed a stale `SHA256SUMS` by Pages' ten-minute cache (above, "Facts
 found that day") finds last night's whole set, and one handed a fresh one
-fetches names no cache holds. A puller knows there is something new when
+fetches names no cache holds. **That holds for CI's three files; the digests
+are listed too, the latest under fixed names, so a puller may fail its check in
+those ten minutes and retry on its next timer** (maintainer, 2026-11-03,
+"Review of the `SHA256SUMS` call" that day). A puller knows there is something new when
 `SHA256SUMS` has changed. CI downloads the baseline to check it and hands
 `check-dir` the path. Rejected: waiting and retrying on a mismatch, a ten
 minutes the forge's ten-minute job cannot spend; failing a PR checked in the
@@ -549,6 +552,15 @@ Found 2026-10-21, for the decisions above.
   build's `rebuild-site.py`. The proxies set `anubis: true`
   (`playbooks/include/proxies-websites.yml`); the en-US crawls and curl have
   not met its challenge, a browser-like User-Agent having.
+- **docs.fp.o's build output persists; each language's tree in it does not.**
+  The CronJob (`50 * * * *`) mounts the PVC `docs-storage` at `/antora/output`
+  (`roles/openshift-apps/docsbuilding/templates/cron.yml.j2:30-38`), which the
+  proxies' rsync (`55 * * * *`) mirrors. `rebuild-site.py` deletes and replaces
+  `/antora/output/<lang>` each run, not atomically, and leaves every other
+  top-level entry alone; a failed Antora build exits before copying, the last
+  tree staying served (`docs/site-builder` `prod` `87767a7`, `:447-471`;
+  `infra/ansible` `bc63ddd`; both moved from pagure to forge.fedoraproject.org,
+  2026-11-03). So docs.fp.o's pull persists only in a top-level directory.
 - **docs.fp.o's `/` is a 200 meta refresh to `./en-US/`, and `/en-US/` one
   to `/en-US/docs/`.** `/en-US`, the home link of all 2,341 pages of the
   2026-11-02 en-US run, 301s to `http://…/en-US/` and 302s back to https

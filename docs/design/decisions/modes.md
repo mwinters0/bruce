@@ -43,13 +43,14 @@ guide describing it; a hand-built `sim/`, which no other machine can rebuild; ru
 every sim. Code: `scripts/sim.py`, `scripts/deployment.py`. Evidence: `scripts/test_sim.py`.
 
 ### D103 A deployment publishes one directory, fetched through its `SHA256SUMS`, the files it lists named by content
-The job stages `SHA256SUMS` (`sha256sum`'s format, written last) over the binary, config and baseline CI needs, named by
-their first 16 hex digits (`baseline-<sha>.duckdb.gz`), and the digests; fixed-name copies are for people, and last
-night's three stay one more night. A fetcher fetches `SHA256SUMS`, then what it lists, then runs `sha256sum -c`, failing
-as could-not-run (I28). Why: a cache gives a stale `SHA256SUMS` beside fresh files, and a binary and baseline of two
-nights must never meet. Rejected: waiting and retrying, ten minutes a forge job lacks; a `manifest.json`, needing `jq`
-in every CI image; a version file; a rolling release, its assets replaced one by one. Reopens: a host with no cache.
-Code: the guide's `bruce-nightly.sh`, `bruce-pull.sh`. Evidence: `scripts/test_deployment.py`, `mise run e2e`.
+The job stages `SHA256SUMS` (written last) over the binary, config and baseline, named by their first 16 hex digits
+and kept a night more, and the digests, the latest under fixed names too; the three's are for people. A fetcher
+fetches `SHA256SUMS`, what it lists, then `sha256sum -c`, failing as could-not-run (I28). Why: a cache gives a
+stale `SHA256SUMS` beside fresh files; CI must never join two nights' binary and baseline, and a puller can retry.
+Rejected: retrying in CI, which lacks ten minutes; a `manifest.json`, needing `jq`; a version file; a rolling
+release, swapped per asset; for a puller, never reusing a listed name (the latest digest, the dated ones), two
+scripts' logic to save a timer's wait. Reopens: a host with no cache. Code: the guide's `bruce-nightly.sh`,
+`bruce-pull.sh`. Evidence: `scripts/test_deployment.py`, `mise run e2e`.
 
 ### D104 The scheduled job is one script that answers a schema change itself and publishes nothing from a failed crawl
 Exit 3 (D102) from the crawl moves the database aside as the one archive and crawls a fresh one. The digest compares
