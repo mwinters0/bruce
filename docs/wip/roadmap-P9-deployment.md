@@ -499,6 +499,20 @@ evidence** and lands no code, so each later slice meets what it found.
    workflow against the Pages URL, a planted break failing and a clean change
    passing. The mirror is a snapshot, the forge's `main` at one commit plus the
    workflow's, never synced: the two runs meet one night's baseline.
+   - **9.11 The guide's view**, admitted 2026-11-03 and done before 9.8: a view
+     extending `bruce:digest.html` whose `palette` block is docs.fp.o's (below,
+     "What the digest's view left"), documented beside the script, which names it
+     with `--view`; `sim` extracting it, `e2e` rendering the fixture digest
+     through it; the deployment repo carrying it. 9.8 reviews the digest as the
+     deployment publishes it.
+   - **9.12 The published directory's index**, admitted 2026-11-03 and done before
+     9.8: the guide's script, under an `INDEX` variable off by default and set by
+     the deployment repo's `nightly.yml`, writes `index.html` in its staging, after
+     the trim and before `SHA256SUMS`, which lists it. Plain HTML, written by the
+     shell over the files the job staged: the latest digest in each format, each
+     dated night newest first, the fixed-name files and `SHA256SUMS`, never the
+     names by content, which are CI's. Rejected: `bruce` writing it, which holds no
+     model of the directory; the view's palette, a second copy of 9.11's.
 8. **9.8 The maintainer's review of the en-US reports**, the digest
    included: no code; the verdict and what it spawns in the notes.
 9. **9.9 The every-locale crawl**, weekly on the maintainer's machine after
