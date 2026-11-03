@@ -148,7 +148,8 @@ The other hosts on the allowlist need no section: each is asked at its own
 lists and www.redhat.com, and at the default two requests a second where there
 is none. They are asked alongside the crawl, each at its own pace.
 
-A crawl of the English pages takes about an hour and a quarter: the forge's
+A crawl of the English pages takes about an hour and a quarter (an hour and
+twelve minutes on a GitHub-hosted runner): the forge's
 4,100 or so targets at one a second are the longest share, the hosts being asked
 alongside one another, so the faster rate on docs.fedoraproject.org shortens
 only its own.
@@ -614,9 +615,11 @@ unattended:
   file, and DuckDB reuses the freed blocks).
 - **The dated digests**, by `KEEP_VIEWS` and `KEEP_JSON`: 30 nights of HTML and
   of any other view, and 13 months of JSON, the report a loader keeps
-  ([`digest.md`](digest.md)). With two nights of binary and baseline the
-  directory is some 500 MB: an en-US digest's HTML is about 4 MB and its JSON
-  about 0.7 MB.
+  ([`digest.md`](digest.md)). An en-US night adds about 10 MB of HTML and 5.4 MB
+  of JSON, so at the defaults the directory approaches 2.5 GB, nearly all of it
+  the JSON. A disk holds that; GitHub Pages' 1 GB does not, and a deployment
+  publishing there sets `KEEP_JSON=60`, which with two nights of binary and
+  baseline leaves it near 700 MB.
 - **The archive of a database of another schema**, one, replaced by the next.
 
 ### A schema change

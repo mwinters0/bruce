@@ -49,7 +49,7 @@ The deployment guide: [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-depl
 - [x] **9.3** Exit status 3: the typed schema refusal in `store::schema`, mapped in `cli` for `crawl`, `check-dir`, `report`, `prune` and `export-baseline`, the manuals' exit tables (D102): [notes](../wip/roadmap-P9.3-exit-3-notes.md)
 - [x] **9.4** The guide's scheduling, publishing and delivery: the script, the systemd units, `bruce-locales.toml`, `per_second = 3`, the staged directory with `SHA256SUMS` and names by content (D103), retention and the schema archive (D104), the digest's comparison, the pull script, the job's and the pull's flowcharts; `sim` parsing the scripts and wiring the units, `cli::tests` checking their `bruce` lines, `e2e` running the job and the pull: [notes](../wip/roadmap-P9.4-scheduling-notes.md)
 - [x] **9.5** The guide's CI section: the workflow with its fetch and check, `sim`'s workflow and `uses:` checks, `e2e` running its steps and parsing it as YAML, the Antora pin checked against production's (I29): [notes](../wip/roadmap-P9.5-ci-workflow-notes.md)
-- [ ] **9.6** The dev deployment: `v0.3.0-rc.1` (its notes drafted by `/release` for the maintainer to edit, the tag the maintainer's), the deployment repo's nightly workflow and orphan Pages branch, the crawl's time on Actions, the guide corrected where they show it wrong. Landed: `v0.3.0-rc.1`, published; the deployment repo's `nightly.yml` (dispatch only), `bruce.toml` and `bruce-nightly.sh`, its first run on Actions dispatched. Not landed: that run's result (the crawl's time), the Pages setting, the schedule, the guide's corrections, the notes: [pickup](history/2026-11-03.md)
+- [x] **9.6** The dev deployment: `v0.3.0-rc.1`, the deployment repo's nightly workflow (scheduled, `KEEP_JSON=60`) and orphan Pages branch, served at `https://mwinters0.github.io/bruce-fedora-docs-ci/`, the crawl's time on Actions (1:12:41) and the guide's figures corrected (the digest's size above all; `runs/p9.6/`): [notes](../wip/roadmap-P9.6-dev-deployment-notes.md)
 - [ ] **9.7** The closing evidence: a quick-docs mirror (the maintainer's repository) running the guide's workflow against the Pages URL, a planted break failing and a clean change passing
 - [ ] **9.8** The maintainer's review of the en-US reports, the digest included: no code
 - [ ] **9.9** The every-locale crawl, weekly on the maintainer's machine: history, `prune` and the schema archive exercised, the guide's locale figures, the digest's size deciding whether its results are published
@@ -70,3 +70,10 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
+- **The guide's `KEEP_JSON` stays 400 though a night's JSON is 5.4 MB.** The spec
+  (`../wip/roadmap-P9-deployment.md`, "Schema changes and retention") sized 13 months of JSON at
+  0.7 MB a night; the dev deployment's first digest is 5.4 MB (`runs/p9.6/sizes.txt`), so the
+  default holds 2.2 GB, which a disk takes and Pages' 1 GB does not. I corrected the guide's
+  figures and had only the dev deployment's workflow set `KEEP_JSON=60`, leaving the maintainer's
+  13 months as the default. Reconsidering means lowering the default, or shrinking the JSON
+  (one 403 target is 2.3 MB of it as repeated rows), which is a digest change and D64's `Reopens`.
