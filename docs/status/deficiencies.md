@@ -100,4 +100,11 @@ roadmap's phase index.
   the default view's wording, which moves the golden file anyway, would promote it. Detail:
   `src/report/digest/view.rs`
 
-<!-- deficiency-watermark: KD39 -->
+- **KD40** — An xref production leaves unresolved, into a component-version the build
+  lacks and the baseline holds, is pointed at the URL its refspec names (D57) where
+  production left it on its own page, so when that URL is broken the gate calls a link
+  already broken introduced and fails every PR of the repo until it is fixed: quick-docs'
+  `f45@fedora:release-notes:welcome/Hardware_Overview.adoc`. **(b) owned by 9.13**.
+  Detail: `src/crawl/xref.rs`
+
+<!-- deficiency-watermark: KD40 -->

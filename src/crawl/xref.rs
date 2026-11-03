@@ -52,6 +52,13 @@ pub(super) fn resolve(
     registry: &Registry,
 ) -> Vec<(LinkRow, Option<Url>)> {
     let lookup = Against { held, pages };
+    // deficiency: KD40 An xref into a component-version the build lacks and
+    // the baseline holds, which no baseline page's facts find, is pointed at
+    // the URL its refspec names (D57). Where production left it unresolved, on
+    // its own page as `#<refspec>`, and that URL is `broken_url`, the link's
+    // target differs from the baseline's row, so the gate (D101) calls a link
+    // already broken introduced. The fix: where the derived URL answers
+    // `broken_url`, the link stays on its own page, the row production renders.
     xrefs
         .into_iter()
         .map(|x| {

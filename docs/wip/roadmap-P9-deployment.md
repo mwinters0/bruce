@@ -513,6 +513,15 @@ evidence** and lands no code, so each later slice meets what it found.
      dated night newest first, the fixed-name files and `SHA256SUMS`, never the
      names by content, which are CI's. Rejected: `bruce` writing it, which holds no
      model of the directory; the view's palette, a second copy of 9.11's.
+   - **9.13 An xref whose derived URL is broken stays on its own page**, admitted
+     2026-11-03 and done before 9.8 (KD40): where the URL an unresolved xref's
+     refspec names (D57) answers `broken_url`, the link's row is the one production
+     renders, its own page at `#<refspec>`, `unresolved_xref`, so a link already
+     broken matches the baseline's row; D57 amended. Then 9.7's pass, a push to the
+     mirror's `clean-change` at the same snapshot, the broken xref kept. Rejected:
+     the gate keying an unresolved xref by its refspec, leaving the CI row a target
+     the page does not link; the guide telling a repo to expect every PR red until
+     the xref is fixed.
 8. **9.8 The maintainer's review of the en-US reports**, the digest
    included: no code; the verdict and what it spawns in the notes.
 9. **9.9 The every-locale crawl**, weekly on the maintainer's machine after
