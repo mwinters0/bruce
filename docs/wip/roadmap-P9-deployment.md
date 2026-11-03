@@ -205,10 +205,11 @@ artifact service's undocumented API.
 
 Settled 2026-10-21 (D42 extended). **`mise run sim` extracts the guide's
 workflow and scheduled-job script too, and checks them**: the workflow
-parses as YAML and has no `uses:` step, the no-third-party-actions rule's
-check, and every `bruce` command line in either parses against the CLI.
-**`mise run e2e` runs the CI job's command steps, Antora's install excepted,
-against its fixture site and baseline.** The dev deployment's real runs are
+has no `uses:` step, the no-third-party-actions rule's check, and every
+`bruce` command line in either parses against the CLI. **`mise run e2e`
+parses the workflow as YAML** (D42, `Rejected`) **and runs the CI job's
+command steps, Antora's install excepted, against its fixture site and
+baseline.** The dev deployment's real runs are
 the closing evidence. Rejected: the static checks alone, which leave the CI
 section free to drift from the tool.
 
@@ -482,7 +483,7 @@ evidence** and lands no code, so each later slice meets what it found.
    script, the workflows' flowchart; `sim` checking the scripts' `bruce`
    lines, `e2e` running the pull against a directory it serves.
 5. **9.5 The guide's CI section**: the workflow, its fetch and check
-   included, `sim`'s YAML and `uses:` checks, `e2e` running its steps, the
+   included, `sim`'s `uses:` check, `e2e` parsing it as YAML and running its steps, the
    Antora pin checked against production's.
 6. **9.6 The dev deployment**: `v0.3.0-rc.1`, its notes drafted by
    `/release` for the maintainer to edit (maintainer, 2026-11-02), the deployment repo's nightly

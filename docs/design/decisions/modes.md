@@ -40,7 +40,9 @@ and its units are wired, so a guide that drifts from the tool fails there and an
 exists here only as the guide's worked example. `cli::tests` holds the scripts' `bruce` lines to the command line and
 `mise run e2e` runs the scripts over the fixture site. Rejected: a committed template directory, which drifts from the
 guide describing it; a hand-built `sim/`, which no other machine can rebuild; running the crawl there, a two-hour job at
-every sim. Code: `scripts/sim.py`, `scripts/deployment.py`. Evidence: `scripts/test_sim.py`.
+every sim; parsing the CI workflow as YAML there, which takes PyYAML, whose YAML 1.1 reads `on:` as true, for a parse
+`e2e`'s js-yaml makes at every guide change. Code: `scripts/sim.py`, `scripts/deployment.py`. Evidence:
+`scripts/test_sim.py`.
 
 ### D103 A deployment publishes one directory, fetched through its `SHA256SUMS`, the files it lists named by content
 The job stages `SHA256SUMS` (written last) over the binary, config and baseline, named by their first 16 hex digits

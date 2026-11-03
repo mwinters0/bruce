@@ -22,7 +22,7 @@ and made executable, and the systemd units are wired: a timer names a service
 template whose environment file and script the guide also tags. The CI workflow
 is read as `workflows.py` reads one, its steps being what `e2e.py` runs, and a
 `uses:` fails it (`WORKFLOW`); `e2e.py` also parses it as YAML, which this check,
-standard library only, cannot. The `bruce` lines of the scripts and of the
+standard library only, does not (D42). The `bruce` lines of the scripts and of the
 workflow are held to the command line by `cli::tests`, which reads the same
 guide. **The crawl is not run**: at one to two hours it is launched detached from
 `sim/` by `mise run crawl` (`review.py`); `e2e.py` runs the scripts over the

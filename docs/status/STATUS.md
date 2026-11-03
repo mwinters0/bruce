@@ -70,10 +70,3 @@ hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
 
-- **The CI workflow is parsed as YAML by `e2e`, not by `sim`** (9.5). The spec has
-  `sim` check that the guide's workflow "parses as YAML"; `scripts/` is standard
-  library only and Python has no YAML parser, so `sim` reads the steps with
-  `workflows.py`'s subset parser and fails a `uses:`, and `e2e` has Antora's
-  `js-yaml` parse the file and agree with it. Reconsidering means adding PyYAML to
-  `scripts/pyproject.toml`, which ends "None: every check is stdlib", for a check
-  `mise run sim` would then make without Node.
