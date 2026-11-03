@@ -50,8 +50,8 @@ FIXED = ("bruce.tar.gz", "bruce.toml", "baseline.duckdb.gz")
 #: The CI workflow's steps that install or fetch what a caller already has.
 INSTALL_STEPS = ("Install the tools", "Check out the change", "Install Antora")
 FETCH_STEP = "Fetch what the deployment published"
-#: The latest digest's HTML, as the guide's view in `fedora.html` publishes it.
-VIEW_PUBLISHED = "digest-fedora.html"
+#: A dated digest's name: the stem, the day the run started and the format.
+DATED_DIGEST = re.compile(r".+-\d{4}-\d{2}-\d{2}\.[^.]+")
 BY_CONTENT = (
     re.compile(r"bruce-[0-9a-f]{16}\.tar\.gz"),
     re.compile(r"config-[0-9a-f]{16}\.toml"),
@@ -145,19 +145,21 @@ def check_sums(directory: Path) -> list[str]:
     return problems
 
 
-def check_published(pub: Path, view: str = "digest.html") -> list[str]:
+def check_published(pub: Path, ext: str = "html") -> list[str]:
     """Every way `pub` is not the contract's directory, empty when there is none:
-    `view` is the file the digest's HTML is published as, `digest.html` for the
-    built-in view and `digest-<name>` for a view in a file `<name>`."""
+    the latest digest is `digest.json` and `digest.<ext>`, whatever file its view
+    is in, and the dated ones are `<stem>-<date>.<ext>`."""
     problems = check_sums(pub)
     if not (pub / "SHA256SUMS").is_file():
         return problems
     listed = sums(pub)
-    for fixed in (*FIXED, "digest.json", view):
+    for fixed in (*FIXED, "digest.json", f"digest.{ext}"):
         if not (pub / fixed).is_file():
             problems.append(f"no {fixed}")
-    if view != "digest.html" and (pub / "digest.html").exists():
-        problems.append(f"a digest.html beside {view}: the job named a view, and the built-in one is not it")
+    for name in sorted(p.name for p in pub.glob("digest-*")):
+        problems.append(f"{name}: a digest is published as digest.<ext>, whatever file its view is in")
+    for name in sorted(p.name for p in (pub / "digests").glob("*") if not DATED_DIGEST.fullmatch(p.name)):
+        problems.append(f"digests/{name} is not <stem>-<date>.<ext>")
     for pattern in BY_CONTENT:
         named = [n for n in listed if pattern.fullmatch(n)]
         if len(named) != 1:
@@ -294,7 +296,7 @@ def exercise(binary: Path, config: Path, work: Path) -> list[str]:
         done = night(guide, run, [bindir], env)
         if done.returncode != 0:
             return problems + [f"night {night_no} exited {done.returncode}:\n{done.stdout}{done.stderr}"]
-        problems += [f"night {night_no}: {p}" for p in check_published(pub, VIEW_PUBLISHED)]
+        problems += [f"night {night_no}: {p}" for p in check_published(pub)]
         compared = json.loads((pub / "digest.json").read_text())["compared_with"]
         if night_no == 1:
             first_names = set(sums(pub))

@@ -34,13 +34,14 @@ status=${seq%% *}
 rest=${seq#"$status"}; rest=${rest# }
 [ -z "$rest" ] && rest=$status
 echo "$rest" > "$STUB_STATE/$var"
-out=; name=bruce; db=; since=
+out=; name=bruce; db=; since=; view=default
 while [ $# -gt 0 ]; do
   case $1 in
     --out) out=$2; shift ;;
     --name) name=$2; shift ;;
     --db) db=$2; shift ;;
     --since) since=$2 ;;
+    --view) view=$2 ;;
   esac
   shift
 done
@@ -51,8 +52,11 @@ case $sub in
   export-baseline) echo "baseline of $(cat "$db")" > "$out" ;;
   digest)
     echo "{\"since\": \"$since\"}" > "$out/$name-$STUB_DATE.json"
-    echo "<html>$STUB_DATE</html>" > "$out/$name-$STUB_DATE.html"
-    echo "a,b" > "$out/$name-$STUB_DATE-links.csv" ;;
+    if [ "$view" = default ]; then
+      echo "<html>$STUB_DATE</html>" > "$out/$name-$STUB_DATE.html"
+    else
+      echo "$view $STUB_DATE" > "$out/$name-$STUB_DATE-${view##*/}"
+    fi ;;
 esac
 """
 
@@ -95,9 +99,8 @@ class Job(unittest.TestCase):
         self.assertEqual(deployment.check_published(self.pub), [])
         self.assertEqual(json.loads((self.pub / "digest.json").read_text()), {"since": ""})
         self.assertEqual(sorted(p.name for p in (self.pub / "digests").iterdir()), [
-            "bruce-2026-11-01-links.csv", "bruce-2026-11-01.html", "bruce-2026-11-01.json",
+            "bruce-2026-11-01.html", "bruce-2026-11-01.json",
         ])
-        self.assertTrue((self.pub / "digest-links.csv").is_file())
         self.assertEqual(
             [c.split()[0] for c in self.calls()], ["crawl", "export-baseline", "report", "prune"],
         )
@@ -155,14 +158,37 @@ class Job(unittest.TestCase):
         for call in digests[1:]:
             self.assertIn("--view /etc/bruce/fedora.html", call)
 
-    def test_a_published_view_is_a_file_of_its_own_and_the_built_in_html_is_not_beside_it(self) -> None:
+    def test_a_view_in_a_file_is_published_as_the_digest_of_its_format_whatever_its_name(self) -> None:
+        for date in ("2026-11-01", "2026-11-02"):
+            done = self.run_night(date, VIEW="/etc/bruce/fedora.html")
+            self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertEqual(deployment.check_published(self.pub), [])
+        self.assertEqual((self.pub / "digest.html").read_text(), "/etc/bruce/fedora.html 2026-11-02\n")
+        self.assertEqual(sorted(p.name for p in (self.pub / "digests").iterdir()), [
+            "bruce-2026-11-01.html", "bruce-2026-11-01.json", "bruce-2026-11-02.html", "bruce-2026-11-02.json",
+        ])
+        self.assertEqual([p.name for p in self.pub.glob("digest-*")], [])
+
+    def test_a_view_the_job_cannot_name_is_refused_before_the_crawl(self) -> None:
+        for view in ("views/fedora", "fedora.json", "/etc/bruce/Links.JSON"):
+            with self.subTest(view):
+                done = self.run_night(VIEW=view)
+                self.assertEqual(done.returncode, 1)
+                self.assertIn("extension", done.stderr)
+                self.assertEqual(self.calls(), [])
+                self.assertFalse(self.pub.exists())
+
+    def test_a_digest_published_under_the_views_file_name_is_not_the_contract(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             pub = Path(d)
-            (pub / "digest.html").write_text("x")
+            (pub / "digest-fedora.html").write_text("x")
+            (pub / "digests").mkdir()
+            (pub / "digests" / "bruce-2026-11-01-fedora.html").write_text("x")
             (pub / "SHA256SUMS").write_text("")
-            problems = "\n".join(deployment.check_published(pub, "digest-fedora.html"))
-            self.assertIn("no digest-fedora.html", problems)
-            self.assertIn("a digest.html beside digest-fedora.html", problems)
+            problems = "\n".join(deployment.check_published(pub))
+            self.assertIn("no digest.html", problems)
+            self.assertIn("digest-fedora.html: a digest is published as digest.<ext>", problems)
+            self.assertIn("digests/bruce-2026-11-01-fedora.html is not <stem>-<date>.<ext>", problems)
 
     def test_a_baseline_of_another_schema_writes_the_digest_uncompared(self) -> None:
         self.run_night("2026-11-01")
@@ -187,15 +213,14 @@ class Job(unittest.TestCase):
 
     def test_the_digests_are_trimmed_by_nights_views_and_json_apart(self) -> None:
         for day in range(1, 6):
-            done = self.run_night(f"2026-11-0{day}", KEEP_VIEWS="2", KEEP_JSON="4")
+            done = self.run_night(f"2026-11-0{day}", KEEP_VIEWS="2", KEEP_JSON="4", VIEW="views/links.csv")
             self.assertEqual(done.returncode, 0, done.stderr)
         kept = sorted(p.name for p in (self.pub / "digests").iterdir())
         self.assertEqual(kept, [
-            "bruce-2026-11-02.json", "bruce-2026-11-03.json", "bruce-2026-11-04-links.csv",
-            "bruce-2026-11-04.html", "bruce-2026-11-04.json", "bruce-2026-11-05-links.csv",
-            "bruce-2026-11-05.html", "bruce-2026-11-05.json",
+            "bruce-2026-11-02.json", "bruce-2026-11-03.json", "bruce-2026-11-04.csv",
+            "bruce-2026-11-04.json", "bruce-2026-11-05.csv", "bruce-2026-11-05.json",
         ])
-        self.assertEqual(deployment.check_published(self.pub), [])
+        self.assertEqual(deployment.check_published(self.pub, "csv"), [])
 
     def test_no_history_is_kept_and_nothing_pruned_with_an_empty_keep(self) -> None:
         self.run_night(KEEP="")

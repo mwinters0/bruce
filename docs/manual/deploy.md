@@ -296,6 +296,15 @@ KEEP_JSON=${KEEP_JSON:-90}
 VIEW=${VIEW:-default}
 DELIVER=${DELIVER:-}
 
+# A view's file is published as the digest of its format, `digest.<ext>`, so its
+# name must say one; `.json` is the JSON digest's. Refused before the crawl.
+view_name=${VIEW##*/}
+view_ext=${view_name##*.}
+if [ "$VIEW" != default ] && { [ "$view_ext" = "$view_name" ] || [ "${view_ext,,}" = json ]; }; then
+  echo "bruce-nightly: VIEW $VIEW must be default or a file with an extension other than .json" >&2
+  exit 1
+fi
+
 # The first failure's status is the job's, once it has done what it still can.
 rc=0
 note() { [ "$rc" -ne 0 ] || rc=$1; }
@@ -341,6 +350,15 @@ if [ "$digest" -eq 3 ]; then
   digest=$?
 fi
 [ "$digest" -eq 0 ] || note "$digest"
+
+# A view in a file is written as STEM-DATE-FILE; it is published as the digest of
+# its format, STEM-DATE.EXT.
+if [ "$digest" -eq 0 ] && [ "$VIEW" != default ]; then
+  for f in "$work/digest/$NAME"-????-??-??-"$view_name"; do
+    d=${f##*/}
+    mv "$f" "$work/digest/${d%"-$view_name"}.$view_ext" || note $?
+  done
+fi
 
 # Deletes the files given that are dated before the $1 newest nights among them.
 trim() {
@@ -394,7 +412,7 @@ stage() {
       cp "$f" "$new/digest$rest"
     done
   else
-    for f in "$PUB"/digest.* "$PUB"/digest-*; do cp -p "$f" "$new/"; done
+    for f in "$PUB"/digest.*; do cp -p "$f" "$new/"; done
   fi
   local json=("$new/digests/$NAME"-????-??-??.json) views=()
   for f in "$new/digests/$NAME"-????-??-??[.-]*; do
@@ -403,7 +421,7 @@ stage() {
   trim "$KEEP_JSON" "${json[@]}"
   trim "$KEEP_VIEWS" "${views[@]}"
 
-  (cd "$new" && sha256sum "$bin" "$cfg" "$base" digest.* digest-* digests/*) > "$work/SHA256SUMS"
+  (cd "$new" && sha256sum "$bin" "$cfg" "$base" digest.* digests/*) > "$work/SHA256SUMS"
   cp "$work/SHA256SUMS" "$new/SHA256SUMS"
 
   rm -rf "$PUB.old"
@@ -511,9 +529,11 @@ still in the page. It is a file beside the script, which the job names with `VIE
 {% endblock %}
 ```
 
-A digest written through a view in a file `fedora.html` is named for it, `bruce-YYYY-MM-DD-fedora.html`
-([`digest.md`](digest.md#the-files)), so the job publishes `digest-fedora.html` where the built-in view
-would have published `digest.html`. The palette is the whole of the view: the print rule keeps a
+`bruce` names a digest written through a view in a file `fedora.html` for it, `bruce-YYYY-MM-DD-fedora.html`
+([`digest.md`](digest.md#the-files)); the job renames it to `bruce-YYYY-MM-DD.html`, so it publishes
+`digest.html` and `digests/bruce-YYYY-MM-DD.html` as it would the built-in view's. It refuses before the
+crawl a `VIEW` that is a file with no extension, which names no format, or a `.json` one, which would
+overwrite the JSON digest. The palette is the whole of the view: the print rule keeps a
 printed digest light, and a `palette` restating only the screen's colours would leave it dark. A
 deployment wanting other words, or other sections, edits the view as `digest.md` describes, and one
 content with the built-in view leaves `VIEW` unset.
@@ -634,7 +654,7 @@ between the job, a content repo's CI and whatever serves the results:
 | `SHA256SUMS` | fetchers | `sha256sum`'s format, written last: the three files below, the latest digest and `digests/`. |
 | `bruce-<sha>.tar.gz`, `config-<sha>.toml`, `baseline-<sha>.duckdb.gz` | CI and pullers | The pinned release's archive, the configuration and the baseline, each named by the first 16 hex digits of its own sha256. Last night's three stay one more night. |
 | `bruce.tar.gz`, `bruce.toml`, `baseline.duckdb.gz` | people | The same files under fixed names, always the latest. |
-| `digest.json`, `digest.html` | people, pullers | The latest digest, in the JSON and the view the job writes: `digest.html` for the built-in view, `digest-<view>` for one in a file `<view>` (`digest-fedora.html`). |
+| `digest.json`, `digest.<ext>` | people, pullers | The latest digest, in the JSON and the view the job writes: `digest.html` for the built-in view or for one in a file `<name>.html`, `digest.csv` for a `.csv` one. |
 | `digests/` | people, pullers | The dated digests: `bruce-YYYY-MM-DD.json`, `.html` and the rest. |
 
 **A fetcher fetches `SHA256SUMS` first, then the files it lists, and runs

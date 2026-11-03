@@ -13,13 +13,11 @@ What 9.12 and 9.8 inherit, and the negative results. The spec is
 - **The script names it with `VIEW`** (default `default`, the built-in view), passed to both of S3's
   digest calls as `--view "$VIEW"`. The systemd environment files and the cron line set
   `VIEW=/etc/bruce/fedora.html`.
-- **A view in a file is published under its file's name**, so the job publishes
-  `digest-fedora.html` and the dated `bruce-YYYY-MM-DD-fedora.html`, and **no `digest.html`**:
-  naming the built-in view beside it would double each night's 10 MB of HTML on a host with 1 GB.
-  9.12's index lists the file it finds, not a fixed name.
+- **A view in a file is published under the contract's names**, `digest.html` and the dated
+  `bruce-YYYY-MM-DD.html` ([9.11.1](roadmap-P9.11.1-view-names-notes.md)).
 - **`sim`** requires the view (`sim.check_view`: tagged, extends the built-in view, declares its model
   version). **`deployment.exercise`** runs both nights with `VIEW` set and holds the published
-  directory to `digest-fedora.html` and no `digest.html` (`check_published`'s `view`). **`e2e`**
+  directory to the contract's names (`check_published`'s `ext`). **`e2e`**
   renders the fixture crawl's digest through the guide's view and holds it to the built-in page with
   palette lines changed and nothing else (`check_guide_view`); the golden files are untouched.
 - **The deployment repo** (`mwinters0/bruce-fedora-docs-ci`) carries `fedora.html`, the guide's script
@@ -28,10 +26,8 @@ What 9.12 and 9.8 inherit, and the negative results. The spec is
 
 ## What the next slices inherit
 
-- **The nightly after the push is the view's first run on Actions**: the first night to publish
-  `digest-fedora.html`. The root `digest.html` of earlier nights is not carried over, and the dated
-  `bruce-<date>.html` of those nights age out by `KEEP_VIEWS` beside the new `-fedora` ones.
-- **9.8 reviews `digest-fedora.html`**, the page as the deployment publishes it.
+- **The nightly after the push is the view's first run on Actions.**
+- **9.8 reviews the digest as the deployment publishes it**, `digest.html`.
 
 ## Negative results
 
