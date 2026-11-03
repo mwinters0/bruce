@@ -333,6 +333,28 @@ class Views(unittest.TestCase):
             self.assertTrue(any("--save-digest" in p for p in problems), problems)
 
 
+class GuideView(unittest.TestCase):
+    BUILT_IN = "<style>\n:root {\n  --accent: #a58de0;\n  --new: #a58de0;\n}\n@media print {\n  :root {\n    --bg: #fff;\n  }\n}\n</style>\n<p>Figures</p>\n"
+
+    def through(self, **kw: str) -> str:
+        return (self.BUILT_IN.replace("#a58de0", "#51a2da")).replace("<p>Figures</p>", kw.get("body", "<p>Figures</p>"))
+
+    def test_a_page_with_only_the_palette_changed_is_accepted(self):
+        self.assertEqual(e2e.check_guide_view(self.BUILT_IN, self.through()), [])
+
+    def test_each_way_the_view_is_not_the_palette_alone_is_named(self):
+        for through, want in (
+            (self.BUILT_IN, "changes nothing"),
+            (self.through(body="<p>Cifry</p>"), "more than the palette"),
+            (self.through().replace("#51a2da", "#111111"), "lacks docs.fp.o's accent"),
+            (self.through() + "--x: #a58de0;\n", "built-in accent"),
+            (self.through().replace("@media print {\n  :root {", "@media print {\n  .x {"), ":root rules"),
+        ):
+            with self.subTest(want):
+                problems = e2e.check_guide_view(self.BUILT_IN, through)
+                self.assertTrue(any(want in p for p in problems), problems)
+
+
 class CiWorkflow(unittest.TestCase):
     class Done:
         def __init__(self, code: int, out: str = "", err: str = "") -> None:

@@ -219,6 +219,35 @@ class Workflow(unittest.TestCase):
                 self.assertTrue(any(want in p for p in problems), problems)
 
 
+VIEW = """{% set bruce_model = 2 %}
+{% extends "bruce:digest.html" %}
+{% block palette %}:root { --bg: red; }
+{% endblock %}
+"""
+
+
+class View(unittest.TestCase):
+    def out(self, text: str | None) -> Path:
+        d = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, d, True)
+        if text is not None:
+            (d / sim.VIEW).write_text(text)
+        return d
+
+    def test_a_view_extending_the_built_in_one_with_its_version_is_accepted(self):
+        self.assertEqual(sim.check_view(self.out(VIEW)), [])
+
+    def test_each_way_it_is_not_a_view_bruce_takes_is_named(self):
+        for text, want in (
+            (None, "tags no"),
+            (VIEW.replace("{% extends \"bruce:digest.html\" %}\n", ""), "does not extend"),
+            (VIEW.replace("{% set bruce_model = 2 %}\n", ""), "no bruce_model"),
+        ):
+            with self.subTest(want):
+                problems = sim.check_view(self.out(text))
+                self.assertTrue(any(want in p for p in problems), problems)
+
+
 class ThisRepo(unittest.TestCase):
     def test_the_guide_extracts_both_configs_its_scripts_and_units(self):
         with tempfile.TemporaryDirectory() as d:
@@ -228,6 +257,7 @@ class ThisRepo(unittest.TestCase):
             self.assertEqual(sim.check_scripts(written), [])
             self.assertEqual(sim.check_units(Path(d)), [])
             self.assertEqual(sim.check_workflow(Path(d)), [])
+            self.assertEqual(sim.check_view(Path(d)), [])
             self.assertTrue((Path(d) / "bruce-nightly.sh").exists())
 
 

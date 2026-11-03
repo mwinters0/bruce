@@ -22,7 +22,9 @@ and made executable, and the systemd units are wired: a timer names a service
 template whose environment file and script the guide also tags. The CI workflow
 is read as `workflows.py` reads one, its steps being what `e2e.py` runs, and a
 `uses:` fails it (`WORKFLOW`); `e2e.py` also parses it as YAML, which this check,
-standard library only, does not (D42). The `bruce` lines of the scripts and of the
+standard library only, does not (D42). The digest's view (`VIEW`) must extend the built-in
+one and state the model version it was written for; `e2e.py` renders the fixture digest
+through it. The `bruce` lines of the scripts and of the
 workflow are held to the command line by `cli::tests`, which reads the same
 guide. **The crawl is not run**: at one to two hours it is launched detached from
 `sim/` by `mise run crawl` (`review.py`); `e2e.py` runs the scripts over the
@@ -56,6 +58,8 @@ OUT = Path("sim")
 #: The tagged files the load check reads.
 CONFIG = "bruce.toml"
 CONFIGS = (CONFIG, "bruce-locales.toml")
+#: The digest's view the guide tags, which the scheduled job names with `VIEW`.
+VIEW = "fedora.html"
 #: The CI workflow the guide tags, where a content repo keeps it.
 WORKFLOW = ".github/workflows/links.yml"
 
@@ -206,6 +210,22 @@ def check_workflow(out: Path) -> list[str]:
     return problems
 
 
+def check_view(out: Path) -> list[str]:
+    """Every way the guide's digest view is not one `bruce report digest --view` can
+    take: it is tagged, it extends the built-in view and it declares its model
+    version (`digest.md`, "Views"). Whether it renders is `e2e.py`'s."""
+    path = out / VIEW
+    if not path.is_file():
+        return [f"the guide tags no {VIEW}"]
+    text = path.read_text(encoding="utf-8")
+    problems = []
+    if not re.search(r"\{%-?\s*extends\s+[\"']bruce:digest\.html[\"']\s*-?%\}", text):
+        problems.append(f"{VIEW}: does not extend bruce:digest.html")
+    if not re.search(r"\{%-?\s*set\s+bruce_model\s*=\s*\d+\s*-?%\}", text):
+        problems.append(f"{VIEW}: declares no bruce_model")
+    return problems
+
+
 def load_command(config: Path) -> list[str]:
     return ["cargo", "run", "--quiet", "--example", "sim_config", "--", str(config)]
 
@@ -218,7 +238,7 @@ def run(guide: Path, out: Path, load: bool, stdout: TextIO = sys.stdout) -> int:
         return 1
     for path in written:
         print(f"sim: wrote {path}", file=stdout)
-    problems = check_scripts(written) + check_units(out) + check_workflow(out)
+    problems = check_scripts(written) + check_units(out) + check_workflow(out) + check_view(out)
     for problem in problems:
         print(f"sim: {problem}", file=sys.stderr)
     if problems:

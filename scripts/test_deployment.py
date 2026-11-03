@@ -146,6 +146,24 @@ class Job(unittest.TestCase):
         self.assertEqual((self.pub / "SHA256SUMS").read_text(), before)
         self.assertNotIn("export-baseline", self.calls()[-1])
 
+    def test_every_digest_is_written_through_the_view_the_job_names_and_the_built_in_one_by_default(self) -> None:
+        self.run_night("2026-11-01")
+        self.run_night("2026-11-02", VIEW="/etc/bruce/fedora.html", STUB_DIGEST_SINCE="3")
+        digests = [c for c in self.calls() if c.startswith("report")]
+        self.assertEqual(len(digests), 3)
+        self.assertIn("--view default", digests[0])
+        for call in digests[1:]:
+            self.assertIn("--view /etc/bruce/fedora.html", call)
+
+    def test_a_published_view_is_a_file_of_its_own_and_the_built_in_html_is_not_beside_it(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            pub = Path(d)
+            (pub / "digest.html").write_text("x")
+            (pub / "SHA256SUMS").write_text("")
+            problems = "\n".join(deployment.check_published(pub, "digest-fedora.html"))
+            self.assertIn("no digest-fedora.html", problems)
+            self.assertIn("a digest.html beside digest-fedora.html", problems)
+
     def test_a_baseline_of_another_schema_writes_the_digest_uncompared(self) -> None:
         self.run_night("2026-11-01")
         done = self.run_night("2026-11-02", STUB_DIGEST_SINCE="3")

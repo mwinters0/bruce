@@ -274,6 +274,7 @@ and a runner with no disk to keep.
 | `NAME` | `bruce` | The digest files' stem, so two jobs' digests can share a directory. |
 | `KEEP_VIEWS` | `30` | The nights of digest kept in HTML and every other view. |
 | `KEEP_JSON` | `90` | The nights of digest kept as JSON: about three months. |
+| `VIEW` | `default` | The [view](digest.md#views) the digest's HTML is written through: a template file, or `default` for the built-in one ([below](#the-digests-view)). |
 | `DELIVER` | none | A command run with `PUB` once it is staged ([below](#delivering-the-results)). |
 
 ```bash file=bruce-nightly.sh
@@ -292,6 +293,7 @@ KEEP=${KEEP-30}
 NAME=${NAME:-bruce}
 KEEP_VIEWS=${KEEP_VIEWS:-30}
 KEEP_JSON=${KEEP_JSON:-90}
+VIEW=${VIEW:-default}
 DELIVER=${DELIVER:-}
 
 # The first failure's status is the job's, once it has done what it still can.
@@ -330,12 +332,12 @@ gzip -n -9 "$work/baseline.duckdb" || exit 1
 # still fails does not stop the job: CI needs the baseline.
 digest=3
 if [ -f "$PUB/baseline.duckdb.gz" ]; then
-  bruce report digest --db "$DB" --out "$work/digest" --name "$NAME" --since "$PUB/baseline.duckdb.gz"
+  bruce report digest --db "$DB" --out "$work/digest" --name "$NAME" --view "$VIEW" --since "$PUB/baseline.duckdb.gz"
   digest=$?
 fi
 if [ "$digest" -eq 3 ]; then
   rm -f "$work/digest"/*
-  bruce report digest --db "$DB" --out "$work/digest" --name "$NAME"
+  bruce report digest --db "$DB" --out "$work/digest" --name "$NAME" --view "$VIEW"
   digest=$?
 fi
 [ "$digest" -eq 0 ] || note "$digest"
@@ -472,6 +474,50 @@ flowchart TD
   S6 --> END(["exit 0, or the first noted failure"])
 ```
 
+### The digest's view
+
+The digest's HTML is written through a **view** ([`digest.md`](digest.md#views)), and the
+built-in one is dark, in a purple of its own. This deployment's is docs.fedoraproject.org's
+palette, the blue of its pages, over the built-in view: it extends `bruce:digest.html` and
+replaces the one block that holds the colours, so every section a later release adds is
+still in the page. It is a file beside the script, which the job names with `VIEW`:
+
+```jinja file=fedora.html
+{% set bruce_model = 2 %}
+{% extends "bruce:digest.html" %}
+{% block palette %}
+:root {
+  color-scheme: dark;
+  --bg: #12151c;
+  --surface: #1a1e28;
+  --raised: #222735;
+  --text: #e4e7ee;
+  --muted: #9aa3b5;
+  --line: #2d3445;
+  --accent: #51a2da;
+  --accent-deep: #294172;
+  --bad: #f0868b;
+  --warn: #e5be6b;
+  --good: #7fcf9a;
+  --new: #51a2da;
+}
+@media print {
+  :root {
+    color-scheme: light;
+    --bg: #fff; --surface: #fff; --raised: #f2f4f8; --text: #111; --muted: #555;
+    --line: #ccd; --accent: #1f5f93; --accent-deep: #fff; --bad: #a11; --warn: #7a5a00; --good: #1a6b36; --new: #1f5f93;
+  }
+}
+{% endblock %}
+```
+
+A digest written through a view in a file `fedora.html` is named for it, `bruce-YYYY-MM-DD-fedora.html`
+([`digest.md`](digest.md#the-files)), so the job publishes `digest-fedora.html` where the built-in view
+would have published `digest.html`. The palette is the whole of the view: the print rule keeps a
+printed digest light, and a `palette` restating only the screen's colours would leave it dark. A
+deployment wanting other words, or other sections, edits the view as `digest.md` describes, and one
+content with the built-in view leaves `VIEW` unset.
+
 ### Scheduling it
 
 A timer runs the script as a systemd service on Fedora. One service template
@@ -513,16 +559,17 @@ CONFIG=/etc/bruce/bruce.toml
 DB=/var/lib/bruce/nightly/bruce.duckdb
 PUB=/var/lib/bruce/nightly/pub
 KEEP=30
+VIEW=/etc/bruce/fedora.html
 ```
 
-Install the script (`install -m 0755 bruce-nightly.sh /usr/local/libexec/bruce/`)
-and the configuration, create the `bruce` user, and `systemctl enable --now
+Install the script (`install -m 0755 bruce-nightly.sh /usr/local/libexec/bruce/`),
+the configuration and the view, create the `bruce` user, and `systemctl enable --now
 bruce-nightly.timer`. `Persistent=true` runs a night the machine slept through
 when it wakes. Where systemd is not at hand, the same job is one line of
 `cron`, the environment on it:
 
 ```sh
-0 1 * * *  ARCHIVE=/opt/bruce/release.tar.gz CONFIG=bruce.toml PUB=/srv/bruce/pub /usr/local/libexec/bruce/bruce-nightly.sh
+0 1 * * *  ARCHIVE=/opt/bruce/release.tar.gz CONFIG=bruce.toml VIEW=fedora.html PUB=/srv/bruce/pub /usr/local/libexec/bruce/bruce-nightly.sh
 ```
 
 ### Every locale, weekly
@@ -557,6 +604,7 @@ DB=/var/lib/bruce/locales/bruce.duckdb
 PUB=/var/lib/bruce/locales/pub
 NAME=bruce-locales
 KEEP=8
+VIEW=/etc/bruce/fedora.html
 ```
 
 ```ini file=systemd/bruce-weekly.timer
@@ -586,7 +634,7 @@ between the job, a content repo's CI and whatever serves the results:
 | `SHA256SUMS` | fetchers | `sha256sum`'s format, written last: the three files below, the latest digest and `digests/`. |
 | `bruce-<sha>.tar.gz`, `config-<sha>.toml`, `baseline-<sha>.duckdb.gz` | CI and pullers | The pinned release's archive, the configuration and the baseline, each named by the first 16 hex digits of its own sha256. Last night's three stay one more night. |
 | `bruce.tar.gz`, `bruce.toml`, `baseline.duckdb.gz` | people | The same files under fixed names, always the latest. |
-| `digest.json`, `digest.html` | people, pullers | The latest digest, in the JSON and every view the job writes (`digest-<view>` for a view in a file `<view>`). |
+| `digest.json`, `digest.html` | people, pullers | The latest digest, in the JSON and the view the job writes: `digest.html` for the built-in view, `digest-<view>` for one in a file `<view>` (`digest-fedora.html`). |
 | `digests/` | people, pullers | The dated digests: `bruce-YYYY-MM-DD.json`, `.html` and the rest. |
 
 **A fetcher fetches `SHA256SUMS` first, then the files it lists, and runs

@@ -39,6 +39,9 @@ exactly the rows `PLANTED_*` name. Nothing leaves the machine: the
 configuration allowlists no host. Needs `cargo`, node and, on the first run,
 the network.
 
+The deployment guide's digest view (`fedora.html`) renders the crawl's digest too: the built-in
+view's page with docs.fp.o's palette and nothing else changed (`check_guide_view`).
+
 The deployment guide's scripts run over this site (`deployment.py`): its scheduled job
 twice, with the real binary, then its pull script over the directory the second night
 published, served locally. The guide's CI workflow runs over that directory too, less the steps
@@ -79,6 +82,7 @@ import argparse
 import collections
 import csv
 import decimal
+import difflib
 import functools
 import hashlib
 import http.server
@@ -96,7 +100,7 @@ from urllib.parse import urlsplit
 
 import deployment
 import workflows
-from sim import GUIDE, tagged_blocks
+from sim import GUIDE, VIEW as GUIDE_VIEW, tagged_blocks
 
 REPO = Path(__file__).resolve().parent.parent
 FIXTURES = REPO / "fixtures" / "antora"
@@ -512,6 +516,49 @@ def check_digest(js: str, html: str, port: int, golden: Path = GOLDEN, save: boo
     return problems
 
 
+#: A line of a digest's palette: a custom property or the colour scheme.
+PALETTE_LINE = re.compile(r"^\s*(--[\w-]+:|color-scheme:)")
+#: docs.fp.o's accent, which the guide's view sets, and the built-in view's own.
+GUIDE_ACCENT, BUILT_IN_ACCENT = "#51a2da", "#a58de0"
+
+
+def guide_view(bin: Path, db: Path, view: Path, out: Path) -> str:
+    """The HTML of the crawl in `db` written through the guide's `view`."""
+    if out.exists():
+        shutil.rmtree(out)
+    code, stdout, err = bruce(bin, "report", "digest", "--db", db, "--out", out, "--name", "e2e", "--view", view, "--no-json")
+    if code:
+        raise E2eError(f"bruce report digest through the guide's view exited {code}:\n{stdout}{err}")
+    (written,) = out.iterdir()
+    return written.read_text()
+
+
+def check_guide_view(builtin: str, through: str) -> list[str]:
+    """Every way the digest written through the guide's view is not the built-in view's
+    with docs.fp.o's palette: it differs from it on palette lines alone, those it
+    changes are its colours, and none of the built-in view's accent is left."""
+    problems: list[str] = []
+    changed = [
+        line[1:]
+        for line in difflib.unified_diff(
+            normalise_digest(builtin).splitlines(), normalise_digest(through).splitlines(), lineterm="", n=0
+        )
+        if line[:1] in "+-" and line[:3] not in ("+++", "---")
+    ]
+    if not changed:
+        problems.append("the guide's view changes nothing of the built-in view's digest")
+    other = [line for line in changed if not PALETTE_LINE.match(line)]
+    if other:
+        problems.append(f"the guide's view changes more than the palette: {other[:3]}")
+    if GUIDE_ACCENT not in through:
+        problems.append(f"the guide's view lacks docs.fp.o's accent {GUIDE_ACCENT}")
+    if BUILT_IN_ACCENT in through:
+        problems.append(f"the guide's view leaves the built-in accent {BUILT_IN_ACCENT} in the page")
+    if through.count(":root") != builtin.count(":root"):
+        problems.append("the guide's view has not both of the palette's :root rules")
+    return problems
+
+
 def records(text: str) -> list[list[str]]:
     """`text` read as CSV, each record a list of its fields."""
     return list(csv.reader(io.StringIO(text, newline="")))
@@ -741,6 +788,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise E2eError("the deployment guide's scripts are not what it promises:\n  " + "\n  ".join(problems))
         print("deployment: two nights of the guide's job published, and the guide's pull fetched them")
         guide_dir = OUT / "deployment" / "guide"
+        problems = check_guide_view(html, guide_view(bin, crawl_db, guide_dir / GUIDE_VIEW, OUT / "digest-guide"))
+        if problems:
+            raise E2eError("the guide's digest view is not what it promises:\n  " + "\n  ".join(problems))
+        print("view: the guide's, docs.fp.o's palette over the built-in digest")
         problems = check_workflow(guide_dir, OUT / "antora" / "node_modules")
         if problems:
             raise E2eError("the guide's CI workflow is not what e2e runs:\n  " + "\n  ".join(problems))
