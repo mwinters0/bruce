@@ -4,7 +4,9 @@
 //! A [`Build`] is a build directory read as the URLs it will have in
 //! production: `--prefix` is the URL of the directory's root, and a file is
 //! the prefix plus its path relative to the root. `foo/index.html` is also
-//! `foo/` (D22), and the top `index.html` is the prefix itself. Every file is
+//! `foo/` (D22), and the top `index.html` is the prefix itself, unless it is a
+//! meta refresh, which answers at its own path alone and leaves the prefix
+//! not built, for the baseline to answer (D101). Every file is
 //! a URL the build answers, an asset a page links to included, and **a seed**
 //! of the run, a partial build's sitemap not being trusted (it has none): the
 //! run then holds a target for each file the build has, which is how the
@@ -18,6 +20,7 @@ use std::path::{Path, PathBuf};
 use url::Url;
 
 use crate::config::Config;
+use crate::extract;
 
 /// A build directory and the prefix it is served under.
 #[derive(Debug, Clone)]
@@ -40,6 +43,8 @@ pub enum Error {
     Io(PathBuf, std::io::Error),
     /// A file whose name is not UTF-8 is no URL.
     NotUtf8(PathBuf),
+    /// The top `index.html` could not be read as a page.
+    Page(PathBuf, extract::Error),
 }
 
 impl fmt::Display for Error {
@@ -53,6 +58,7 @@ impl fmt::Display for Error {
             ),
             Error::Io(path, e) => write!(f, "{}: {e}", path.display()),
             Error::NotUtf8(path) => write!(f, "{}: the name is not UTF-8", path.display()),
+            Error::Page(path, e) => write!(f, "{}: {e}", path.display()),
         }
     }
 }
@@ -73,17 +79,29 @@ impl Build {
         }
         let mut files = Vec::new();
         walk(dir, &mut Vec::new(), &mut files)?;
-        Ok(Build::from_files(prefix, files))
+        let refresh = match files
+            .iter()
+            .find(|(segments, _)| *segments == ["index.html"])
+        {
+            Some((_, file)) => {
+                let bytes = std::fs::read(file).map_err(|e| Error::Io(file.clone(), e))?;
+                extract::leaves_at_once(&String::from_utf8_lossy(&bytes))
+                    .map_err(|e| Error::Page(file.clone(), e))?
+            }
+            None => false,
+        };
+        Ok(Build::from_files(prefix, files, refresh))
     }
 
     /// The build holding `files`, each as its path segments below the root
-    /// and the file that holds it.
-    fn from_files(prefix: Url, files: Vec<(Vec<String>, PathBuf)>) -> Build {
+    /// and the file that holds it. `refresh`: the top `index.html` is a meta
+    /// refresh, so it is the URL of its own path alone (D101).
+    fn from_files(prefix: Url, files: Vec<(Vec<String>, PathBuf)>, refresh: bool) -> Build {
         let (mut served, mut seeds) = (Vec::new(), Vec::new());
         for (segments, file) in files {
             let url = url_of(&prefix, &segments, false);
             let index = segments.last().is_some_and(|s| s == "index.html");
-            if index {
+            if index && !(refresh && segments.len() == 1) {
                 let dir = url_of(&prefix, &segments[..segments.len() - 1], true);
                 served.push((dir.clone(), file.clone()));
                 seeds.push(dir);

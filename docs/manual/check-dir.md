@@ -19,7 +19,7 @@ have broken. The run is added to a database like a crawl's ([`crawl.md`](crawl.m
 | Argument | Default | Meaning |
 |---|---|---|
 | `DIR` | required | The build directory. Every `.html` or `.htm` file under it is a page checked, and every other file a target of the run; a symlinked directory is not walked. |
-| `--prefix URL` | required | The production URL of the directory's root, such as `https://docs.example.org/en-US`. A file is the page at the prefix plus its path, and `foo/index.html` is `foo/` too. It must be inside a root's scope. |
+| `--prefix URL` | required | The production URL of the directory's root, such as `https://docs.example.org/en-US`. A file is the page at the prefix plus its path, and `foo/index.html` is `foo/` too, except a top `index.html` that is a meta refresh with a delay of 0, which is the page at its own path alone: the prefix is then not built, and the baseline answers a link to it. It must be inside a root's scope. |
 | `--baseline FILE\|URL` | required | The baseline file, or an `http` or `https` URL to download it from. A gzipped file is decompressed, whatever its name. Nothing is cached. |
 | `--config FILE` | none | The configuration the baseline was crawled under ([`config.md`](config.md)). With none, the prefix is the only root. |
 | `--db FILE` | `bruce.duckdb` | The database the run is added to, created if it does not exist. |
@@ -148,6 +148,12 @@ Text lists, in order:
 7. **Breakage already in the baseline**: a count, and with `--all` the links,
    those in the outcomes of `gate.fail` that the baseline had too, which never
    fail the check.
+
+A link in sections 1, 2, 5 and 7 is the baseline's when it is on the same page
+with the same fragment and its target is the same or differs only by a final
+`/`, so a page's link home is not new because the baseline's omits the slash. It
+is hidden only where the baseline's link was in the same state: a `/foo` that
+answers 404 where the baseline's `/foo/` answered is introduced.
 
 ```text
 run 7: 23 targets, 3 pages

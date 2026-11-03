@@ -100,3 +100,50 @@ fn a_directory_that_cannot_be_read_is_an_error_naming_it() {
     .to_string();
     assert!(e.contains("/nonexistent/build"), "{e}");
 }
+
+/// A build whose top `index.html` is `top` and which holds `tools/index.html`.
+fn build_with_top(top: &str) -> Build {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::create_dir_all(dir.path().join("tools")).unwrap();
+    std::fs::write(dir.path().join("index.html"), top).unwrap();
+    std::fs::write(dir.path().join("tools/index.html"), "x").unwrap();
+    Build::scan(dir.path(), "https://x.org/en-US/", &config()).unwrap()
+}
+
+#[test]
+fn a_top_index_that_is_a_meta_refresh_is_served_at_its_own_path_and_leaves_the_prefix_unbuilt_d101()
+{
+    let built = build_with_top(
+        "<html><head><meta http-equiv=\"refresh\" content=\"0; url=tools/\"></head></html>",
+    );
+    assert_eq!(
+        urls(built.seeds()),
+        [
+            "https://x.org/en-US/index.html",
+            "https://x.org/en-US/tools/"
+        ],
+        "the refresh is a seed at its own path, and the prefix is none"
+    );
+    let served: Vec<String> = built.served().map(|(u, _)| u.to_string()).collect();
+    assert!(
+        !served.contains(&"https://x.org/en-US/".to_owned()),
+        "{served:?}"
+    );
+    assert!(served.contains(&"https://x.org/en-US/index.html".to_owned()));
+}
+
+#[test]
+fn a_top_index_that_is_not_an_immediate_refresh_is_the_prefix() {
+    for top in [
+        "<meta http-equiv=refresh content=\"5; url=tools/\"><p>hello",
+        "<meta http-equiv=refresh content=\"0\">",
+        "<title>a page</title>",
+    ] {
+        let built = build_with_top(top);
+        assert!(
+            urls(built.seeds()).contains(&"https://x.org/en-US/"),
+            "{top}: {:?}",
+            built.seeds()
+        );
+    }
+}

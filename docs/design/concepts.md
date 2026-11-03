@@ -48,7 +48,8 @@ decisions each carries are cited in its module's doc.
 ## CI mode
 
 - **bruce** — `ci.rs`: a build directory read as the URLs it will have in
-  production, the prefix mapping, which files are seeds and the refusal of a
+  production, the prefix mapping, which files are seeds, a top `index.html`
+  that is a meta refresh served at its own path and no prefix (D101), and the refusal of a
   prefix outside every root's scope, handing `fetch/local` a finished map. It
   sits beside `crawl` and `report`, none calling another, and above `config`
   (D39).

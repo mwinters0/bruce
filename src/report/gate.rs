@@ -1,9 +1,9 @@
 //! The gate: what a CI run broke that its baseline had not (D9), and the
 //! sections `check-dir` prints beside it.
 //!
-//! A link is keyed by its page's `url_id` (D26), its target URL and its
-//! fragment, the same in every run, and a run's `baseline_run` names the run it was checked
-//! against. A CI run holds the links of built pages alone, a copied page
+//! A link is keyed by its page's `url_id` (D26), its target URL, its final `/`
+//! toggled being the same (D101), and its fragment, the same in every run, and
+//! a run's `baseline_run` names the run it was checked against. A CI run holds the links of built pages alone, a copied page
 //! having none (D52), so a baseline link on a page not built is absent from
 //! it and is no one's to call fixed. **Introduced** is a link whose outcome
 //! the CI run's `fail` list names (D83; `broken_url` and `broken_anchor` by
@@ -39,9 +39,24 @@ const LINK: Cols = Cols {
     page: "b.src_url_id",
 };
 
-/// A baseline link `o` has the key of the CI link `b`.
-const SAME_KEY: &str = "o.src_url_id = b.src_url_id AND o.target IS NOT DISTINCT FROM b.target \
-                        AND o.frag = coalesce(b.fragment, '')";
+/// `target` without its path's final `/`, its query kept; a root's own `/` stays,
+/// no URL lacking it (`url::toggle_slash`). Two targets with the same result
+/// differ at most by that slash (D101).
+fn slashless(target: &str) -> String {
+    format!(
+        "regexp_replace({target}, '^([a-zA-Z][a-zA-Z0-9+.-]*://[^/?#]+/[^?#]*)/([?#]|$)', '\\1\\2')"
+    )
+}
+
+/// A baseline link `o` has the key of the CI link `b`: the same page and
+/// fragment, and a target the same or differing by a final `/` (D101).
+fn same_key() -> String {
+    format!(
+        "o.src_url_id = b.src_url_id AND o.tkey IS NOT DISTINCT FROM {} \
+         AND o.frag = coalesce(b.fragment, '')",
+        slashless("b.target")
+    )
+}
 
 /// The gate's sections over one CI run.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -305,8 +320,11 @@ pub(super) fn baseline(conn: &Connection, run: RunId) -> Result<(RunId, String),
 /// `base`, the links of the baseline run with the key a CI link is matched on.
 fn base_links(sql: &mut Sql, base: RunId, request: &Request) {
     sql.push(
-        "WITH base AS (SELECT v.src_url_id, t.url AS target, coalesce(v.fragment, '') AS frag, \
-         v.outcome, v.redirected FROM link_verdicts v \
+        "WITH base AS (SELECT v.src_url_id, t.url AS target, ",
+    )
+    .push(&slashless("t.url"))
+    .push(
+        " AS tkey, coalesce(v.fragment, '') AS frag, v.outcome, v.redirected FROM link_verdicts v \
          LEFT JOIN targets t ON t.run_id = v.run_id AND t.url_id = v.target_url_id \
          WHERE v.run_id = ",
     )
@@ -339,7 +357,7 @@ fn broken(
             "coalesce((SELECT arg_min(o.outcome, CASE o.outcome WHEN 'error' THEN 0 \
              WHEN 'unchecked' THEN 1 ELSE 2 END) FROM base o WHERE ",
         )
-        .push(SAME_KEY)
+        .push(&same_key())
         .push("), 'new') AS baseline, ");
     }
     // An `error` is no `report_broken` row, so its view joins by name where the
@@ -360,7 +378,7 @@ fn broken(
         } else {
             " AND EXISTS (SELECT 1 FROM base o WHERE "
         })
-        .push(SAME_KEY)
+        .push(&same_key())
         .push(" AND o.outcome IN ")
         .push(&outcomes(fail))
         .push(
@@ -389,7 +407,7 @@ fn redirected(
     .push(" AND ");
     sql.scope(run, request, LINK)
         .push(" AND NOT EXISTS (SELECT 1 FROM base o WHERE ")
-        .push(SAME_KEY)
+        .push(&same_key())
         .push(
             " AND o.redirected) QUALIFY row_number() OVER (PARTITION BY b.src_url_id, b.target, \
              coalesce(b.fragment, '') ORDER BY b.raw_href, b.kind) = 1) ORDER BY ",

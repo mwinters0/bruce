@@ -443,3 +443,130 @@ fn an_error_the_baseline_had_is_already_there_where_the_list_names_it() {
     // The new 503 (14) is introduced, an error first.
     assert_eq!(column(&g.introduced, "raw_href")[0], "1>14#");
 }
+
+/// A target of `run` at `url`, answering `status`, redirected onto page 2 where `moved`.
+fn at(store: &Store, run: u64, id: u64, url: &str, status: u16, outcome: &str, moved: bool) {
+    let conn = store.connection();
+    conn.execute(
+        "INSERT INTO targets (answered_by, run_id, url_id, url, status, outcome) \
+         VALUES ('live', ?, ?, ?, ?, ?)",
+        params![run, id, url, status, outcome],
+    )
+    .unwrap();
+    if moved {
+        conn.execute(
+            "UPDATE targets SET final_url = ?, redirect_chain = [] WHERE run_id = ? AND url_id = ?",
+            params![self::url(2), run, id],
+        )
+        .unwrap();
+    }
+}
+
+/// The key matches a baseline link whose target differs by a final `/`, in
+/// every section (D101).
+#[test]
+fn a_link_matches_the_baselines_with_its_final_slash_toggled_d101() {
+    let store = store();
+    // A redirected home link: `/home` in the baseline, `/home/` here.
+    at(&store, 1, 30, "https://e.test/home", 200, "ok", true);
+    at(&store, 2, 31, "https://e.test/home/", 200, "ok", true);
+    // Broken in both under the other spelling.
+    at(
+        &store,
+        1,
+        32,
+        "https://e.test/gone",
+        404,
+        "broken_url",
+        false,
+    );
+    at(
+        &store,
+        2,
+        33,
+        "https://e.test/gone/",
+        404,
+        "broken_url",
+        false,
+    );
+    // Answering in the baseline, broken here under the other spelling.
+    at(&store, 1, 34, "https://e.test/was/", 200, "ok", false);
+    at(
+        &store,
+        2,
+        35,
+        "https://e.test/was",
+        404,
+        "broken_url",
+        false,
+    );
+    // A query is kept: the path's slash is the one toggled.
+    at(
+        &store,
+        1,
+        36,
+        "https://e.test/q?a=1",
+        404,
+        "broken_url",
+        false,
+    );
+    at(
+        &store,
+        2,
+        37,
+        "https://e.test/q/?a=1",
+        404,
+        "broken_url",
+        false,
+    );
+    // Another query is another URL.
+    at(
+        &store,
+        2,
+        38,
+        "https://e.test/q/?a=2",
+        404,
+        "broken_url",
+        false,
+    );
+    for (run, to) in [
+        (1, 30),
+        (2, 31),
+        (1, 32),
+        (2, 33),
+        (1, 34),
+        (2, 35),
+        (1, 36),
+        (2, 37),
+        (2, 38),
+    ] {
+        link(&store, run, 1, to, None, "anchor");
+    }
+    let g = gate_of(&store, |_| {});
+    let introduced = column(&g.introduced, "raw_href");
+    assert!(
+        introduced.contains(&"1>35#".to_owned()),
+        "a 404 where the baseline answered: {introduced:?}"
+    );
+    assert!(introduced.contains(&"1>38#".to_owned()), "{introduced:?}");
+    for matched in ["1>33#", "1>37#"] {
+        assert!(
+            !introduced.contains(&matched.to_owned()),
+            "{matched}: {introduced:?}"
+        );
+    }
+    let already = column(&g.already, "raw_href");
+    assert!(
+        already.contains(&"1>33#".to_owned()) && already.contains(&"1>37#".to_owned()),
+        "{already:?}"
+    );
+    assert_eq!(
+        column(&g.introduced, "baseline")[introduced.iter().position(|r| r == "1>35#").unwrap()],
+        "ok"
+    );
+    assert!(
+        !column(&g.redirected, "raw_href").contains(&"1>31#".to_owned()),
+        "redirected in both: {:?}",
+        g.redirected
+    );
+}

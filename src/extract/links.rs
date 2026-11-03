@@ -366,6 +366,15 @@ fn srcset_urls(value: &str) -> Vec<String> {
     }
 }
 
+/// Whether `el` is a `<meta http-equiv=refresh>` whose delay is 0 and which
+/// names a URL: the page a browser leaves at once (D7).
+pub(super) fn leaves_at_once(el: &Element) -> bool {
+    immediate_refresh(el)
+        && attribute(el, "content")
+            .and_then(|c| refresh_url(&c))
+            .is_some()
+}
+
 /// Whether `el` is a `<meta http-equiv=refresh>` whose delay is 0.
 fn immediate_refresh(el: &Element) -> bool {
     let refresh =

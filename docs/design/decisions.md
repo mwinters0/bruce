@@ -12,7 +12,7 @@ entries quote are named by their day (2026-10-23, 2026-10-24, 2026-10-25, run 2 
 2026-10-28). Their databases predate schema 6 and are no longer kept: a figure stands as recorded, and a new crawl
 remeasures it. The en-US crawl of 2026-11-01 is kept, beside the one before it, in `runs/en-us-20261101-0005/`.
 
-<!-- decision-watermark: D100 -->
+<!-- decision-watermark: D101 -->
 
 ## Modes, commands and deployment
 [`decisions/modes.md`](decisions/modes.md)
@@ -106,6 +106,7 @@ remeasures it. The en-US crawl of 2026-11-01 is kept, beside the one before it, 
 - **D9** CI fails only on breakage the change introduced
 - **D21** CI consumes a single-run baseline file, not the history DB
 - **D22** A local build's links resolve locally, then against the baseline, then by allowlist
+- **D101** The gate's key matches a baseline link whose target differs only by a final `/`
 - **D53** In a local build, an href beginning `/` resolves against the prefix
 - **D54** A URL the build lacks waits for the held set, and a copy from the baseline waits for the end
 - **D55** An xref waits for the held set, resolves through the baseline's pages, and keeps its refspec

@@ -14,12 +14,12 @@ cross-component links, the breakage this tool exists for.
 
 ### D9 CI fails only on breakage the change introduced
 A link is `(source page, target URL, fragment)` of any kind (D13), the build mapped to production URLs, and only built
-pages' links count. It is introduced where it fails here and the baseline lacks its key at a failing outcome (D83). The
-inverse check fails too unless `--inverse=warn`. `report introduced` and `report inverse` judge every kind as well, so
-re-reporting a CI run gives the rows that set its exit under `--inverse=fail`. Accepted noise: a renamed page's links
-all look new. Rejected: failing on all breakage, which keeps CI permanently red; `check-dir --kind` narrowing the gate,
-D50's `skip` silencing a noisy URL instead. Code: `report::gate`. Evidence:
-`report::gate::tests::the_gate_reads_every_kind_unless_a_report_narrows_it`.
+pages' links count; a baseline link's target may differ by a final `/` (D101). It is introduced where it fails here and
+the baseline lacks its key at a failing outcome (D83). The inverse check fails too unless `--inverse=warn`. `report
+introduced` and `report inverse` judge every kind as well, so re-reporting a CI run gives the rows that set its exit
+under `--inverse=fail`. Accepted noise: a renamed page's links all look new. Rejected: failing on all breakage, which
+keeps CI permanently red; `check-dir --kind` narrowing the gate, D50's `skip` silencing a noisy URL instead. Code:
+`report::gate`. Evidence: `report::gate::tests::the_gate_reads_every_kind_unless_a_report_narrows_it`.
 
 ### D21 CI consumes a single-run baseline file, not the history DB
 `bruce export-baseline` writes one finished run into a fresh DB of the current schema, so the views, reports and D43's
@@ -29,12 +29,24 @@ schema of its own, a second version and set of queries; a `--max-age` refusal, f
 cannot fix, until one is asked for. Code: `store::baseline`.
 
 ### D22 A local build's links resolve locally, then against the baseline, then by allowlist
-A built URL is checked locally (`foo/` is `foo/index.html`); an in-scope URL the build lacks is `broken_url` in a
-component-version the build holds, else the baseline's, else asked live (D54); an unresolved xref outside what the build
-holds resolves through the baseline's pages (D19, D55). Externals default to the baseline's verdict (`--externals`), so
-a slow host never blocks a PR. Rejected: the baseline's answer for a held page, which passes a link to a page the change
-deletes; `--externals` governing an in-scope URL the build lacks, a URL on the site new to the gate being the one most
-worth asking. Code: `ci::Build`, `crawl::baseline`.
+A built URL is checked locally (`foo/` is `foo/index.html`, bar a top `index.html` that is a meta refresh, served at
+its own path alone so the prefix is not built, D101); an in-scope URL the build lacks is `broken_url` in a
+component-version the build holds, else the baseline's, else asked live (D54); an unresolved xref outside what the
+build holds resolves through the baseline's pages (D19, D55). Externals default to the baseline's verdict
+(`--externals`), so a slow host never blocks a PR. Rejected: a held-set exception in `crawl::baseline` for the refresh;
+the baseline's answer for a held page, which passes a link to a page the change deletes; `--externals` governing an
+in-scope URL the build lacks, a URL on the site new to the gate being the one most worth asking. Code: `ci::Build`,
+`crawl::baseline`.
+
+### D101 The gate's key matches a baseline link whose target differs only by a final `/`
+A CI link matches a baseline link from the same page and fragment whose target is the same or differs by its path's
+final `/`, in every section, and hides only where the baseline's was in the same state: a `/foo` broken where `/foo/`
+answered is introduced. Why: production's `site.url` has no final `/` and a partial build, having none (I11), links
+`.../en-US/`; both redirect, and 236 of a quick-docs run's 239 redirected rows were the home link. Rejected: the toggle
+in `redirected` alone, leaving the home link introduced under a `max_redirects` that breaks it; matching by landing,
+which hides an edit between two outdated hrefs; the guide telling a repo to expect the rows or to build with `site.url`
+(I15, D53). Code: `report::gate`. Evidence:
+`report::gate::tests::a_link_matches_the_baselines_with_its_final_slash_toggled_d101`.
 
 ### D53 In a local build, an href beginning `/` resolves against the prefix
 The build directory's root is the site's root, as a static server serving it at `/` shows it, so such an href (not

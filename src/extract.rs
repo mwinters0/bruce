@@ -198,6 +198,25 @@ impl std::fmt::Display for Stop {
 
 impl std::error::Error for Stop {}
 
+/// Whether `html` has a `<meta http-equiv=refresh>` of delay 0 naming a URL,
+/// so a browser leaves the page at once (D7): `ci` asks it of a build's top
+/// `index.html` (D101).
+pub fn leaves_at_once(html: &str) -> Result<bool, Error> {
+    let found = RefCell::new(false);
+    let settings = Settings::new()
+        .with_strict(false)
+        .append_element_content_handler(element("meta", |el| {
+            if links::leaves_at_once(el) {
+                *found.borrow_mut() = true;
+            }
+            Ok(())
+        }));
+    let mut rewriter = HtmlRewriter::new(settings, |_: &[u8]| {});
+    rewriter.write(html.as_bytes())?;
+    drop(rewriter);
+    Ok(found.into_inner())
+}
+
 /// The content of the page's first `<meta name="generator">` that has one
 /// (D35), read from the head: the pass stops at a `<body>` start tag, past
 /// which no profile looks, and on a page without one reads to the end.

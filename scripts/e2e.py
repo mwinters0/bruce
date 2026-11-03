@@ -503,17 +503,12 @@ def rows(doc: dict[str, Any], section: str, prefix: str, *keys: str) -> set[tupl
     }
 
 
-#: An unchanged build of `tools` has nothing introduced, though it lists the
-#: links that redirect: each page's home link reaches the site's `index.html`,
-#: which refreshes to the start page of the build (`tools/`) where the baseline's
-#: refreshes to `guide/`. They never fail the check.
-UNCHANGED_REDIRECTED = {
-    ("tools/", "..", "refresh"), ("tools/reference/", "../..", "refresh"), ("tools/usage/", "../..", "refresh"),
-}
-#: The xref through the page-alias is among them, its page a meta refresh (D57).
-PLANTED_REDIRECTED = {
-    ("tools/", "..", "refresh"), ("tools/usage/", "../..", "refresh"), ("tools/usage/", "#ops::disks.adoc", "refresh"),
-}
+#: An unchanged build of `tools` has nothing introduced and no redirected link: each
+#: page's home link reaches the site's `index.html`, a meta refresh, as the baseline's does,
+#: and matches it with its final `/` toggled (D101).
+UNCHANGED_REDIRECTED: set[tuple[str, str, str]] = set()
+#: The xref through the page-alias alone, its page a meta refresh (D57).
+PLANTED_REDIRECTED = {("tools/usage/", "#ops::disks.adoc", "refresh")}
 #: What `plant` introduces, each rule once: (page, raw_href, kind, outcome,
 #: reason, baseline). The valid xrefs out of the build, the alias's too, are absent, and so is the
 #: deleted image no built page names, which only the inverse check finds.
