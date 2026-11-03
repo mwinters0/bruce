@@ -269,3 +269,4 @@ judges every link by run 2's.
 | 0 | The report ran. Finding broken links does not change this. |
 | 1 | The database could not be read, or has no such run or no finished one, `diff`, `changed` or `anchors-removed` has no finished run to compare, the run a bare report would read is the baseline of a later unfinished `check-dir` run, an `introduced` or `inverse` run names no baseline, or the `--config` file cannot be read or is not a valid configuration; the message says which. |
 | 2 | The command line was not understood. |
+| 3 | The database is of another schema version. |

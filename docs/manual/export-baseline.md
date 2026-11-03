@@ -52,5 +52,6 @@ crawl has open fails at once.
 | Status | Meaning |
 |---|---|
 | 0 | The baseline was written. |
-| 1 | The database does not exist, could not be opened or is of another schema version; the run is unfinished or missing; or `--out` exists without `--force`, is the database, or could not be written. |
+| 1 | The database does not exist or could not be opened; the run is unfinished or missing; or `--out` exists without `--force`, is the database, or could not be written. |
 | 2 | The command line was not understood. |
+| 3 | The database is of another schema version. |

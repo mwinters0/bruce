@@ -11,6 +11,43 @@ pub const SCHEMA_VERSION: u32 = 7;
 /// The `meta` key holding [`SCHEMA_VERSION`].
 pub const VERSION_KEY: &str = "schema_version";
 
+/// A database or baseline file recording another schema version than the one
+/// this build reads (D43). It is a type of its own for `cli`, which gives it
+/// an exit status no other failure has (D102).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Mismatch {
+    /// The version the file records.
+    pub found: String,
+    /// The version this build reads.
+    pub expected: u32,
+}
+
+impl Mismatch {
+    /// Whether `found`, the text of a file's `meta` row, is this build's version.
+    pub(super) fn check(found: String) -> Result<(), Mismatch> {
+        if found == SCHEMA_VERSION.to_string() {
+            Ok(())
+        } else {
+            Err(Mismatch {
+                found,
+                expected: SCHEMA_VERSION,
+            })
+        }
+    }
+}
+
+impl std::fmt::Display for Mismatch {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "database has schema version {}, but this bruce reads version {}",
+            self.found, self.expected
+        )
+    }
+}
+
+impl std::error::Error for Mismatch {}
+
 /// The five outcomes of D16.
 const OUTCOME: &str = "('ok', 'broken_url', 'broken_anchor', 'error', 'unchecked')";
 

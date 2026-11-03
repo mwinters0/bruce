@@ -421,5 +421,6 @@ An `unchecked` link is not broken: the run did not learn whether it is. Its
 | Status | Meaning |
 |---|---|
 | 0 | The files were written. Finding broken links does not change this. |
-| 1 | The database could not be read or has no such run or no finished one, the run or the run compared with is a `check-dir` run, `--since` names no baseline (a file or URL that cannot be read, is not one, or is of another schema version), the `--config` file cannot be read or is not a valid configuration, the run a bare digest would read is the baseline of a later unfinished `check-dir` run, a `--view` cannot be read or parsed, declares another model version, fails to render or would write the file of another, or a file could not be written (`--write-default-view`: one is already there); the message says which. |
+| 1 | The database could not be read or has no such run or no finished one, the run or the run compared with is a `check-dir` run, `--since` names no baseline (a file or URL that cannot be read, or is not one), the `--config` file cannot be read or is not a valid configuration, the run a bare digest would read is the baseline of a later unfinished `check-dir` run, a `--view` cannot be read or parsed, declares another model version, fails to render or would write the file of another, or a file could not be written (`--write-default-view`: one is already there); the message says which. |
 | 2 | The command line was not understood. |
+| 3 | The database or the `--since` baseline is of another schema version. |

@@ -137,7 +137,7 @@ class Opens(unittest.TestCase):
     def test_another_schema_starts_a_new_database(self):
         with tempfile.TemporaryDirectory() as d:
             refusal = "database has schema version 6, but this bruce reads version 7"
-            self.assertFalse(review.opens(self.fake(d, refusal, 1), Path(d) / "x.duckdb"))
+            self.assertFalse(review.opens(self.fake(d, refusal, 3), Path(d) / "x.duckdb"))
 
     def test_any_other_refusal_stops_the_crawl(self):
         with tempfile.TemporaryDirectory() as d:

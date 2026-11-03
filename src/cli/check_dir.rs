@@ -15,7 +15,8 @@
 //! the finished run, and sets the exit status: 0 where nothing is introduced,
 //! 1 where a link is introduced at an outcome `gate.fail` names (D83) or, under
 //! `--inverse=fail`, the change removed what a page outside the build links
-//! to, 2 where the tool could not run. A SIGINT or SIGTERM stops the run as it does `crawl`'s (D58): a
+//! to, 2 where the tool could not run, 3 where the database or the baseline is
+//! of another schema version (D102). A SIGINT or SIGTERM stops the run as it does `crawl`'s (D58): a
 //! build cut short is not judged, so no gate runs, the run is left unfinished
 //! and the exit status is 128 plus the signal.
 
@@ -24,6 +25,7 @@ use std::process::ExitCode;
 
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
+use super::failure::Failure;
 use super::interrupt::{self, Pressed};
 use super::{crawl, db};
 use crate::ci::Build;
@@ -195,7 +197,7 @@ pub fn run(args: &Args) -> ExitCode {
         }
         Err(e) => {
             eprintln!("bruce check-dir: {e}");
-            ExitCode::from(COULD_NOT_RUN)
+            ExitCode::from(e.status(COULD_NOT_RUN))
         }
     }
 }
@@ -209,7 +211,7 @@ enum Checked {
 
 /// Checks and writes one run of the build, and judges it against its
 /// baseline unless a signal came first.
-fn check(args: &Args) -> Result<Checked, String> {
+fn check(args: &Args) -> Result<Checked, Failure> {
     // With no file the prefix is the root, and a file names its own.
     let given = crawl::Args {
         url: args.config.is_none().then(|| args.prefix.clone()),
@@ -224,11 +226,11 @@ fn check(args: &Args) -> Result<Checked, String> {
         .map_err(|e| e.to_string())?;
     let baseline_file = BaselineFile::open(&args.baseline, Some(&config), &runtime)?;
     let db = db::path(args.db.as_deref());
-    let in_db = |e: crate::store::Error| format!("{}: {e}", db.display());
+    let in_db = |e: crate::store::Error| Failure::at(db.display(), &e);
     let store = db::open(db, &registry).map_err(in_db)?;
     let imported = store
         .import_baseline(baseline_file.path())
-        .map_err(|e| format!("{}: {e}", args.baseline))?;
+        .map_err(|e| Failure::at(&args.baseline, &e))?;
     let index = store.baseline_index(imported.run).map_err(in_db)?;
     let live =
         HttpFetcher::new(Settings::of(&config), Hosts::new(&config)).map_err(|e| e.to_string())?;

@@ -13,6 +13,7 @@ use std::time::Duration;
 use clap::{Arg, ArgGroup, ArgMatches, Command, value_parser};
 
 use super::db;
+use super::failure::Failure;
 use crate::profile::Registry;
 use crate::store::Rule;
 
@@ -96,19 +97,19 @@ pub fn run(args: &Args, registry: Registry) -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("bruce prune: {e}");
-            ExitCode::FAILURE
+            ExitCode::from(e.status(1))
         }
     }
 }
 
-fn prune(args: &Args, registry: &Registry) -> Result<(), String> {
+fn prune(args: &Args, registry: &Registry) -> Result<(), Failure> {
     let db = db::path(args.db.as_deref());
     if !db.exists() {
-        return Err(format!("{}: no such database", db.display()));
+        return Err(format!("{}: no such database", db.display()).into());
     }
-    let in_db = |e: &dyn std::fmt::Display| format!("{}: {e}", db.display());
-    let store = db::open(db, registry).map_err(|e| in_db(&e))?;
-    let runs = store.prune(args.rule).map_err(|e| in_db(&e))?;
+    let in_db = |e: crate::store::Error| Failure::at(db.display(), &e);
+    let store = db::open(db, registry).map_err(in_db)?;
+    let runs = store.prune(args.rule).map_err(in_db)?;
     if runs.is_empty() {
         println!("bruce prune: no run to delete");
     } else {

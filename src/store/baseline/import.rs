@@ -104,12 +104,6 @@ impl Store {
             [schema::VERSION_KEY],
             |r| r.get(0),
         )?;
-        if found != schema::SCHEMA_VERSION.to_string() {
-            return Err(Error::SchemaVersion {
-                found,
-                expected: schema::SCHEMA_VERSION,
-            });
-        }
-        Ok(())
+        schema::Mismatch::check(found).map_err(Error::SchemaVersion)
     }
 }

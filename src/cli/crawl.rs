@@ -19,6 +19,7 @@ use clap::{Arg, ArgMatches, Command};
 use xxhash_rust::xxh3::xxh3_64;
 
 use super::db;
+use super::failure::Failure;
 use super::interrupt::{self, Pressed};
 use crate::config::{Config, ProfileChoice, Root};
 use crate::crawl::{Crawl, Summary};
@@ -90,17 +91,17 @@ pub fn run(args: &Args) -> ExitCode {
         }
         Err(e) => {
             eprintln!("bruce crawl: {e}");
-            ExitCode::FAILURE
+            ExitCode::from(e.status(1))
         }
     }
 }
 
 /// Crawls and writes one run, finishing it unless it was stopped. No summary
 /// means the second signal abandoned the crawl.
-fn crawl(args: &Args) -> Result<(RunId, Option<Summary>, Pressed), String> {
+fn crawl(args: &Args) -> Result<(RunId, Option<Summary>, Pressed), Failure> {
     let (config, registry, hash) = configure(args)?;
     let db = db::path(args.db.as_deref());
-    let in_db = |e: crate::store::Error| format!("{}: {e}", db.display());
+    let in_db = |e: crate::store::Error| Failure::at(db.display(), &e);
     let store = db::open(db, &registry).map_err(in_db)?;
     let fetcher =
         HttpFetcher::new(Settings::of(&config), Hosts::new(&config)).map_err(|e| e.to_string())?;

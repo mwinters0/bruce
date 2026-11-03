@@ -26,6 +26,15 @@ are outside the version (`Store::install`). Rejected: recreating on mismatch, de
 user; a rewriting script, a migration in all but name; the schema line left to the notes (D89), which their drafter
 forgets. Code: `store::schema`, `release.yml`'s "Write the release body". Evidence: `test_workflows.BodyStep`.
 
+### D102 A database or baseline of another schema version is a typed error, and every command exits 3 on it
+`store::schema::Mismatch` is the one refusal D43 makes, whether the file is a `--db` or a baseline, and `cli` maps it to
+status 3 for `crawl`, `check-dir`, `report` (a `--since` baseline included), `prune` and `export-baseline`. An
+unattended script answers this refusal alone, by starting a fresh database, and no message is a contract. 3 is new, so
+`check-dir`'s 2 and the others' 1 keep their other causes, and a CI workflow treats 3 as 2. D43 stands: a migrated run
+lacks what its crawl never collected. Rejected: matching the message, as `scripts/review.py` did; sharing 1 or 2; a
+migration. Reopens: a second refusal a script answers differently. Code: `store::Mismatch`, `cli::failure`. Evidence:
+`cli::tests::every_command_exits_3_on_a_database_of_another_schema_version`.
+
 ### D28 Fragment verdicts are computed in SQL after the crawl, not during it
 The crawler holds no anchor state and need not order fetches around targets. The verdict is a view, `link_verdicts`,
 computed at each read, so a stopped run needs no second path and no stored column can disagree with it; the reports and

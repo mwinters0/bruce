@@ -84,4 +84,5 @@ from the beginning, and the unfinished one's rows stay in the database.
 | 0 | The run finished. Broken links do not change this. |
 | 1 | The configuration, the database or the crawl failed; the message says which. |
 | 2 | The command line was not understood. |
+| 3 | The database is of another schema version: move it aside, and the next crawl starts a new one. |
 | 128 plus the signal | Stopped by a signal, 130 for SIGINT and 143 for SIGTERM, whichever came first. |

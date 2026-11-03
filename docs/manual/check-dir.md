@@ -201,7 +201,8 @@ database ([`report.md`](report.md)).
 |---|---|
 | 0 | No link is introduced, and no inverse breakage is found or `--inverse=warn`. |
 | 1 | A link is introduced, or the inverse check finds breakage and `--inverse=fail`. |
-| 2 | The check could not run: the command line was not understood, the configuration or the baseline could not be read, the baseline or the database is of another schema version, the prefix is outside every root's scope, or the build could not be read. |
+| 2 | The check could not run: the command line was not understood, the configuration or the baseline could not be read, the prefix is outside every root's scope, or the build could not be read. |
+| 3 | The baseline or the database is of another schema version. A workflow treats it as it does 2: the job failed, not the change. |
 | 128 plus the signal | Stopped by a signal before the build was judged. |
 
 An `error` moves the status only where `gate.fail` names it, and a redirected link or a warned inverse breakage never does.

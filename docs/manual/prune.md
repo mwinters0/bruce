@@ -53,5 +53,6 @@ so an unfinished run `prune` finds is dead.
 | Status | Meaning |
 |---|---|
 | 0 | The database was pruned, or held nothing to delete. |
-| 1 | The database does not exist, could not be opened or written, or is of another schema version. |
+| 1 | The database does not exist, or could not be opened or written. |
 | 2 | The command line was not understood. |
+| 3 | The database is of another schema version. |

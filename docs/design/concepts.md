@@ -21,7 +21,7 @@ decisions each carries are cited in its module's doc.
 
 - **bruce** — `cli/` and the binary's `main.rs`, which only calls it: the
   command line in the parent file, the registry of the compiled profiles and a config's in its `registry` child, a child module for
-  each subcommand, `check_dir` (its build, the run over it and the line it prints, and the gate's exit status), `crawl` (its roots from the file or the URL and the run), `export_baseline` (its files and the line it prints), `file` (the baseline file a path or URL names, downloaded and decompressed, which `check_dir` and `report digest --since` both read), `interrupt` (what SIGINT and SIGTERM do to the run `crawl` and `check_dir` make, D58), `prune` (its rule and what it prints) and `report` (its options and
+  each subcommand, `check_dir` (its build, the run over it and the line it prints, and the gate's exit status), `crawl` (its roots from the file or the URL and the run), `export_baseline` (its files and the line it prints), `failure` (why a command failed, and the status another schema version earns, D102), `file` (the baseline file a path or URL names, downloaded and decompressed, which `check_dir` and `report digest --since` both read), `interrupt` (what SIGINT and SIGTERM do to the run `crawl` and `check_dir` make, D58), `prune` (its rule and what it prints) and `report` (its options and
   printing the output, or writing the digest's file), and the `db`
   child, which all five open the database through, installing the reports' views
   that only this layer can hand `store` (D6, D39). It is the top of the

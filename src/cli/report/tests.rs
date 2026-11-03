@@ -608,7 +608,7 @@ fn a_trial_config_that_cannot_be_read_or_is_invalid_refuses_the_report() {
         let Err(e) = open(args.db.as_deref(), args.config.as_deref(), &registry) else {
             panic!("refused")
         };
-        assert!(e.starts_with("--config "), "{e}");
+        assert!(e.to_string().starts_with("--config "), "{e}");
     }
 }
 

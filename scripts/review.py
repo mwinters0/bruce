@@ -154,8 +154,8 @@ def cargo_release() -> None:
         raise ReviewError("the release build failed")
 
 
-#: What `bruce` says of a database of another schema version (`Error::SchemaVersion`).
-SCHEMA_REFUSAL = "schema version"
+#: The exit status of a database of another schema version (D102).
+SCHEMA_REFUSAL = 3
 
 
 def opens(bruce: Path, db: Path) -> bool:
@@ -169,7 +169,7 @@ def opens(bruce: Path, db: Path) -> bool:
     )
     if done.returncode == 0:
         return True
-    if SCHEMA_REFUSAL in done.stderr:
+    if done.returncode == SCHEMA_REFUSAL:
         return False
     raise ReviewError(f"{db} does not open: {done.stderr.strip()}")
 

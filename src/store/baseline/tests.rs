@@ -1,7 +1,7 @@
 use super::*;
 use crate::profile::Registry;
 use crate::profile::generic::Generic;
-use crate::store::{Mode, SCHEMA_VERSION};
+use crate::store::{Mismatch, Mode, SCHEMA_VERSION};
 
 use duckdb::params;
 use std::path::{Path, PathBuf};
@@ -365,10 +365,10 @@ fn a_file_that_is_not_a_baseline_is_refused_and_left_alone() {
         .unwrap();
     assert!(matches!(
         refused(&old),
-        Error::SchemaVersion {
+        Error::SchemaVersion(Mismatch {
             expected: SCHEMA_VERSION,
             ..
-        }
+        })
     ));
 
     // A run that never finished.

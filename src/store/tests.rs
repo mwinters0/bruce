@@ -773,7 +773,7 @@ fn a_database_of_schema_version_1_is_refused() {
         .unwrap();
     let err = Store::open(&path, &registry()).err().unwrap();
     assert!(
-        matches!(err, Error::SchemaVersion { ref found, expected: SCHEMA_VERSION } if found == "1")
+        matches!(err, Error::SchemaVersion(Mismatch { ref found, expected: SCHEMA_VERSION }) if found == "1")
     );
 }
 

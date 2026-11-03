@@ -14,7 +14,8 @@
 //! A report reads a database a crawl wrote and never creates one; opening it
 //! installs the views, so a database from before them gains them here.
 //! Finding rows is not a failure: the exit status is 1 only where the report
-//! could not run.
+//! could not run, or 3 where the database or a `--since` baseline is of another
+//! schema version (D102).
 
 use std::fs;
 use std::io::{self, Write};
@@ -25,6 +26,7 @@ use clap::builder::PossibleValuesParser;
 use clap::{Arg, ArgAction, ArgMatches, Command, value_parser};
 
 use super::db;
+use super::failure::Failure;
 use super::file::BaselineFile;
 use crate::config::Config;
 use crate::extract::Kind;
@@ -469,13 +471,13 @@ pub fn run(job: &Job, registry: Registry) -> ExitCode {
     let done = match job {
         Job::Report(args) => report(args, &registry),
         Job::Digest(args) => digest(args, &registry),
-        Job::DefaultView(dir) => write_default_view(dir),
+        Job::DefaultView(dir) => write_default_view(dir).map_err(Failure::from),
     };
     match done {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("bruce report: {e}");
-            ExitCode::FAILURE
+            ExitCode::from(e.status(1))
         }
     }
 }
@@ -486,12 +488,12 @@ fn open(
     db: Option<&Path>,
     config: Option<&Path>,
     registry: &Registry,
-) -> Result<(Store, PathBuf), String> {
+) -> Result<(Store, PathBuf), Failure> {
     let db = db::path(db);
     if !db.exists() {
-        return Err(format!("{}: no such database", db.display()));
+        return Err(format!("{}: no such database", db.display()).into());
     }
-    let store = db::open(db, registry).map_err(|e| format!("{}: {e}", db.display()))?;
+    let store = db::open(db, registry).map_err(|e| Failure::at(db.display(), &e))?;
     if let Some(path) = config {
         let config = Config::load(path).map_err(|e| match e {
             // A read error names its file already.
@@ -500,7 +502,7 @@ fn open(
         })?;
         store
             .try_policy(&config.policy)
-            .map_err(|e| format!("{}: {e}", db.display()))?;
+            .map_err(|e| Failure::at(db.display(), &e))?;
         eprintln!(
             "bruce report: judging by the trial policy in {}; its asking settings are ignored",
             path.display()
@@ -532,10 +534,9 @@ fn warn_incomplete(
     }
 }
 
-fn report(args: &Args, registry: &Registry) -> Result<(), String> {
+fn report(args: &Args, registry: &Registry) -> Result<(), Failure> {
     let (store, db) = open(args.db.as_deref(), args.config.as_deref(), registry)?;
-    let output =
-        report::run(&store, &args.request).map_err(|e| format!("{}: {e}", db.display()))?;
+    let output = report::run(&store, &args.request).map_err(|e| Failure::report(&db, &e))?;
     warn_incomplete(
         output.run,
         output.later_unfinished,
@@ -551,7 +552,7 @@ fn report(args: &Args, registry: &Registry) -> Result<(), String> {
             text.push_str(note);
         }
     }
-    say(&text)
+    Ok(say(&text)?)
 }
 
 /// Writes the digest of the run named: `DIR/STEM-YYYY-MM-DD.json` unless
@@ -559,7 +560,7 @@ fn report(args: &Args, registry: &Registry) -> Result<(), String> {
 /// `DIR/STEM-YYYY-MM-DD-NAME` for a view in a file named `NAME`, and prints the path of each
 /// (D64, D95). Every view is rendered before any file is written, so a view that
 /// fails leaves the directory as it was (D96).
-fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
+fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), Failure> {
     let views = Views::load(&args.views)?;
     let (store, db) = open(args.db.as_deref(), args.config.as_deref(), registry)?;
     // The file outlives the digest, which reads the run imported from it.
@@ -579,7 +580,7 @@ fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
         _ => Against::Previous,
     };
     let mut digest: Digest = report::digest(&store, args.run, against, registry)
-        .map_err(|e| format!("{}: {e}", db.display()))?;
+        .map_err(|e| Failure::report(&db, &e))?;
     digest.trial = args.config.as_ref().map(|p| p.display().to_string());
     let compared = digest
         .compared
@@ -605,7 +606,7 @@ fn digest(args: &DigestArgs, registry: &Registry) -> Result<(), String> {
         };
         files.push((name, view.text));
     }
-    write_all(&args.out, files)
+    Ok(write_all(&args.out, files)?)
 }
 
 /// `--write-default-view`: the built-in view's files in `dir`, none of them

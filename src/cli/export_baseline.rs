@@ -18,6 +18,7 @@ use flate2::Compression;
 use flate2::write::GzEncoder;
 
 use super::db;
+use super::failure::Failure;
 use crate::profile::Registry;
 use crate::store::{Exported, RunId};
 
@@ -85,15 +86,15 @@ pub fn run(args: &Args, registry: Registry) -> ExitCode {
         }
         Err(e) => {
             eprintln!("bruce export-baseline: {e}");
-            ExitCode::FAILURE
+            ExitCode::from(e.status(1))
         }
     }
 }
 
-fn export(args: &Args, registry: &Registry) -> Result<String, String> {
+fn export(args: &Args, registry: &Registry) -> Result<String, Failure> {
     let db = db::path(args.db.as_deref());
     if !db.exists() {
-        return Err(format!("{}: no such database", db.display()));
+        return Err(format!("{}: no such database", db.display()).into());
     }
     let out = args.out.as_path();
     let partial = partial(out);
@@ -101,24 +102,25 @@ fn export(args: &Args, registry: &Registry) -> Result<String, String> {
         return Err(format!(
             "{}: --out's .partial file is the database itself",
             partial.display()
-        ));
+        )
+        .into());
     }
     if out.exists() {
         if same_file(db, out) {
-            return Err(format!("{}: --out is the database itself", out.display()));
+            return Err(format!("{}: --out is the database itself", out.display()).into());
         }
         if !args.force {
-            return Err(format!("{}: exists; --force replaces it", out.display()));
+            return Err(format!("{}: exists; --force replaces it", out.display()).into());
         }
     }
-    let store = db::open(db, registry).map_err(|e| format!("{}: {e}", db.display()))?;
+    let store = db::open(db, registry).map_err(|e| Failure::at(db.display(), &e))?;
     let in_out = |e: &dyn std::fmt::Display| format!("{}: {e}", out.display());
     // Written beside `--out` and renamed onto it, so a refused run leaves the
     // file `--force` would have replaced.
     remove(&partial).map_err(|e| in_out(&e))?;
     let exported = store
         .export_baseline(args.run, &partial, registry)
-        .map_err(|e| format!("{}: {e}", db.display()))?;
+        .map_err(|e| Failure::at(db.display(), &e))?;
     drop(store);
     // The reports' views go into the file here, `store` being below `report`
     // (D6, D39): a `duckdb` user opening the file finds what a crawl's

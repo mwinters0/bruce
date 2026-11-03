@@ -12,7 +12,7 @@ entries quote are named by their day (2026-10-23, 2026-10-24, 2026-10-25, run 2 
 2026-10-28). Their databases predate schema 6 and are no longer kept: a figure stands as recorded, and a new crawl
 remeasures it. The en-US crawl of 2026-11-01 is kept, beside the one before it, in `runs/en-us-20261101-0005/`.
 
-<!-- decision-watermark: D101 -->
+<!-- decision-watermark: D102 -->
 
 ## Modes, commands and deployment
 [`decisions/modes.md`](decisions/modes.md)
@@ -79,6 +79,7 @@ remeasures it. The en-US crawl of 2026-11-01 is kept, beside the one before it, 
 - **D2** Runs are append-only: every row but `meta`'s carries a `run_id`, and only a run's `finished_at` is updated
 - **D26** A URL's identity is a u64 hash of its canonical form, stable across runs
 - **D43** A DB records its schema version, and `bruce` refuses a DB of another version
+- **D102** A database or baseline of another schema version is a typed error, and every command exits 3 on it
 - **D28** Fragment verdicts are computed in SQL after the crawl, not during it
 - **D51** A target records where its answer came from, in a column the writer fills and no view reads
 - **D52** A baseline file is imported as a run of its own, and a target is copied between runs row by row

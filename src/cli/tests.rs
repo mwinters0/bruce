@@ -173,3 +173,113 @@ fn a_profile_extends_a_compiled_one_and_nothing_else() {
         "{e}"
     );
 }
+
+/// A finished run in a database at `path`, recording schema version `version`.
+fn database_of_version(path: &std::path::Path, version: u32) {
+    let store = Store::open(path, &registry()).unwrap();
+    let run = store
+        .begin_run(
+            Mode::Crawl,
+            "abc",
+            None,
+            &[],
+            &crate::config::Policy::default(),
+        )
+        .unwrap();
+    store.finish_run(run).unwrap();
+    store
+        .connection()
+        .execute(
+            "UPDATE meta SET value = ? WHERE key = 'schema_version'",
+            [version.to_string()],
+        )
+        .unwrap();
+}
+
+#[test]
+fn every_command_exits_3_on_a_database_of_another_schema_version() {
+    let tmp = tempfile::tempdir().unwrap();
+    let db = tmp.path().join("old.duckdb");
+    database_of_version(&db, crate::store::SCHEMA_VERSION + 1);
+    let db = db.to_str().unwrap();
+    let build = tmp.path().join("build");
+    std::fs::create_dir(&build).unwrap();
+    let build = build.to_str().unwrap();
+    let out = tmp.path().join("out.duckdb");
+    let out = out.to_str().unwrap();
+    // A baseline of this build's schema, so only the database is wrong.
+    let baseline = tmp.path().join("baseline.duckdb");
+    database_of_version(&baseline, crate::store::SCHEMA_VERSION);
+    let baseline = baseline.to_str().unwrap();
+    let go = |args: &[&str]| super::run_from(["bruce"].into_iter().chain(args.iter().copied()));
+    for (name, args) in [
+        ("crawl", vec!["crawl", "http://127.0.0.1:9/", "--db", db]),
+        ("prune", vec!["prune", "--keep", "1", "--db", db]),
+        ("report", vec!["report", "stats", "--db", db]),
+        (
+            "export-baseline",
+            vec!["export-baseline", "--out", out, "--db", db],
+        ),
+        (
+            "check-dir",
+            vec![
+                "check-dir",
+                build,
+                "--prefix",
+                "http://127.0.0.1:9/",
+                "--baseline",
+                baseline,
+                "--db",
+                db,
+            ],
+        ),
+    ] {
+        assert_eq!(go(&args), ExitCode::from(3), "{name}");
+    }
+}
+
+#[test]
+fn a_baseline_of_another_schema_version_exits_3_whoever_reads_it() {
+    let tmp = tempfile::tempdir().unwrap();
+    let old = tmp.path().join("old.duckdb");
+    database_of_version(&old, crate::store::SCHEMA_VERSION - 1);
+    let current = tmp.path().join("current.duckdb");
+    database_of_version(&current, crate::store::SCHEMA_VERSION);
+    let build = tmp.path().join("build");
+    std::fs::create_dir(&build).unwrap();
+    let (old, current, build) = (
+        old.to_str().unwrap(),
+        current.to_str().unwrap(),
+        build.to_str().unwrap(),
+    );
+    let fresh = tmp.path().join("fresh.duckdb");
+    let fresh = fresh.to_str().unwrap();
+    let go = |args: &[&str]| super::run_from(["bruce"].into_iter().chain(args.iter().copied()));
+    assert_eq!(
+        go(&[
+            "check-dir",
+            build,
+            "--prefix",
+            "http://127.0.0.1:9/",
+            "--baseline",
+            old,
+            "--db",
+            fresh,
+        ]),
+        ExitCode::from(3)
+    );
+    let out = tmp.path().join("out");
+    assert_eq!(
+        go(&[
+            "report",
+            "digest",
+            "--db",
+            current,
+            "--since",
+            old,
+            "--out",
+            out.to_str().unwrap(),
+        ]),
+        ExitCode::from(3)
+    );
+}

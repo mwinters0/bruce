@@ -30,7 +30,7 @@ pub use rows::{AnchorRow, AnsweredBy, FactRow, Hop, LinkRow, PageRow, Row, RunRo
 
 /// The outcome a target stores, defined beside the reasons a link carries.
 pub use crate::config::Outcome;
-pub use schema::SCHEMA_VERSION;
+pub use schema::{Mismatch, SCHEMA_VERSION};
 pub use views::{JudgedBy, TARGET_URL_DOUBLES};
 pub use writer::{WriteHandle, Writer, WriterGone};
 
@@ -63,12 +63,7 @@ pub enum Error {
     /// DuckDB refused.
     Db(duckdb::Error),
     /// The file holds a bruce database of another schema version (D43).
-    SchemaVersion {
-        /// The version the file records.
-        found: String,
-        /// The version this build reads.
-        expected: u32,
-    },
+    SchemaVersion(Mismatch),
     /// The file holds no `meta`, so it is not ours: one opened that holds
     /// tables, or any imported as a baseline, an empty one included.
     NotBruce,
@@ -89,10 +84,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::Db(e) => write!(f, "{e}"),
-            Error::SchemaVersion { found, expected } => write!(
-                f,
-                "database has schema version {found}, but this bruce reads version {expected}"
-            ),
+            Error::SchemaVersion(mismatch) => write!(f, "{mismatch}"),
             Error::NotBruce => f.write_str("not a bruce database: it has no `meta` table"),
             Error::NoFinishedRun => {
                 f.write_str("the database holds no finished run; name one with --run")
@@ -113,6 +105,7 @@ impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Error::Db(e) => Some(e),
+            Error::SchemaVersion(e) => Some(e),
             _ => None,
         }
     }
@@ -147,12 +140,7 @@ impl Store {
                 [schema::VERSION_KEY],
                 |row| row.get(0),
             )?;
-            if found != SCHEMA_VERSION.to_string() {
-                return Err(Error::SchemaVersion {
-                    found,
-                    expected: SCHEMA_VERSION,
-                });
-            }
+            schema::Mismatch::check(found).map_err(Error::SchemaVersion)?;
         } else {
             let tables: i64 = conn.query_row(
                 "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'main'",
