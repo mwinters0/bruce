@@ -30,7 +30,7 @@ in `runs/p9.6/` (`sizes.txt`, `SHA256SUMS`).
   and 0.7 MB, measured on 2026-10-24's digest, before the redirect facts and the
   digest's view. At 30 nights of HTML and 400 of JSON the directory approaches 2.5
   GB, past Pages' 1 GB. The guide states the new figures, and the dev deployment sets
-  `KEEP_JSON=60` (about 700 MB). The JSON's bulk is `errors` (2.3 MB: one target,
+  `KEEP_JSON=30`, as long as its views (about 525 MB). The JSON's bulk is `errors` (2.3 MB: one target,
   `https://docs.fedoraproject.org/en-US/fedora/`, answering 403, repeated for each of
   its 5,657 linking pages), `housekeeping` (1.2 MB, of which the redirects 1.0 MB)
   and `pages` (1.2 MB). That 403 is the site's, the same 5,683 rows in both local
@@ -38,7 +38,7 @@ in `runs/p9.6/` (`sizes.txt`, `SHA256SUMS`).
 - **The first night is uncompared and carried nothing.** The second night (the
   schedule's first, 2026-11-04 01:00 UTC) is the first to run `digest --since` the
   published baseline, to carry `digests/` and last night's content-named set into the
-  next orphan commit, and to publish under `KEEP_JSON=60`. Its result is the first
+  next orphan commit, and to publish under `KEEP_JSON=30`. Its result is the first
   evidence of those paths on Actions; the stage and carry were exercised by
   `scripts/deployment.py` only. Read it with `gh run list --repo
   mwinters0/bruce-fedora-docs-ci`.
