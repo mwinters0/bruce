@@ -222,6 +222,40 @@ class Job(unittest.TestCase):
         ])
         self.assertEqual(deployment.check_published(self.pub, "csv"), [])
 
+    def test_the_index_is_off_by_default_and_with_it_on_is_listed_and_links_what_the_directory_holds(self) -> None:
+        self.run_night("2026-11-01")
+        self.assertFalse((self.pub / "index.html").exists())
+        self.assertEqual(deployment.check_published(self.pub, index=True), ["no index.html"])
+        for day in (2, 3):
+            done = self.run_night(f"2026-11-0{day}", INDEX="1", VIEW="/etc/bruce/fedora.html")
+            self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertEqual(deployment.check_published(self.pub, index=True), [])
+        self.assertIn("index.html", deployment.sums(self.pub))
+        page = (self.pub / "index.html").read_text()
+        self.assertLess(page.index("2026-11-03"), page.index("2026-11-02"))
+        self.assertLess(page.index("2026-11-02"), page.index("2026-11-01"))
+        self.assertIn('<a href="digests/bruce-2026-11-03.json">json</a>', page)
+        self.assertNotIn("baseline-", page)
+
+    def test_an_index_missing_a_file_linking_an_unknown_one_or_out_of_order_is_not_the_contract(self) -> None:
+        self.run_night("2026-11-01", INDEX="1")
+        self.run_night("2026-11-02", INDEX="1")
+        index = self.pub / "index.html"
+        page = index.read_text()
+        for broken, want in (
+            (page.replace('<a href="digest.json">digest.json</a>', ""), "does not link digest.json"),
+            (page + '<a href="baseline-0123456789abcdef.duckdb.gz">x</a>', "baseline-0123456789abcdef.duckdb.gz, which is not"),
+            (page.replace("2026-11-02", "x").replace("2026-11-01", "2026-11-02").replace("x", "2026-11-01"), "not newest first"),
+        ):
+            with self.subTest(want):
+                index.write_text(broken)
+                self.assertIn(want, "\n".join(deployment.check_index(self.pub)))
+
+    def test_a_name_is_escaped_in_the_index(self) -> None:
+        done = self.run_night(INDEX="1", NAME="a&b")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertIn("<h1>a&amp;b</h1>", (self.pub / "index.html").read_text())
+
     def test_no_history_is_kept_and_nothing_pruned_with_an_empty_keep(self) -> None:
         self.run_night(KEEP="")
         self.assertNotIn("prune", [c.split()[0] for c in self.calls()])

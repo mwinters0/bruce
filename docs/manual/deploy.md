@@ -274,6 +274,7 @@ and a runner with no disk to keep.
 | `NAME` | `bruce` | The digest files' stem, so two jobs' digests can share a directory. |
 | `KEEP_VIEWS` | `30` | The nights of digest kept in HTML and every other view. |
 | `KEEP_JSON` | `90` | The nights of digest kept as JSON: about three months. |
+| `INDEX` | none | Set (to anything), the job writes `index.html` in the published directory ([below](#the-published-directory)). |
 | `VIEW` | `default` | The [view](digest.md#views) the digest's HTML is written through: a template file, or `default` for the built-in one ([below](#the-digests-view)). |
 | `DELIVER` | none | A command run with `PUB` once it is staged ([below](#delivering-the-results)). |
 
@@ -294,6 +295,7 @@ NAME=${NAME:-bruce}
 KEEP_VIEWS=${KEEP_VIEWS:-30}
 KEEP_JSON=${KEEP_JSON:-90}
 VIEW=${VIEW:-default}
+INDEX=${INDEX:-}
 DELIVER=${DELIVER:-}
 
 # A view's file is published as the digest of its format, `digest.<ext>`, so its
@@ -374,6 +376,42 @@ trim() {
 
 short() { sha256sum "$1" | cut -c1-16; }
 
+# An HTML-safe copy of $1.
+esc() { printf '%s' "$1" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g'; }
+
+# INDEX: index.html for people, in the staged directory $1: the latest files under
+# their fixed names, then each night's digests, newest first. Never the names by
+# content, which are CI's.
+index() {
+  local dir=$1 f n day
+  {
+    echo '<!doctype html>'
+    echo '<meta charset="utf-8">'
+    echo '<meta name="viewport" content="width=device-width, initial-scale=1">'
+    echo '<meta name="color-scheme" content="light dark">'
+    echo "<title>$(esc "$NAME")</title>"
+    echo "<h1>$(esc "$NAME")</h1>"
+    echo '<h2>The latest</h2>'
+    echo '<ul>'
+    for f in "$dir"/digest.* "$dir/bruce.tar.gz" "$dir/bruce.toml" "$dir/baseline.duckdb.gz" "$dir/SHA256SUMS"; do
+      n=$(esc "${f##*/}")
+      echo "<li><a href=\"$n\">$n</a></li>"
+    done
+    echo '</ul>'
+    echo '<h2>Each night</h2>'
+    echo '<ul>'
+    for day in $(for f in "$dir/digests/$NAME"-????-??-??.*; do n=${f##*/}; n=${n#"$NAME"-}; echo "${n:0:10}"; done | sort -ru); do
+      printf '<li>%s' "$day"
+      for f in "$dir/digests/$NAME-$day".*; do
+        n=$(esc "${f##*/}")
+        printf ' <a href="digests/%s">%s</a>' "$n" "$(esc "${f##*.}")"
+      done
+      echo '</li>'
+    done
+    echo '</ul>'
+  } > "$dir/index.html"
+}
+
 # S4: stage a new directory, then rename it over PUB. SHA256SUMS is written
 # last; the files it lists are named by their content.
 stage() {
@@ -421,7 +459,13 @@ stage() {
   trim "$KEEP_JSON" "${json[@]}"
   trim "$KEEP_VIEWS" "${views[@]}"
 
-  (cd "$new" && sha256sum "$bin" "$cfg" "$base" digest.* digests/*) > "$work/SHA256SUMS"
+  local listed=()
+  if [ -n "$INDEX" ]; then
+    index "$new"
+    listed=(index.html)
+  fi
+
+  (cd "$new" && sha256sum "$bin" "$cfg" "$base" digest.* digests/* "${listed[@]}") > "$work/SHA256SUMS"
   cp "$work/SHA256SUMS" "$new/SHA256SUMS"
 
   rm -rf "$PUB.old"
@@ -466,6 +510,8 @@ What each step does, and what a failure at it leaves:
 - **S4, stage.** The new directory is built beside `PUB` and renamed over it, so
   the files `SHA256SUMS` lists are in place before it is, and a failure while
   staging leaves `PUB` as it was ([the directory](#the-published-directory)).
+  With `INDEX` set it writes `index.html` after the digests are trimmed, so the
+  index lists the nights the directory holds and `SHA256SUMS` lists the index.
 - **S5, prune.** After the files are staged, so a database that cannot be pruned
   costs no publication; it must not run beside a crawl, which the one script
   ensures ([`prune.md`](prune.md#not-beside-a-crawl)).
@@ -484,7 +530,7 @@ flowchart TD
   HAS -->|no| S3b["S3 digest, uncompared"]
   S3a -->|3| S3b
   S3a -->|0| S4
-  S3b --> S4["S4 stage a new directory:<br/>files named by content,<br/>digests/ trimmed, SHA256SUMS last"]
+  S3b --> S4["S4 stage a new directory:<br/>files named by content,<br/>digests/ trimmed, the index,<br/>SHA256SUMS last"]
   S3a -->|other failure| NOTE["note the failure"] --> S4
   S4 --> SWAP["rename it over the published directory"]
   SWAP --> S5["S5 prune the database<br/>(not with KEEP empty)"]
@@ -651,11 +697,12 @@ between the job, a content repo's CI and whatever serves the results:
 
 | File | For | Holds |
 |---|---|---|
-| `SHA256SUMS` | fetchers | `sha256sum`'s format, written last: the three files below, the latest digest and `digests/`. |
+| `SHA256SUMS` | fetchers | `sha256sum`'s format, written last: the three files below, the latest digest, `digests/` and `index.html` where there is one. |
 | `bruce-<sha>.tar.gz`, `config-<sha>.toml`, `baseline-<sha>.duckdb.gz` | CI and pullers | The pinned release's archive, the configuration and the baseline, each named by the first 16 hex digits of its own sha256. Last night's three stay one more night. |
 | `bruce.tar.gz`, `bruce.toml`, `baseline.duckdb.gz` | people | The same files under fixed names, always the latest. |
 | `digest.json`, `digest.<ext>` | people, pullers | The latest digest, in the JSON and the view the job writes: `digest.html` for the built-in view or for one in a file `<name>.html`, `digest.csv` for a `.csv` one. |
 | `digests/` | people, pullers | The dated digests: `bruce-YYYY-MM-DD.json`, `.html` and the rest. |
+| `index.html` | people | With `INDEX` set: a page linking the fixed-name files and `SHA256SUMS`, then each night's digests newest first, so the directory can be browsed where the host lists no files. |
 
 **A fetcher fetches `SHA256SUMS` first, then the files it lists, and runs
 `sha256sum -c`** (`--ignore-missing` where it fetched only some), failing as

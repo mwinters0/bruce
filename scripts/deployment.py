@@ -14,7 +14,8 @@ fixture Antora site and `test_deployment.py` does over a stub `bruce`:
 - `pull` runs the pull script against it.
 - `check_published` holds the published directory to the guide's contract: the
   fixed names, the files named by content, `SHA256SUMS` listing what it should
-  and every sum right.
+  and every sum right, and the index, where there is one, linking what the
+  directory holds.
 - `ci_job` runs the workflow's `run:` steps as `workflows.py script` joins them,
   with the workflow's own `env:` as the defaults, the runner's variables set by
   the caller and the steps that install or fetch the repo left out by name.
@@ -52,6 +53,7 @@ INSTALL_STEPS = ("Install the tools", "Check out the change", "Install Antora")
 FETCH_STEP = "Fetch what the deployment published"
 #: A dated digest's name: the stem, the day the run started and the format.
 DATED_DIGEST = re.compile(r".+-\d{4}-\d{2}-\d{2}\.[^.]+")
+DATED_DIGEST_DAY = re.compile(r"-(\d{4}-\d{2}-\d{2})\.[^.]+$")
 BY_CONTENT = (
     re.compile(r"bruce-[0-9a-f]{16}\.tar\.gz"),
     re.compile(r"config-[0-9a-f]{16}\.toml"),
@@ -145,17 +147,40 @@ def check_sums(directory: Path) -> list[str]:
     return problems
 
 
-def check_published(pub: Path, ext: str = "html") -> list[str]:
+def check_index(pub: Path) -> list[str]:
+    """Every way `pub/index.html` is not the published directory's index: it links the
+    fixed-name files, the latest digests, `SHA256SUMS` and each dated digest, and
+    nothing else, the dated digests' nights newest first."""
+    hrefs = re.findall(r'href="([^"]*)"', (pub / "index.html").read_text(encoding="utf-8"))
+    dated = [f"digests/{p.name}" for p in sorted((pub / "digests").glob("*"))]
+    want = {*FIXED, "SHA256SUMS", *(p.name for p in pub.glob("digest.*")), *dated}
+    problems = [f"index.html does not link {n}" for n in sorted(want - set(hrefs))]
+    problems += [f"index.html links {n}, which is not a file of the contract's" for n in sorted(set(hrefs) - want)]
+    if len(hrefs) != len(set(hrefs)):
+        problems.append("index.html links a file twice")
+    days = [m.group(1) for h in hrefs if h in dated and (m := DATED_DIGEST_DAY.search(h))]
+    seen = list(dict.fromkeys(days))
+    if seen != sorted(seen, reverse=True):
+        problems.append(f"index.html lists the nights {seen}, not newest first")
+    return problems
+
+
+def check_published(pub: Path, ext: str = "html", index: bool = False) -> list[str]:
     """Every way `pub` is not the contract's directory, empty when there is none:
     the latest digest is `digest.json` and `digest.<ext>`, whatever file its view
-    is in, and the dated ones are `<stem>-<date>.<ext>`."""
+    is in, the dated ones are `<stem>-<date>.<ext>`, and with `index` there is an
+    `index.html`, which is checked whenever there is one."""
     problems = check_sums(pub)
     if not (pub / "SHA256SUMS").is_file():
         return problems
     listed = sums(pub)
-    for fixed in (*FIXED, "digest.json", f"digest.{ext}"):
+    for fixed in (*FIXED, "digest.json", f"digest.{ext}", *(["index.html"] if index else [])):
         if not (pub / fixed).is_file():
             problems.append(f"no {fixed}")
+    if (pub / "index.html").is_file():
+        problems += check_index(pub)
+        if "index.html" not in listed:
+            problems.append("SHA256SUMS does not list index.html")
     for name in sorted(p.name for p in pub.glob("digest-*")):
         problems.append(f"{name}: a digest is published as digest.<ext>, whatever file its view is in")
     for name in sorted(p.name for p in (pub / "digests").glob("*") if not DATED_DIGEST.fullmatch(p.name)):
@@ -287,6 +312,7 @@ def exercise(binary: Path, config: Path, work: Path) -> list[str]:
         "PUB": "pub",
         "KEEP": "30",
         "VIEW": str(guide / sim.VIEW),
+        "INDEX": "1",
     }
     run = work / "run"
     shutil.rmtree(run, ignore_errors=True)
@@ -296,7 +322,7 @@ def exercise(binary: Path, config: Path, work: Path) -> list[str]:
         done = night(guide, run, [bindir], env)
         if done.returncode != 0:
             return problems + [f"night {night_no} exited {done.returncode}:\n{done.stdout}{done.stderr}"]
-        problems += [f"night {night_no}: {p}" for p in check_published(pub)]
+        problems += [f"night {night_no}: {p}" for p in check_published(pub, index=True)]
         compared = json.loads((pub / "digest.json").read_text())["compared_with"]
         if night_no == 1:
             first_names = set(sums(pub))
