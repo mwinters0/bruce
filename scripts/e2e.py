@@ -39,6 +39,10 @@ exactly the rows `PLANTED_*` name. Nothing leaves the machine: the
 configuration allowlists no host. Needs `cargo`, node and, on the first run,
 the network.
 
+The deployment guide's scripts run over this site (`deployment.py`): its scheduled job
+twice, with the real binary, then its pull script over the directory the second night
+published, served locally.
+
 The crawl's digest is written too (`bruce report digest`), and its HTML, less
 what varies from run to run (`normalise_digest`), is held to `fixtures/antora/
 digest.html`, the golden file of the rendering over this site; `--save-digest`
@@ -85,6 +89,7 @@ from pathlib import Path
 from typing import Any, Sequence
 from urllib.parse import urlsplit
 
+import deployment
 from sim import GUIDE, tagged_blocks
 
 REPO = Path(__file__).resolve().parent.parent
@@ -651,6 +656,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise E2eError("the digest is not what the site promises:\n  " + "\n  ".join(problems))
         print(f"digest: {len(html)} bytes of HTML, {len(js)} of JSON, as the golden file has it")
         print(f"views: {len(written['cs.html'])} bytes of Czech, {len(written['links.csv'])} of CSV, as their golden files have them")
+        problems = deployment.exercise(bin, config, OUT / "deployment")
+        if problems:
+            raise E2eError("the deployment guide's scripts are not what it promises:\n  " + "\n  ".join(problems))
+        print("deployment: two nights of the guide's job published, and the guide's pull fetched them")
         ci = (args.port, config, baseline, ci_db)
         unchanged = check_dir(bin, partial, *ci)
         (repos[PARTIAL] / "modules" / "ROOT" / "images" / "diagram.svg").unlink()

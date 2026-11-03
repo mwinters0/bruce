@@ -556,11 +556,61 @@ fn every_toml_example_in_the_manual_parses() {
 fn guide_config() -> Config {
     let guide = include_str!("../../docs/manual/deploy.md");
     let mut joined = String::new();
-    for block in guide.split("```toml file=bruce.toml\n").skip(1) {
-        joined.push_str(block.split("```").next().unwrap());
+    // A block shared with `bruce-locales.toml` names that path after this one.
+    for block in guide.split("```toml file=bruce.toml").skip(1) {
+        let (info, rest) = block.split_once('\n').unwrap();
+        assert!(
+            info.is_empty() || info == " file=bruce-locales.toml",
+            "{info:?}"
+        );
+        joined.push_str(rest.split("```").next().unwrap());
         joined.push('\n');
     }
     Config::parse(&joined).unwrap_or_else(|e| panic!("{e}\nin the guide's config:\n{joined}"))
+}
+
+/// The guide's `bruce-locales.toml`: the blocks tagged with it, in either
+/// order of the two paths.
+fn guide_locales_config() -> Config {
+    let guide = include_str!("../../docs/manual/deploy.md");
+    let mut joined = String::new();
+    let mut tagged = false;
+    for line in guide.lines() {
+        if let Some(info) = line.strip_prefix("```") {
+            tagged =
+                !tagged && info.starts_with("toml") && info.contains("file=bruce-locales.toml");
+        } else if tagged {
+            joined.push_str(line);
+            joined.push('\n');
+        }
+    }
+    Config::parse(&joined)
+        .unwrap_or_else(|e| panic!("{e}\nin the guide's locales config:\n{joined}"))
+}
+
+#[test]
+fn the_guides_every_locale_config_is_the_en_us_one_with_a_root_at_the_sites_top() {
+    let (en, all) = (guide_config(), guide_locales_config());
+    assert_eq!(en.roots.len(), 1);
+    assert_eq!(
+        en.roots[0].url.as_str(),
+        "https://docs.fedoraproject.org/en-US/"
+    );
+    assert_eq!(all.roots.len(), 1);
+    let root = &all.roots[0];
+    assert_eq!(root.url.as_str(), "https://docs.fedoraproject.org/");
+    assert_eq!(root.sitemap, en.roots[0].sitemap);
+    assert_eq!(all.allowlist.entries(), en.allowlist.entries());
+    assert_eq!(all.skip.globs(), en.skip.globs());
+    assert_eq!(all.hosts, en.hosts);
+    assert_eq!(all.policy.profiles.len(), en.policy.profiles.len());
+}
+
+#[test]
+fn the_guide_asks_docs_fp_o_three_requests_a_second_and_the_forge_one() {
+    let c = guide_config();
+    assert_eq!(c.hosts["docs.fedoraproject.org"].per_second, Some(3.0));
+    assert_eq!(c.hosts["forge.fedoraproject.org"].per_second, Some(1.0));
 }
 
 #[test]

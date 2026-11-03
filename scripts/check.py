@@ -102,8 +102,8 @@ first of the other three rules it meets gives it:
 **`e2e` rides on those rules** (`E2E_READS`): it runs when a changed path
 puts a package with a binary target among those run whole, so a change to its
 tests or benches alone, or to a comment, does not; when a path is one the
-site's build reads (`fixtures/antora/`'s content, UI bundle and golden file);
-and wherever every check runs.
+site's build reads (`fixtures/antora/`'s content, UI bundle and golden file) or
+the deployment guide, whose scripts it runs; and wherever every check runs.
 
 A change touching only the third kind, and named by no target, runs no
 cargo check, `cargo metadata` aside; nor does any change before a workspace
@@ -382,14 +382,15 @@ NO_WORKSPACE = (
     "cargo: no Cargo.toml at the root, so fmt, clippy, nextest, doctest and e2e are skipped"
 )
 #: The paths, beside the binary itself, that `e2e.py` reads: the hand-written
-#: components, the UI bundle it builds them with, the digest's golden file and the
-#: views it is also written through.
+#: components, the UI bundle it builds them with, the digest's golden file, the
+#: views it is also written through and the deployment guide, whose scripts it runs.
 #: Its own source is in no crate and read by no test, so it runs every check.
 E2E_READS = (
     "fixtures/antora/content/",
     "fixtures/antora/ui-bundle.",
     "fixtures/antora/digest.html",
     "fixtures/antora/views/",
+    "docs/manual/deploy.md",
 )
 
 

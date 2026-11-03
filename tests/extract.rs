@@ -434,9 +434,16 @@ fn fedora_registry() -> bruce::profile::Registry {
     )
     .unwrap();
     let block = guide
-        .split("```toml file=bruce.toml\n")
+        .split("```toml file=bruce.toml")
         .skip(1)
-        .map(|rest| rest.split("```").next().unwrap())
+        .map(|rest| {
+            rest.split_once('\n')
+                .unwrap()
+                .1
+                .split("```")
+                .next()
+                .unwrap()
+        })
         .find(|block| block.contains("[[profile]]"))
         .expect("the guide has a profile block");
     let defined = bruce::config::Config::parse(block).unwrap().policy.profiles;

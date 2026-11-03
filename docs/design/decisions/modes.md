@@ -35,8 +35,27 @@ manual documents how to configure one, and a gitignored simulated deployment her
 Rejected: a shipped `fedora.toml`, or a preset compiled in, either putting a deployment into the tool's release.
 
 ### D42 The simulated deployment is the manual's deployment guide, executed
-`mise run sim` extracts the guide's tagged blocks into a gitignored `sim/` and checks its config loads, so a guide that
-drifts from the tool fails there and any machine rebuilds it; docs.fp.o's config exists here only as the guide's worked
-example. Rejected: a committed template directory, which drifts from the guide describing it; a hand-built `sim/`, which
-no other machine can rebuild; running the crawl there, a two-hour job at every sim. Code: `scripts/sim.py`. Evidence:
-`scripts/test_sim.py`.
+`mise run sim` extracts the guide's tagged blocks into a gitignored `sim/` and checks its configs load, its scripts parse
+and its units are wired, so a guide that drifts from the tool fails there and any machine rebuilds it; docs.fp.o's config
+exists here only as the guide's worked example. `cli::tests` holds the scripts' `bruce` lines to the command line and
+`mise run e2e` runs the scripts over the fixture site. Rejected: a committed template directory, which drifts from the
+guide describing it; a hand-built `sim/`, which no other machine can rebuild; running the crawl there, a two-hour job at
+every sim. Code: `scripts/sim.py`, `scripts/deployment.py`. Evidence: `scripts/test_sim.py`.
+
+### D103 A deployment publishes one directory, fetched through its `SHA256SUMS`, the files it lists named by content
+The job stages `SHA256SUMS` (`sha256sum`'s format, written last) over the binary, config and baseline CI needs, named by
+their first 16 hex digits (`baseline-<sha>.duckdb.gz`), and the digests; fixed-name copies are for people, and last
+night's three stay one more night. A fetcher fetches `SHA256SUMS`, then what it lists, then runs `sha256sum -c`, failing
+as could-not-run (I28). Why: a cache gives a stale `SHA256SUMS` beside fresh files, and a binary and baseline of two
+nights must never meet. Rejected: waiting and retrying, ten minutes a forge job lacks; a `manifest.json`, needing `jq`
+in every CI image; a version file; a rolling release, its assets replaced one by one. Reopens: a host with no cache.
+Code: the guide's `bruce-nightly.sh`, `bruce-pull.sh`. Evidence: `scripts/test_deployment.py`, `mise run e2e`.
+
+### D104 The scheduled job is one script that answers a schema change itself and publishes nothing from a failed crawl
+Exit 3 (D102) from the crawl moves the database aside as the one archive and crawls a fresh one. The digest compares
+with the baseline the job replaces (D73's file), uncompared on 3 or none, so a host with a disk and one without run one
+script; a digest that still fails does not stop the job, CI needing the baseline, and the job ends non-zero. Any other
+crawl failure stops before staging, and prune runs after it. Why: nobody is there to follow a release note, and D43
+stands. Rejected: a procedure keyed on the notes; the run before in the database (D73's default), a second path; the
+baseline fetched from the published URL, losing the dated digests where no disk keeps them. Reopens: a second refusal
+answered differently. Code: the guide's `bruce-nightly.sh`. Evidence: `scripts/test_deployment.py`.

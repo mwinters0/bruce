@@ -53,6 +53,23 @@ where
     }
 }
 
+/// Whether `args`, the program's name first, is a command line `run_from`
+/// would run, parsed and cross-checked and nothing run: the check on the
+/// deployment guide's scripts (D42).
+pub fn accepts<I, T>(args: I) -> Result<(), String>
+where
+    I: IntoIterator<Item = T>,
+    T: Into<OsString> + Clone,
+{
+    let matches = command()
+        .try_get_matches_from(args)
+        .map_err(|e| e.to_string())?;
+    match matches.subcommand() {
+        Some(("report", m)) => report::check(m).map_err(|e| e.to_string()),
+        _ => Ok(()),
+    }
+}
+
 /// Prints a command line `clap` refuses and gives its exit status.
 fn refuse(e: &clap::Error) -> ExitCode {
     // `--help` and `--version` are errors to clap that print to stdout.

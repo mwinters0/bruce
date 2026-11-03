@@ -283,3 +283,70 @@ fn a_baseline_of_another_schema_version_exits_3_whoever_reads_it() {
         ExitCode::from(3)
     );
 }
+
+/// The `bruce` command lines of the deployment guide's tagged scripts (D42):
+/// a logical line (continuations joined) that starts with `bruce`, cut at the
+/// shell's `||`, `&&`, `;`, `|` or a redirection, each `$`-word a stand-in
+/// number that every option's value accepts.
+fn guide_command_lines() -> Vec<Vec<String>> {
+    let guide = include_str!("../../docs/manual/deploy.md");
+    let mut lines = Vec::new();
+    let mut tagged = false;
+    let mut joined = String::new();
+    for line in guide.lines() {
+        if let Some(info) = line.strip_prefix("```") {
+            tagged = !tagged && info.contains("file=") && info.starts_with("bash");
+            continue;
+        }
+        if !tagged {
+            continue;
+        }
+        joined.push_str(line.trim_end_matches('\\'));
+        if line.ends_with('\\') {
+            continue;
+        }
+        let logical = std::mem::take(&mut joined);
+        if !logical.trim_start().starts_with("bruce ") {
+            continue;
+        }
+        let mut words = Vec::new();
+        for word in logical.split_whitespace() {
+            if matches!(word, "||" | "&&" | ";" | "|" | ">" | "2>" | ">&2") {
+                break;
+            }
+            words.push(if word.contains('$') {
+                "1".to_string()
+            } else {
+                word.trim_matches('"').to_string()
+            });
+        }
+        lines.push(words);
+    }
+    lines
+}
+
+#[test]
+fn every_bruce_line_of_the_guides_scripts_is_a_command_line_bruce_accepts() {
+    let lines = guide_command_lines();
+    // Crawl, export, two digests, prune: a script rewritten so that this
+    // reads none has not been checked.
+    assert!(lines.len() >= 5, "found {lines:?}");
+    for line in lines {
+        if let Err(e) = super::accepts(&line) {
+            panic!("{}\nthe guide's script runs `{}`", e, line.join(" "));
+        }
+    }
+}
+
+#[test]
+fn accepts_refuses_what_run_would() {
+    assert!(super::accepts(["bruce", "prune", "--keep", "30"]).is_ok());
+    assert!(super::accepts(["bruce", "prune"]).is_err());
+    assert!(super::accepts(["bruce", "crawl", "--nosuch"]).is_err());
+    assert!(
+        super::accepts([
+            "bruce", "report", "digest", "--out", "d", "--format", "text"
+        ])
+        .is_err()
+    );
+}

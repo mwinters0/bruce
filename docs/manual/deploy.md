@@ -8,13 +8,17 @@ The configuration keys are explained in [`config.md`](config.md), and
 `bruce crawl` in [`crawl.md`](crawl.md); this guide says which to write for a
 site like this one, and why.
 
-This is the configuration part of the guide. Scheduling a crawl and publishing
-its results come later.
+The guide is in two parts: the configuration, which says what is crawled and how,
+and the scheduled job that crawls with it and publishes the results, which
+[starts here](#scheduling-a-crawl). A content repo's CI job, which checks its
+build against what the job publishes, is the guide's last part, not yet
+written.
 
 The code blocks marked `file=<path>` are the files of the example: this
 repository extracts them into a directory and checks that `bruce` accepts the
-configuration (`mise run sim`), so the example cannot drift from the tool.
-Blocks that share a path are one file, in the order they appear here.
+configuration and the scripts (`mise run sim`), so the example cannot drift from
+the tool. Blocks that share a path are one file, in the order they appear here;
+a block marked with two paths belongs to both files.
 
 ## The configuration
 
@@ -23,7 +27,7 @@ the file below says only what docs.fedoraproject.org needs.
 
 ### Who is crawling
 
-```toml file=bruce.toml
+```toml file=bruce.toml file=bruce-locales.toml
 user_agent = "bruce-fedora-docs/1.0 (+https://docs.fedoraproject.org/)"
 ```
 
@@ -35,7 +39,7 @@ here `bruce-fedora-docs`
 
 ### Which links are checked on other hosts
 
-```toml file=bruce.toml
+```toml file=bruce.toml file=bruce-locales.toml
 allowlist = [
   "fedoraproject.org", "*.fedoraproject.org",
   "getfedora.org", "*.getfedora.org",
@@ -82,7 +86,7 @@ with the reason `robots`.
 
 ### Which links are never asked about
 
-```toml file=bruce.toml
+```toml file=bruce.toml file=bruce-locales.toml
 skip = [
   "https://forge.fedoraproject.org/**/issues/new*",
   "https://forge.fedoraproject.org/**/issues/new*/**",
@@ -108,10 +112,10 @@ not, and the query is part of what is matched ([`config.md`](config.md#skip)).
 
 ### How fast each host is asked
 
-```toml file=bruce.toml
+```toml file=bruce.toml file=bruce-locales.toml
 [host."docs.fedoraproject.org"]
 robots = false
-per_second = 1
+per_second = 3
 
 [host."forge.fedoraproject.org"]
 per_second = 1
@@ -121,9 +125,10 @@ docs.fedoraproject.org's `robots.txt` asks crawlers for one second between
 requests (`Crawl-delay: 1`) and disallows some paths. Its disallows are
 written for search engines, and a crawl of the site's own links is
 better without them: they hid nine broken links from live pages, each a 404
-for anyone who follows it. So the example turns `robots.txt` off for this host
-and writes the same second as its own rate, which keeps the crawl as polite as
-the site asked.
+for anyone who follows it. So the example turns `robots.txt` off for this host,
+which turns its `Crawl-delay` off with it, and writes the rate itself: three
+requests a second, the rate settled for this deployment. A rate faster than a
+site asked for needs its permission, so ask before copying it for another site.
 
 That is a choice open to whoever may speak for the site, since only a host that
 a root starts on may skip its `robots.txt` ([`config.md`](config.md#hosts)). If
@@ -135,7 +140,7 @@ control, leave `robots` on and write no rate: `bruce` obeys its `Crawl-delay`
 with no setting at all.
 
 The forge keeps its `robots.txt`: a host that no root starts on is always
-obeyed. It asks for the same second between requests. Writing the rate keeps
+obeyed. It asks for one second between requests. Writing that rate keeps
 the crawl that polite if its `robots.txt` ever drops the request, since there
 the slower of `per_second` and `Crawl-delay` applies.
 
@@ -144,8 +149,10 @@ The other hosts on the allowlist need no section: each is asked at its own
 lists and www.redhat.com, and at the default two requests a second where there
 is none. They are asked alongside the crawl, each at its own pace.
 
-A rate faster than the site asked for needs its permission. The example asks
-no faster, and a crawl of the English pages takes a little over an hour.
+A crawl of the English pages takes about an hour and a quarter: the forge's
+4,100 or so targets at one a second are the longest share, the hosts being asked
+alongside one another, so the faster rate on docs.fedoraproject.org shortens
+only its own.
 
 ### What is crawled
 
@@ -162,6 +169,12 @@ checked; a link to any other address on the site, such as the header's home
 link `https://docs.fedoraproject.org/en-US` without its slash, is checked
 once.
 
+**The roots set neither `hash_root` nor `hash_exclude`**, so a page of an Antora
+site hashes `article.doc`, the profile's content region
+([`config.md`](config.md#roots)). A whole-page scope takes in the navigation,
+which lists a component's pages, so adding one page would change every page of
+its component, and an update of the UI bundle every page of the site.
+
 The sitemap is an index of one sitemap per component. `bruce` would find it
 unaided, at `sitemap.xml` under the root; writing it down saves the probe and
 shows the next deployer where it is. It is also how `bruce` knows which pages
@@ -169,7 +182,7 @@ the site means to publish, as opposed to those it only found by following links.
 
 ### How the pages are read
 
-```toml file=bruce.toml
+```toml file=bruce.toml file=bruce-locales.toml
 [[profile]]
 name = "fedora"
 extends = "antora"
@@ -206,3 +219,494 @@ setsid bruce crawl --config bruce.toml --db bruce.duckdb > crawl.log 2>&1 &
 
 and read the log, and the run it wrote, when it has ended
 ([`crawl.md`](crawl.md#output)).
+
+## Scheduling a crawl
+
+A deployment runs one script on a timer. It crawls, exports the run as the
+baseline a content repo's CI checks against ([`export-baseline.md`](export-baseline.md)),
+writes the run's digest ([`digest.md`](digest.md)), stages the results as one
+directory, and prunes the history. Delivering the directory to wherever it is
+served from is a step the deployer writes ([below](#delivering-the-results)).
+
+```mermaid
+flowchart LR
+  rel["bruce release<br/>(pinned)"] -->|archive| job
+  job["the scheduled job<br/>(bruce-nightly.sh)"] -->|"stages"| pub[("published directory<br/>SHA256SUMS + files")]
+  pub -->|"previous set"| job
+  pub -->|"SHA256SUMS, binary,<br/>config, baseline"| ci["a content repo's CI"]
+  job -->|"push step"| web["the web server"]
+  pub -->|"SHA256SUMS + changed files"| pull["pull script<br/>(on a timer)"]
+  pull --> web
+```
+
+**A deployment pins the exact `bruce` release its job runs**, and upgrades by
+changing the pin, so a schema change reaches it as a commit and not on an
+unattended night ([below](#a-schema-change)). Install the release it names where
+the job's `PATH` finds `bruce`, and keep its archive beside it, since the job
+publishes the archive: a content repo's CI then runs the binary that wrote the
+baseline, and the two can never be of different schemas.
+
+```sh
+tag=v0.3.0   # the release to pin
+base=https://github.com/mwinters0/bruce/releases/download/$tag
+archive=bruce-$tag-x86_64-unknown-linux-gnu.tar.gz
+install -d /opt/bruce/bin /var/lib/bruce/nightly /var/lib/bruce/locales /etc/bruce
+cd /opt/bruce
+curl -fsSLO "$base/$archive" -O "$base/$archive.sha256"
+sha256sum -c "$archive.sha256"
+ln -sf "$archive" release.tar.gz
+tar -xzf "$archive" --strip-components=1 -C bin "bruce-$tag-x86_64-unknown-linux-gnu/bruce"
+```
+
+### The script
+
+Everything the job needs it takes from its environment, so one script serves
+the nightly crawl, the weekly every-locale crawl ([below](#every-locale-weekly))
+and a runner with no disk to keep.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `ARCHIVE` | required | The pinned release's archive, which the job publishes. |
+| `CONFIG` | `bruce.toml` | The configuration the crawl runs under, published beside the baseline. |
+| `DB` | `bruce.duckdb` | The history database. |
+| `PUB` | `pub` | The published directory as last published, replaced by the job. |
+| `KEEP` | `30` | The runs the database keeps (`bruce prune --keep`). Empty keeps no history, and the job does not prune. |
+| `NAME` | `bruce` | The digest files' stem, so two jobs' digests can share a directory. |
+| `KEEP_VIEWS` | `30` | The nights of digest kept in HTML and every other view. |
+| `KEEP_JSON` | `400` | The nights of digest kept as JSON: about 13 months. |
+| `DELIVER` | none | A command run with `PUB` once it is staged ([below](#delivering-the-results)). |
+
+```bash file=bruce-nightly.sh
+#!/usr/bin/env bash
+# The scheduled job: crawl, export the baseline, write the digest, stage the
+# published directory, prune the history, deliver. The variables are the guide's.
+set -u
+shopt -s nullglob
+
+: "${ARCHIVE:?the archive of the pinned release}"
+CONFIG=${CONFIG:-bruce.toml}
+DB=${DB:-bruce.duckdb}
+PUB=${PUB:-pub}
+PUB=${PUB%/}
+KEEP=${KEEP-30}
+NAME=${NAME:-bruce}
+KEEP_VIEWS=${KEEP_VIEWS:-30}
+KEEP_JSON=${KEEP_JSON:-400}
+DELIVER=${DELIVER:-}
+
+# The first failure's status is the job's, once it has done what it still can.
+rc=0
+note() { [ "$rc" -ne 0 ] || rc=$1; }
+
+crawl() {
+  bruce crawl --config "$CONFIG" --db "$DB"
+}
+
+# S1: crawl. A database of another schema (3) is moved aside as the archive,
+# replacing the last, and the crawl starts a fresh one. Any other failure stops
+# the job with the published directory as it was.
+crawl
+status=$?
+if [ "$status" -eq 3 ]; then
+  echo "bruce-nightly: $DB is of another schema version; moved aside as $DB.archive" >&2
+  mv -f "$DB" "$DB.archive"
+  if [ -e "$DB.wal" ]; then mv -f "$DB.wal" "$DB.archive.wal"; fi
+  crawl
+  status=$?
+fi
+[ "$status" -eq 0 ] || exit "$status"
+
+work=$(mktemp -d "$PUB.work.XXXXXX") || exit 1
+new=$PUB.new
+trap 'rm -rf "$work" "$new"' EXIT
+mkdir "$work/digest"
+
+# S2: the run as the baseline, gzipped.
+bruce export-baseline --db "$DB" --out "$work/baseline.duckdb" || exit
+gzip -n -9 "$work/baseline.duckdb" || exit 1
+
+# S3: the digest, compared with the baseline this job replaces. With none, or
+# with one of another schema (3), it is written uncompared. A digest that
+# still fails does not stop the job: CI needs the baseline.
+digest=3
+if [ -f "$PUB/baseline.duckdb.gz" ]; then
+  bruce report digest --db "$DB" --out "$work/digest" --name "$NAME" --since "$PUB/baseline.duckdb.gz"
+  digest=$?
+fi
+if [ "$digest" -eq 3 ]; then
+  rm -f "$work/digest"/*
+  bruce report digest --db "$DB" --out "$work/digest" --name "$NAME"
+  digest=$?
+fi
+[ "$digest" -eq 0 ] || note "$digest"
+
+# Deletes the files given that are dated before the $1 newest nights among them.
+trim() {
+  local keep=$1 cutoff f d
+  shift
+  cutoff=$(for f in "$@"; do d=${f##*/}; d=${d#"$NAME"-}; echo "${d:0:10}"; done | sort -ru | sed -n "${keep}p")
+  [ -n "$cutoff" ] || return 0
+  for f in "$@"; do
+    d=${f##*/}; d=${d#"$NAME"-}
+    if [[ ${d:0:10} < $cutoff ]]; then rm -f "$f"; fi
+  done
+}
+
+short() { sha256sum "$1" | cut -c1-16; }
+
+# S4: stage a new directory, then rename it over PUB. SHA256SUMS is written
+# last; the files it lists are named by their content.
+stage() {
+  set -e
+  rm -rf "$new"
+  mkdir -p "$new/digests"
+  cp "$ARCHIVE" "$new/bruce.tar.gz"
+  cp "$CONFIG" "$new/bruce.toml"
+  cp "$work/baseline.duckdb.gz" "$new/baseline.duckdb.gz"
+  local bin=bruce-$(short "$new/bruce.tar.gz").tar.gz
+  local cfg=config-$(short "$new/bruce.toml").toml
+  local base=baseline-$(short "$new/baseline.duckdb.gz").duckdb.gz
+  cp "$new/bruce.tar.gz" "$new/$bin"
+  cp "$new/bruce.toml" "$new/$cfg"
+  cp "$new/baseline.duckdb.gz" "$new/$base"
+
+  # Last night's set stays one more night, for a fetcher given a stale
+  # SHA256SUMS by a cache in front of the directory.
+  if [ -f "$PUB/SHA256SUMS" ]; then
+    local sum name
+    while read -r sum name; do
+      case $name in
+        bruce-*.tar.gz|config-*.toml|baseline-*.duckdb.gz) cp -p "$PUB/$name" "$new/" || true ;;
+      esac
+    done < "$PUB/SHA256SUMS"
+  fi
+
+  # The dated digests are carried over and tonight's added, under the counts.
+  if [ -d "$PUB/digests" ]; then cp -Rp "$PUB/digests/." "$new/digests/"; fi
+  local f rest
+  if [ "$digest" -eq 0 ]; then
+    for f in "$work/digest"/*; do
+      cp "$f" "$new/digests/"
+      rest=${f##*/}
+      rest=${rest#"$NAME"-????-??-??}
+      cp "$f" "$new/digest$rest"
+    done
+  else
+    for f in "$PUB"/digest.* "$PUB"/digest-*; do cp -p "$f" "$new/"; done
+  fi
+  local json=("$new/digests/$NAME"-????-??-??.json) views=()
+  for f in "$new/digests/$NAME"-????-??-??[.-]*; do
+    case $f in *.json) ;; *) views+=("$f") ;; esac
+  done
+  trim "$KEEP_JSON" "${json[@]}"
+  trim "$KEEP_VIEWS" "${views[@]}"
+
+  (cd "$new" && sha256sum "$bin" "$cfg" "$base" digest.* digest-* digests/*) > "$work/SHA256SUMS"
+  cp "$work/SHA256SUMS" "$new/SHA256SUMS"
+
+  rm -rf "$PUB.old"
+  if [ -e "$PUB" ]; then mv "$PUB" "$PUB.old"; fi
+  mv "$new" "$PUB"
+  rm -rf "$PUB.old"
+}
+( stage )
+staged=$?
+if [ "$staged" -ne 0 ]; then
+  echo "bruce-nightly: staging failed; $PUB is as it was" >&2
+  note "$staged"
+fi
+
+# S5: prune the history. Staging is done, so a failure here costs no publication.
+if [ -n "$KEEP" ]; then
+  bruce prune --db "$DB" --keep "$KEEP" || note $?
+fi
+
+# S6: deliver.
+if [ -n "$DELIVER" ] && [ "$staged" -eq 0 ]; then
+  "$DELIVER" "$PUB" || note $?
+fi
+exit "$rc"
+```
+
+What each step does, and what a failure at it leaves:
+
+- **S1, crawl.** The crawl is the job's one long step. It exits 3 where the
+  database is of another schema ([below](#a-schema-change)); any other failure
+  stops the job, non-zero, before anything is published.
+- **S2, export.** The run becomes the baseline, gzipped; `check-dir` reads a
+  `.gz` path or URL as it reads the file.
+- **S3, digest.** The digest compares with the baseline the job is about to
+  replace, so it says what changed since the baseline CI last judged by, and a
+  night that failed to publish is folded into the next. It needs no earlier
+  run in the database, so a deployment that keeps no history (`KEEP=`) has the
+  same digest as one that does. With no baseline yet, or one of another schema
+  version, the digest is written without a comparison. A digest that fails for
+  any other cause does not stop the job: the baseline CI needs is still
+  published, the digest's files stay as they were, and the job ends non-zero.
+- **S4, stage.** The new directory is built beside `PUB` and renamed over it, so
+  the files `SHA256SUMS` lists are in place before it is, and a failure while
+  staging leaves `PUB` as it was ([the directory](#the-published-directory)).
+- **S5, prune.** After the files are staged, so a database that cannot be pruned
+  costs no publication; it must not run beside a crawl, which the one script
+  ensures ([`prune.md`](prune.md#not-beside-a-crawl)).
+- **S6, deliver.** `DELIVER` is run with the directory's path. It is skipped
+  after a staging failure, since `PUB` then holds the last night's set.
+
+```mermaid
+flowchart TD
+  S1["S1 crawl into the database"] -->|0| S2["S2 export the baseline, gzip"]
+  S1 -->|3| ARC["move the database aside as the archive"] --> S1b["crawl into a fresh one"]
+  S1b -->|0| S2
+  S1 -->|other failure| STOP(["stop non-zero,<br/>the published directory as it was"])
+  S1b -->|failure| STOP
+  S2 --> HAS{"a published baseline?"}
+  HAS -->|yes| S3a["S3 digest --since that baseline"]
+  HAS -->|no| S3b["S3 digest, uncompared"]
+  S3a -->|3| S3b
+  S3a -->|0| S4
+  S3b --> S4["S4 stage a new directory:<br/>files named by content,<br/>digests/ trimmed, SHA256SUMS last"]
+  S3a -->|other failure| NOTE["note the failure"] --> S4
+  S4 --> SWAP["rename it over the published directory"]
+  SWAP --> S5["S5 prune the database<br/>(not with KEEP empty)"]
+  S5 --> S6["S6 deliver"]
+  S6 --> END(["exit 0, or the first noted failure"])
+```
+
+### Scheduling it
+
+A timer runs the script as a systemd service on Fedora. One service template
+serves both crawls, `%i` naming the instance, `nightly` or `locales`, which
+picks its environment file and its working directory.
+
+```ini file=systemd/bruce-crawl@.service
+[Unit]
+Description=bruce: the %i crawl
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=bruce
+Environment=PATH=/opt/bruce/bin:/usr/local/bin:/usr/bin
+EnvironmentFile=/etc/bruce/%i.env
+WorkingDirectory=/var/lib/bruce/%i
+ExecStart=/usr/local/libexec/bruce/bruce-nightly.sh
+TimeoutStartSec=infinity
+```
+
+```ini file=systemd/bruce-nightly.timer
+[Unit]
+Description=bruce: the nightly en-US crawl
+
+[Timer]
+OnCalendar=*-*-* 01:00:00 UTC
+Persistent=true
+Unit=bruce-crawl@nightly.service
+
+[Install]
+WantedBy=timers.target
+```
+
+```sh file=etc/bruce/nightly.env
+ARCHIVE=/opt/bruce/release.tar.gz
+CONFIG=/etc/bruce/bruce.toml
+DB=/var/lib/bruce/nightly/bruce.duckdb
+PUB=/var/lib/bruce/nightly/pub
+KEEP=30
+```
+
+Install the script (`install -m 0755 bruce-nightly.sh /usr/local/libexec/bruce/`)
+and the configuration, create the `bruce` user, and `systemctl enable --now
+bruce-nightly.timer`. `Persistent=true` runs a night the machine slept through
+when it wakes. Where systemd is not at hand, the same job is one line of
+`cron`, the environment on it:
+
+```sh
+0 1 * * *  ARCHIVE=/opt/bruce/release.tar.gz CONFIG=bruce.toml PUB=/srv/bruce/pub /usr/local/libexec/bruce/bruce-nightly.sh
+```
+
+### Every locale, weekly
+
+docs.fedoraproject.org has 69 locales, each carrying en-US's pages, so a crawl
+of every locale is about 69 times the requests of en-US's: some 220,000 to
+docs.fedoraproject.org alone, which at three a second is about 20 hours. So the
+deployment runs **two crawls into two databases**: the English pages nightly,
+the run CI's baseline is exported from, and every locale weekly, in a database
+of its own. DuckDB lets one process write a file, so a long crawl never holds
+the nightly one's. CI's baseline stays en-US's.
+
+The weekly crawl's configuration is `bruce.toml` with one root, at the site's
+top, in place of en-US's:
+
+```toml file=bruce-locales.toml
+[[root]]
+url = "https://docs.fedoraproject.org/"
+sitemap = "https://docs.fedoraproject.org/en-US/sitemap.xml"
+```
+
+The sitemap is en-US's: every locale's `sitemap.xml` repeats it, and no locale's
+pages are in one, so the other locales are found by the language menu's links
+([How the pages are read](#how-the-pages-are-read)). A locale added later is
+crawled unasked, and so is the occasional first path segment that is no locale
+(`infra`, `f28`), where en-US's configuration asks each once.
+
+```sh file=etc/bruce/locales.env
+ARCHIVE=/opt/bruce/release.tar.gz
+CONFIG=/etc/bruce/bruce-locales.toml
+DB=/var/lib/bruce/locales/bruce.duckdb
+PUB=/var/lib/bruce/locales/pub
+NAME=bruce-locales
+KEEP=8
+```
+
+```ini file=systemd/bruce-weekly.timer
+[Unit]
+Description=bruce: the weekly every-locale crawl
+
+[Timer]
+OnCalendar=Sat *-*-* 00:00:00 UTC
+Persistent=true
+Unit=bruce-crawl@locales.service
+
+[Install]
+WantedBy=timers.target
+```
+
+The weekly database keeps eight runs, two months. Its results stay where the
+job ran: they are published as a second directory only once the size of the
+every-locale digest is known, and CI never reads them.
+
+## The published directory
+
+The job ends by staging **one directory**, and what it holds is the contract
+between the job, a content repo's CI and whatever serves the results:
+
+| File | For | Holds |
+|---|---|---|
+| `SHA256SUMS` | fetchers | `sha256sum`'s format, written last: the three files below, the latest digest and `digests/`. |
+| `bruce-<sha>.tar.gz`, `config-<sha>.toml`, `baseline-<sha>.duckdb.gz` | CI and pullers | The pinned release's archive, the configuration and the baseline, each named by the first 16 hex digits of its own sha256. Last night's three stay one more night. |
+| `bruce.tar.gz`, `bruce.toml`, `baseline.duckdb.gz` | people | The same files under fixed names, always the latest. |
+| `digest.json`, `digest.html` | people, pullers | The latest digest, in the JSON and every view the job writes (`digest-<view>` for a view in a file `<view>`). |
+| `digests/` | people, pullers | The dated digests: `bruce-YYYY-MM-DD.json`, `.html` and the rest. |
+
+**A fetcher fetches `SHA256SUMS` first, then the files it lists, and runs
+`sha256sum -c`** (`--ignore-missing` where it fetched only some), failing as
+could-not-run, never as broken links. The names are why: a directory served
+through a cache can answer `SHA256SUMS` from before the last deploy and a file
+from after it. GitHub Pages serves each file with `Cache-Control: max-age=600`,
+file by file. A fetcher handed a stale `SHA256SUMS` finds last night's whole set,
+which stays, and one handed a fresh one asks for names no cache holds. The
+sums say nothing of the release or the schema: the binary and the baseline of
+one night are listed together, and the digest's JSON says which `bruce` crawled.
+
+A reader of the directory knows there is something new when `SHA256SUMS` has
+changed.
+
+### What grows, and what bounds it
+
+Everything that accretes is bounded by a count, so a deployment runs for years
+unattended:
+
+- **The history database**, by `bruce prune --keep` after every night: 30 runs
+  of the English pages are 0.7 to 0.85 GB, and a database pruned nightly holds
+  a steady size once it holds the thirty (`prune` returns almost nothing to the
+  file, and DuckDB reuses the freed blocks).
+- **The dated digests**, by `KEEP_VIEWS` and `KEEP_JSON`: 30 nights of HTML and
+  of any other view, and 13 months of JSON, the report a loader keeps
+  ([`digest.md`](digest.md)). With two nights of binary and baseline the
+  directory is some 500 MB: an en-US digest's HTML is about 4 MB and its JSON
+  about 0.7 MB.
+- **The archive of a database of another schema**, one, replaced by the next.
+
+### A schema change
+
+`bruce` migrates no database ([`crawl.md`](crawl.md)): runs are never changed,
+and a migrated one would lack what its crawl never collected, so a view judging
+it would judge on missing facts. Every command that opens a database or a
+baseline exits 3 on one of another schema version, and the script answers that
+status alone: the crawl moves the database aside as `bruce.duckdb.archive`
+(replacing the last archive) and starts a fresh one, and the digest is written
+without a comparison. The new binary and the new baseline are published in one
+set, which a content repo's next fetch takes whole. Delete the archive when it
+is no longer wanted.
+
+## Delivering the results
+
+Some deployments push the results when the job ends; others serve them from a
+host that fetches them. The script stops at the staged directory and the guide
+shows both.
+
+**A push** is a command the deployment writes, named in `DELIVER` and run with
+the directory's path. `rsync` to a web server:
+
+```bash file=deliver-rsync.sh
+#!/usr/bin/env bash
+# DELIVER: copy the staged directory to $TARGET, SHA256SUMS last, and delete
+# what the new set no longer holds only after it is whole.
+set -eu
+rsync -a --delete-after --exclude SHA256SUMS "$1/" "${TARGET:?}/"
+rsync -a "$1/SHA256SUMS" "${TARGET:?}/"
+```
+
+**A pull** is for a server that cannot be pushed to, or that is rebuilt from
+somewhere else. A timer on it runs this script, which fetches `SHA256SUMS` from
+the published URL and, where it changed, every file it lists, reusing a local
+file whose sum matches, checks them all, and renames the new directory into
+place. A set that fails its check is dropped, the directory served stays as it
+was, and the next run tries again.
+
+```bash file=bruce-pull.sh
+#!/usr/bin/env bash
+# Pull the published directory at $URL into $DEST, replacing $DEST as a whole.
+set -u
+URL=${URL:?the address of the published directory}
+URL=${URL%/}
+DEST=${DEST:?the directory served from}
+DEST=${DEST%/}
+
+tmp=$(mktemp -d "$DEST.pull.XXXXXX") || exit 1
+trap 'rm -rf "$tmp"' EXIT
+
+# P1: nothing new when SHA256SUMS is the one served.
+curl -fsS --retry 3 -o "$tmp/SHA256SUMS" "$URL/SHA256SUMS" || exit 1
+if cmp -s "$tmp/SHA256SUMS" "$DEST/SHA256SUMS"; then exit 0; fi
+
+# P2: every file it lists, from here where the sum matches, else from the URL.
+mkdir "$tmp/new"
+while read -r sum name; do
+  name=${name#\*}
+  case /$name/ in
+    //*|*/../*) echo "bruce-pull: $name is not inside the directory" >&2; exit 1 ;;
+  esac
+  mkdir -p "$tmp/new/$(dirname "$name")"
+  if [ -f "$DEST/$name" ] && [ "$(sha256sum < "$DEST/$name" | cut -d' ' -f1)" = "$sum" ]; then
+    cp -p "$DEST/$name" "$tmp/new/$name"
+  else
+    curl -fsS --retry 3 -o "$tmp/new/$name" "$URL/$name" || exit 1
+  fi
+done < "$tmp/SHA256SUMS"
+cp "$tmp/SHA256SUMS" "$tmp/new/SHA256SUMS"
+
+# P3: all of it, or none.
+(cd "$tmp/new" && sha256sum -c --quiet SHA256SUMS) || { echo "bruce-pull: the set fails its sums" >&2; exit 1; }
+
+# P4: into place.
+if [ -e "$DEST" ]; then mv "$DEST" "$tmp/old"; fi
+mv "$tmp/new" "$DEST"
+```
+
+```mermaid
+flowchart TD
+  P1["P1 fetch SHA256SUMS"] --> SAME{"the one served?"}
+  SAME -->|yes| DONE(["nothing new"])
+  SAME -->|no| P2["P2 fetch each file it lists into a new directory,<br/>reusing a local file whose sum matches"]
+  P2 --> P3{"P3 sha256sum -c"}
+  P3 -->|fails| FAIL(["stop non-zero, the directory served untouched,<br/>the next run tries again"])
+  P3 -->|passes| P4["P4 rename the new directory into place"]
+```
+
+A pull run while the set is being deployed may find `SHA256SUMS` and a fixed-name
+file from different nights: its check fails, and the next run, after the cache
+expires, passes. A site whose pages are copied from a build by `rsync --delete`,
+as docs.fedoraproject.org's proxies are, runs the pull inside that build or into
+a path the copy spares; which is for the site's operators to decide.

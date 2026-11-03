@@ -12,7 +12,7 @@ entries quote are named by their day (2026-10-23, 2026-10-24, 2026-10-25, run 2 
 2026-10-28). Their databases predate schema 6 and are no longer kept: a figure stands as recorded, and a new crawl
 remeasures it. The en-US crawl of 2026-11-01 is kept, beside the one before it, in `runs/en-us-20261101-0005/`.
 
-<!-- decision-watermark: D102 -->
+<!-- decision-watermark: D104 -->
 
 ## Modes, commands and deployment
 [`decisions/modes.md`](decisions/modes.md)
@@ -22,6 +22,8 @@ remeasures it. The en-US crawl of 2026-11-01 is kept, beside the one before it, 
 - **D40** A run needs no config: the URL given is the root, and every other setting has a default
 - **D41** This repo builds the tool and never deploys it
 - **D42** The simulated deployment is the manual's deployment guide, executed
+- **D103** A deployment publishes one directory, fetched through its `SHA256SUMS`, the files it lists named by content
+- **D104** The scheduled job is one script that answers a schema change itself and publishes nothing from a failed crawl
 
 ## Configuration and scope
 [`decisions/config.md`](decisions/config.md)

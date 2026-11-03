@@ -30,7 +30,7 @@ run = "uv run check.py"
 # into the gitignored `sim/`, and its config checked to load (D42). The crawl
 # is `mise run crawl`, below; `scripts/sim.py` says why it is not this.
 [tasks.sim]
-description = "Extract the deployment guide into sim/ and check its config loads"
+description = "Extract the deployment guide into sim/ and check its configs load and its scripts parse"
 dir = "{{config_root}}/scripts"
 run = "uv run sim.py"
 

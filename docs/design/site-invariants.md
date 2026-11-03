@@ -6,7 +6,7 @@ discovery and never reused. Walk this file whenever Antora's version changes (I8
 names it), or when docs.fp.o's build or hosting moves: a change here surfaces as wrong verdicts,
 not as an error.
 
-<!-- invariant-watermark: I27 -->
+<!-- invariant-watermark: I28 -->
 
 ### I1 docs.fp.o's sitemap is an index at `/en-US/sitemap.xml`, and lists no translated page
 - **Claim.** `/sitemap.xml` is 404, and robots.txt names no `Sitemap:`. `/en-US/sitemap.xml` is
@@ -374,3 +374,14 @@ not as an error.
 - **Relied on by.** The deployment guide's `user_agent` and the dev deployment's nightly crawl and CI fetches on
   GitHub Actions (P9).
 - **Re-verify.** `for ua in 'bruce-fedora-docs/1.0 (+https://docs.fedoraproject.org/)' 'Mozilla/5.0 (X11; Linux x86_64) Chrome/130.0 Safari/537.36'; do curl -s -A "$ua" https://docs.fedoraproject.org/en-US/quick-docs/ | grep -ci anubis; done` prints 0, then a positive count.
+
+### I28 GitHub Pages serves each file with `Cache-Control: max-age=600`
+- **Claim.** A file served by GitHub Pages carries `cache-control: max-age=600` and an ETag, so for ten minutes after a
+  deploy a client may be answered from a cache, file by file, with the file from before it.
+- **Proof.** Observed behaviour: `curl -sI https://pages.github.com/`. docs.github.com ("GitHub Pages limits") states
+  the soft limits and not this.
+- **Scope limit.** The value is GitHub's to change and was read on one site; a custom domain behind another CDN has its
+  own.
+- **Verified against.** pages.github.com, 2026-11-03.
+- **Relied on by.** D103 (names by content, last night's set kept) and the deployment guide's published directory.
+- **Re-verify.** `curl -sI https://pages.github.com/ | grep -i '^cache-control'` prints `cache-control: max-age=600`.
