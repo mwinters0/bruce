@@ -39,7 +39,7 @@
 //! stopped run wrote is whole targets, and every target claimed and not
 //! written is counted as cut. A run abandoned without waiting for its grace
 //! [`Writes::close`]s first, so it too holds whole targets, though not a
-//! built page's xref links, which `settle_xrefs` writes late.
+//! built page's xref links, which `settle_xrefs` and `send_kept` write late.
 //!
 //! A run over a local build begins from its seeds instead ([`Crawl::run_seeded`]):
 //! no sitemap is read and no root is asked about, since the build is the
@@ -83,6 +83,7 @@ use frontier::{Frontier, Outside, Plan};
 use hops::{Chain, Stop};
 use schedule::{Route, Schedule, host_of};
 use sitemap::Sitemap;
+use xref::Kept;
 
 pub use crate::fetch::Stopper;
 pub use frontier::{Baseline, Externals};
@@ -385,12 +386,13 @@ where
         let shared = self.shared;
         let items = shared.seed(seeds).await?;
         shared.drive(items, None).await?;
-        let resolved = shared.settle_xrefs().await?;
+        let (resolved, kept) = shared.settle_xrefs().await?;
         shared.drive(resolved, None).await?;
         let beyond = shared.settle_unbuilt().await?;
         shared.drive(beyond, None).await?;
         shared.settle_outside().await?;
         shared.copy_from_baseline().await?;
+        shared.send_kept(kept).await?;
         Ok(shared.summary())
     }
 }
@@ -1125,14 +1127,16 @@ where
     /// Writes the links of the xrefs waiting for the held set, now that every
     /// built page is read: one the profile resolves points at the page it
     /// resolves to, claimed as a link's target is, unless the run is stopping,
-    /// and any other stays the unresolved xref it was (D20). Returns the items to ask about.
-    pub(super) async fn settle_xrefs(self: &Arc<Self>) -> Result<Vec<Item>, Error> {
+    /// and any other stays the unresolved xref it was (D20). Returns the items
+    /// to ask about, and the links of the resolved, whose rows wait for their
+    /// targets' outcomes (`send_kept`, D57).
+    pub(super) async fn settle_xrefs(self: &Arc<Self>) -> Result<(Vec<Item>, Vec<Kept>), Error> {
         let shared = Arc::clone(self);
         tokio::task::spawn_blocking(move || {
             let (Some(_writing), Some(baseline)) =
                 (shared.writes.begin(), shared.frontier.baseline())
             else {
-                return Ok(Vec::new());
+                return Ok((Vec::new(), Vec::new()));
             };
             let xrefs = shared.pending.take_xrefs();
             let resolved = {
@@ -1140,22 +1144,45 @@ where
                 xref::resolve(xrefs, &held, &baseline.index, &shared.registry)
             };
             let mut items = Vec::new();
+            let mut kept = Vec::new();
             for (mut link, target) in resolved {
-                if let Some(target) = target
-                    && !shared.stopping()
-                {
-                    link.fragment = target.fragment().map(str::to_owned);
-                    let mut bare = target;
-                    bare.set_fragment(None);
-                    let (plan, form) = shared.frontier.plan(&bare, Kind::Anchor);
-                    link.target_url_id = form.id();
-                    if shared.frontier.claim(form.id()) {
-                        items.extend(shared.dispatch(bare, Kind::Anchor, plan, form)?);
-                    }
+                let Some(target) = target.filter(|_| !shared.stopping()) else {
+                    shared.rows.send(Row::Link(link))?;
+                    continue;
+                };
+                let unresolved = link.clone();
+                link.fragment = target.fragment().map(str::to_owned);
+                let mut bare = target;
+                bare.set_fragment(None);
+                let (plan, form) = shared.frontier.plan(&bare, Kind::Anchor);
+                link.target_url_id = form.id();
+                if shared.frontier.claim(form.id()) {
+                    items.extend(shared.dispatch(bare, Kind::Anchor, plan, form)?);
                 }
-                shared.rows.send(Row::Link(link))?;
+                kept.push(Kept {
+                    resolved: link,
+                    unresolved,
+                });
             }
-            Ok(items)
+            Ok((items, kept))
+        })
+        .await
+        .map_err(|_| Error::Panicked)?
+    }
+
+    /// Sends each link of `kept`, to be written once every target of the run
+    /// is: the writer takes the resolved form unless its target is `broken_url`
+    /// (D57). Called last, after the copies of the baseline's rows.
+    pub(super) async fn send_kept(self: &Arc<Self>, kept: Vec<Kept>) -> Result<(), Error> {
+        let shared = Arc::clone(self);
+        tokio::task::spawn_blocking(move || {
+            let Some(_writing) = shared.writes.begin() else {
+                return Ok(());
+            };
+            for k in kept {
+                shared.rows.xref_link(k.resolved, k.unresolved)?;
+            }
+            Ok(())
         })
         .await
         .map_err(|_| Error::Panicked)?

@@ -8,6 +8,11 @@
 //! component's whole catalog, and the xref stays unresolved. The held set is
 //! final only after the last built page, so the links wait in
 //! [`Pending`](super::baseline::Pending).
+//!
+//! The URL a refspec names may be one production does not serve, and production
+//! left the xref on its own page: so the link of a resolved xref is written
+//! last, as [`Kept`], pointing at the resolved URL unless that target is
+//! `broken_url`, and else at its own page, the row the baseline holds (D57).
 
 use url::Url;
 
@@ -42,6 +47,13 @@ impl Lookup for Against<'_> {
     }
 }
 
+/// A resolved xref's link both ways: pointing at what the profile resolved it
+/// to, and on its own page as production renders an unresolved one.
+pub(super) struct Kept {
+    pub(super) resolved: LinkRow,
+    pub(super) unresolved: LinkRow,
+}
+
 /// Each xref's link row, with the URL its refspec resolves to, fragment
 /// included: `None` where the profile cannot resolve it, or fails to, either
 /// leaving it an unresolved xref (D20).
@@ -52,13 +64,6 @@ pub(super) fn resolve(
     registry: &Registry,
 ) -> Vec<(LinkRow, Option<Url>)> {
     let lookup = Against { held, pages };
-    // deficiency: KD40 An xref into a component-version the build lacks and
-    // the baseline holds, which no baseline page's facts find, is pointed at
-    // the URL its refspec names (D57). Where production left it unresolved, on
-    // its own page as `#<refspec>`, and that URL is `broken_url`, the link's
-    // target differs from the baseline's row, so the gate (D101) calls a link
-    // already broken introduced. The fix: where the derived URL answers
-    // `broken_url`, the link stays on its own page, the row production renders.
     xrefs
         .into_iter()
         .map(|x| {

@@ -50,11 +50,12 @@ The deployment guide: [`../wip/roadmap-P9-deployment.md`](../wip/roadmap-P9-depl
 - [x] **9.4** The guide's scheduling, publishing and delivery: the script, the systemd units, `bruce-locales.toml`, `per_second = 3`, the staged directory with `SHA256SUMS` and names by content (D103), retention and the schema archive (D104), the digest's comparison, the pull script, the job's and the pull's flowcharts; `sim` parsing the scripts and wiring the units, `cli::tests` checking their `bruce` lines, `e2e` running the job and the pull: [notes](../wip/roadmap-P9.4-scheduling-notes.md)
 - [x] **9.5** The guide's CI section: the workflow with its fetch and check, `sim`'s workflow and `uses:` checks, `e2e` running its steps and parsing it as YAML, the Antora pin checked against production's (I29): [notes](../wip/roadmap-P9.5-ci-workflow-notes.md)
 - [x] **9.6** The dev deployment: `v0.3.0-rc.1`, the deployment repo's nightly workflow (scheduled, `KEEP_JSON=30`) and orphan Pages branch, served at `https://mwinters0.github.io/bruce-fedora-docs-ci/`, the crawl's time on Actions (1:12:41) and the guide's figures corrected (the digest's size above all; `runs/p9.6/`): [notes](../wip/roadmap-P9.6-dev-deployment-notes.md)
-- [ ] **9.7** The closing evidence: a quick-docs mirror (a temporary repository the round creates) running the guide's workflow against the Pages URL, a planted break failing and a clean change passing. Landed: the mirror, the workflow end to end on Actions and the planted break failing. Not delivered: the clean change fails on a link it never touched, its pass waiting on 9.13: [notes](../wip/roadmap-P9.7-closing-evidence-notes.md)
+- [ ] **9.7** The closing evidence: a quick-docs mirror (a temporary repository the round creates) running the guide's workflow against the Pages URL, a planted break failing and a clean change passing. Landed: the mirror, the workflow end to end on Actions and the planted break failing. Not delivered: the clean change fails on a link it never touched, its pass waiting on 9.13.1: [notes](../wip/roadmap-P9.7-closing-evidence-notes.md)
 - [x] **9.11** The guide's view: docs.fp.o's palette over `bruce:digest.html`, named by the script's `VIEW` (`--view`), checked by `sim` and `e2e`, carried by the deployment repo: [notes](../wip/roadmap-P9.11-guide-view-notes.md)
 - [x] **9.11.1** The view under the contract's names: the script publishing a view's file as `digest.<ext>` and `digests/<stem>-<date>.<ext>`, refusing one with no extension or `.json` before it crawls; `deployment` and `e2e` holding the directory to those names, the deployment repo's script and README following: [notes](../wip/roadmap-P9.11.1-view-names-notes.md)
 - [x] **9.12** The published directory's index: `index.html` of the current digests, the fixed-name files and `SHA256SUMS`, written by the guide's script under `INDEX` (off by default, on in the deployment repo), listed in `SHA256SUMS`, checked by `deployment.check_index`: [notes](../wip/roadmap-P9.12-directory-index-notes.md)
-- [ ] **9.13** An xref whose derived URL is `broken_url` kept on its own page, as production renders it (KD40, amending D57); then 9.7's pass on the mirror's `clean-change`; before 9.8
+- [x] **9.13** An xref whose target is `broken_url` kept on its own page, as production renders it (KD40 closed, D57 amended): the link of a resolved xref written last, by the writer, on its own page when its target's outcome is `broken_url`: [notes](../wip/roadmap-P9.13-xref-own-page-notes.md)
+- [ ] **9.13.1** 9.7's pass on the mirror's `clean-change`, the broken xref kept: needs a release carrying 9.13 for the nightly to publish (`v0.3.0-rc.2`, the maintainer's tag), the deployment repo's pin bumped, a nightly run, and a push to `clean-change`; before 9.8
 - [ ] **9.8** The maintainer's review of the en-US reports, the digest included: no code
 - [ ] **9.9** The every-locale crawl, weekly on the maintainer's machine: history, `prune` and the schema archive exercised, the guide's locale figures, the digest's size deciding whether its results are published
 - [ ] **9.10** The release P9 closes on (its notes drafted by `/release` for the maintainer to edit, the tag the maintainer's), and the README's CI section corrected
@@ -75,4 +76,11 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
+
+- **9.13 keeps every resolved xref whose target the crawl wrote `broken_url` on its own page, not only one whose URL
+  Resolve derived.** The writer cannot tell the two (Resolve returns a URL alone), and a page the baseline's facts found
+  is never `broken_url`, so the rule differs only for derived URLs. It reads the crawl's outcome, not the policy's
+  (KD23): a policy remapping a status leaves the link on the derived URL, which `link_verdicts` still judges. The
+  request for the derived URL is still made, so its target row remains in the run with no link to it. Reconsidering
+  changes which links the gate's key meets, and whether such an orphan target is acceptable.
 

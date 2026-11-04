@@ -18,7 +18,8 @@
 //!    (D20). A CI run that resolved the refspec points the link at the page it
 //!    names with the refspec's own fragment, and keeps the refspec: rules 2 to
 //!    9 judge it (D55), unless the URL it names, which Resolve may only have
-//!    derived, is itself broken (D57).
+//!    derived, is itself broken, which the crawl keeps on the link's own page
+//!    (D57) and only the policy's reading of the target can still show.
 //! 2. A link whose target has no row, which only a stopped run leaves, is
 //!    `unchecked`, reason `cut`.
 //! 3. A link to a URL whose path doubles a slash, or to one that redirected

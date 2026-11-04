@@ -244,6 +244,28 @@ impl Checked {
         .collect::<Result<_, _>>()
         .unwrap()
     }
+
+    /// Where the links from the page `from` (a path) point, as
+    /// `(raw href, target path, fragment)`.
+    fn aims(&self, from: &str, base: &str) -> Vec<(String, String, Option<String>)> {
+        let mut stmt = self
+            .store
+            .connection()
+            .prepare(
+                "SELECT l.raw_href, t.url, l.fragment FROM links l \
+                 JOIN targets s ON s.run_id = l.run_id AND s.url_id = l.src_url_id \
+                 JOIN targets t ON t.run_id = l.run_id AND t.url_id = l.target_url_id \
+                 WHERE l.run_id = ? AND s.url = ? ORDER BY l.raw_href",
+            )
+            .unwrap();
+        stmt.query_map(duckdb::params![self.run.0, format!("{base}{from}")], |r| {
+            Ok((r.get(0)?, r.get::<_, String>(1)?, r.get(2)?))
+        })
+        .unwrap()
+        .map(|r| r.map(|(h, u, f)| (h, u.replace(base, ""), f)))
+        .collect::<Result<_, _>>()
+        .unwrap()
+    }
 }
 
 fn t(
@@ -761,6 +783,20 @@ async fn an_xref_into_a_component_the_build_lacks_resolves_through_the_baseline(
         1,
         "the URL ops:admin:missing names"
     );
+    // The link whose named URL is broken stays on its own page, as production
+    // renders it (D57); one that resolved points at the page.
+    let aims = second.aims("/docs/tools/", &base);
+    let aim = |refspec: &str| {
+        let raw = format!("#{refspec}");
+        aims.iter().find(|(h, ..)| *h == raw).unwrap().1.clone()
+    };
+    assert_eq!(aim("ops:admin:missing.adoc"), "/docs/tools/");
+    assert_eq!(
+        aim("ops:admin:partitions.adoc"),
+        "/docs/ops/admin/partitions/"
+    );
+    let own = aims.iter().find(|(h, ..)| h == "#ops:admin:missing.adoc");
+    assert_eq!(own.unwrap().2.as_deref(), Some("ops:admin:missing.adoc"));
 }
 
 /// The whole site as a baseline run, holding a crawled page-alias and a page
@@ -834,6 +870,17 @@ async fn an_xref_no_page_has_the_coordinates_of_resolves_by_the_url_it_names() {
     assert_eq!(of("releases::spins.adoc#x"), "ok", "a shared URL");
     assert_eq!(of("project::uncrawled.adoc"), "ok", "answered live");
     assert_eq!(of("project::nowhere.adoc"), "broken_url");
+    let aims = second.aims("/docs/tools/", &base);
+    let aim = |refspec: &str| {
+        let raw = format!("#{refspec}");
+        aims.iter().find(|(h, ..)| *h == raw).unwrap().1.clone()
+    };
+    assert_eq!(
+        aim("project::nowhere.adoc"),
+        "/docs/tools/",
+        "kept on its page"
+    );
+    assert_eq!(aim("project::uncrawled.adoc"), "/docs/project/uncrawled/");
     let targets = second.targets(second.run, &base);
     let by = |path: &str| targets.iter().find(|t| t.0.ends_with(path)).unwrap();
     assert_eq!(by("/project/objectives/").3, "baseline");

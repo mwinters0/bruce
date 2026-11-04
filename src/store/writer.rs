@@ -2,7 +2,8 @@
 //! appenders from a bounded channel, so a slow disk pushes back on the
 //! crawl and DuckDB sees one writing process. It writes the rows of
 //! [`Row`], one table each but `bodies` (KD27), and
-//! copies a baseline's target into the run on request (D52).
+//! copies a baseline's target into the run on request (D52) and chooses a
+//! resolved xref's link on request (D57).
 
 use std::fmt;
 use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
@@ -11,7 +12,7 @@ use std::thread::JoinHandle;
 use duckdb::types::{Null, Value};
 use duckdb::{Appender, params, params_from_iter};
 
-use super::rows::{Hop, Row, TargetRow, timestamp};
+use super::rows::{Hop, LinkRow, Row, TargetRow, timestamp};
 use super::{Error, RunId, Store};
 use crate::config::Reason;
 
@@ -26,6 +27,11 @@ enum Msg {
         from: RunId,
         to: RunId,
         url_id: u64,
+    },
+    /// [`WriteHandle::xref_link`].
+    Xref {
+        resolved: LinkRow,
+        unresolved: LinkRow,
     },
     Finish,
 }
@@ -93,6 +99,20 @@ impl WriteHandle {
             .map_err(|_| WriterGone)
     }
 
+    /// Asks for the link of an xref to be written, once everything sent before
+    /// is: `resolved` where its target is not `broken_url` in the run, else
+    /// `unresolved`, the link as production renders an xref it leaves
+    /// unresolved (D57). A target the run lacks, which only a stopped run
+    /// leaves, takes `resolved`.
+    pub fn xref_link(&self, resolved: LinkRow, unresolved: LinkRow) -> Result<(), WriterGone> {
+        self.tx
+            .send(Msg::Xref {
+                resolved,
+                unresolved,
+            })
+            .map_err(|_| WriterGone)
+    }
+
     /// Sends `row`, waiting while the channel is full.
     pub fn send(&self, row: Row) -> Result<(), WriterGone> {
         self.tx
@@ -105,15 +125,34 @@ fn write_all(store: Store, rx: Receiver<Msg>) -> Result<Store, Error> {
     {
         let mut tables = Tables::new(&store)?;
         let mut pending = 0;
+        // Whether a target may still sit in an appender, unread.
+        let mut unflushed = false;
         for msg in rx {
             match msg {
-                Msg::Row(row) => tables.append(*row)?,
+                Msg::Row(row) => {
+                    tables.append(*row)?;
+                    unflushed = true;
+                }
                 Msg::Copy { from, to, url_id } => {
                     // The copy reads what the appenders still hold.
                     tables.flush()?;
                     pending = 0;
+                    unflushed = false;
                     store.copy_target(from, to, url_id)?;
                     continue;
+                }
+                Msg::Xref {
+                    resolved,
+                    unresolved,
+                } => {
+                    if unflushed {
+                        tables.flush()?;
+                        pending = 0;
+                        unflushed = false;
+                    }
+                    let broken =
+                        store.target_is_broken(RunId(resolved.run_id), resolved.target_url_id)?;
+                    tables.append(Row::Link(if broken { unresolved } else { resolved }))?;
                 }
                 Msg::Finish => break,
             }
@@ -121,11 +160,32 @@ fn write_all(store: Store, rx: Receiver<Msg>) -> Result<Store, Error> {
             if pending == FLUSH_EVERY {
                 tables.flush()?;
                 pending = 0;
+                unflushed = false;
             }
         }
         tables.flush()?;
     }
     Ok(store)
+}
+
+impl Store {
+    /// Whether run `run` holds a target `url_id` whose outcome is `broken_url`,
+    /// as the crawl wrote it (KD23).
+    fn target_is_broken(&self, run: RunId, url_id: u64) -> Result<bool, Error> {
+        let broken: Option<bool> = self
+            .conn
+            .query_row(
+                "SELECT outcome = 'broken_url' FROM targets WHERE run_id = ? AND url_id = ?",
+                [run.0, url_id],
+                |row| row.get(0),
+            )
+            .map(Some)
+            .or_else(|e| match e {
+                duckdb::Error::QueryReturnedNoRows => Ok(None),
+                e => Err(e),
+            })?;
+        Ok(broken.unwrap_or(false))
+    }
 }
 
 /// An appender for each table the writer fills.

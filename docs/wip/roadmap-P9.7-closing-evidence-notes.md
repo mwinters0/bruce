@@ -55,7 +55,7 @@ one. It is `quick-docs/virtualization-getting-started/`'s
 
 ## What 9.8 to 9.10 inherit
 
-- A clean pass on the mirror is the evidence still owed, 9.13's to take: a push to the
+- A clean pass on the mirror is the evidence still owed, 9.13.1's to take: a push to the
   mirror's `clean-change` at `b86cb96`, the broken xref kept, it being the case the pass
   has to show.
 - The three "introduced redirected links" (`package-maintainers::Packaging_Tutorial_GNU_Hello.adoc`
