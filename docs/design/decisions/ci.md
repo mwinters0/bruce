@@ -87,12 +87,12 @@ pages are read. Reopens: I16 changing, its layout read in three places (D57). Co
 `report::inverse::tests`.
 
 ### D57 An xref no page's facts find is the URL its refspec names, answered as any URL the build lacks
-Antora resolves a refspec through a page-alias, and to either of two files sharing an output URL; the baseline holds
-facts once per URL, and an alias only if crawled. So where Resolve's facts find no page it names the URL by I16's layout
-(I5), and D22's chain answers it. Production leaves the xref on its own page when that URL is broken, so the writer,
-last of all, writes a resolved xref's link there when its target's outcome is `broken_url`, the gate's key (D101) then
-meeting the baseline's row. Rejected: the baseline's redirect targets alone, missing an uncrawled alias; any outcome but
-`broken_url`, failing a PR on a timeout its author cannot fix (D16); the gate keying an xref by its refspec. Code:
+Antora resolves a refspec through a page-alias, or to either of two files sharing a URL; the baseline holds facts once
+per URL, and an alias only if crawled. Where no page's facts do, Resolve names the URL by I16's layout (I5), D22's chain
+answering it. Production leaves an xref to a missing page on its page, so the writer, last, puts the link there when the
+crawl wrote the target `broken_url`, meeting the baseline's row (D101). Rejected: redirect targets, missing uncrawled
+aliases; other outcomes, failing PRs on timeouts (D16); the policy's, grading answers, not Antora's catalog (KD23);
+dropping the unlinked target, which says why; keying an xref by refspec. Reopens: a docs-host `status` map. Code:
 `profile::antora::resolve`, `crawl::xref`. Evidence:
 `crawl::baseline::tests::an_xref_no_page_has_the_coordinates_of_resolves_by_the_url_it_names`.
 

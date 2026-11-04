@@ -76,11 +76,3 @@ Closing an entry means filing it and then deleting it, done by the session that
 hears the answer. Where the review affirms a call and changes nothing, its
 reasoning goes beside the mechanism it governs first. Full rules:
 [`../process.md`](../process.md), "Decisions worth another look".
-
-- **9.13 keeps every resolved xref whose target the crawl wrote `broken_url` on its own page, not only one whose URL
-  Resolve derived.** The writer cannot tell the two (Resolve returns a URL alone), and a page the baseline's facts found
-  is never `broken_url`, so the rule differs only for derived URLs. It reads the crawl's outcome, not the policy's
-  (KD23): a policy remapping a status leaves the link on the derived URL, which `link_verdicts` still judges. The
-  request for the derived URL is still made, so its target row remains in the run with no link to it. Reconsidering
-  changes which links the gate's key meets, and whether such an orphan target is acceptable.
-
